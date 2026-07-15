@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOTORWORLD — La enciclopedia del automóvil</title>
+<meta name="description" content="Historia de marcas, fichas técnicas de modelos icónicos y cómo funciona un coche por dentro. La referencia definitiva del mundo del motor.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;
+  --surface:#141418;
+  --surface2:#1b1b20;
+  --line:#26262c;
+  --text:#eceef1;
+  --muted:#93939d;
+  --red:#e01a2b;
+  --red-dim:#8f1420;
+  --blue:#2f6feb;
+  --blue-dim:#1f4aa3;
+  --font-display:'Rajdhani',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius:2px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none;}
+ul{list-style:none;}
+img,svg{display:block;max-width:100%;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+::selection{background:var(--red);color:#fff;}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+
+.container{max-width:1240px;margin:0 auto;padding:0 24px;}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--red);
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:'';width:22px;height:1px;background:var(--red);}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;letter-spacing:.01em;text-transform:uppercase;line-height:1.05;}
+h2{font-size:clamp(28px,4vw,44px);margin:10px 0 6px;}
+h3{font-size:22px;}
+.section{padding:88px 0;border-top:1px solid var(--line);}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:44px;flex-wrap:wrap;}
+.section-head p{color:var(--muted);max-width:480px;font-size:15px;}
+
+/* ---------- HEADER ---------- */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,10,13,.86);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;max-width:1240px;margin:0 auto;gap:20px;}
+.logo{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px;}
+.logo span{color:var(--red);}
+.logo .dash{width:10px;height:2px;background:var(--red);display:inline-block;}
+nav.main-nav{display:flex;gap:32px;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+nav.main-nav a{color:var(--muted);transition:color .2s;position:relative;padding:4px 0;}
+nav.main-nav a:hover,nav.main-nav a.active{color:var(--text);}
+nav.main-nav a.active::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--red);}
+.nav-right{display:flex;align-items:center;gap:14px;}
+.search-toggle,.burger{width:38px;height:38px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;transition:.2s;border-radius:var(--radius);}
+.search-toggle:hover,.burger:hover{border-color:var(--red);}
+.burger{display:none;}
+.search-panel{
+  max-height:0;overflow:hidden;transition:max-height .35s ease;
+  border-bottom:1px solid var(--line);background:var(--surface);
+}
+.search-panel.open{max-height:120px;}
+.search-inner{max-width:1240px;margin:0 auto;padding:18px 24px;}
+.search-inner input{
+  width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
+  color:var(--text);font-family:var(--font-display);font-size:26px;text-transform:uppercase;padding:8px 0;letter-spacing:.02em;
+}
+.search-inner input:focus{outline:none;border-color:var(--red);}
+.search-results{margin-top:10px;font-family:var(--font-mono);font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px 18px;}
+.search-results a{color:var(--text);border-bottom:1px dotted var(--line);}
+.search-results a:hover{color:var(--red);border-color:var(--red);}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;padding:110px 0 90px;overflow:hidden;border-top:none;}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(224,26,43,.16), transparent 45%),
+    radial-gradient(circle at 10% 80%, rgba(47,111,235,.12), transparent 40%);
+  pointer-events:none;
+}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center;position:relative;}
+.hero h1{font-size:clamp(44px,7vw,84px);line-height:.95;}
+.hero h1 .accent{color:var(--red);}
+.hero p.lead{color:var(--muted);font-size:17px;max-width:460px;margin:20px 0 34px;}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+.btn{
+  font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:14px;
+  padding:15px 28px;border-radius:var(--radius);transition:.25s;display:inline-flex;align-items:center;gap:10px;
+}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:#ff2338;transform:translateY(-2px);}
+.btn-outline{border:1px solid var(--line);color:var(--text);}
+.btn-outline:hover{border-color:var(--text);transform:translateY(-2px);}
+.hero-visual{position:relative;aspect-ratio:4/3;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);}
+.speed-ring{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.speed-ring svg{width:78%;}
+.dial-num{font-family:var(--font-mono);}
+.hero-stats{display:flex;gap:0;margin-top:24px;border:1px solid var(--line);}
+.hero-stats div{flex:1;padding:16px 18px;border-right:1px solid var(--line);}
+.hero-stats div:last-child{border-right:none;}
+.hero-stats .num{font-family:var(--font-mono);font-size:22px;color:var(--red);}
+.hero-stats .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+
+/* ---------- CARD GRIDS ---------- */
+.grid{display:grid;gap:20px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+
+.brand-card{
+  border:1px solid var(--line);background:var(--surface);padding:26px 20px;
+  display:flex;flex-direction:column;gap:14px;transition:.25s;position:relative;overflow:hidden;
+}
+.brand-card:hover{border-color:var(--red);transform:translateY(-4px);}
+.brand-card .wordmark{font-family:var(--font-display);font-size:24px;font-weight:700;text-transform:uppercase;}
+.brand-card .country{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.brand-card .since{position:absolute;top:14px;right:16px;font-family:var(--font-mono);font-size:11px;color:var(--line);}
+
+.model-card{border:1px solid var(--line);background:var(--surface);overflow:hidden;transition:.25s;display:flex;flex-direction:column;}
+.model-card:hover{transform:translateY(-4px);border-color:var(--red);}
+.model-thumb{aspect-ratio:16/10;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.model-thumb svg{width:58%;opacity:.92;transition:.4s;}
+.model-card:hover .model-thumb svg{transform:scale(1.06);}
+.model-thumb .yr{position:absolute;top:10px;left:10px;font-family:var(--font-mono);font-size:11px;background:rgba(0,0,0,.55);padding:3px 8px;letter-spacing:.05em;}
+.model-body{padding:16px 18px 20px;}
+.model-body .brand{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.model-body h4{font-size:19px;margin-top:4px;}
+.model-body .quick{display:flex;gap:14px;margin-top:12px;font-family:var(--font-mono);font-size:12px;color:var(--muted);}
+.model-body .quick b{color:var(--text);font-weight:500;}
+
+/* thumbnail gradient variety */
+.g1{background:linear-gradient(135deg,#1b0d0f,#2a0f14);}
+.g2{background:linear-gradient(135deg,#0d1420,#101c2e);}
+.g3{background:linear-gradient(135deg,#141414,#1f1f1f);}
+.g4{background:linear-gradient(135deg,#1a0f18,#241422);}
+
+/* trivia */
+.trivia-card{border:1px solid var(--line);padding:24px;background:var(--surface);}
+.trivia-card .num{font-family:var(--font-mono);color:var(--blue);font-size:13px;}
+.trivia-card p{margin-top:10px;font-size:14.5px;color:#d3d3d8;}
+
+/* news placeholder */
+.news-card{border:1px dashed var(--line);padding:28px 22px;background:var(--surface);text-align:center;color:var(--muted);font-size:13px;}
+.news-card b{display:block;font-family:var(--font-display);text-transform:uppercase;color:var(--text);font-size:17px;margin-bottom:8px;}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:60px 0 30px;background:var(--surface);}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;margin-bottom:50px;}
+.footer-grid h5{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:16px;}
+.footer-grid li{margin-bottom:9px;font-size:14px;color:#c9c9ce;}
+.footer-grid li a:hover{color:var(--red);}
+.footer-bottom{border-top:1px solid var(--line);padding-top:24px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:10px;font-family:var(--font-mono);}
+
+/* ---------- BREADCRUMB ---------- */
+.breadcrumb{font-family:var(--font-mono);font-size:12px;color:var(--muted);padding:20px 0;display:flex;gap:8px;flex-wrap:wrap;}
+.breadcrumb a:hover{color:var(--red);}
+
+/* ---------- BRAND PAGE ---------- */
+.brand-hero{padding:40px 0 60px;border-bottom:1px solid var(--line);}
+.brand-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;flex-wrap:wrap;}
+.brand-hero .wordmark-big{font-family:var(--font-display);font-size:clamp(40px,7vw,90px);font-weight:700;text-transform:uppercase;line-height:.9;}
+.brand-meta{display:flex;gap:0;border:1px solid var(--line);margin-top:26px;flex-wrap:wrap;}
+.brand-meta div{padding:14px 22px;border-right:1px solid var(--line);}
+.brand-meta div:last-child{border-right:none;}
+.brand-meta .lbl{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.brand-meta .val{font-family:var(--font-display);font-size:16px;margin-top:3px;}
+.prose{max-width:760px;}
+.prose p{color:#cfcfd4;margin-bottom:16px;font-size:15.5px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:50px;}
+.curio-list li{padding:16px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:#d3d3d8;display:flex;gap:14px;}
+.curio-list li::before{content:'▸';color:var(--red);flex-shrink:0;}
+.gallery-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.gallery-strip .ph{aspect-ratio:4/3;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.gallery-strip svg{width:60%;opacity:.85;}
+
+/* ---------- MODEL PAGE ---------- */
+.model-hero{padding:36px 0 0;}
+.model-hero-visual{aspect-ratio:21/9;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);}
+.model-hero-visual svg{width:44%;}
+.model-title-row{display:flex;justify-content:space-between;align-items:flex-end;margin:26px 0 10px;flex-wrap:wrap;gap:16px;}
+.model-title-row h1{font-size:clamp(32px,5.5vw,58px);}
+.tag-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.tag{font-family:var(--font-mono);font-size:11px;border:1px solid var(--line);padding:5px 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+
+.spec-panel{border:1px solid var(--line);background:var(--surface);}
+.spec-row{display:flex;justify-content:space-between;padding:15px 22px;border-bottom:1px solid var(--line);font-size:14px;}
+.spec-row:last-child{border-bottom:none;}
+.spec-row .k{color:var(--muted);text-transform:uppercase;font-size:12px;letter-spacing:.05em;font-family:var(--font-mono);}
+.spec-row .v{font-family:var(--font-mono);font-weight:500;text-align:right;}
+.spec-row .v b{color:var(--red);}
+
+.bar-block{margin-bottom:18px;}
+.bar-block .top{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:12px;margin-bottom:6px;color:var(--muted);}
+.bar-track{height:6px;background:var(--surface2);border:1px solid var(--line);}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff5a4d);}
+
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.pc-box{border:1px solid var(--line);padding:20px;}
+.pc-box.pros{border-top:3px solid var(--blue);}
+.pc-box.cons{border-top:3px solid var(--red);}
+.pc-box h4{font-size:15px;margin-bottom:12px;}
+.pc-box li{font-size:14px;color:#d3d3d8;padding:8px 0;border-bottom:1px solid var(--line);}
+.pc-box li:last-child{border-bottom:none;}
+
+.competitor-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px 14px;margin:0 10px 10px 0;font-size:13px;}
+
+/* ---------- HOW IT WORKS ---------- */
+.topic-card{border:1px solid var(--line);background:var(--surface);padding:26px;display:flex;flex-direction:column;gap:10px;transition:.25s;}
+.topic-card:hover{border-color:var(--blue);transform:translateY(-4px);}
+.topic-card .ic{font-size:26px;}
+.topic-detail p{color:#cfcfd4;font-size:15.5px;margin-bottom:16px;}
+
+/* buttons back */
+.back-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;color:var(--muted);margin-bottom:20px;}
+.back-link:hover{color:var(--red);}
+
+/* responsive */
+@media(max-width:980px){
+  .hero-grid{grid-template-columns:1fr;}
+  .grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-3{grid-template-columns:repeat(2,1fr);}
+  .two-col{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .gallery-strip{grid-template-columns:repeat(2,1fr);}
+  .pros-cons{grid-template-columns:1fr;}
+}
+@media(max-width:700px){
+  nav.main-nav{display:none;}
+  .burger{display:flex;}
+  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr 1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .brand-meta{flex-direction:column;}
+  .brand-meta div{border-right:none;border-bottom:1px solid var(--line);}
+}
+@media(max-width:480px){
+  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}
+  .gallery-strip{grid-template-columns:1fr 1fr;}
+  .section{padding:56px 0;}
+}
+
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;padding:24px;flex-direction:column;}
+.mobile-menu.open{display:flex;}
+.mobile-menu .close{align-self:flex-end;font-family:var(--font-mono);font-size:14px;margin-bottom:40px;}
+.mobile-menu a{font-family:var(--font-display);font-size:28px;text-transform:uppercase;padding:14px 0;border-bottom:1px solid var(--line);}
+
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="car-icon" viewBox="0 0 200 90">
+    <path d="M18 60 C18 45 30 40 45 38 L60 22 C64 17 70 14 78 14 L128 14 C136 14 142 17 146 23 L158 38 C172 40 182 46 184 58 L184 66 C184 70 181 73 177 73 L166 73 C166 62 158 54 148 54 C138 54 130 62 130 73 L70 73 C70 62 62 54 52 54 C42 54 34 62 34 73 L23 73 C20 73 18 70 18 66 Z" fill="currentColor" opacity="0.9"/>
+    <circle cx="52" cy="73" r="13" fill="none" stroke="currentColor" stroke-width="4"/>
+    <circle cx="148" cy="73" r="13" fill="none" stroke="currentColor" stroke-width="4"/>
+    <path d="M66 38 L74 22 L126 22 L134 38 Z" fill="var(--bg)" opacity="0.55"/>
+  </symbol>
+</svg>
+
+<header>
+  <div class="nav-wrap">
+    <a href="#/" class="logo"><span>MOTOR</span>WORLD<span class="dash"></span></a>
+    <nav class="main-nav" id="mainNav">
+      <a href="#/" data-route="/">Inicio</a>
+      <a href="#/marcas" data-route="/marcas">Marcas</a>
+      <a href="#/como-funciona" data-route="/como-funciona">Cómo funciona</a>
+      <a href="#/noticias" data-route="/noticias">Noticias</a>
+    </nav>
+    <div class="nav-right">
+      <button class="search-toggle" id="searchToggle" aria-label="Buscar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </button>
+      <button class="burger" id="burgerToggle" aria-label="Menú">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="search-panel" id="searchPanel">
+    <div class="search-inner">
+      <input type="text" id="searchInput" placeholder="Busca una marca o un modelo…" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <button class="close" id="closeMobileMenu">CERRAR ✕</button>
+  <a href="#/">Inicio</a>
+  <a href="#/marcas">Marcas</a>
+  <a href="#/como-funciona">Cómo funciona</a>
+  <a href="#/noticias">Noticias</a>
+</div>
+
+<main id="app"></main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="margin-bottom:14px;"><span>MOTOR</span>WORLD</div>
+        <p style="color:var(--muted);font-size:14px;max-width:280px;">La enciclopedia del automóvil: historia de marcas, fichas técnicas y el funcionamiento de cada pieza de un coche, explicado con precisión y pasión por el motor.</p>
+      </div>
+      <div>
+        <h5>Marcas</h5>
+        <ul id="footerBrands"></ul>
+      </div>
+      <div>
+        <h5>Explorar</h5>
+        <ul>
+          <li><a href="#/marcas">Todas las marcas</a></li>
+          <li><a href="#/como-funciona">Cómo funciona un coche</a></li>
+          <li><a href="#/noticias">Noticias del motor</a></li>
+          <li><a href="#/">Modelos destacados</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>MotorWorld</h5>
+        <ul>
+          <li><a href="#/">Sobre el proyecto</a></li>
+          <li><a href="#/">Contacto</a></li>
+          <li><a href="#/">Publicidad</a></li>
+          <li><a href="#/">Aviso legal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MOTORWORLD. Contenido editorial con fines informativos.</span>
+      <span>Cifras técnicas aproximadas y orientativas.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* =========================================================
+   DATOS
+   ========================================================= */
+const BRANDS = {
+  ferrari:{name:"Ferrari",country:"Italia",founded:1947,founders:"Enzo Ferrari",hq:"Maranello",
+    history:"Ferrari nace en Maranello de la mano de Enzo Ferrari, antiguo piloto y director deportivo de Alfa Romeo, que decide fabricar sus propios coches de carreras tras romper con la marca en 1939. El primer Ferrari con el emblema oficial, el 125 S, debuta en 1947 con un V12 de 1.5 litros, arquitectura de motor que se convertiría en la seña de identidad de la marca durante décadas.",
+    evolution:"Durante los años 50 y 60 Ferrari domina la Fórmula 1 y las carreras de resistencia como Le Mans, financiando su división de calle con los éxitos en competición. En 1969 Fiat entra en el capital de la compañía, lo que permite una expansión industrial sin perder la esencia artesanal. Los 80 y 90 traen los superdeportivos icónicos (F40, F50) y en el nuevo milenio la marca combina tradición con tecnología híbrida, manteniendo el listón más alto del sector.",
+    curiosities:["El logotipo del Cavallino Rampante procede de un avión de combate italiano de la Primera Guerra Mundial pilotado por Francesco Baracca.",
+      "Enzo Ferrari nunca quiso fabricar coches de calle; los vendía únicamente para financiar el equipo de carreras.",
+      "El color rojo 'Rosso Corsa' era el color oficial asignado a Italia en las carreras internacionales de principios del siglo XX.",
+      "Ferrari limita voluntariamente su producción anual para mantener la exclusividad de la marca."],
+    models:["laferrari","f40"]},
+  lamborghini:{name:"Lamborghini",country:"Italia",founded:1963,founders:"Ferruccio Lamborghini",hq:"Sant'Agata Bolognese",
+    history:"Ferruccio Lamborghini, empresario del sector del tractor agrícola, funda la marca tras una supuesta disputa con Enzo Ferrari sobre la calidad de un embrague. Decidido a construir el 'gran turismo perfecto', lanza en 1964 el 350 GT, con acabados más refinados que sus rivales de la época.",
+    evolution:"El Miura de 1966 revoluciona el concepto de superdeportivo al colocar el motor central, y el Countach de los 70 define la estética cuñada que marcaría generaciones. Tras pasar por varias manos (Chrysler, un grupo indonesio-malayo), Audi adquiere la marca en 1998, aportando la solidez técnica del grupo Volkswagen y dando paso a modelos como el Murciélago, el Aventador y el SUV Urus.",
+    curiosities:["El toro es el símbolo de la marca porque Ferruccio Lamborghini era aficionado a la tauromaquia y su signo zodiacal era Tauro.",
+      "Muchos modelos llevan nombres de toros de lidia históricos: Murciélago, Aventador, Huracán, Gallardo.",
+      "El primer tractor Lamborghini se fabricó con piezas de vehículos militares reconvertidos tras la Segunda Guerra Mundial.",
+      "El Countach recibe su nombre de una exclamación piamontesa de asombro."],
+    models:["aventador","urus"]},
+  mclaren:{name:"McLaren",country:"Reino Unido",founded:1963,founders:"Bruce McLaren",hq:"Woking",
+    history:"El piloto neozelandés Bruce McLaren funda el equipo que lleva su nombre para competir en Fórmula 1. La división de coches de calle, McLaren Automotive, no nace hasta décadas después, en 2010, aunque ya en 1992 la marca había sorprendido al mundo con el McLaren F1, considerado durante años el coche de producción más rápido del planeta.",
+    evolution:"Desde su relanzamiento como fabricante de calle, McLaren ha apostado por el monocasco de fibra de carbono en todos sus modelos, heredado directamente de su experiencia en Fórmula 1. La gama se estructura en tres pilares (Sports, Super y Ultimate Series), culminando en híbridos extremos como el P1.",
+    curiosities:["El McLaren F1 llevaba el asiento del conductor centrado, una disposición única heredada de los monoplazas.",
+      "Bruce McLaren falleció probando uno de sus propios prototipos en 1970, sin llegar a ver el éxito posterior de su marca.",
+      "El color naranja 'papaya' es la seña de identidad histórica del equipo y también aparece en varios modelos de calle."],
+    models:["p1","720s"]},
+  koenigsegg:{name:"Koenigsegg",country:"Suecia",founded:1994,founders:"Christian von Koenigsegg",hq:"Ängelholm",
+    history:"Con solo 22 años, Christian von Koenigsegg funda esta marca sueca con el objetivo declarado de construir el mejor superdeportivo del mundo. El primer prototipo tarda casi una década en llegar a producción, pero desde entonces Koenigsegg ha sido pionera en tecnologías como los frenos de carbono cerámico o el cigüeñal hueco.",
+    evolution:"Marca minúscula en volumen pero gigante en innovación: ha batido récords de velocidad con el Agera RS y ha introducido soluciones únicas como la caja de cambios Light Speed Transmission del Jesko, capaz de saltar de una marcha a cualquier otra sin pasar por las intermedias.",
+    curiosities:["Las puertas de sus coches, llamadas 'dihedral synchro-helix', giran y se elevan a la vez de forma sincronizada.",
+      "Koenigsegg fabrica una cantidad de unidades tan reducida que cada coche es prácticamente artesanal.",
+      "La marca ha sido durante varios años poseedora del récord de velocidad para coches de producción."],
+    models:["jesko","agera-rs"]},
+  alpina:{name:"Alpina",country:"Alemania",founded:1965,founders:"Burkard Bovensiepen",hq:"Buchloe",
+    history:"Alpina nace como fabricante de máquinas de escribir antes de reconvertirse en preparador de BMW. Con el tiempo obtiene el estatus de fabricante independiente reconocido oficialmente, con número de bastidor propio, aunque siempre trabaja sobre la base mecánica de BMW.",
+    evolution:"Su filosofía se aleja del deportivo agresivo: Alpina busca el equilibrio entre confort de gran turismo y prestaciones elevadas, con motores optimizados y suspensiones propias. En 2022 BMW anuncia la adquisición de la marca, que dejará de operar de forma independiente a partir de 2025.",
+    curiosities:["El logotipo de Alpina incluye un cigüeñal y un carburador estilizados, en homenaje a su origen como preparador mecánico.",
+      "Cada Alpina lleva una placa numerada con el nombre del técnico responsable del montaje del motor.",
+      "La tipografía característica de sus llantas multirradio es reconocible al instante entre los aficionados."],
+    models:["b3","xb7"]},
+  "aston-martin":{name:"Aston Martin",country:"Reino Unido",founded:1913,founders:"Lionel Martin y Robert Bamford",hq:"Gaydon",
+    history:"Fundada en Londres, la marca combina el apellido de Lionel Martin con 'Aston', en referencia a la colina de Aston Clinton donde Martin competía con éxito en pruebas de escalada. A lo largo del siglo XX pasa por numerosos propietarios y dificultades financieras, pero mantiene siempre su estatus de gran turismo británico de referencia.",
+    evolution:"La asociación con James Bond desde 'Goldfinger' (1964) catapulta la fama internacional de la marca. Tras la etapa bajo el paraguas de Ford, Aston Martin recupera la independencia y en los últimos años ha incorporado motores V8 de origen Mercedes-AMG, además de lanzar su primer SUV, el DBX.",
+    curiosities:["El logotipo con las alas representa velocidad y ligereza, inspirado en emblemas de aviación de principios del siglo XX.",
+      "James Bond ha conducido más de una decena de modelos distintos de Aston Martin a lo largo de la saga cinematográfica.",
+      "La marca ha entrado y salido de bancarrota en varias ocasiones a lo largo de su historia centenaria."],
+    models:["db11","vantage"]},
+  audi:{name:"Audi",country:"Alemania",founded:1909,founders:"August Horch",hq:"Ingolstadt",
+    history:"August Horch, tras abandonar la empresa que él mismo había fundado con su propio nombre, crea una nueva compañía y, al no poder reutilizar 'Horch' por motivos legales, traduce su apellido (que significa 'escuchar' en alemán) al latín: 'Audi'. En 1932 se fusiona con otras tres marcas (DKW, Horch y Wanderer) formando Auto Union, origen de los célebres cuatro aros.",
+    evolution:"Tras la Segunda Guerra Mundial la marca resurge bajo el paraguas de Volkswagen. El lanzamiento de la tracción total quattro en 1980, probada con éxito en el Rally, transforma la imagen de Audi hacia la tecnología y el rendimiento, consolidándola como una de las tres grandes premium alemanas junto a BMW y Mercedes-Benz.",
+    curiosities:["Los cuatro aros del logotipo representan la unión histórica de Audi, DKW, Horch y Wanderer.",
+      "El lema 'Vorsprung durch Technik' (ventaja mediante la tecnología) es uno de los eslóganes más reconocibles de la industria del automóvil.",
+      "El Audi Quattro original fue el primer coche de tracción total en ganar un campeonato de rallys."],
+    models:["r8","rs6-avant"]},
+  bmw:{name:"BMW",country:"Alemania",founded:1916,founders:"Karl Rapp y Gustav Otto (origen aeronáutico)",hq:"Múnich",
+    history:"Bayerische Motoren Werke nace como fabricante de motores de avión durante la Primera Guerra Mundial. Al prohibirse la producción aeronáutica militar tras el conflicto, la compañía se reconvierte primero en motores de moto y, desde 1928, en automóviles.",
+    evolution:"El logotipo circular, con sus cuadrantes blancos y azules, se ha interpretado tradicionalmente como una hélice de avión girando, aunque también representa los colores de la bandera de Baviera. La marca construye su reputación sobre la tracción trasera, el equilibrio de pesos 50/50 y la división deportiva M, creada en 1972.",
+    curiosities:["BMW fabricó motores de avión antes que automóviles, de ahí el origen de su logotipo.",
+      "La división M nació para homologar coches de competición para las carreras de turismos.",
+      "El primer Mini de la era BMW llegó tras la compra de la marca británica en 1994."],
+    models:["m3","i8"]},
+  bentley:{name:"Bentley",country:"Reino Unido",founded:1919,founders:"Walter Owen Bentley",hq:"Crewe",
+    history:"W.O. Bentley, ingeniero apasionado por los motores rotativos de aviación, funda su marca con la ambición de construir 'un coche rápido, un buen coche, el mejor de su clase'. Sus modelos dominan las 24 Horas de Le Mans durante los años 20, ganando la prueba en cinco ocasiones con los legendarios 'Bentley Boys'.",
+    evolution:"Tras dificultades económicas, Rolls-Royce absorbe la marca en 1931, compartiendo posteriormente plataformas durante décadas. En 1998 Volkswagen se hace con Bentley, separándola definitivamente de Rolls-Royce (adquirida por BMW) y relanzándola como referencia del lujo británico deportivo.",
+    curiosities:["Las alas del logotipo Bentley tienen más plumas en un lado que en otro por un motivo puramente estético de diseño.",
+      "Los 'Bentley Boys' eran un grupo de adinerados pilotos británicos que competían y ganaban con estos coches en los años 20.",
+      "El Bentley Continental GT ha sido durante años el gran turismo de referencia para largas distancias a alta velocidad."],
+    models:["continental-gt","bentayga"]},
+  bugatti:{name:"Bugatti",country:"Francia",founded:1909,founders:"Ettore Bugatti",hq:"Molsheim",
+    history:"El italiano Ettore Bugatti, afincado en la región francesa de Alsacia, funda su marca combinando ingeniería de precisión con un fuerte sentido estético, heredado de una familia de artistas. Sus coches dominan la competición durante el periodo de entreguerras, incluyendo varias victorias en Le Mans.",
+    evolution:"Tras el declive de posguerra y varios intentos de resurrección, el grupo Volkswagen relanza Bugatti en 1998 con el objetivo de construir el automóvil de producción más rápido y potente del mundo, materializado en el Veyron (2005) y posteriormente en el Chiron. En 2021 la marca entra en una nueva era junto a Rimac.",
+    curiosities:["El Bugatti Veyron fue el primer coche de producción en superar los 400 km/h.",
+      "Ettore Bugatti consideraba sus coches auténticas obras de arte funcionales, no simples máquinas.",
+      "La parrilla en forma de herradura es una seña de identidad presente en todos los modelos desde los años 20."],
+    models:["chiron","veyron"]},
+  ktm:{name:"KTM",country:"Austria",founded:1934,founders:"Hans Trunkenpolz",hq:"Mattighofen",
+    history:"KTM nace como pequeño taller de reparación de vehículos en Austria y evoluciona hacia la fabricación de motocicletas, disciplina en la que se convierte en referencia mundial, especialmente en competición off-road. Su incursión en el automóvil llega mucho más tarde, con un único propósito: construir el coche de carretera con la relación peso-potencia más extrema posible.",
+    evolution:"El X-Bow (pronunciado 'crossbow'), presentado en 2008, prescinde de parabrisas, techo y asistencias superfluas para ofrecer una experiencia de conducción prácticamente de competición homologada para calle, con un peso mínimo gracias a su monocasco de fibra de carbono.",
+    curiosities:["El nombre X-Bow es un juego de palabras con 'crossbow' (ballesta) por su diseño afilado y agresivo.",
+      "KTM es, ante todo, un fabricante de motocicletas: el automóvil es un proyecto minoritario dentro de la marca.",
+      "El X-Bow no incorpora parabrisas de serie en varias de sus versiones, obligando al uso de casco."],
+    models:["x-bow"]},
+  "land-rover":{name:"Land Rover",country:"Reino Unido",founded:1948,founders:"Maurice y Spencer Wilks (Rover)",hq:"Solihull",
+    history:"Los hermanos Wilks, directivos de Rover, diseñan un vehículo todoterreno utilitario inspirado en el Jeep militar estadounidense, pensado inicialmente para el campo británico. El primer Land Rover Series I se presenta en 1948 con carrocería de aluminio, material elegido por la escasez de acero tras la guerra.",
+    evolution:"Lo que nació como herramienta agrícola se convierte en icono todoterreno mundial, dando lugar a gamas diferenciadas como Defender, Discovery y Range Rover, esta última pionera en combinar capacidad off-road con lujo de gran berlina desde 1970. Actualmente pertenece al grupo indio Tata Motors bajo la marca Jaguar Land Rover.",
+    curiosities:["El primer Land Rover se diseñó con el volante en el centro, inspirado en maquinaria agrícola.",
+      "El color verde característico de los primeros modelos se debía al excedente de pintura de aviones militares tras la guerra.",
+      "La familia real británica ha utilizado Land Rover en actos oficiales durante generaciones."],
+    models:["range-rover","defender"]},
+  lexus:{name:"Lexus",country:"Japón",founded:1989,founders:"Toyota Motor Corporation",hq:"Toyota City / Nagoya",
+    history:"Lexus se crea como división de lujo de Toyota tras un ambicioso proyecto secreto de ingeniería (F1 project) destinado a construir la mejor berlina de lujo del mundo desde cero, sin las limitaciones de una gama existente. El resultado, el LS 400 de 1989, sorprende a la industria por su silencio y fiabilidad.",
+    evolution:"Lexus se consolida en Estados Unidos como alternativa fiable a las marcas premium alemanas y, con el tiempo, se convierte en pionera de la hibridación de lujo dentro del grupo Toyota, además de desarrollar proyectos de imagen como el superdeportivo LFA.",
+    curiosities:["El desarrollo del primer Lexus LS 400 costó a Toyota mil millones de dólares y varios años de pruebas secretas.",
+      "El Lexus LFA se desarrolló durante casi una década y su motor V10 fue afinado con ayuda de ingenieros de sonido de Yamaha.",
+      "Lexus no vendió coches en Japón bajo ese nombre hasta 2005; antes se comercializaban como Toyota."],
+    models:["lfa","rc-f"]},
+  "mercedes-benz":{name:"Mercedes-Benz",country:"Alemania",founded:1926,founders:"Karl Benz y Gottlieb Daimler (fusión)",hq:"Stuttgart",
+    history:"Karl Benz patenta en 1886 el que se considera el primer automóvil con motor de combustión de la historia. Décadas más tarde, en 1926, las empresas de Benz y de su rival Gottlieb Daimler se fusionan formando Daimler-Benz, dando origen a la marca Mercedes-Benz, nombre tomado de Mercedes Jellinek, hija de un influyente distribuidor e inversor de Daimler.",
+    evolution:"Pionera histórica en seguridad (cinturón de tres puntos, airbag, ABS), Mercedes-Benz consolida su prestigio con la Clase S como referencia mundial del lujo, y desde 1967 con la división deportiva AMG, integrada después como marca de alto rendimiento propia dentro del grupo.",
+    curiosities:["Karl Benz patentó el primer automóvil de la historia con motor de combustión interna en 1886.",
+      "La estrella de tres puntas representa el dominio de Daimler en tierra, mar y aire.",
+      "El cinturón de seguridad de tres puntos, inventado por Mercedes-Benz en 1959, se liberó de patente para que cualquier fabricante pudiera usarlo."],
+    models:["amg-gt","clase-s"]},
+  porsche:{name:"Porsche",country:"Alemania",founded:1931,founders:"Ferdinand Porsche",hq:"Stuttgart",
+    history:"Ferdinand Porsche funda inicialmente una oficina de diseño e ingeniería que trabaja para otros fabricantes, incluyendo el desarrollo del Volkswagen Escarabajo. No es hasta 1948, con el Porsche 356, cuando la familia presenta su primer coche bajo su propio nombre.",
+    evolution:"El Porsche 911, presentado en 1963 y en producción continua desde entonces con el motor bóxer trasero como seña de identidad, se convierte en el deportivo de referencia mundial. La marca ha sabido combinar la tradición del 911 con la innovación total del Taycan, su primer eléctrico, sin renunciar a su carácter deportivo.",
+    curiosities:["El escudo de Porsche combina el emblema de la ciudad de Stuttgart (un caballo) con el de Wurtemberg.",
+      "El Porsche 911 mantiene la disposición de motor trasero desde su lanzamiento en 1963 hasta la actualidad.",
+      "Ferdinand Porsche también diseñó el Volkswagen Escarabajo antes de fundar su propia marca."],
+    models:["911","taycan"]},
+  toyota:{name:"Toyota",country:"Japón",founded:1937,founders:"Kiichiro Toyoda",hq:"Toyota City",
+    history:"Kiichiro Toyoda crea la división de automóviles dentro de la empresa textil familiar Toyoda, cambiando la grafía a 'Toyota' por motivos de sonoridad y buena fortuna en japonés (el nuevo nombre requiere ocho trazos para escribirse, número considerado propicio).",
+    evolution:"Toyota se convierte en el mayor fabricante de coches del mundo gracias al sistema de producción Toyota (base del 'lean manufacturing') y a su apuesta pionera por la hibridación con el Prius en 1997. Su división deportiva GR (Gazoo Racing) recupera modelos icónicos como el Supra.",
+    curiosities:["El nombre 'Toyota' se eligió en lugar de 'Toyoda' porque se escribe con ocho trazos en japonés, número de la suerte.",
+      "El Toyota Corolla es el modelo de automóvil más vendido de la historia a nivel mundial.",
+      "El sistema de producción Toyota ha sido estudiado y copiado por industrias de todo el mundo, más allá del automóvil."],
+    models:["supra","gr-yaris"]},
+  volkswagen:{name:"Volkswagen",country:"Alemania",founded:1937,founders:"Frente Alemán del Trabajo (impulsado por el gobierno alemán)",hq:"Wolfsburgo",
+    history:"Volkswagen ('el coche del pueblo') se funda con el objetivo de producir un automóvil asequible para la población alemana, proyecto en el que participa el ingeniero Ferdinand Porsche diseñando lo que se convertiría en el Escarabajo. La fábrica de Wolfsburgo se construye específicamente para este fin.",
+    evolution:"Tras la Segunda Guerra Mundial, la producción se retoma bajo administración británica y el Escarabajo se convierte en un fenómeno de ventas mundial. Con el tiempo, Volkswagen construye uno de los mayores grupos automovilísticos del planeta, integrando marcas como Audi, Porsche, Bentley, Bugatti o Lamborghini.",
+    curiosities:["El Volkswagen Escarabajo estuvo en producción, con distintas actualizaciones, durante más de 65 años.",
+      "El Golf, presentado en 1974, sustituyó al Escarabajo y se convirtió en el modelo más vendido de la marca.",
+      "El logotipo VW dentro de un círculo apenas ha cambiado de concepto desde los años 30."],
+    models:["golf-gti","id4"]}
+};
+
+const MODELS = {
+  laferrari:{brand:"ferrari",name:"LaFerrari",year:2013,motor:"V12 6.3L atmosférico + motor eléctrico (híbrido)",potencia:"963 CV combinados",par:"900 Nm",cilindrada:"6262 cc",peso:"1255 kg",traccion:"Trasera",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 15 l/100 km",vmax:"350 km/h",acel:"2.4 s",precioLanzamiento:"≈ 1.300.000 €",precioActual:"≈ 3.500.000 € o más (mercado de coleccionismo)",
+    versiones:["LaFerrari coupé","LaFerrari Aperta (descapotable)"],
+    ventajas:["Tecnología híbrida directamente derivada de la Fórmula 1","Prestaciones extremas con entrega de potencia muy progresiva","Pieza de coleccionista con gran revalorización"],
+    desventajas:["Producción limitadísima, prácticamente imposible de adquirir","Mantenimiento y seguro muy elevados","Poco práctico para el uso diario"],
+    competidores:["McLaren P1","Porsche 918 Spyder"],
+    curiosidades:["Fue el primer Ferrari de calle en incorporar un sistema híbrido KERS derivado de la F1.","Solo se fabricaron 499 unidades del coupé y 209 de la versión Aperta."]},
+  f40:{brand:"ferrari",name:"F40",year:1987,motor:"V8 2.9L Twin-Turbo",potencia:"478 CV",par:"577 Nm",cilindrada:"2936 cc",peso:"1100 kg",traccion:"Trasera",cambio:"Manual 5 velocidades",consumo:"≈ 18 l/100 km",vmax:"324 km/h",acel:"3.8 s",precioLanzamiento:"≈ 400.000 dólares",precioActual:"≈ 2.500.000 € o más en subasta",
+    versiones:["F40 estándar","F40 LM (competición)","F40 GTE"],
+    ventajas:["Sensaciones de conducción puras, sin electrónica que intervenga","Icono absoluto de coleccionismo","Diseño atemporal de Pininfarina"],
+    desventajas:["Carece de asistencias modernas: sin ABS ni dirección asistida","Habitáculo muy espartano","Turbo lag notable a bajas revoluciones"],
+    competidores:["Porsche 959","Lamborghini Diablo"],
+    curiosidades:["Fue el último Ferrari aprobado personalmente por Enzo Ferrari antes de su muerte en 1988.","Se construyó para celebrar el 40º aniversario de la marca, de ahí su nombre."]},
+  aventador:{brand:"lamborghini",name:"Aventador",year:2011,motor:"V12 6.5L atmosférico",potencia:"700-780 CV según versión",par:"690-720 Nm",cilindrada:"6498 cc",peso:"1575 kg",traccion:"Integral",cambio:"Automatizada monoembrague 7 velocidades (ISR)",consumo:"≈ 17 l/100 km",vmax:"350 km/h",acel:"2.9 s",precioLanzamiento:"≈ 300.000 €",precioActual:"≈ 280.000 - 400.000 € según versión y estado",
+    versiones:["LP700-4","S","SVJ","Ultimae (última edición)"],
+    ventajas:["Sonido de V12 atmosférico inconfundible","Presencia visual extrema","Tracción integral que ayuda a explotar la potencia"],
+    desventajas:["Caja de cambios ISR con cambios bruscos a baja velocidad","Visibilidad trasera muy limitada","Consumo elevado"],
+    competidores:["Ferrari 812 Superfast","McLaren 720S"],
+    curiosidades:["Fue el último Lamborghini de gran serie con motor V12 puramente atmosférico, sin ningún tipo de hibridación.","Su nombre proviene de un toro de lidia español llamado Aventador."]},
+  urus:{brand:"lamborghini",name:"Urus",year:2018,motor:"V8 4.0L Biturbo",potencia:"666 CV",par:"850 Nm",cilindrada:"3996 cc",peso:"2200 kg",traccion:"Integral",cambio:"Automática 8 velocidades",consumo:"≈ 12.7 l/100 km",vmax:"305 km/h",acel:"3.6 s",precioLanzamiento:"≈ 200.000 €",precioActual:"≈ 210.000 - 260.000 €",
+    versiones:["Urus estándar","Urus S","Urus Performante"],
+    ventajas:["El SUV más rápido de su segmento en muchas pruebas","Practicidad de un todoterreno con prestaciones de superdeportivo","Buena base mecánica del grupo Volkswagen"],
+    desventajas:["Estética que divide opiniones entre los puristas de la marca","Peso elevado para tratarse de un Lamborghini","Consumo alto en ciudad"],
+    competidores:["Aston Martin DBX","Porsche Cayenne Turbo GT"],
+    curiosidades:["El nombre Urus hace referencia al uro, un bóvido salvaje ancestral extinguido.","Es el modelo más vendido en la historia de Lamborghini."]},
+  p1:{brand:"mclaren",name:"P1",year:2013,motor:"V8 3.8L Biturbo + motor eléctrico",potencia:"916 CV combinados",par:"900 Nm",cilindrada:"3799 cc",peso:"1395 kg",traccion:"Trasera",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 8.3 l/100 km (ciclo con uso eléctrico)",vmax:"350 km/h",acel:"2.8 s",precioLanzamiento:"≈ 1.150.000 €",precioActual:"≈ 2.000.000 € o más",
+    versiones:["P1 coupé","P1 GTR (solo circuito)"],
+    ventajas:["Aerodinámica activa muy avanzada para su época","Equilibrio excepcional en curva","Tecnología híbrida heredada de la F1"],
+    desventajas:["Producción muy limitada y precio de reventa disparado","Habitabilidad reducida","Uso del modo eléctrico puro muy limitado"],
+    competidores:["Ferrari LaFerrari","Porsche 918 Spyder"],
+    curiosidades:["Formó, junto al LaFerrari y el Porsche 918 Spyder, la conocida 'Santísima Trinidad' de híbridos extremos.","Solo se construyeron 375 unidades del modelo de calle."]},
+  "720s":{brand:"mclaren",name:"720S",year:2017,motor:"V8 4.0L Biturbo",potencia:"720 CV",par:"770 Nm",cilindrada:"3994 cc",peso:"1283 kg",traccion:"Trasera",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 10.7 l/100 km",vmax:"341 km/h",acel:"2.9 s",precioLanzamiento:"≈ 260.000 €",precioActual:"≈ 200.000 - 250.000 €",
+    versiones:["720S coupé","720S Spider","720S GT3 (competición)"],
+    ventajas:["Chasis de fibra de carbono muy ligero","Prestaciones que rivalizan con superdeportivos de gama superior","Excelente visibilidad para tratarse de un superdeportivo"],
+    desventajas:["Interior menos lujoso que algunos rivales","Diseño de faros que no convence a todos","Depreciación pronunciada en el mercado de segunda mano"],
+    competidores:["Ferrari F8 Tributo","Lamborghini Huracán"],
+    curiosidades:["Su monocasco 'Monocage II' de fibra de carbono pesa apenas 80 kg.","Fue elegido Coche del Año por numerosas publicaciones especializadas en 2017."]},
+  jesko:{brand:"koenigsegg",name:"Jesko",year:2020,motor:"V8 5.0L Biturbo",potencia:"1600 CV (con combustible E85)",par:"1500 Nm",cilindrada:"4998 cc",peso:"1420 kg",traccion:"Trasera",cambio:"Automatizada 9 velocidades Light Speed Transmission",consumo:"≈ 20 l/100 km (uso mixto)",vmax:"+480 km/h (versión Absolut, estimado)",acel:"2.5 s",precioLanzamiento:"≈ 2.800.000 €",precioActual:"Similar o superior, producción muy limitada",
+    versiones:["Jesko (orientado a circuito)","Jesko Absolut (orientado a velocidad punta)"],
+    ventajas:["Caja de cambios revolucionaria que permite saltos directos de marcha","Potencia y aerodinámica de nivel prácticamente de competición","Fabricación artesanal de altísima calidad"],
+    desventajas:["Producción extremadamente reducida","Precio inaccesible para la inmensa mayoría","Mantenimiento altamente especializado"],
+    competidores:["Bugatti Chiron","SSC Tuatara"],
+    curiosidades:["Debe su nombre al padre del fundador, Jesko von Koenigsegg.","Su caja de cambios permite pasar, por ejemplo, de séptima a segunda de forma directa."]},
+  "agera-rs":{brand:"koenigsegg",name:"Agera RS",year:2015,motor:"V8 5.0L Biturbo",potencia:"1160-1360 CV según combustible",par:"1280 Nm",cilindrada:"4998 cc",peso:"1395 kg",traccion:"Trasera",cambio:"Automatizada 7 velocidades",consumo:"≈ 19 l/100 km",vmax:"447.19 km/h (récord registrado en 2017)",acel:"2.8 s",precioLanzamiento:"≈ 2.000.000 €",precioActual:"≈ 2.500.000 € o más en subasta",
+    versiones:["Agera RS coupé","Agera RS1 (edición especial)"],
+    ventajas:["Poseedor de un récord mundial de velocidad para coches de producción","Ligereza extrema gracias al uso masivo de fibra de carbono","Detalles de fabricación artesanal únicos"],
+    desventajas:["Solo 25 unidades fabricadas, virtualmente inconseguible","Uso extremadamente impráctico en el día a día","Piezas y mantenimiento de coste elevadísimo"],
+    competidores:["Bugatti Chiron Super Sport","Hennessey Venom F5"],
+    curiosidades:["En 2017 alcanzó los 447.19 km/h de media en una carretera pública cerrada en Nevada, récord para coches de producción durante años.","Cada una de las 25 unidades llevaba un nombre propio elegido por su comprador."]},
+  b3:{brand:"alpina",name:"B3",year:2020,motor:"6 cilindros en línea 3.0L Biturbo",potencia:"462 CV",par:"700 Nm",cilindrada:"2998 cc",peso:"1750 kg",traccion:"Integral",cambio:"Automática 8 velocidades",consumo:"≈ 8.5 l/100 km",vmax:"302 km/h",acel:"3.7 s",precioLanzamiento:"≈ 85.000 €",precioActual:"≈ 70.000 - 90.000 €",
+    versiones:["B3 berlina","B3 Touring (familiar)"],
+    ventajas:["Confort de marcha superior al de un M3 sin renunciar a las prestaciones","Fiabilidad mecánica heredada de BMW","Elegancia discreta, menos ostentosa que un deportivo convencional"],
+    desventajas:["Menor deportividad percibida frente al M3 en conducción muy exigente","Marca menos conocida por el gran público","Producción reducida frente a los BMW M de serie"],
+    competidores:["BMW M3","Audi RS4/RS5"],
+    curiosidades:["Se fabrica en la propia línea de producción de BMW, integrada dentro del proceso industrial.","Cada motor lleva una placa con el nombre del técnico que lo ensambló."]},
+  xb7:{brand:"alpina",name:"XB7",year:2021,motor:"V8 4.4L Biturbo",potencia:"618 CV",par:"800 Nm",cilindrada:"4395 cc",peso:"2500 kg",traccion:"Integral",cambio:"Automática 8 velocidades",consumo:"≈ 12.5 l/100 km",vmax:"291 km/h",acel:"4.0 s",precioLanzamiento:"≈ 145.000 €",precioActual:"≈ 120.000 - 150.000 €",
+    versiones:["XB7 único acabado, con paquetes de personalización"],
+    ventajas:["SUV de gran tamaño con prestaciones de deportivo","Confort de viaje excepcional para siete plazas","Acabados de altísima calidad"],
+    desventajas:["Tamaño y peso muy elevados para uso urbano","Consumo alto","Precio elevado frente al X7 M60i en el que se basa"],
+    competidores:["Mercedes-AMG GLS 63","BMW X7 M60i"],
+    curiosidades:["Es uno de los SUV de gran tamaño más rápidos jamás homologados por Alpina.","Comparte plataforma con el BMW X7 pero con ajustes propios de suspensión y motor."]},
+  db11:{brand:"aston-martin",name:"DB11",year:2016,motor:"V8 4.0L Biturbo (origen Mercedes-AMG) / V12 5.2L Biturbo",potencia:"503-630 CV según versión",par:"675-900 Nm",cilindrada:"3982-5204 cc",peso:"1770 kg",traccion:"Trasera",cambio:"Automática 8 velocidades",consumo:"≈ 11 l/100 km",vmax:"322 km/h",acel:"3.7 s",precioLanzamiento:"≈ 180.000 €",precioActual:"≈ 130.000 - 180.000 €",
+    versiones:["DB11 V8","DB11 AMR (V12)","DB11 Volante (descapotable)"],
+    ventajas:["Diseño elegante y atemporal, muy british","Buen equilibrio entre gran turismo y deportivo","Interior de gran calidad artesanal"],
+    desventajas:["Sistema de infoentretenimiento heredado de Mercedes, algo desfasado con los años","Maletero reducido para un gran turismo","Fiabilidad históricamente inferior a rivales alemanes"],
+    competidores:["Bentley Continental GT","Ferrari Roma"],
+    curiosidades:["Fue el primer Aston Martin en usar motores V8 de origen Mercedes-AMG tras el acuerdo entre ambas marcas.","Su nombre 'DB' rinde homenaje a David Brown, propietario de la marca en los años 50."]},
+  vantage:{brand:"aston-martin",name:"Vantage",year:2018,motor:"V8 4.0L Biturbo (origen Mercedes-AMG)",potencia:"510-665 CV según versión",par:"685 Nm",cilindrada:"3982 cc",peso:"1530 kg",traccion:"Trasera",cambio:"Automática 8 velocidades",consumo:"≈ 10.5 l/100 km",vmax:"314 km/h",acel:"3.5 s",precioLanzamiento:"≈ 130.000 €",precioActual:"≈ 100.000 - 140.000 €",
+    versiones:["Vantage coupé","Vantage Roadster","Vantage F1 Edition"],
+    ventajas:["Comportamiento dinámico muy afilado, el más deportivo de la gama","Sonido de escape muy trabajado","Diseño agresivo diferenciado del resto de la gama"],
+    desventajas:["Interior con materiales que no siempre están a la altura del precio","Espacio interior reducido","Depreciación notable en el mercado de ocasión"],
+    competidores:["Porsche 911 Turbo","Chevrolet Corvette Z06"],
+    curiosidades:["Su parrilla frontal en forma de 'boca de vampiro' es una de las más reconocibles del sector.","Aston Martin usa el Vantage como coche de seguridad oficial en la Fórmula 1."]},
+  r8:{brand:"audi",name:"R8",year:2007,motor:"V10 5.2L atmosférico",potencia:"570-620 CV según versión",par:"550-580 Nm",cilindrada:"5204 cc",peso:"1620 kg",traccion:"Integral quattro",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 12.5 l/100 km",vmax:"329 km/h",acel:"3.1 s",precioLanzamiento:"≈ 165.000 €",precioActual:"≈ 130.000 - 180.000 €",
+    versiones:["R8 V10","R8 V10 Performance","R8 Spyder","R8 GT (edición limitada)"],
+    ventajas:["Uno de los últimos superdeportivos con V10 atmosférico del mercado","Fiabilidad muy superior a la media del segmento","Facilidad de manejo diario poco habitual en un superdeportivo"],
+    desventajas:["Diseño exterior algo conservador frente a rivales italianos","Menor exclusividad de marca percibida","Sonido menos característico que un V12 o V8 italiano"],
+    competidores:["Porsche 911 Turbo","Lamborghini Huracán (comparte plataforma)"],
+    curiosidades:["Comparte plataforma técnica con el Lamborghini Huracán, ambos del grupo Volkswagen.","Fue el primer superdeportivo en ofrecer faros completamente de tecnología LED."]},
+  "rs6-avant":{brand:"audi",name:"RS6 Avant",year:2019,motor:"V8 4.0L Biturbo",potencia:"600 CV",par:"800 Nm",cilindrada:"3996 cc",peso:"2075 kg",traccion:"Integral quattro",cambio:"Automática 8 velocidades",consumo:"≈ 11.8 l/100 km",vmax:"280 km/h (305 con paquete opcional)",acel:"3.6 s",precioLanzamiento:"≈ 120.000 €",precioActual:"≈ 100.000 - 130.000 €",
+    versiones:["RS6 Avant","RS6 Avant Performance"],
+    ventajas:["Combina un maletero familiar enorme con prestaciones de superdeportivo","Tracción quattro que aporta seguridad en cualquier condición","Muy versátil para uso diario y largas distancias"],
+    desventajas:["Peso elevado por tratarse de un familiar de gran tamaño","Precio de mantenimiento y neumáticos elevado","Consumo alto en uso deportivo"],
+    competidores:["Mercedes-AMG E63 S Estate","BMW M5 Touring"],
+    curiosidades:["Es uno de los coches familiares más rápidos jamás fabricados en serie.","Su apodo no oficial entre aficionados es 'la nave nodriza' por su presencia imponente."]},
+  m3:{brand:"bmw",name:"M3",year:1986,motor:"6 cilindros en línea 3.0L Biturbo (generación actual)",potencia:"480-550 CV según versión",par:"550-650 Nm",cilindrada:"2993 cc",peso:"1730 kg",traccion:"Trasera / Integral (Competition xDrive)",cambio:"Manual 6 vel. / Automática 8 vel.",consumo:"≈ 10.2 l/100 km",vmax:"250-290 km/h según paquete",acel:"3.5 s",precioLanzamiento:"≈ 90.000 € (generación actual)",precioActual:"≈ 75.000 - 100.000 €",
+    versiones:["M3 Competition","M3 Competition xDrive","M3 Touring (familiar)"],
+    ventajas:["Referencia histórica del sedán deportivo desde 1986","Buen equilibrio entre uso diario y circuito","Amplia oferta de configuraciones de transmisión"],
+    desventajas:["Diseño de parrilla de la generación actual, muy debatido","Suspensión firme que penaliza el confort","Precio de seguros elevado por potencia"],
+    competidores:["Mercedes-AMG C63","Audi RS4/RS5"],
+    curiosidades:["El M3 original de 1986 se creó para homologar el modelo en competición de turismos (DTM).","Es el modelo más vendido históricamente de la división M de BMW."]},
+  i8:{brand:"bmw",name:"i8",year:2014,motor:"3 cilindros 1.5L Turbo + motor eléctrico (híbrido enchufable)",potencia:"374 CV combinados",par:"570 Nm combinados",cilindrada:"1499 cc",peso:"1560 kg",traccion:"Integral (motor eléctrico delante, térmico detrás)",cambio:"Automática 6 vel. (térmico) + reductora (eléctrico)",consumo:"≈ 2.1 l/100 km (ciclo homologado con carga)",vmax:"250 km/h (limitado)",acel:"4.4 s",precioLanzamiento:"≈ 130.000 €",precioActual:"≈ 60.000 - 90.000 €",
+    versiones:["i8 Coupé","i8 Roadster"],
+    ventajas:["Diseño futurista que apenas ha envejecido","Consumo homologado muy bajo gracias a la hibridación","Chasis de fibra de carbono que aporta ligereza"],
+    desventajas:["Autonomía eléctrica real reducida","Maletero y plazas traseras casi simbólicas","Sonido de motor de tres cilindros poco emocionante"],
+    competidores:["Audi R8 e-tron (prototipo)","Honda NSX"],
+    curiosidades:["Sus puertas de tipo 'mariposa' se convirtieron en una de sus señas de identidad visual.","Fue uno de los primeros deportivos híbridos enchufables producidos en serie a gran escala."]},
+  "continental-gt":{brand:"bentley",name:"Continental GT",year:2003,motor:"W12 6.0L Biturbo / V8 4.0L Biturbo",potencia:"550-659 CV según versión",par:"770-900 Nm",cilindrada:"3996-5950 cc",peso:"2244 kg",traccion:"Integral",cambio:"Automática doble embrague 8 velocidades",consumo:"≈ 13.5 l/100 km",vmax:"333 km/h",acel:"3.6 s",precioLanzamiento:"≈ 200.000 €",precioActual:"≈ 180.000 - 230.000 €",
+    versiones:["Continental GT V8","Continental GT Speed (W12)","Continental GTC (descapotable)"],
+    ventajas:["Combina lujo artesanal británico con prestaciones de superdeportivo","Gran confort para viajes de larga distancia a alta velocidad","Motor W12 único en el mercado de gran turismos"],
+    desventajas:["Peso muy elevado por su nivel de equipamiento y lujo","Consumo alto, especialmente en versión W12","Precio de mantenimiento elevado"],
+    competidores:["Aston Martin DB11","Mercedes-AMG S 63 Coupé"],
+    curiosidades:["Relanzó la marca en 2003 tras años de escasa renovación de producto.","El motor W12 combina dos bloques VR6 en una configuración compacta poco habitual en la industria."]},
+  bentayga:{brand:"bentley",name:"Bentayga",year:2015,motor:"V8 4.0L Biturbo",potencia:"550 CV",par:"770 Nm",cilindrada:"3996 cc",peso:"2440 kg",traccion:"Integral",cambio:"Automática 8 velocidades",consumo:"≈ 12.5 l/100 km",vmax:"290 km/h",acel:"4.5 s",precioLanzamiento:"≈ 190.000 €",precioActual:"≈ 170.000 - 210.000 €",
+    versiones:["Bentayga V8","Bentayga S","Bentayga EWB (batalla larga)"],
+    ventajas:["El SUV de lujo con mayor nivel de personalización artesanal del mercado","Capacidad todoterreno inesperada para su categoría de lujo","Espacio y confort de referencia en su segmento"],
+    desventajas:["Precio muy elevado, incluso dentro del segmento de lujo","Peso y dimensiones que dificultan el uso urbano","Consumo elevado"],
+    competidores:["Rolls-Royce Cullinan","Range Rover SV"],
+    curiosidades:["Fue el primer SUV en la historia de Bentley, marcando un antes y un después en la marca.","Su nombre proviene del pico Bentayga, en la isla de Gran Canaria."]},
+  chiron:{brand:"bugatti",name:"Chiron",year:2016,motor:"W16 8.0L Quad-Turbo",potencia:"1500-1600 CV según versión",par:"1600 Nm",cilindrada:"7993 cc",peso:"1996 kg",traccion:"Integral",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 23 l/100 km",vmax:"420 km/h (limitado) / 490.48 km/h en la versión Super Sport 300+",acel:"2.4 s",precioLanzamiento:"≈ 2.400.000 €",precioActual:"≈ 3.000.000 € o más",
+    versiones:["Chiron","Chiron Sport","Chiron Super Sport 300+","Chiron Pur Sport"],
+    ventajas:["Cúspide absoluta de la ingeniería de rendimiento extremo","Comodidad de gran turismo pese a sus prestaciones descomunales","Calidad de fabricación artesanal excepcional"],
+    desventajas:["Precio fuera del alcance de prácticamente cualquier comprador","Consumo desorbitado","Piezas y mantenimiento extremadamente costosos"],
+    competidores:["Koenigsegg Jesko","SSC Tuatara"],
+    curiosidades:["Lleva el nombre de Louis Chiron, piloto monegasco que corrió para Bugatti en los años 30.","La versión Super Sport 300+ fue el primer coche de producción en superar los 480 km/h."]},
+  veyron:{brand:"bugatti",name:"Veyron",year:2005,motor:"W16 8.0L Quad-Turbo",potencia:"1001-1200 CV según versión",par:"1500 Nm",cilindrada:"7993 cc",peso:"1888 kg",traccion:"Integral",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 24 l/100 km",vmax:"407-431 km/h según versión",acel:"2.5 s",precioLanzamiento:"≈ 1.200.000 €",precioActual:"≈ 1.800.000 - 2.500.000 €",
+    versiones:["Veyron 16.4","Veyron Grand Sport (descapotable)","Veyron Super Sport"],
+    ventajas:["Fue el primer coche de producción en romper la barrera de los 400 km/h","Ingeniería pionera para su época en refrigeración y aerodinámica","Objeto de coleccionismo de primer nivel"],
+    desventajas:["Neumáticos especiales de coste extremadamente elevado y vida útil corta","Consumo de combustible desorbitado","Mantenimiento reservado a muy pocos talleres especializados"],
+    competidores:["Koenigsegg CCX","SSC Ultimate Aero"],
+    curiosidades:["Necesita diez radiadores distintos para gestionar su refrigeración.","A máxima velocidad, el depósito se vacía en poco más de diez minutos."]},
+  "x-bow":{brand:"ktm",name:"X-Bow",year:2008,motor:"4 cilindros 2.0L Turbo (origen Audi)",potencia:"300-500 CV según versión",par:"420-560 Nm",cilindrada:"1984 cc",peso:"790 kg",traccion:"Trasera",cambio:"Manual / Automatizada secuencial según versión",consumo:"≈ 9 l/100 km",vmax:"235-270 km/h según versión",acel:"3.4 s",precioLanzamiento:"≈ 80.000 €",precioActual:"≈ 90.000 - 150.000 € según versión",
+    versiones:["X-Bow R","X-Bow GT","X-Bow GT2 (orientado a circuito)"],
+    ventajas:["Relación peso-potencia extrema gracias a su monocasco de carbono","Sensaciones de conducción casi de monoplaza homologado para calle","Ligereza que compensa una potencia moderada frente a rivales"],
+    desventajas:["Muy poco práctico para uso diario, sin apenas protección de carrocería","Confort prácticamente inexistente","Producto minoritario con red de posventa reducida"],
+    competidores:["Ariel Atom","Caterham Seven"],
+    curiosidades:["Su nombre es un juego de palabras con 'crossbow' (ballesta) por su forma afilada.","Varias versiones no incorporan parabrisas ni techo de serie."]},
+  "range-rover":{brand:"land-rover",name:"Range Rover",year:1970,motor:"V8 4.4L / 6 cilindros Diésel según versión",potencia:"350-606 CV según motorización",par:"500-750 Nm",cilindrada:"2996-4395 cc",peso:"2400 kg",traccion:"Integral",cambio:"Automática 8 velocidades",consumo:"≈ 9-13 l/100 km según motor",vmax:"225-290 km/h según versión",acel:"4.4-6.0 s",precioLanzamiento:"≈ 120.000 € (generación actual)",precioActual:"≈ 110.000 - 250.000 € según motorización",
+    versiones:["Range Rover SE","Range Rover Autobiography","Range Rover SV","Range Rover SV (batalla larga)"],
+    ventajas:["Referencia mundial en lujo todoterreno desde hace más de cinco décadas","Capacidad off-road real, no solo estética","Amplia gama de motorizaciones incluyendo híbridas enchufables"],
+    desventajas:["Historial de fiabilidad eléctrica cuestionado en varias generaciones","Precio de mantenimiento elevado","Consumo alto en versiones de gasolina de mayor potencia"],
+    competidores:["Mercedes-Benz Clase GLS","BMW X7"],
+    curiosidades:["Fue el primer todoterreno de lujo expuesto en el Museo del Louvre como objeto de diseño.","La primera generación se vendía originalmente con interiores lavables pensados para el uso agrícola."]},
+  defender:{brand:"land-rover",name:"Defender",year:1983,motor:"6 cilindros 3.0L Diésel / Gasolina Turbo",potencia:"200-400 CV según versión",par:"430-550 Nm",cilindrada:"1997-2996 cc",peso:"2200 kg",traccion:"Integral",cambio:"Automática 8 velocidades",consumo:"≈ 9.5 l/100 km",vmax:"191-240 km/h según versión",acel:"5.7-6.7 s",precioLanzamiento:"≈ 55.000 € (generación actual)",precioActual:"≈ 55.000 - 130.000 € según versión",
+    versiones:["Defender 90 (3 puertas)","Defender 110 (5 puertas)","Defender 130 (7 plazas)"],
+    ventajas:["Capacidad todoterreno de referencia histórica en la marca","Robustez y versatilidad para todo tipo de terrenos","Diseño que combina herencia clásica con tecnología actual"],
+    desventajas:["Precio elevado en las versiones más equipadas","Consumo alto en carretera con motores de gasolina potentes","Tamaño exterior considerable para uso urbano"],
+    competidores:["Jeep Wrangler","Mercedes-Benz Clase G"],
+    curiosidades:["El Defender original se fabricó, con cambios mínimos, durante más de 30 años sin interrupción.","La generación actual mantiene el nombre pero es un diseño completamente nuevo desde cero, presentado en 2019."]},
+  lfa:{brand:"lexus",name:"LFA",year:2010,motor:"V10 4.8L atmosférico",potencia:"560 CV",par:"480 Nm",cilindrada:"4805 cc",peso:"1480 kg",traccion:"Trasera",cambio:"Automatizada monoembrague 6 velocidades",consumo:"≈ 16 l/100 km",vmax:"325 km/h",acel:"3.7 s",precioLanzamiento:"≈ 375.000 €",precioActual:"≈ 500.000 - 700.000 € (mercado de coleccionismo)",
+    versiones:["LFA","LFA Nürburgring Package"],
+    ventajas:["Sonido de V10 desarrollado junto a ingenieros de Yamaha, considerado uno de los mejores de la historia","Chasis de fibra de carbono desarrollado íntegramente por Toyota/Lexus","Fiabilidad muy superior a la de sus rivales exóticos"],
+    desventajas:["Producción limitadísima que dispara su precio en el mercado de segunda mano","Caja de cambios monoembrague algo más lenta que las de doble embrague rivales","Pocas unidades disponibles fuera de coleccionistas"],
+    competidores:["Ferrari 458 Italia","Nissan GT-R"],
+    curiosidades:["Se fabricaron únicamente 500 unidades en dos años de producción, todas prácticamente artesanales.","El cuentarrevoluciones es una pantalla digital, no una aguja mecánica, por la rapidez con la que gira el motor."]},
+  "rc-f":{brand:"lexus",name:"RC F",year:2014,motor:"V8 5.0L atmosférico",potencia:"477 CV",par:"535 Nm",cilindrada:"4969 cc",peso:"1830 kg",traccion:"Trasera",cambio:"Automática 8 velocidades",consumo:"≈ 11.3 l/100 km",vmax:"270 km/h",acel:"4.5 s",precioLanzamiento:"≈ 85.000 €",precioActual:"≈ 60.000 - 80.000 €",
+    versiones:["RC F","RC F Track Edition"],
+    ventajas:["Uno de los pocos deportivos actuales con V8 atmosférico sin turbo","Fiabilidad y calidad de acabados típicas de Lexus","Buen equilibrio de conducción para uso en carretera"],
+    desventajas:["Peso elevado frente a rivales alemanes turboalimentados","Menos par motor a bajas revoluciones que los rivales con turbo","Imagen de marca menos deportiva que BMW M o Mercedes-AMG"],
+    competidores:["BMW M4","Mercedes-AMG C63"],
+    curiosidades:["Comparte parte de su ingeniería de motor con el superdeportivo Lexus LFA.","La versión Track Edition incorpora un techo de fibra de carbono para reducir peso."]},
+  "amg-gt":{brand:"mercedes-benz",name:"AMG GT",year:2014,motor:"V8 4.0L Biturbo",potencia:"476-730 CV según versión",par:"630-800 Nm",cilindrada:"3982 cc",peso:"1645 kg",traccion:"Trasera / Integral (versión 4-puertas)",cambio:"Automática doble embrague 7 velocidades",consumo:"≈ 11.5 l/100 km",vmax:"318 km/h",acel:"3.2 s",precioLanzamiento:"≈ 140.000 €",precioActual:"≈ 110.000 - 200.000 € según versión",
+    versiones:["AMG GT","AMG GT S/R/Black Series","AMG GT 4 puertas Coupé"],
+    ventajas:["Sonido de escape muy característico del V8 biturbo AMG","Diseño de capó largo muy deportivo y equilibrado","Amplia gama de potencias para distintos perfiles de comprador"],
+    desventajas:["Maletero y espacio interior reducidos en la versión coupé de dos puertas","Suspensión firme en las versiones más deportivas","Precio de mantenimiento elevado"],
+    competidores:["Porsche 911","BMW M8"],
+    curiosidades:["El AMG GT Black Series ha marcado tiempos de referencia en Nürburgring para coches de tracción trasera.","Su capó extremadamente largo alberga el motor V8 colocado detrás del eje delantero para mejorar el reparto de pesos."]},
+  "clase-s":{brand:"mercedes-benz",name:"Clase S",year:1972,motor:"6 cilindros 3.0L / V8 4.0L Biturbo según versión",potencia:"286-612 CV según motorización",par:"500-900 Nm",cilindrada:"2925-3982 cc",peso:"2075 kg",traccion:"Trasera / Integral 4MATIC",cambio:"Automática 9 velocidades",consumo:"≈ 7-11 l/100 km según motor",vmax:"250 km/h (limitado electrónicamente en la mayoría de versiones)",acel:"3.8-6.0 s",precioLanzamiento:"≈ 110.000 € (generación actual)",precioActual:"≈ 100.000 - 200.000 € según motorización",
+    versiones:["S 350d","S 500","Mercedes-AMG S 63","Maybach S-Class (versión ultra lujo)"],
+    ventajas:["Referencia histórica mundial en confort y tecnología de lujo","Pionera en incorporar de serie sistemas de seguridad hoy universales","Amplísima oferta de motorizaciones y niveles de equipamiento"],
+    desventajas:["Precio de las versiones más equipadas muy elevado","Complejidad electrónica que puede encarecer reparaciones fuera de garantía","Tamaño considerable para entornos urbanos estrechos"],
+    competidores:["BMW Serie 7","Audi A8"],
+    curiosidades:["La Clase S ha sido tradicionalmente el primer modelo de la marca en estrenar tecnologías que después llegan al resto de la gama.","El airbag y el ABS se popularizaron en la industria gracias a su introducción en este modelo."]},
+  "911":{brand:"porsche",name:"911",year:1963,motor:"6 cilindros bóxer 3.0L Biturbo (generación actual)",potencia:"385-650 CV según versión",par:"450-800 Nm",cilindrada:"2981-3745 cc",peso:"1505 kg",traccion:"Trasera / Integral según versión",cambio:"Manual 6 vel. / Automática PDK 8 vel.",consumo:"≈ 9.5 l/100 km",vmax:"293-330 km/h según versión",acel:"2.7-4.2 s",precioLanzamiento:"≈ 120.000 € (Carrera, generación actual)",precioActual:"≈ 110.000 - 250.000 € según versión",
+    versiones:["911 Carrera","911 Carrera S/4S","911 Turbo/Turbo S","911 GT3/GT3 RS"],
+    ventajas:["Deportivo de uso diario más versátil del mercado","Motor bóxer trasero con un carácter único desde 1963","Enorme oferta de versiones para todos los perfiles de conductor"],
+    desventajas:["Precio de las versiones más deseadas (GT3, Turbo S) muy elevado","Opciones de personalización que encarecen rápidamente el precio final","Plazas traseras casi simbólicas"],
+    competidores:["Chevrolet Corvette","Aston Martin Vantage"],
+    curiosidades:["Mantiene la disposición de motor trasero desde su lanzamiento en 1963 hasta la actualidad.","Existen más de 20 versiones distintas del 911 en cada generación, desde la más comedida hasta la de competición homologada."]},
+  taycan:{brand:"porsche",name:"Taycan",year:2019,motor:"Dos motores eléctricos (delantero y trasero)",potencia:"326-761 CV según versión",par:"345-1050 Nm",cilindrada:"No aplica (eléctrico)",peso:"2140 kg",traccion:"Integral",cambio:"Automática de dos velocidades (eje trasero)",consumo:"≈ 20-23 kWh/100 km",vmax:"230-260 km/h según versión",acel:"2.4-5.1 s",precioLanzamiento:"≈ 90.000 €",precioActual:"≈ 80.000 - 190.000 € según versión",
+    versiones:["Taycan","Taycan 4S","Taycan Turbo/Turbo S","Taycan Cross Turismo (familiar)"],
+    ventajas:["Comportamiento dinámico propio de un Porsche, incluso siendo eléctrico","Carga rápida gracias a su arquitectura eléctrica de 800 voltios","Aceleración instantánea y muy repetible en varias tandas seguidas"],
+    desventajas:["Autonomía inferior a la de algunos rivales eléctricos de igual precio","Peso elevado por el paquete de baterías","Precio de las versiones tope de gama muy elevado"],
+    competidores:["Tesla Model S","Audi e-tron GT"],
+    curiosidades:["Fue el primer Porsche de producción totalmente eléctrico de la historia.","Su arquitectura eléctrica de 800V permite recargas mucho más rápidas que la mayoría de rivales de su época de lanzamiento."]},
+  supra:{brand:"toyota",name:"Supra",year:2019,motor:"6 cilindros en línea 3.0L Turbo (origen BMW) / 4 cilindros 2.0L Turbo",potencia:"258-387 CV según versión",par:"400-500 Nm",cilindrada:"1998-2998 cc",peso:"1520 kg",traccion:"Trasera",cambio:"Manual 6 vel. / Automática 8 vel.",consumo:"≈ 8 l/100 km",vmax:"250 km/h (limitado)",acel:"4.3 s",precioLanzamiento:"≈ 65.000 €",precioActual:"≈ 55.000 - 75.000 €",
+    versiones:["Supra 2.0","Supra 3.0","Supra 3.0 GR Final Edition"],
+    ventajas:["Recupera un nombre legendario dentro de la cultura del tuning y el motor","Desarrollado conjuntamente con BMW, hereda mecánica muy solvente","Buen equilibrio de peso gracias a sus dimensiones compactas"],
+    desventajas:["Comparte gran parte de su ingeniería con el BMW Z4, lo que resta 'pureza' a puristas de Toyota","Maletero reducido","Solo dos plazas, sin versión práctica"],
+    competidores:["Nissan Z","BMW Z4"],
+    curiosidades:["Se desarrolló conjuntamente con BMW y comparte plataforma con el Z4, aunque con distinta carrocería.","La generación anterior (A80) de los años 90 es un icono absoluto de la cultura tuning gracias al cine y los videojuegos."]},
+  "gr-yaris":{brand:"toyota",name:"GR Yaris",year:2020,motor:"3 cilindros 1.6L Turbo",potencia:"261-304 CV según versión",par:"360-400 Nm",cilindrada:"1618 cc",peso:"1280 kg",traccion:"Integral",cambio:"Manual 6 velocidades",consumo:"≈ 8.2 l/100 km",vmax:"230 km/h",acel:"5.2 s",precioLanzamiento:"≈ 45.000 €",precioActual:"≈ 40.000 - 55.000 €",
+    versiones:["GR Yaris","GR Yaris Circuit Pack","GR Yaris GRMN (edición limitada)"],
+    ventajas:["Relación prestaciones-precio excepcional dentro de los deportivos compactos","Tracción integral heredada directamente de la competición en rally","Ligereza y agilidad excepcionales en carretera de curvas"],
+    desventajas:["Solo tres puertas y espacio trasero muy reducido","Suspensión firme que penaliza el confort en trayectos largos","Producción limitada en algunos mercados"],
+    competidores:["Ford Fiesta ST","Hyundai i20 N"],
+    curiosidades:["Se desarrolló específicamente para homologar un coche de rally del Mundial WRC.","Su carrocería comparte muy pocas piezas con el Yaris de calle convencional, siendo prácticamente un modelo aparte."]},
+  "golf-gti":{brand:"volkswagen",name:"Golf GTI",year:1976,motor:"4 cilindros 2.0L Turbo (generación actual)",potencia:"245-300 CV según versión",par:"370-400 Nm",cilindrada:"1984 cc",peso:"1430 kg",traccion:"Delantera",cambio:"Manual 6 vel. / Automática DSG 7 vel.",consumo:"≈ 7.2 l/100 km",vmax:"250 km/h",acel:"5.9 s",precioLanzamiento:"≈ 40.000 € (generación actual)",precioActual:"≈ 35.000 - 48.000 €",
+    versiones:["Golf GTI","Golf GTI Clubsport","Golf GTI Clubsport S"],
+    ventajas:["Inventor del concepto de 'hot hatch' en 1976, con enorme legado","Gran equilibrio entre uso diario práctico y carácter deportivo","Calidad de construcción típica de Volkswagen"],
+    desventajas:["Tracción delantera que limita la potencia máxima aprovechable frente a rivales con tracción integral","Precio que se ha ido acercando al de coches de segmentos superiores","Estética discreta que no llama tanto la atención como otros rivales"],
+    competidores:["Honda Civic Type R","Hyundai i30 N"],
+    curiosidades:["El Golf GTI de 1976 es considerado el primer 'hot hatch' de la historia del automóvil.","Su característico volante deportivo y la tapicería a cuadros escoceses se han mantenido como seña de identidad durante generaciones."]},
+  id4:{brand:"volkswagen",name:"ID.4",year:2020,motor:"Motor eléctrico trasero (o delantero+trasero en 4motion)",potencia:"170-299 CV según versión",par:"310-460 Nm",cilindrada:"No aplica (eléctrico)",peso:"2100 kg",traccion:"Trasera / Integral (4motion)",cambio:"Reductora de una velocidad",consumo:"≈ 17-19 kWh/100 km",vmax:"160-180 km/h (limitado)",acel:"6.2-6.9 s",precioLanzamiento:"≈ 45.000 €",precioActual:"≈ 40.000 - 55.000 €",
+    versiones:["ID.4 Pure/Pro","ID.4 GTX (versión de altas prestaciones)"],
+    ventajas:["Buen espacio interior gracias a la plataforma eléctrica específica MEB","Autonomía adecuada para uso familiar habitual","Gama accesible dentro del segmento de SUV eléctricos"],
+    desventajas:["Sistema de infoentretenimiento e interfaz criticados por su complejidad en el lanzamiento","Autonomía inferior a algunos rivales premium en versiones de acceso","Carga máxima algo por debajo de otros rivales del segmento"],
+    competidores:["Tesla Model Y","Skoda Enyaq"],
+    curiosidades:["Fue uno de los primeros modelos construidos sobre la plataforma eléctrica MEB del grupo Volkswagen, compartida con otras marcas del grupo.","La versión GTX recupera el espíritu deportivo del histórico distintivo GTI, adaptado a la era eléctrica."]}
+};
+
+const TOPICS = [
+  {id:"aerodinamica",ic:"💨",title:"Aerodinámica",text:"La aerodinámica estudia cómo el aire se comporta alrededor de la carrocería de un coche en movimiento. Su objetivo es doble: reducir la resistencia al avance (lo que ahorra combustible y permite más velocidad) y generar carga aerodinámica, una fuerza que 'pega' el coche al suelo para mejorar el agarre en curva a alta velocidad. Elementos como alerones, difusores, faldones laterales o el propio suelo plano del coche canalizan el flujo de aire para conseguir este equilibrio entre baja resistencia y máxima estabilidad."},
+  {id:"motor",ic:"🔧",title:"Motor",text:"El motor de combustión interna transforma la energía química del combustible en energía mecánica mediante pequeñas explosiones controladas dentro de los cilindros. Cada ciclo consta de cuatro fases: admisión (entra la mezcla de aire y combustible), compresión (el pistón la comprime), combustión (la bujía o la propia compresión la inflaman, empujando el pistón) y escape (los gases quemados salen del cilindro). Ese movimiento vertical del pistón se transforma en movimiento giratorio gracias al cigüeñal, que finalmente hace girar las ruedas."},
+  {id:"chasis",ic:"🏗️",title:"Chasis",text:"El chasis es la estructura base sobre la que se construye todo el coche: motor, suspensión, carrocería y ocupantes. Su rigidez determina en gran medida el comportamiento dinámico y la seguridad del vehículo. Existen distintas filosofías, desde el chasis independiente de largueros (típico de todoterrenos y camiones) hasta la carrocería autoportante, donde la propia chapa de la carrocería hace las veces de estructura, pasando por los monocascos de fibra de carbono usados en superdeportivos por su ligereza y rigidez extremas."},
+  {id:"direccion",ic:"🎯",title:"Dirección",text:"El sistema de dirección permite al conductor orientar las ruedas delanteras (y en algunos coches también las traseras) para cambiar de trayectoria. La mayoría de coches actuales usan dirección de piñón y cremallera: al girar el volante, un piñón hace desplazarse lateralmente una barra dentada (cremallera) conectada a las ruedas. Hoy en día casi todos los sistemas incorporan asistencia eléctrica, que reduce el esfuerzo físico necesario y permite ajustar la dureza de la dirección según la velocidad o el modo de conducción seleccionado."},
+  {id:"suspension",ic:"🌀",title:"Suspensión",text:"La suspensión conecta las ruedas con la carrocería y cumple dos funciones esenciales: absorber las irregularidades del asfalto para dar confort a los ocupantes y mantener las ruedas en contacto con el suelo para garantizar agarre y control. Se compone principalmente de muelles (que absorben los impactos) y amortiguadores (que controlan el rebote de esos muelles para que el coche no siga botando). Existen múltiples configuraciones, desde el sencillo eje rígido hasta sofisticados sistemas multibrazo o suspensiones neumáticas adaptativas en coches de lujo."},
+  {id:"frenos",ic:"🛑",title:"Frenos",text:"El sistema de frenos convierte la energía cinética del coche en calor mediante la fricción, reduciendo su velocidad. La inmensa mayoría de coches actuales usan frenos de disco: unas pinzas con pastillas de fricción aprietan un disco metálico solidario a la rueda. El sistema se acciona de forma hidráulica: al pisar el pedal, se genera presión de líquido de frenos que se transmite a cada rueda. Sistemas electrónicos como el ABS evitan que las ruedas se bloqueen por completo, permitiendo mantener el control de la dirección incluso en frenadas de emergencia."},
+  {id:"transmision",ic:"⚙️",title:"Transmisión",text:"La transmisión (o caja de cambios) adapta la potencia y las revoluciones del motor a las distintas condiciones de circulación, permitiendo que el coche arranque desde parado y alcance velocidades elevadas de forma eficiente. Mediante distintas combinaciones de engranajes (marchas), multiplica el par a bajas velocidades para facilitar el arranque y reduce el esfuerzo del motor a alta velocidad para ahorrar combustible. Puede ser manual (el conductor selecciona la marcha), automática de convertidor de par, de doble embrague (muy rápida, típica de deportivos) o de variador continuo (CVT)."},
+  {id:"embrague",ic:"🔗",title:"Embrague",text:"El embrague es el elemento que conecta y desconecta el motor de la caja de cambios, permitiendo cambiar de marcha sin que el motor se cale y facilitando arrancar desde parado de forma progresiva. En un coche manual, al pisar el pedal se separan dos discos de fricción (uno unido al motor y otro a la caja), interrumpiendo momentáneamente la transmisión de potencia. Los cambios automáticos de doble embrague usan en realidad dos embragues independientes que trabajan alternando marchas pares e impares, lo que permite cambios casi instantáneos."},
+  {id:"diferencial",ic:"➗",title:"Diferencial",text:"El diferencial es un conjunto de engranajes que permite que las dos ruedas de un mismo eje giren a velocidades distintas, algo imprescindible al tomar una curva, ya que la rueda exterior recorre más distancia que la interior. Sin diferencial, los neumáticos sufrirían un desgaste enorme y el coche perdería tracción en curva. Existen diferenciales autoblocantes o de deslizamiento limitado, que reparten la potencia de forma inteligente entre ambas ruedas para mejorar la tracción cuando una de ellas pierde agarre, muy habituales en coches deportivos y todoterrenos."},
+  {id:"neumaticos",ic:"⭕",title:"Neumáticos",text:"Los neumáticos son el único punto de contacto real entre el coche y el asfalto, y de ellos depende buena parte del agarre, el confort y la seguridad. Su banda de rodadura incorpora un dibujo específico para evacuar el agua y evitar el aquaplaning, mientras que la composición de la goma (más blanda o más dura) determina el equilibrio entre agarre y durabilidad. La presión de inflado correcta es clave: un neumático mal inflado afecta al consumo, al desgaste y a la seguridad, especialmente en frenadas y curvas a alta velocidad."},
+  {id:"escape",ic:"💨",title:"Sistema de escape",text:"El sistema de escape conduce los gases resultantes de la combustión desde el motor hasta el exterior del coche, cumpliendo tres funciones: reducir la contaminación (mediante el catalizador, que transforma gases nocivos en sustancias menos dañinas), filtrar partículas (en motores diésel, mediante el filtro de partículas) y controlar el sonido del motor (mediante los silenciadores). El diseño del escape también influye en el rendimiento: un sistema con menos restricciones puede ayudar al motor a 'respirar' mejor, motivo por el que muchos deportivos incorporan escapes deportivos de gran diámetro."},
+  {id:"electronica",ic:"💻",title:"Electrónica",text:"El automóvil moderno incorpora decenas de pequeños ordenadores (unidades de control electrónico o ECU) que gestionan prácticamente todos sus sistemas: la inyección de combustible, el cambio automático, los airbags, el control de estabilidad o el propio sistema de infoentretenimiento. Sensores repartidos por todo el coche (de velocidad de rueda, de posición del acelerador, de oxígeno en el escape, etc.) envían información constante a estas unidades, que ajustan el funcionamiento del vehículo en tiempo real para optimizar seguridad, consumo y prestaciones."},
+  {id:"turbo",ic:"🌪️",title:"Turbo",text:"El turbocompresor aprovecha los gases de escape, que de otro modo se desperdiciarían, para mover una turbina que a su vez hace girar un compresor. Ese compresor introduce más aire a presión dentro de los cilindros del motor, lo que permite quemar más combustible y generar más potencia con un motor de menor cilindrada. Esta es la razón por la que hoy en día abundan motores pequeños (1.0, 1.5 litros) capaces de ofrecer prestaciones que antes solo se conseguían con motores atmosféricos mucho más grandes, reduciendo además el consumo en condiciones de conducción suave."},
+  {id:"hibridos",ic:"🔋",title:"Sistemas híbridos",text:"Un coche híbrido combina un motor de combustión tradicional con uno o varios motores eléctricos y una batería de tamaño reducido. El motor eléctrico puede asistir al térmico en aceleraciones (aportando par extra), mover el coche en solitario a baja velocidad en modo cero emisiones, o recuperar energía en las frenadas y deceleraciones, almacenándola en la batería para reutilizarla después. Los híbridos enchufables añaden una batería de mayor capacidad que se puede cargar desde un enchufe, permitiendo recorrer varias decenas de kilómetros en modo totalmente eléctrico."},
+  {id:"electricos",ic:"⚡",title:"Vehículos eléctricos",text:"Los coches totalmente eléctricos prescinden por completo del motor de combustión, propulsándose únicamente mediante uno o varios motores eléctricos alimentados por una gran batería. Ofrecen una entrega de par instantánea desde parado (de ahí sus aceleraciones tan rápidas), no emiten gases contaminantes durante su uso y su mecánica es mucho más sencilla, con muchas menos piezas móviles que un motor térmico. Su autonomía depende de la capacidad de la batería y se recargan mediante puntos de carga que, según su potencia, pueden tardar desde apenas veinte minutos hasta varias horas."}
+];
+
+const TRIVIA = [
+  "El primer accidente de tráfico documentado de la historia ocurrió en 1891 en Ohio, cuando un conductor perdió el control al esquivar la raíz de un árbol.",
+  "El coche más vendido de la historia es el Toyota Corolla, con más de 50 millones de unidades fabricadas desde 1966.",
+  "La primera multa por exceso de velocidad se puso en 1896 a un conductor que circulaba a 13 km/h en una zona limitada a 3 km/h.",
+  "El cinturón de seguridad de tres puntos, inventado por Volvo en 1959, se liberó de patente para que cualquier fabricante pudiera usarlo de forma gratuita.",
+  "Un Fórmula 1 genera tanta carga aerodinámica a alta velocidad que, en teoría, podría circular boca abajo por el techo de un túnel.",
+  "El limpiaparabrisas fue inventado en 1903 por Mary Anderson, una mujer que se inspiró en un viaje en tranvía bajo la lluvia.",
+  "La marcha atrás no se incorporó de serie en todos los coches hasta bien entrado el siglo XX; los primeros automóviles carecían de ella.",
+  "El airbag se patentó por primera vez en los años 50, pero no se popularizó como equipamiento de serie hasta los años 80 y 90."
+];
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = (sel,ctx=document)=>ctx.querySelector(sel);
+const $$ = (sel,ctx=document)=>[...ctx.querySelectorAll(sel)];
+const slugName = s => BRANDS[s]?BRANDS[s].name:s;
+const gClasses=["g1","g2","g3","g4"];
+const gFor = str => gClasses[[...str].reduce((a,c)=>a+c.charCodeAt(0),0)%gClasses.length];
+
+function carThumb(brandSlug,extraClass=""){
+  return `<div class="model-thumb ${gFor(brandSlug)} ${extraClass}"><svg class="icon-car" viewBox="0 0 200 90" style="color:var(--red)"><use href="#car-icon"/></svg></div>`;
+}
+function modelCard(slug){
+  const m=MODELS[slug]; if(!m) return "";
+  return `<a href="#/modelo/${m.brand}/${slug}" class="model-card reveal">
+    ${carThumb(m.brand)}
+    <div class="model-body">
+      <div class="brand">${slugName(m.brand)}</div>
+      <h4>${m.name}</h4>
+      <div class="quick"><span><b>${m.potencia.split(" ")[0]}</b> CV</span><span><b>${m.acel}</b> 0-100</span><span><b>${m.vmax.split(" ")[0]}</b> km/h</span></div>
+    </div>
+  </a>`;
+}
+function brandCard(slug){
+  const b=BRANDS[slug];
+  return `<a href="#/marca/${slug}" class="brand-card reveal">
+    <span class="since">${b.founded}</span>
+    <div class="wordmark">${b.name}</div>
+    <div class="country">${b.country}</div>
+  </a>`;
+}
+
+function specTable(m){
+  const rows=[
+    ["Año de lanzamiento",m.year],["Motor",m.motor],["Potencia",m.potencia],["Par motor",m.par],
+    ["Cilindrada",m.cilindrada],["Peso",m.peso],["Tracción",m.traccion],["Caja de cambios",m.cambio],
+    ["Consumo",m.consumo],["Velocidad máxima",m.vmax],["Aceleración 0-100 km/h",m.acel],
+    ["Precio de lanzamiento",m.precioLanzamiento],["Precio aproximado actual",m.precioActual]
+  ];
+  return `<div class="spec-panel">${rows.map(r=>`<div class="spec-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("")}</div>`;
+}
+
+function setActiveNav(route){
+  $$(".main-nav a").forEach(a=>a.classList.toggle("active",a.dataset.route===route));
+}
+
+function revealOnScroll(){
+  const els=$$(".reveal");
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} });
+  },{threshold:.12});
+  els.forEach(el=>io.observe(el));
+}
+
+/* =========================================================
+   RENDER: HOME
+   ========================================================= */
+function renderHome(){
+  const popularBrandsSlugs=["ferrari","lamborghini","porsche","bmw","mercedes-benz","mclaren","bugatti","audi"];
+  const popularModelSlugs=["laferrari","911","aventador","m3","amg-gt","chiron","urus","r8"];
+  return `
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">La enciclopedia del automóvil</div>
+        <h1>Motores,<br>historia y<br><span class="accent">velocidad.</span></h1>
+        <p class="lead">17 marcas, docenas de modelos icónicos con ficha técnica completa y una guía a fondo de cómo funciona un coche por dentro, pieza a pieza.</p>
+        <div class="hero-actions">
+          <a href="#/marcas" class="btn btn-primary">Explorar marcas</a>
+          <a href="#/como-funciona" class="btn btn-outline">Cómo funciona un coche</a>
+        </div>
+        <div class="hero-stats">
+          <div><div class="num">17</div><div class="lbl">Marcas</div></div>
+          <div><div class="num">33</div><div class="lbl">Modelos</div></div>
+          <div><div class="num">15</div><div class="lbl">Sistemas explicados</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="hero-visual">
+          <div class="speed-ring">
+            <svg viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="86" fill="none" stroke="#26262c" stroke-width="2"/>
+              <circle cx="100" cy="100" r="86" fill="none" stroke="var(--red)" stroke-width="3" stroke-dasharray="405" stroke-dashoffset="120" stroke-linecap="round" transform="rotate(-210 100 100)"/>
+              <text x="100" y="96" text-anchor="middle" class="dial-num" fill="var(--text)" font-size="34">350</text>
+              <text x="100" y="118" text-anchor="middle" class="dial-num" fill="var(--muted)" font-size="11">KM/H MÁX.</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div><div class="eyebrow">Marcas</div><h2>Las más buscadas</h2></div>
+        <p>Desde superdeportivos italianos hasta el lujo británico y la precisión alemana.</p>
+      </div>
+      <div class="grid grid-4">${popularBrandsSlugs.map(brandCard).join("")}</div>
+      <div style="margin-top:30px;text-align:center;"><a href="#/marcas" class="btn btn-outline">Ver las 17 marcas</a></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div><div class="eyebrow">Modelos</div><h2>Los más visitados</h2></div>
+        <p>Ficha técnica completa: potencia, prestaciones, precio, ventajas, desventajas y rivales.</p>
+      </div>
+      <div class="grid grid-4">${popularModelSlugs.map(modelCard).join("")}</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div><div class="eyebrow">Curiosidades</div><h2>El mundo del motor</h2></div>
+        <p>Pequeñas historias y datos sorprendentes de más de un siglo de automóviles.</p>
+      </div>
+      <div class="grid grid-4">
+        ${TRIVIA.slice(0,4).map((t,i)=>`<div class="trivia-card reveal"><div class="num">0${i+1}</div><p>${t}</p></div>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div><div class="eyebrow">Actualidad</div><h2>Noticias del motor</h2></div>
+        <p>Sección preparada para incorporar noticias de actualidad del sector.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="news-card"><b>Próximamente</b>Lanzamientos y estrenos de nuevos modelos.</div>
+        <div class="news-card"><b>Próximamente</b>Cobertura de salones del automóvil y ferias del sector.</div>
+        <div class="news-card"><b>Próximamente</b>Análisis de tendencias: electrificación y nuevas tecnologías.</div>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+/* =========================================================
+   RENDER: LISTA DE MARCAS
+   ========================================================= */
+function renderBrandList(){
+  const slugs=Object.keys(BRANDS).sort((a,b)=>BRANDS[a].name.localeCompare(BRANDS[b].name));
+  return `
+  <section class="section" style="border-top:none;padding-top:50px;">
+    <div class="container">
+      <div class="breadcrumb"><a href="#/">Inicio</a> / Marcas</div>
+      <div class="eyebrow">Directorio</div>
+      <h2>Todas las marcas</h2>
+      <p style="color:var(--muted);max-width:520px;margin:14px 0 40px;">Historia, fundadores, evolución y modelos destacados de 17 fabricantes de referencia mundial.</p>
+      <div class="grid grid-4">${slugs.map(brandCard).join("")}</div>
+    </div>
+  </section>`;
+}
+
+/* =========================================================
+   RENDER: MARCA
+   ========================================================= */
+function renderBrand(slug){
+  const b=BRANDS[slug];
+  if(!b) return render404();
+  return `
+  <section class="brand-hero">
+    <div class="container">
+      <div class="breadcrumb"><a href="#/">Inicio</a> / <a href="#/marcas">Marcas</a> / ${b.name}</div>
+      <div class="brand-hero-top">
+        <div>
+          <div class="eyebrow">${b.country}</div>
+          <div class="wordmark-big">${b.name}</div>
+        </div>
+      </div>
+      <div class="brand-meta">
+        <div><div class="lbl">Fundación</div><div class="val">${b.founded}</div></div>
+        <div><div class="lbl">Fundador(es)</div><div class="val">${b.founders}</div></div>
+        <div><div class="lbl">Sede</div><div class="val">${b.hq}</div></div>
+        <div><div class="lbl">Modelos en ficha</div><div class="val">${b.models.length}</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container two-col">
+      <div>
+        <div class="eyebrow">Historia</div>
+        <h3 style="margin:10px 0 18px;">Los orígenes</h3>
+        <div class="prose"><p>${b.history}</p></div>
+      </div>
+      <div>
+        <div class="eyebrow">Evolución</div>
+        <h3 style="margin:10px 0 18px;">A lo largo de los años</h3>
+        <div class="prose"><p>${b.evolution}</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Curiosidades</div>
+      <h3 style="margin:10px 0 20px;">Datos que quizá no conocías</h3>
+      <ul class="curio-list">${b.curiosities.map(c=>`<li>${c}</li>`).join("")}</ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Galería</div>
+      <h3 style="margin:10px 0 20px;">${b.name} en imágenes</h3>
+      <div class="gallery-strip">
+        ${b.models.map(()=>``).join("")}
+        ${[0,1,2,3].map(i=>`<div class="ph ${gClasses[i%4]}"><svg viewBox="0 0 200 90" style="color:var(--red);width:60%;"><use href="#car-icon"/></svg></div>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Modelos</div>
+      <h3 style="margin:10px 0 20px;">Modelos destacados de ${b.name}</h3>
+      <div class="grid grid-4">${b.models.map(modelCard).join("")}</div>
+    </div>
+  </section>
+  `;
+}
+
+/* =========================================================
+   RENDER: MODELO
+   ========================================================= */
+function renderModel(brandSlug,modelSlug){
+  const b=BRANDS[brandSlug]; const m=MODELS[modelSlug];
+  if(!b||!m||m.brand!==brandSlug) return render404();
+  const others = b.models.filter(s=>s!==modelSlug);
+  return `
+  <section class="model-hero">
+    <div class="container">
+      <div class="breadcrumb"><a href="#/">Inicio</a> / <a href="#/marca/${brandSlug}">${b.name}</a> / ${m.name}</div>
+      <div class="model-hero-visual ${gFor(brandSlug)}">
+        <svg viewBox="0 0 200 90" style="color:var(--red)"><use href="#car-icon"/></svg>
+      </div>
+      <div class="model-title-row">
+        <div>
+          <div class="eyebrow">${b.name}</div>
+          <h1>${m.name}</h1>
+          <div class="tag-row">
+            <span class="tag">${m.year}</span>
+            <span class="tag">${m.potencia}</span>
+            <span class="tag">${m.traccion}</span>
+            <span class="tag">${m.acel} · 0-100 km/h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container two-col">
+      <div>
+        <div class="eyebrow">Historia del modelo</div>
+        <h3 style="margin:10px 0 18px;">Contexto y lanzamiento</h3>
+        <div class="prose"><p>Presentado en ${m.year}, el ${b.name} ${m.name} se sitúa dentro de la gama de ${b.name} como uno de sus modelos de referencia por prestaciones e ingeniería. Su desarrollo refleja la filosofía de la marca: ${b.evolution.slice(0,180)}…</p></div>
+        <div class="eyebrow" style="margin-top:30px;">Versiones existentes</div>
+        <div class="tag-row" style="margin-top:14px;">${m.versiones.map(v=>`<span class="tag">${v}</span>`).join("")}</div>
+      </div>
+      <div>
+        <div class="eyebrow">Rendimiento</div>
+        <h3 style="margin:10px 0 18px;">En cifras</h3>
+        <div class="bar-block"><div class="top"><span>Potencia</span><span>${m.potencia}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,parseInt(m.potencia)/16)}%"></div></div></div>
+        <div class="bar-block"><div class="top"><span>Velocidad máxima</span><span>${m.vmax}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,parseInt(m.vmax)/5)}%"></div></div></div>
+        <div class="bar-block"><div class="top"><span>0-100 km/h</span><span>${m.acel}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(8,100-parseFloat(m.acel)*14)}%"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Ficha técnica</div>
+      <h3 style="margin:10px 0 20px;">Especificaciones completas</h3>
+      ${specTable(m)}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Balance</div>
+      <h3 style="margin:10px 0 20px;">Ventajas y desventajas</h3>
+      <div class="pros-cons">
+        <div class="pc-box pros"><h4>Ventajas</h4><ul>${m.ventajas.map(v=>`<li>${v}</li>`).join("")}</ul></div>
+        <div class="pc-box cons"><h4>Desventajas</h4><ul>${m.desventajas.map(v=>`<li>${v}</li>`).join("")}</ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Rivales</div>
+      <h3 style="margin:10px 0 20px;">Principales competidores</h3>
+      <div>${m.competidores.map(c=>`<span class="competitor-chip">🏁 ${c}</span>`).join("")}</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Curiosidades</div>
+      <h3 style="margin:10px 0 20px;">Sabías que…</h3>
+      <ul class="curio-list">${m.curiosidades.map(c=>`<li>${c}</li>`).join("")}</ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Galería</div>
+      <h3 style="margin:10px 0 20px;">${m.name} en imágenes</h3>
+      <div class="gallery-strip">${[0,1,2,3].map(i=>`<div class="ph ${gClasses[i%4]}"><svg viewBox="0 0 200 90" style="color:var(--red);width:60%;"><use href="#car-icon"/></svg></div>`).join("")}</div>
+    </div>
+  </section>
+
+  ${others.length?`<section class="section">
+    <div class="container">
+      <div class="eyebrow">Más de ${b.name}</div>
+      <h3 style="margin:10px 0 20px;">Otros modelos de la marca</h3>
+      <div class="grid grid-4">${others.map(modelCard).join("")}</div>
+    </div>
+  </section>`:""}
+  `;
+}
+
+/* =========================================================
+   RENDER: CÓMO FUNCIONA UN COCHE
+   ========================================================= */
+function renderHowIndex(){
+  return `
+  <section class="section" style="border-top:none;padding-top:50px;">
+    <div class="container">
+      <div class="breadcrumb"><a href="#/">Inicio</a> / Cómo funciona</div>
+      <div class="eyebrow">Guía educativa</div>
+      <h2>Cómo funciona un coche</h2>
+      <p style="color:var(--muted);max-width:560px;margin:14px 0 40px;">Quince sistemas explicados de forma sencilla, desde el motor hasta la electrónica y los vehículos eléctricos.</p>
+      <div class="grid grid-4">
+        ${TOPICS.map(t=>`<a href="#/como-funciona/${t.id}" class="topic-card reveal"><span class="ic">${t.ic}</span><h4>${t.title}</h4></a>`).join("")}
+      </div>
+    </div>
+  </section>`;
+}
+function renderHowTopic(id){
+  const t=TOPICS.find(x=>x.id===id);
+  if(!t) return render404();
+  const idx=TOPICS.indexOf(t);
+  const prev=TOPICS[(idx-1+TOPICS.length)%TOPICS.length];
+  const next=TOPICS[(idx+1)%TOPICS.length];
+  return `
+  <section class="section" style="border-top:none;padding-top:50px;">
+    <div class="container">
+      <div class="breadcrumb"><a href="#/">Inicio</a> / <a href="#/como-funciona">Cómo funciona</a> / ${t.title}</div>
+      <div class="eyebrow">Sistema 0${idx+1} de ${TOPICS.length}</div>
+      <h2><span style="margin-right:14px;">${t.ic}</span>${t.title}</h2>
+      <div class="topic-detail prose" style="margin-top:24px;max-width:760px;"><p>${t.text}</p></div>
+      <div style="display:flex;gap:14px;margin-top:40px;flex-wrap:wrap;">
+        <a href="#/como-funciona/${prev.id}" class="btn btn-outline">← ${prev.title}</a>
+        <a href="#/como-funciona/${next.id}" class="btn btn-outline">${next.title} →</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* =========================================================
+   RENDER: NOTICIAS / 404
+   ========================================================= */
+function renderNews(){
+  return `
+  <section class="section" style="border-top:none;padding-top:50px;">
+    <div class="container">
+      <div class="breadcrumb"><a href="#/">Inicio</a> / Noticias</div>
+      <div class="eyebrow">Actualidad</div>
+      <h2>Noticias del motor</h2>
+      <p style="color:var(--muted);max-width:560px;margin:14px 0 40px;">Esta sección está preparada como plantilla para publicar noticias del sector: solo hace falta añadir entradas al array de datos, sin tocar el resto de la web.</p>
+      <div class="grid grid-3">
+        <div class="news-card"><b>Próximamente</b>Lanzamientos y estrenos de nuevos modelos.</div>
+        <div class="news-card"><b>Próximamente</b>Cobertura de salones del automóvil.</div>
+        <div class="news-card"><b>Próximamente</b>Tendencias del sector: electrificación y tecnología.</div>
+      </div>
+    </div>
+  </section>`;
+}
+function render404(){
+  return `<section class="section" style="border-top:none;padding-top:110px;text-align:center;">
+    <div class="container">
+      <div class="eyebrow" style="justify-content:center;">Error 404</div>
+      <h2>Página no encontrada</h2>
+      <p style="color:var(--muted);margin:16px 0 30px;">El contenido que buscas no existe o se ha movido.</p>
+      <a href="#/" class="btn btn-primary">Volver al inicio</a>
+    </div>
+  </section>`;
+}
+
+/* =========================================================
+   ROUTER
+   ========================================================= */
+function router(){
+  const hash=location.hash.replace(/^#/,"")||"/";
+  const parts=hash.split("/").filter(Boolean);
+  const app=$("#app");
+  window.scrollTo(0,0);
+  let route="/";
+  if(parts.length===0){ app.innerHTML=renderHome(); route="/"; document.title="MotorWorld — La enciclopedia del automóvil"; }
+  else if(parts[0]==="marcas"){ app.innerHTML=renderBrandList(); route="/marcas"; document.title="Todas las marcas — MotorWorld"; }
+  else if(parts[0]==="marca"&&parts[1]){ app.innerHTML=renderBrand(parts[1]); document.title=`${slugName(parts[1])} — MotorWorld`; }
+  else if(parts[0]==="modelo"&&parts[1]&&parts[2]){ app.innerHTML=renderModel(parts[1],parts[2]); document.title=`${MODELS[parts[2]]?MODELS[parts[2]].name:"Modelo"} — MotorWorld`; }
+  else if(parts[0]==="como-funciona"&&parts[1]){ app.innerHTML=renderHowTopic(parts[1]); route="/como-funciona"; document.title="Cómo funciona un coche — MotorWorld"; }
+  else if(parts[0]==="como-funciona"){ app.innerHTML=renderHowIndex(); route="/como-funciona"; document.title="Cómo funciona un coche — MotorWorld"; }
+  else if(parts[0]==="noticias"){ app.innerHTML=renderNews(); route="/noticias"; document.title="Noticias del motor — MotorWorld"; }
+  else { app.innerHTML=render404(); document.title="404 — MotorWorld"; }
+  setActiveNav(route);
+  revealOnScroll();
+  closeAllMenus();
+}
+
+/* =========================================================
+   BUSCADOR
+   ========================================================= */
+function doSearch(q){
+  q=q.trim().toLowerCase();
+  const results=$("#searchResults");
+  if(!q){ results.innerHTML=""; return; }
+  const brandHits=Object.entries(BRANDS).filter(([s,b])=>b.name.toLowerCase().includes(q)).map(([s,b])=>`<a href="#/marca/${s}">${b.name} <span style="color:var(--muted)">(marca)</span></a>`);
+  const modelHits=Object.entries(MODELS).filter(([s,m])=>m.name.toLowerCase().includes(q)||slugName(m.brand).toLowerCase().includes(q)).map(([s,m])=>`<a href="#/modelo/${m.brand}/${s}">${slugName(m.brand)} ${m.name}</a>`);
+  const all=[...brandHits,...modelHits].slice(0,12);
+  results.innerHTML= all.length? all.join("") : `<span>Sin resultados para "${q}"</span>`;
+}
+
+/* =========================================================
+   UI: menús
+   ========================================================= */
+function closeAllMenus(){
+  $("#searchPanel").classList.remove("open");
+  $("#mobileMenu").classList.remove("open");
+}
+$("#searchToggle").addEventListener("click",()=>{
+  $("#searchPanel").classList.toggle("open");
+  $("#mobileMenu").classList.remove("open");
+  if($("#searchPanel").classList.contains("open")) setTimeout(()=>$("#searchInput").focus(),350);
+});
+$("#burgerToggle").addEventListener("click",()=>{
+  $("#mobileMenu").classList.add("open");
+});
+$("#closeMobileMenu").addEventListener("click",()=>$("#mobileMenu").classList.remove("open"));
+$$("#mobileMenu a").forEach(a=>a.addEventListener("click",()=>$("#mobileMenu").classList.remove("open")));
+$("#searchInput").addEventListener("input",e=>doSearch(e.target.value));
+$("#searchInput").addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#searchPanel").classList.remove("open"); } });
+
+/* footer brands (first 8) */
+$("#footerBrands").innerHTML = Object.entries(BRANDS).slice(0,8).map(([s,b])=>`<li><a href="#/marca/${s}">${b.name}</a></li>`).join("");
+
+/* init */
+window.addEventListener("hashchange",router);
+document.addEventListener("DOMContentLoaded",router);
+router();
+</script>
+</body>
+</html>
