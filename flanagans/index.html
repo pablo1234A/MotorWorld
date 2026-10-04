@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Flanagan’s — Hamburguesería en Móstoles</title>
+  <meta name="description" content="Flanagan’s, hamburguesería del PAU de Móstoles. Smash burgers, carne a la brasa y pan brioche. C/ Casiopea 12, esquina Andrómeda. Reserva o consulta la carta.">
+  <meta name="theme-color" content="#0b0907">
+  <meta property="og:title" content="Flanagan’s — Cada capa cuenta">
+  <meta property="og:description" content="Hamburguesería en el PAU de Móstoles. Explora la burger capa a capa.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0907'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' dominant-baseline='middle' font-family='Georgia,serif' font-style='italic' font-size='44' fill='%23f2a42a'%3EF%3C/text%3E%3C/svg%3E">
+  <link rel="preload" href="assets/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="modulepreload" href="vendor/three/three.module.min.js">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.min.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Flanagans Burguer",
+      "servesCuisine": "Hamburguesas",
+      "priceRange": "10–20 €",
+      "telephone": "+34 919 40 12 41",
+      "url": "https://flanagansburguer.com/",
+      "sameAs": ["https://www.instagram.com/flanagansburguer/"],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Calle Casiopea 12 (esquina Calle Andrómeda)",
+        "addressLocality": "Móstoles",
+        "postalCode": "28938",
+        "addressRegion": "Madrid",
+        "addressCountry": "ES"
+      }
+    }
+  </script>
+</head>
+<body class="is-loading">
+  <a class="skip" href="#historia">Saltar al contenido</a>
+
+  <!-- ============================================================ NAV -->
+  <header class="nav" data-nav>
+    <a class="nav__brand" href="#top" aria-label="Flanagan’s, inicio">Flanagan<span>’</span>s</a>
+    <nav class="nav__links" aria-label="Principal">
+      <a href="#historia">La casa</a>
+      <a href="#burgers">Burgers</a>
+      <a href="#carta">Carta</a>
+      <a href="#local">El local</a>
+      <a href="#resenas">Reseñas</a>
+    </nav>
+    <a class="btn btn--ghost btn--sm nav__cta" data-link="reservas" target="_blank" rel="noopener">Reservar</a>
+    <button class="nav__toggle" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú" data-menu-toggle><span></span><span></span></button>
+  </header>
+
+  <div class="menu" id="menu" hidden data-menu>
+    <nav aria-label="Móvil">
+      <a href="#historia">La casa</a>
+      <a href="#burgers">Burgers</a>
+      <a href="#carta">Carta</a>
+      <a href="#local">El local</a>
+      <a href="#resenas">Reseñas</a>
+    </nav>
+    <div class="menu__foot">
+      <a class="btn btn--solid" data-link="reservas" target="_blank" rel="noopener">Reservar mesa</a>
+      <a class="menu__phone" data-link="phone">919 40 12 41</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- ========================================================== HERO -->
+    <section class="hero" id="top" data-hero aria-label="Flanagan’s">
+      <div class="hero__stage">
+        <div class="hero__glow" aria-hidden="true"></div>
+        <h1 class="hero__word" data-hero-word aria-label="Flanagan’s">
+          <span aria-hidden="true">Flanagan<em>’</em>s</span>
+        </h1>
+        <canvas class="hero__canvas" data-hero-canvas aria-label="Hamburguesa en 3D. Mueve el cursor arriba o abajo para desmontarla capa a capa." role="img"></canvas>
+        <ol class="hero__labels" data-hero-labels aria-hidden="true"></ol>
+
+        <div class="hero__meta">
+          <p class="eyebrow" data-hero-in>Hamburguesería · PAU de Móstoles</p>
+        </div>
+
+        <div class="hero__bottom">
+          <div class="hero__pitch" data-hero-pitch>
+            <p class="hero__line" data-hero-in>Cada capa<br><em>cuenta.</em></p>
+            <p class="hero__sub" data-hero-in>Carne a la brasa, pan brioche y recetas de la casa.</p>
+            <div class="hero__ctas" data-hero-in>
+              <a class="btn btn--solid" data-link="reservas" target="_blank" rel="noopener">Reservar mesa</a>
+              <a class="btn btn--text" href="#carta">Ver la carta <span class="arr" aria-hidden="true">→</span></a>
+            </div>
+          </div>
+
+          <div class="hero__aside" data-hero-in>
+            <p class="hero__piece"><span class="mono">Pieza</span> <span data-hero-piece>Anatomía de una burger</span></p>
+            <p class="hint" data-hint>
+              <span class="hint__dot" aria-hidden="true"></span>
+              <span class="hint__txt hint__txt--desk">Explora la burger</span>
+              <span class="hint__txt hint__txt--touch">Toca la burger</span>
+            </p>
+            <button class="chip" data-tilt hidden>Activar inclinación</button>
+            <button class="chip" data-reset hidden>Volver a la anatomía</button>
+          </div>
+        </div>
+
+        <div class="hero__scroll" aria-hidden="true"><span></span></div>
+      </div>
+    </section>
+
+    <!-- ======================================================= HISTORIA -->
+    <section class="story section" id="historia">
+      <div class="wrap">
+        <p class="eyebrow" data-reveal>01 — La casa</p>
+        <h2 class="display story__title" data-split>En la esquina de Casiopea con Andrómeda, la hamburguesa se toma <em>en serio.</em></h2>
+        <div class="story__grid">
+          <p class="lead" data-reveal>Flanagan’s es la hamburguesería del PAU de Móstoles con carácter propio: carne a la brasa, pan brioche y combinaciones de la casa, servidas en un comedor moderno, cómodo y cuidado al detalle.</p>
+          <p class="body" data-reveal>Se viene a por una smash. Se vuelve por todo lo demás: los nachos para compartir, las alitas con salsa agridulce, la tarta del mes y un equipo que atiende como en casa.</p>
+        </div>
+        <ul class="facts" role="list">
+          <li data-reveal><span class="facts__n">3<small>×</small>100<small>g</small></span><span class="facts__t">La Smash: triple carne, doble queso y salsa cheddar.</span></li>
+          <li data-reveal><span class="facts__n">+1<small>€</small></span><span class="facts__t">Pan sin gluten disponible en cualquier burger.</span></li>
+          <li data-reveal><span class="facts__n">Mar<small>—</small>Dom</span><span class="facts__t">Comidas y cenas. Cerrado los lunes.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ======================================================== BURGERS -->
+    <section class="burgers section" id="burgers">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="eyebrow" data-reveal>02 — Las burgers</p>
+          <h2 class="display" data-split>Las que pide <em>todo el mundo.</em></h2>
+          <p class="sec-head__sub" data-reveal>Pasa el cursor por cada una para verla por dentro.</p>
+        </header>
+
+        <div class="plates" data-plates>
+          <article class="plate" data-plate="smash">
+            <figure class="plate__media" data-media>
+              <div class="plate__stage">
+                <img class="plate__img plate__img--a" alt="Flanagan’s Smash: triple carne smash, doble queso y salsa cheddar en pan brioche" width="760" height="950" decoding="async">
+                <img class="plate__img plate__img--b" alt="" aria-hidden="true" width="760" height="950" decoding="async">
+                <span class="plate__loader" aria-hidden="true"></span>
+              </div>
+            </figure>
+            <div class="plate__info">
+              <span class="plate__num mono">01</span>
+              <h3 class="plate__name" data-split>Flanagan’s Smash</h3>
+              <p class="plate__desc" data-reveal>Triple carne de 100 g, doble queso y salsa cheddar.</p>
+              <ul class="plate__tags" data-reveal role="list"><li>Triple carne</li><li>Doble queso</li><li>Salsa cheddar</li></ul>
+              <div class="plate__foot" data-reveal>
+                <span class="price">14,90 €</span>
+                <button class="btn btn--text" data-explore="smash">Desmontar en 3D <span class="arr" aria-hidden="true">↑</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="plate plate--flip" data-plate="mostoles">
+            <figure class="plate__media" data-media>
+              <div class="plate__stage">
+                <img class="plate__img plate__img--a" alt="Móstoles Style: carne de 180 g, queso de cabra, bacon y cebolla caramelizada" width="760" height="950" decoding="async">
+                <img class="plate__img plate__img--b" alt="" aria-hidden="true" width="760" height="950" decoding="async">
+                <span class="plate__loader" aria-hidden="true"></span>
+              </div>
+            </figure>
+            <div class="plate__info">
+              <span class="plate__num mono">02</span>
+              <h3 class="plate__name" data-split>Móstoles Style</h3>
+              <p class="plate__desc" data-reveal>180 g de carne, queso de cabra, bacon y cebolla caramelizada. La del barrio.</p>
+              <ul class="plate__tags" data-reveal role="list"><li>Carne 180 g</li><li>Queso de cabra</li><li>Bacon</li><li>Cebolla caramelizada</li></ul>
+              <div class="plate__foot" data-reveal>
+                <span class="price">13,40 €</span>
+                <button class="btn btn--text" data-explore="mostoles">Desmontar en 3D <span class="arr" aria-hidden="true">↑</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="plate" data-plate="pulledpork">
+            <figure class="plate__media" data-media>
+              <div class="plate__stage">
+                <img class="plate__img plate__img--a" alt="Hamburguesa Pulled Pork en pan brioche" width="760" height="950" decoding="async">
+                <img class="plate__img plate__img--b" alt="" aria-hidden="true" width="760" height="950" decoding="async">
+                <span class="plate__loader" aria-hidden="true"></span>
+              </div>
+            </figure>
+            <div class="plate__info">
+              <span class="plate__num mono">03</span>
+              <h3 class="plate__name" data-split>Pulled Pork</h3>
+              <p class="plate__desc" data-reveal>Cerdo desmenuzado, jugoso y glaseado. Una de las favoritas de la casa.</p>
+              <ul class="plate__tags" data-reveal role="list"><li>Pulled pork</li><li>Favorita</li></ul>
+              <div class="plate__foot" data-reveal>
+                <span class="price">12,90 €</span>
+                <button class="btn btn--text" data-explore="pulledpork">Desmontar en 3D <span class="arr" aria-hidden="true">↑</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="plate plate--flip" data-plate="vegan">
+            <figure class="plate__media" data-media>
+              <div class="plate__stage">
+                <img class="plate__img plate__img--a" alt="Vegan Burger con Beyond Burger, mezclum, tomate, cebolla, calabacín y salsa romesco" width="760" height="950" decoding="async">
+                <img class="plate__img plate__img--b" alt="" aria-hidden="true" width="760" height="950" decoding="async">
+                <span class="plate__loader" aria-hidden="true"></span>
+              </div>
+            </figure>
+            <div class="plate__info">
+              <span class="plate__num mono">04</span>
+              <h3 class="plate__name" data-split>Vegan Burger</h3>
+              <p class="plate__desc" data-reveal>Beyond Burger, mezclum, tomate, cebolla, calabacín y salsa romesco.</p>
+              <ul class="plate__tags" data-reveal role="list"><li>Beyond Burger</li><li>Romesco</li><li>100 % vegetal</li></ul>
+              <div class="plate__foot" data-reveal>
+                <a class="price price--link" data-link="carta" target="_blank" rel="noopener">Precio en carta ↗</a>
+                <button class="btn btn--text" data-explore="vegan">Desmontar en 3D <span class="arr" aria-hidden="true">↑</span></button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p class="footnote" data-reveal>Precios de referencia publicados por el restaurante en su canal a domicilio. Pueden variar en sala.</p>
+      </div>
+    </section>
+
+    <!-- ========================================================== CARTA -->
+    <section class="carta section" id="carta">
+      <div class="wrap">
+        <header class="sec-head sec-head--split">
+          <div>
+            <p class="eyebrow" data-reveal>03 — La carta</p>
+            <h2 class="display" data-split>Para compartir. <em>Para repetir.</em></h2>
+          </div>
+          <a class="btn btn--ghost" data-link="carta" target="_blank" rel="noopener" data-reveal>Carta completa <span class="arr" aria-hidden="true">↗</span></a>
+        </header>
+
+        <div class="tabs" data-tabs>
+          <div class="tabs__list" role="tablist" aria-label="Categorías de la carta" data-reveal>
+            <button role="tab" id="t-compartir" aria-controls="p-compartir" aria-selected="true">Para compartir</button>
+            <button role="tab" id="t-burgers" aria-controls="p-burgers" aria-selected="false" tabindex="-1">Hamburguesas</button>
+            <button role="tab" id="t-sandwich" aria-controls="p-sandwich" aria-selected="false" tabindex="-1">Sándwiches y perritos</button>
+            <button role="tab" id="t-dulce" aria-controls="p-dulce" aria-selected="false" tabindex="-1">Postres y batidos</button>
+            <span class="tabs__ink" aria-hidden="true"></span>
+          </div>
+
+          <div class="tabs__panels">
+            <div role="tabpanel" id="p-compartir" aria-labelledby="t-compartir" class="panel">
+              <ul class="menu-list" role="list">
+                <li><span class="menu-list__name">Nachos Flanagan’s</span><span class="menu-list__desc">Guacamole, crema agria, pulled pork y gratinado de quesos.</span></li>
+                <li><span class="menu-list__name">Alitas Flanagan’s Style</span><span class="menu-list__desc">Con salsa agridulce. De las más comentadas.</span></li>
+                <li><span class="menu-list__name">Patatas gratinadas</span><span class="menu-list__desc">Con pulled pork y queso fundido.</span></li>
+                <li><span class="menu-list__name">Lingotes de queso</span><span class="menu-list__desc">Con mermelada de tomate.</span></li>
+                <li><span class="menu-list__name">Aros de cebolla</span><span class="menu-list__desc">Para el centro de la mesa.</span></li>
+                <li><span class="menu-list__name">Ensaladas frescas</span><span class="menu-list__desc">Para equilibrar la ronda.</span></li>
+              </ul>
+            </div>
+
+            <div role="tabpanel" id="p-burgers" aria-labelledby="t-burgers" class="panel" hidden>
+              <ul class="menu-list" role="list">
+                <li><span class="menu-list__name">Flanagan’s Smash</span><span class="menu-list__desc">Triple carne de 100 g, doble queso, salsa cheddar.</span><span class="menu-list__price">14,90</span></li>
+                <li><span class="menu-list__name">Móstoles Style</span><span class="menu-list__desc">180 g de carne, queso de cabra, bacon, cebolla caramelizada.</span><span class="menu-list__price">13,40</span></li>
+                <li><span class="menu-list__name">Pulled Pork</span><span class="menu-list__desc">Cerdo desmenuzado.</span><span class="menu-list__price">12,90</span></li>
+                <li><span class="menu-list__name">New York Smash</span><span class="menu-list__desc">Smash al estilo neoyorquino.</span></li>
+                <li><span class="menu-list__name">La Trufada</span><span class="menu-list__desc">Especial de la casa.</span></li>
+                <li><span class="menu-list__name">La Cesar</span><span class="menu-list__desc">Especial de la casa.</span></li>
+                <li><span class="menu-list__name">Cuatro quesos</span><span class="menu-list__desc">Para los muy queseros.</span></li>
+                <li><span class="menu-list__name">La Clásica</span><span class="menu-list__desc">El equilibrio de siempre.</span></li>
+                <li><span class="menu-list__name">Chicken Burger</span><span class="menu-list__desc">La opción de pollo.</span></li>
+                <li><span class="menu-list__name">Vegan Burger</span><span class="menu-list__desc">Beyond Burger, mezclum, tomate, cebolla, calabacín, romesco.</span></li>
+              </ul>
+              <p class="panel__note">Hamburguesas de 11,90 € a 15 € · Pan sin gluten +1 €</p>
+            </div>
+
+            <div role="tabpanel" id="p-sandwich" aria-labelledby="t-sandwich" class="panel" hidden>
+              <div class="panel__feature">
+                <p class="panel__big">desde <span>8,90 €</span></p>
+                <p class="panel__copy">Una selección de sándwiches y hot dogs para quien viene con ganas de otra cosa. Consulta las opciones del día en la carta completa.</p>
+              </div>
+            </div>
+
+            <div role="tabpanel" id="p-dulce" aria-labelledby="t-dulce" class="panel" hidden>
+              <ul class="menu-list" role="list">
+                <li><span class="menu-list__name">Tarta del mes</span><span class="menu-list__desc">Cambia cada mes. Pregunta por la de hoy.</span><span class="menu-list__price">6,50</span></li>
+                <li><span class="menu-list__name">Tarta de tres chocolates</span><span class="menu-list__desc">La que más se repite en las reseñas.</span></li>
+                <li><span class="menu-list__name">Batidos</span><span class="menu-list__desc">Cremosos, para acompañar o para el final.</span><span class="menu-list__price">5 – 5,30</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <aside class="carta__extras" data-reveal>
+          <div><span class="mono">Menús</span><p>Con patatas, bebida y helado o café.</p></div>
+          <div><span class="mono">Peques</span><p>Menú infantil hasta 12 años.</p></div>
+          <div><span class="mono">A domicilio</span><p><a data-link="uber" target="_blank" rel="noopener">Uber Eats ↗</a> · <a data-link="justeat" target="_blank" rel="noopener">Just Eat ↗</a></p></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ========================================================== LOCAL -->
+    <section class="local section" id="local">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="eyebrow" data-reveal>04 — El local</p>
+          <h2 class="display" data-split>Un comedor para <em>quedarse.</em></h2>
+          <p class="sec-head__sub" data-reveal>Quienes lo visitan lo describen como moderno, luminoso y muy bien decorado. Para ir en pareja, con amigos o en familia.</p>
+        </header>
+
+        <div class="gallery" data-gallery hidden></div>
+
+        <div class="local__grid">
+          <div class="local__info">
+            <div class="info-block" data-reveal>
+              <span class="mono">Dirección</span>
+              <p class="info-block__big">C/ Casiopea 12,<br>esq. C/ Andrómeda</p>
+              <p class="muted">28938 Móstoles · Madrid</p>
+            </div>
+            <div class="info-block" data-reveal>
+              <span class="mono">Horario</span>
+              <dl class="hours">
+                <div><dt>Lunes</dt><dd class="muted">Cerrado</dd></div>
+                <div><dt>Martes — Miércoles</dt><dd>Cenas · 20:00 – 23:30</dd></div>
+                <div><dt>Jueves — Domingo</dt><dd>Comidas desde 12:30 · Cenas desde 20:00</dd></div>
+              </dl>
+              <p class="hours__now" data-open-now></p>
+            </div>
+            <div class="local__actions" data-reveal>
+              <a class="btn btn--solid" data-link="maps" target="_blank" rel="noopener">Cómo llegar <span class="arr" aria-hidden="true">↗</span></a>
+              <a class="btn btn--ghost" data-link="phone">919 40 12 41</a>
+              <a class="btn btn--text" data-link="instagram" target="_blank" rel="noopener">@flanagansburguer <span class="arr" aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+
+          <figure class="map" data-reveal>
+            <iframe title="Mapa: Flanagans Burguer, Calle Casiopea 12, Móstoles" loading="lazy" referrerpolicy="no-referrer-when-downgrade" data-map-src="https://maps.google.com/maps?q=Flanagans%20Burguer%2C%20Calle%20Casiopea%2012%2C%2028938%20M%C3%B3stoles&z=16&output=embed"></iframe>
+            <figcaption class="map__pin"><span class="map__dot" aria-hidden="true"></span>PAU de Móstoles</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== RESEÑAS -->
+    <section class="reviews section" id="resenas">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="eyebrow" data-reveal>05 — Lo que dicen</p>
+          <h2 class="display" data-split>Habla <em>el barrio.</em></h2>
+        </header>
+
+        <ul class="scores" role="list">
+          <li data-reveal><span class="scores__n" data-count="4.1" data-decimals="1">4,1</span><span class="scores__of">/ 5</span><span class="scores__src">Restaurant Guru · 544 reseñas</span></li>
+          <li data-reveal><span class="scores__n" data-count="4.4" data-decimals="1">4,4</span><span class="scores__of">/ 5</span><span class="scores__src">Uber Eats · +230 valoraciones</span></li>
+          <li data-reveal><span class="scores__n" data-count="87" data-decimals="0">87</span><span class="scores__of">/ 100</span><span class="scores__src">Sluurpy · índice agregado</span></li>
+        </ul>
+
+        <div class="quotes">
+          <blockquote class="quote quote--xl" data-reveal>
+            <p>«La mejor hamburguesería de Móstoles sin duda alguna!»</p>
+            <footer>Opinión de cliente</footer>
+          </blockquote>
+          <blockquote class="quote" data-reveal>
+            <p>«Espectacular, buen sabor, buena cantidad y rápidos. Muy bien.»</p>
+            <footer>Opinión de cliente · Uber Eats</footer>
+          </blockquote>
+        </div>
+
+        <div class="themes" data-reveal>
+          <span class="mono">Lo que más se repite</span>
+          <ul class="marquee" role="list" data-marquee>
+            <li>Personal atento</li><li>Ambiente moderno</li><li>Smash burgers</li><li>Alitas con salsa agridulce</li><li>Patatas gratinadas con pulled pork</li><li>Tarta de tres chocolates</li><li>Buena relación calidad-precio</li>
+          </ul>
+        </div>
+        <p class="footnote" data-reveal>Valoraciones y citas recogidas de Restaurant Guru, Uber Eats y Sluurpy (octubre de 2026).</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ CTA -->
+    <section class="final" id="visita">
+      <div class="wrap final__inner">
+        <p class="eyebrow" data-reveal>06 — Te esperamos</p>
+        <h2 class="final__title" data-split>Ven con <em>hambre.</em></h2>
+        <div class="final__ctas" data-reveal>
+          <a class="btn btn--solid btn--lg" data-link="reservas" target="_blank" rel="noopener">Reservar mesa <span class="arr" aria-hidden="true">↗</span></a>
+          <a class="btn btn--ghost btn--lg" data-link="uber" target="_blank" rel="noopener">Pedir a domicilio</a>
+          <a class="btn btn--text btn--lg" data-link="phone">919 40 12 41</a>
+        </div>
+        <p class="final__note muted" data-reveal>También puedes reservar escribiendo por Instagram a <a data-link="instagram" target="_blank" rel="noopener">@flanagansburguer</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__grid">
+      <a class="footer__brand" href="#top">Flanagan<span>’</span>s</a>
+      <div>
+        <span class="mono">Visítanos</span>
+        <p>C/ Casiopea 12, esq. C/ Andrómeda<br>28938 Móstoles, Madrid</p>
+      </div>
+      <div>
+        <span class="mono">Horario</span>
+        <p>Mar – Dom · Lunes cerrado</p>
+      </div>
+      <div>
+        <span class="mono">Sigue</span>
+        <p><a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a><br><a data-link="carta" target="_blank" rel="noopener">Carta completa ↗</a></p>
+      </div>
+    </div>
+    <div class="wrap footer__base">
+      <span>© <span data-year>2026</span> Flanagan’s Burguer · Móstoles</span>
+      <span>Propuesta de diseño web</span>
+    </div>
+  </footer>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <script src="vendor/gsap/gsap.min.js" defer></script>
+  <script src="vendor/gsap/ScrollTrigger.min.js" defer></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
