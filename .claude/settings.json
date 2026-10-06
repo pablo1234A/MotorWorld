@@ -1,0 +1,23 @@
+{
+  "enabledPlugins": {
+    "impeccable@impeccable": true,
+    "scroll-world@scroll-world": true
+  },
+  "extraKnownMarketplaces": {
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      }
+    },
+    "scroll-world": {
+      "source": {
+        "source": "github",
+        "repo": "oso95/scroll-world"
+      }
+    }
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
+}
