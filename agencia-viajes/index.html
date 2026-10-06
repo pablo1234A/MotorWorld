@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Alisio Viajes</title>
+<meta name="description" content="Alisio, agencia de viajes de autor en Madrid. Itinerarios a medida a 62 países, diseñados a mano y con asistencia 24/7.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Instrument+Sans:wght@400..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: un vuelo vertical. Escenarios 3D "sticky" (despegue, proceso) se alternan con secciones editoriales en una rejilla de 12 columnas. */
+:root{
+  --night:#060a1c;
+  --ink:#0c1331;
+  --ink-2:#131b42;
+  --line:rgba(178,196,255,.14);
+  --line-2:rgba(178,196,255,.28);
+  --fg:#eef1ff;
+  --muted:#9aa4cb;
+  --dawn:#ff9a6a;
+  --gold:#ffd09a;
+  --sky:#8db6ff;
+  --ok:#7fe0b0;
+  --warn:#ffcf6b;
+
+  --f-display:'Bricolage Grotesque','Avenir Next','Segoe UI',system-ui,sans-serif;
+  --f-body:'Instrument Sans','Helvetica Neue','Segoe UI',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+
+  --gutter:clamp(16px,4vw,48px);
+  --t-label:12px;
+  --t-small:15px;
+  --t-body:17px;
+  --t-lead:clamp(18px,1.6vw,21px);
+  --t-h3:clamp(24px,2.4vw,32px);
+  --t-h2:clamp(40px,6vw,84px);
+  --t-hero:clamp(52px,9.4vw,150px);
+  --ease:cubic-bezier(.2,.8,.2,1);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--night)}
+body{
+  background:var(--night);
+  color:var(--fg);
+  font-family:var(--f-body);
+  font-size:var(--t-body);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:clip;
+}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+a{color:inherit;text-decoration:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+img,svg,canvas{display:block;max-width:100%}
+::selection{background:var(--dawn);color:var(--night)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+
+.wrap{width:min(1280px,100% - 2*var(--gutter));margin-inline:auto}
+.label{font-family:var(--f-mono);font-size:var(--t-label);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:-.035em;line-height:.95;text-wrap:balance;font-variation-settings:'opsz' 96}
+h2{font-size:var(--t-h2)}
+h3{font-size:var(--t-h3);letter-spacing:-.02em;line-height:1.05}
+.hl{background:linear-gradient(100deg,var(--gold),var(--dawn) 60%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* Botones */
+.btn{
+  --bg:var(--fg);
+  display:inline-flex;align-items:center;gap:12px;
+  padding:16px 26px;border-radius:999px;
+  background:var(--bg);color:var(--night);
+  font-weight:600;font-size:16px;letter-spacing:-.01em;
+  transition:background .3s,color .3s,transform .4s var(--ease);
+  will-change:transform;
+}
+.btn svg{width:18px;height:18px;transition:transform .4s var(--ease)}
+.btn:hover{--bg:var(--gold)}
+.btn:hover svg{transform:translateX(4px) rotate(-45deg)}
+.btn-ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
+.btn-ghost:hover{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--fg)}
+.btn-small{padding:11px 18px;font-size:14px}
+
+/* ---------- Cargador ---------- */
+.loader{
+  position:fixed;inset:0;z-index:300;background:var(--night);
+  display:grid;place-items:center;
+  transition:clip-path 1.1s cubic-bezier(.76,0,.24,1),visibility 0s 1.1s;
+  clip-path:inset(0 0 0 0);
+  animation:loaderFailsafe .6s 6s forwards;
+}
+.loader.done{clip-path:inset(0 0 100% 0);visibility:hidden}
+@keyframes loaderFailsafe{to{clip-path:inset(0 0 100% 0);visibility:hidden}}
+.loader-inner{width:min(420px,100% - 2*var(--gutter));display:grid;gap:22px}
+.loader-top{display:flex;justify-content:space-between;align-items:baseline}
+.loader-brand{font-family:var(--f-display);font-size:40px;font-weight:700;letter-spacing:-.04em}
+.loader-pct{font-family:var(--f-mono);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.loader-route{position:relative;height:24px;border-bottom:1px dashed var(--line-2)}
+.loader-plane{position:absolute;left:0;bottom:-11px;width:22px;height:22px;color:var(--gold);transform:translateX(-50%) rotate(90deg)}
+.loader-codes{display:flex;justify-content:space-between}
+
+/* ---------- Cursor ---------- */
+.cursor{position:fixed;left:0;top:0;z-index:400;pointer-events:none;display:none}
+.has-cursor .cursor{display:block}
+.has-cursor,.has-cursor a,.has-cursor button,.has-cursor [data-cursor]{cursor:none}
+.cursor-dot{width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--gold)}
+.cursor-ring{position:fixed;left:0;top:0}
+.cursor-ring-inner{
+  width:40px;height:40px;transform:translate(-50%,-50%);border-radius:50%;
+  border:1px solid rgba(238,241,255,.45);
+  display:grid;place-items:center;
+  transition:width .35s var(--ease),height .35s var(--ease),background .35s,border-color .35s;
+}
+.cursor-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--night);opacity:0;transition:opacity .2s}
+.cursor.is-link .cursor-ring-inner{width:64px;height:64px;border-color:var(--gold)}
+.cursor.is-label .cursor-ring-inner{width:96px;height:96px;background:var(--gold);border-color:var(--gold)}
+.cursor.is-label .cursor-label{opacity:1}
+.cursor.is-label .cursor-dot{opacity:0}
+
+/* ---------- Cabecera ---------- */
+.topbar{
+  position:fixed;left:0;right:0;top:0;z-index:100;
+  padding-top:env(safe-area-inset-top,0px);
+  transition:background .4s,backdrop-filter .4s;
+}
+.topbar.scrolled{background:rgba(6,10,28,.72);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:24px;height:76px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:24px;font-weight:700;letter-spacing:-.04em}
+.brand svg{width:30px;height:30px}
+.nav{display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(12,19,49,.55);box-shadow:inset 0 0 0 1px var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav a{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);
+  transition:color .25s,background .25s;
+}
+.nav a .gate{font-family:var(--f-mono);font-size:10px;color:var(--dawn);opacity:.8}
+.nav a:hover{color:var(--fg)}
+.nav a.active{background:var(--fg);color:var(--night)}
+.nav a.active .gate{color:var(--night);opacity:.55}
+.topbar-cta{display:flex;align-items:center;gap:10px}
+.menu-btn{display:none;width:46px;height:46px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line-2);place-items:center}
+.menu-btn span{display:block;width:18px;height:1.5px;background:var(--fg);position:relative;transition:transform .3s}
+.menu-btn span::after{content:'';position:absolute;left:0;top:6px;width:18px;height:1.5px;background:var(--fg);transition:transform .3s,top .3s}
+.menu-btn span::before{content:'';position:absolute;left:0;top:-6px;width:18px;height:1.5px;background:var(--fg);transition:transform .3s,top .3s}
+.menu-open .menu-btn span{background:transparent}
+.menu-open .menu-btn span::before{top:0;transform:rotate(45deg)}
+.menu-open .menu-btn span::after{top:0;transform:rotate(-45deg)}
+
+.flightline{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line)}
+.flightline-fill{position:absolute;left:0;top:0;height:1px;width:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,transparent,var(--dawn) 30%,var(--gold))}
+.flightline-plane{position:absolute;top:-8px;left:0;width:16px;height:16px;color:var(--gold);transform:translateX(-50%) rotate(90deg)}
+
+.mobile-menu{
+  position:fixed;inset:0;z-index:90;background:var(--night);
+  padding:calc(100px + env(safe-area-inset-top,0px)) var(--gutter) 40px;
+  display:flex;flex-direction:column;gap:6px;
+  clip-path:circle(0 at calc(100% - 40px) 40px);
+  transition:clip-path .7s cubic-bezier(.76,0,.24,1);
+  visibility:hidden;
+}
+.menu-open .mobile-menu{clip-path:circle(150% at calc(100% - 40px) 40px);visibility:visible}
+.mobile-menu a{display:flex;align-items:baseline;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-family:var(--f-display);font-size:40px;font-weight:700;letter-spacing:-.04em}
+.mobile-menu a .gate{font-family:var(--f-mono);font-size:12px;color:var(--dawn);letter-spacing:.1em}
+
+/* Rail lateral */
+.rail{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:14px}
+.rail a{display:flex;align-items:center;justify-content:flex-end;gap:12px;height:14px}
+.rail i{width:8px;height:8px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--muted);transition:transform .3s,background .3s,box-shadow .3s}
+.rail span{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg);opacity:0;transform:translateX(8px);transition:opacity .3s,transform .3s;white-space:nowrap}
+.rail a:hover span,.rail a:focus-visible span{opacity:1;transform:none}
+.rail a.active i{background:var(--dawn);box-shadow:0 0 0 4px rgba(255,154,106,.18);transform:scale(1.15)}
+.rail.on-hero span{opacity:0!important}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;height:520vh}
+.hero-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:radial-gradient(120% 80% at 70% 100%,#2a2464 0%,#0b1030 55%,var(--night) 100%)}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(6,10,28,.72) 0%,rgba(6,10,28,.25) 45%,transparent 70%),linear-gradient(0deg,rgba(6,10,28,.6),transparent 30%)}
+.chapter{
+  position:absolute;left:var(--gutter);top:50%;transform:translateY(-52%);
+  width:min(760px,100% - 2*var(--gutter));
+  display:grid;gap:26px;
+  visibility:hidden;transition:visibility 0s .9s;
+}
+.chapter.is-active{visibility:visible;transition:visibility 0s}
+.chapter h1,.chapter h2{font-size:var(--t-hero);font-weight:750;letter-spacing:-.05em;line-height:.88}
+.chapter h2{font-size:clamp(46px,7.4vw,118px)}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.1em;margin-bottom:-.1em}
+.w>span{display:inline-block;transform:translateY(110%) rotate(4deg);transform-origin:left bottom;transition:transform 1s var(--ease);transition-delay:calc(var(--i,0)*45ms)}
+.chapter.is-active .w>span{transform:none}
+.chapter .fade{opacity:0;transform:translateY(16px);transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--d,0)*1ms)}
+.chapter.is-active .fade{opacity:1;transform:none}
+.chapter:not(.is-active) .w>span{transition-delay:0s;transition-duration:.5s;transform:translateY(-110%)}
+.chapter p.lead{font-size:var(--t-lead);color:#d4daf5;max-width:52ch;line-height:1.55}
+.chapter .actions{display:flex;flex-wrap:wrap;gap:12px}
+.chapter-eyebrow{display:flex;align-items:center;gap:12px}
+.chapter-eyebrow::before{content:'';width:28px;height:1px;background:var(--dawn)}
+.chapter-eyebrow .label{color:var(--gold)}
+
+.hud{position:absolute;bottom:calc(28px + env(safe-area-inset-bottom,0px));font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+.hud-left{left:var(--gutter);display:grid;grid-template-columns:repeat(4,auto);gap:10px 34px}
+.hud-left div{display:grid;gap:2px}
+.hud-left b{font-weight:500;color:var(--fg);font-size:15px;letter-spacing:.02em}
+.hud-right{right:var(--gutter);display:grid;gap:10px;justify-items:end;width:min(320px,40vw)}
+.phase{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+.phase span{display:grid;gap:8px;text-transform:uppercase;font-size:11px;transition:color .3s}
+.phase span::before{content:'';height:2px;background:var(--line-2);border-radius:2px;transition:background .4s}
+.phase span.on{color:var(--fg)}
+.phase span.on::before{background:var(--dawn)}
+.scroll-cue{position:absolute;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;justify-items:center;gap:10px;pointer-events:none;transition:opacity .4s}
+.scroll-cue .mouse{width:22px;height:34px;border-radius:12px;box-shadow:inset 0 0 0 1.5px var(--fg);position:relative}
+.scroll-cue .mouse::after{content:'';position:absolute;left:50%;top:7px;width:2px;height:7px;margin-left:-1px;border-radius:2px;background:var(--gold);animation:wheel 1.6s infinite}
+@keyframes wheel{0%{transform:translateY(0);opacity:1}80%{transform:translateY(10px);opacity:0}100%{opacity:0}}
+
+/* ---------- Teletipo ---------- */
+.ticker{border-block:1px solid var(--line);overflow:hidden;padding-block:22px;background:var(--night)}
+.ticker-track{display:flex;width:max-content;animation:tick 48s linear infinite}
+.ticker-track span{display:flex;align-items:center;gap:18px;padding-right:46px;font-family:var(--f-display);font-size:clamp(26px,3.2vw,44px);font-weight:600;letter-spacing:-.03em;white-space:nowrap;color:var(--muted)}
+.ticker-track span b{color:var(--fg);font-weight:700}
+.ticker-track span i{font-style:normal;font-family:var(--f-mono);font-size:13px;letter-spacing:.1em;color:var(--dawn)}
+.ticker-track svg{width:22px;height:22px;color:var(--gold);transform:rotate(90deg)}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ---------- Secciones ---------- */
+.section{position:relative;padding-block:clamp(96px,14vw,180px)}
+.sec-head{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;align-items:end;margin-bottom:clamp(48px,6vw,80px)}
+.sec-head .gate-tag{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+.gate-tag .code{display:inline-grid;place-items:center;min-width:42px;height:28px;padding:0 8px;border-radius:6px;background:var(--dawn);color:var(--night);font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.08em}
+.sec-head h2{grid-column:1/span 8}
+.sec-head .lede{grid-column:9/-1;color:var(--muted);font-size:var(--t-lead);line-height:1.5;max-width:42ch}
+
+.spot{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.spot::before{content:'';position:absolute;width:900px;height:900px;left:calc(var(--sx,50%) - 450px);top:calc(var(--sy,50%) - 450px);background:radial-gradient(circle,rgba(141,182,255,.09),transparent 60%);transition:left .6s var(--ease),top .6s var(--ease)}
+
+/* ---------- Destinos ---------- */
+.dest-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
+.card{perspective:1200px;border-radius:22px}
+.card-inner{
+  position:relative;aspect-ratio:4/5.3;max-width:100%;border-radius:22px;
+  transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .6s var(--ease);
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.7);
+}
+.card.hovering .card-inner{transition:transform .12s linear}
+.card-scene{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:var(--ink)}
+.layer{position:absolute;inset:-7%;width:114%;height:114%;transform:translate3d(calc(var(--px,0)*var(--d)*-1px),calc(var(--py,0)*var(--d)*-1px),0) scale(1.02);transition:transform .6s var(--ease)}
+.card.hovering .layer{transition:transform .12s linear}
+.layer svg{width:100%;height:100%}
+.card-glare{position:absolute;inset:0;border-radius:22px;pointer-events:none;background:radial-gradient(circle at var(--gx,50%) var(--gy,0%),rgba(255,255,255,.28),transparent 45%);mix-blend-mode:soft-light;opacity:0;transition:opacity .4s}
+.card.hovering .card-glare{opacity:1}
+.card-scrim{position:absolute;inset:0;border-radius:22px;background:linear-gradient(180deg,rgba(6,10,28,.35) 0%,transparent 26%,transparent 42%,rgba(6,10,28,.9) 100%);pointer-events:none}
+.card-top{position:absolute;left:22px;right:22px;top:20px;display:flex;justify-content:space-between;align-items:center;transform:translateZ(30px)}
+.iata{font-family:var(--f-mono);font-size:13px;letter-spacing:.12em;padding:6px 10px;border-radius:6px;background:rgba(6,10,28,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.card-top .label{color:#e3e8ff}
+.card-body{position:absolute;left:22px;right:22px;bottom:22px;display:grid;gap:12px;transform:translateZ(60px)}
+.card-body .country{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.card-body h3{font-size:clamp(30px,3vw,42px);letter-spacing:-.04em}
+.card-body p{font-size:15px;color:#cfd6f3;line-height:1.5;max-height:0;opacity:0;overflow:hidden;transition:max-height .6s var(--ease),opacity .5s}
+.card.hovering .card-body p,.card:focus-within .card-body p{max-height:120px;opacity:1}
+.card-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18)}
+.card-meta dt{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.card-meta dd{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.card-cta{justify-self:start;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:10px 16px;border-radius:999px;background:var(--fg);color:var(--night);transition:background .25s}
+.card-cta:hover{background:var(--gold)}
+
+/* ---------- Rutas / Globo ---------- */
+.routes{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:center}
+.route-list{display:grid;border-top:1px solid var(--line)}
+.route{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;
+  padding:18px 6px;border-bottom:1px solid var(--line);text-align:left;width:100%;
+  transition:padding .35s var(--ease),background .35s;
+}
+.route .code{font-family:var(--f-mono);font-size:13px;color:var(--muted);letter-spacing:.1em;min-width:96px}
+.route .city{font-family:var(--f-display);font-size:clamp(22px,2.2vw,30px);font-weight:650;letter-spacing:-.03em}
+.route .km{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.route:hover,.route.active{padding-left:18px;background:linear-gradient(90deg,rgba(255,154,106,.12),transparent)}
+.route.active .code,.route:hover .code{color:var(--dawn)}
+.globe-box{position:relative;aspect-ratio:1;max-width:100%;width:100%}
+#globe-canvas{width:100%;height:100%;cursor:grab}
+#globe-canvas:active{cursor:grabbing}
+.globe-readout{position:absolute;left:0;bottom:4%;display:grid;gap:4px;padding:16px 18px;border-radius:14px;background:rgba(12,19,49,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px var(--line);font-variant-numeric:tabular-nums;min-width:230px}
+.globe-readout strong{font-family:var(--f-display);font-size:26px;letter-spacing:-.03em}
+.globe-readout .label{color:var(--gold)}
+.globe-hint{position:absolute;right:0;top:4%;color:var(--muted)}
+.globe-fallback{display:none;position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#29408f,#0c1331 70%);box-shadow:0 0 80px rgba(141,182,255,.25)}
+.no-webgl .globe-fallback{display:block}
+
+/* ---------- Panel de salidas ---------- */
+.board{border-radius:20px;background:linear-gradient(180deg,#0a0f27,#070b1f);box-shadow:inset 0 0 0 1px var(--line),0 40px 80px -40px rgba(0,0,0,.8);padding:clamp(18px,2.4vw,32px)}
+.board-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.board-title{display:flex;align-items:center;gap:14px;font-family:var(--f-display);font-size:28px;font-weight:700;letter-spacing:-.03em}
+.board-title svg{width:26px;height:26px;color:var(--gold);transform:rotate(45deg)}
+.board-clock{font-family:var(--f-mono);font-size:14px;color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:.08em}
+.board-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.board-table{min-width:880px;display:grid}
+.board-row{display:grid;grid-template-columns:repeat(6,max-content) minmax(140px,1fr);gap:clamp(18px,2.4vw,34px);align-items:center;padding:12px 6px;border-bottom:1px solid var(--line);transition:background .3s}
+.board-row.head{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-block:8px}
+.board-row:not(.head):hover{background:rgba(255,255,255,.03)}
+.flaps{display:flex;gap:2px}
+.flap{
+  position:relative;display:inline-grid;place-items:center;width:1.15em;height:1.6em;
+  font-family:var(--f-mono);font-size:17px;font-weight:500;color:#f3f0e4;
+  background:linear-gradient(180deg,#1a2147 0 49%,#141a3b 51% 100%);border-radius:3px;
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.flap::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.55)}
+.flap.flip{animation:flip .09s linear}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(-80deg)}100%{transform:rotateX(0)}}
+.status{justify-self:start;font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:8px}
+.status::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.status.ok{color:var(--ok);background:rgba(127,224,176,.1)}
+.status.warn{color:var(--warn);background:rgba(255,207,107,.1)}
+.status.board-now{color:var(--dawn);background:rgba(255,154,106,.12)}
+.status.board-now::before{animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.board-foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px}
+
+/* ---------- Proceso (horizontal) ---------- */
+.process{height:440vh;position:relative}
+.process-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr);align-content:center;gap:clamp(28px,4vh,48px)}
+.process-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+.process-head h2{max-width:13ch}
+.process-count{font-family:var(--f-mono);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.process-count b{color:var(--fg);font-size:42px;font-family:var(--f-display);letter-spacing:-.04em;font-weight:700}
+.track-wrap{perspective:1600px;min-width:0}
+.track{display:flex;gap:clamp(18px,2.4vw,32px);padding-inline:var(--gutter);width:max-content;will-change:transform;transform-style:preserve-3d}
+.step{
+  width:clamp(300px,34vw,460px);min-height:clamp(340px,50vh,440px);
+  display:grid;grid-template-rows:auto 1fr auto;gap:18px;
+  padding:clamp(24px,2.6vw,36px);border-radius:24px;position:relative;
+  background:linear-gradient(160deg,var(--ink-2),var(--ink));
+  box-shadow:inset 0 0 0 1px var(--line);
+  transform:rotateY(var(--ry,0deg)) translateZ(var(--tz,0px));
+  transition:box-shadow .4s;
+}
+.step::before,.step::after{content:'';position:absolute;top:96px;width:22px;height:22px;border-radius:50%;background:var(--night)}
+.step::before{left:-11px}
+.step::after{right:-11px}
+.step-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:24px;border-bottom:1px dashed var(--line-2)}
+.step-num{font-family:var(--f-display);font-size:64px;font-weight:800;letter-spacing:-.06em;line-height:1;color:transparent;-webkit-text-stroke:1px var(--line-2)}
+.step.near .step-num{-webkit-text-stroke:1px var(--dawn)}
+.step.near{box-shadow:inset 0 0 0 1px rgba(255,154,106,.45)}
+.step h3{margin-top:6px}
+.step p{color:var(--muted);font-size:16px;max-width:38ch}
+.step-meta{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.08em}
+.step-meta b{color:var(--gold);font-weight:500}
+.path{position:relative;height:30px;margin-inline:var(--gutter)}
+.path::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--line-2)}
+.path-fill{position:absolute;left:0;top:50%;height:1px;width:100%;background:var(--dawn);transform-origin:left;transform:scaleX(0)}
+.path-plane{position:absolute;top:50%;left:0;width:24px;height:24px;margin-top:-12px;color:var(--gold);transform:translateX(-50%) rotate(90deg)}
+
+/* ---------- Estilos de viaje ---------- */
+.styles{display:flex;gap:12px;height:clamp(420px,62vh,560px)}
+.style{
+  position:relative;flex:1;min-width:0;border-radius:22px;overflow:hidden;
+  transition:flex .8s var(--ease);
+  display:flex;align-items:flex-end;
+  outline-offset:4px;
+}
+.style:hover,.style:focus-within,.style.open{flex:3.4}
+.style-bg{position:absolute;inset:0;transition:transform 1.2s var(--ease)}
+.style:hover .style-bg{transform:scale(1.06)}
+.style-bg canvas{width:100%;height:100%}
+.style::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(6,10,28,.85));pointer-events:none}
+.style-v{position:absolute;left:22px;bottom:24px;z-index:2;writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--f-display);font-size:30px;font-weight:700;letter-spacing:-.03em;transition:opacity .4s;white-space:nowrap}
+.style-content{position:relative;z-index:2;padding:28px;display:grid;gap:12px;width:min(460px,100%);opacity:0;transform:translateY(20px);transition:opacity .5s,transform .7s var(--ease)}
+.style:hover .style-content,.style:focus-within .style-content,.style.open .style-content{opacity:1;transform:none;transition-delay:.25s}
+.style:hover .style-v,.style:focus-within .style-v,.style.open .style-v{opacity:0}
+.style-content h3{font-size:clamp(30px,3vw,44px)}
+.style-content p{color:#d4daf5;font-size:16px}
+.style-content .label{color:var(--gold)}
+.style button.style-toggle{position:absolute;inset:0;z-index:1}
+
+/* ---------- Reserva ---------- */
+.booking{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:clamp(28px,5vw,80px);align-items:start}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.field{display:grid;gap:8px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label,.field legend{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select{
+  width:100%;padding:15px 16px;border-radius:12px;border:0;
+  background:var(--ink);box-shadow:inset 0 0 0 1px var(--line);
+  font-size:16px;transition:box-shadow .25s,background .25s;appearance:none;-webkit-appearance:none;
+}
+.field select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.field input:focus,.field select:focus{outline:none;box-shadow:inset 0 0 0 1px var(--gold);background-color:var(--ink-2)}
+.field input[type=range]{padding:0;height:4px;background:var(--line-2);box-shadow:none;margin-top:14px;border-radius:4px}
+.field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 6px rgba(255,208,154,.15)}
+.field input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:var(--gold)}
+.range-head{display:flex;justify-content:space-between;align-items:baseline}
+.range-head output{font-family:var(--f-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+fieldset.field{border:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;position:relative}
+.chips input{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
+.chips label{font-family:var(--f-body);font-size:14px;letter-spacing:0;text-transform:none;color:var(--fg);padding:10px 16px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line-2);cursor:pointer;transition:background .25s,color .25s,box-shadow .25s}
+.chips input:checked+label{background:var(--fg);color:var(--night);box-shadow:none}
+.chips input:focus-visible+label{outline:2px solid var(--gold);outline-offset:2px}
+.stepper{display:flex;align-items:center;gap:0;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);background:var(--ink)}
+.stepper button{width:52px;height:52px;font-size:22px;color:var(--muted);transition:color .2s}
+.stepper button:hover{color:var(--fg)}
+.stepper input{text-align:center;box-shadow:none!important;background:transparent!important;padding-inline:0;font-variant-numeric:tabular-nums}
+.form-foot{grid-column:1/-1;display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:8px}
+.form-note{font-size:14px;color:var(--muted);max-width:44ch}
+.form-error{grid-column:1/-1;color:var(--dawn);font-size:14px}
+
+.pass-wrap{position:sticky;top:110px;perspective:1400px}
+.pass{
+  position:relative;border-radius:22px;overflow:hidden;
+  background:linear-gradient(135deg,#f6f3ea,#ece6d6);color:#141a3b;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .6s var(--ease);
+  box-shadow:0 50px 90px -40px rgba(0,0,0,.85);
+  transform-style:preserve-3d;
+}
+.pass.hovering{transition:transform .12s linear}
+.pass-sheen{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 45%,rgba(141,182,255,.35) 50%,transparent 62%);background-size:250% 100%;background-position:var(--sheen,100%) 0;mix-blend-mode:overlay}
+.pass-top{display:flex;justify-content:space-between;align-items:center;padding:20px 26px;background:#141a3b;color:var(--fg)}
+.pass-top .brand{font-size:20px}
+.pass-top .label{color:var(--gold)}
+.pass-main{padding:26px;display:grid;gap:22px}
+.pass-route{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.pass-route .code{font-family:var(--f-display);font-size:clamp(48px,6vw,76px);font-weight:800;letter-spacing:-.05em;line-height:.9}
+.pass-route .code+small,.pass-route small{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5b6283;margin-top:6px}
+.pass-route .to{text-align:right}
+.pass-route svg{width:34px;height:34px;color:#e0784a;transform:rotate(90deg)}
+.pass-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px}
+.pass-grid dt{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6a7090}
+.pass-grid dd{font-weight:600;font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pass-tear{position:relative;border-top:2px dashed rgba(20,26,59,.2);margin-inline:14px}
+.pass-tear::before,.pass-tear::after{content:'';position:absolute;top:-14px;width:26px;height:26px;border-radius:50%;background:var(--night)}
+.pass-tear::before{left:-27px}
+.pass-tear::after{right:-27px}
+.pass-stub{padding:20px 26px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.pass-stub canvas{height:56px;width:min(260px,60%)}
+.pass-stub .seat{text-align:right}
+.pass-stub .seat b{display:block;font-family:var(--f-display);font-size:34px;letter-spacing:-.04em;line-height:1}
+.stamp{position:absolute;right:26px;top:84px;padding:10px 16px;border:3px solid #e0784a;color:#e0784a;border-radius:10px;font-family:var(--f-mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;font-size:14px;transform:rotate(-12deg) scale(2.2);opacity:0;transition:transform .45s cubic-bezier(.3,1.6,.5,1),opacity .2s;pointer-events:none;background:rgba(246,243,234,.6)}
+.pass.stamped .stamp{transform:rotate(-12deg) scale(1);opacity:1}
+.pass-caption{margin-top:16px;color:var(--muted);font-size:14px}
+
+/* ---------- FAQ ---------- */
+.faq{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,5vw,80px)}
+.faq-list{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:26px 0;cursor:pointer;font-family:var(--f-display);font-size:clamp(20px,2vw,26px);font-weight:600;letter-spacing:-.02em}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary i{flex:none;width:36px;height:36px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line-2);position:relative;transition:transform .4s var(--ease),background .3s}
+.faq summary i::before,.faq summary i::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:1.5px;margin:-.75px 0 0 -6px;background:var(--fg)}
+.faq summary i::after{transform:rotate(90deg);transition:transform .4s var(--ease)}
+.faq details[open] summary i{background:var(--dawn)}
+.faq details[open] summary i::after{transform:rotate(0)}
+.faq details p{padding:0 0 26px;color:var(--muted);max-width:62ch}
+
+/* ---------- Pie ---------- */
+.footer{position:relative;padding-block:clamp(80px,10vw,140px) calc(40px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);overflow:hidden}
+.footer-cta{display:flex;justify-content:space-between;align-items:end;gap:32px;flex-wrap:wrap;margin-bottom:clamp(40px,6vw,80px)}
+.footer-cta h2{max-width:14ch}
+.wordmark{display:flex;justify-content:space-between;perspective:900px;font-family:var(--f-display);font-weight:800;font-size:clamp(80px,22vw,340px);letter-spacing:-.06em;line-height:.8;user-select:none;margin-bottom:clamp(40px,5vw,70px)}
+.wordmark span{display:inline-block;transform-origin:50% 100%;transition:transform .5s var(--ease),color .5s;color:var(--ink);-webkit-text-stroke:1.5px rgba(178,196,255,.32)}
+.footer-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px;padding-top:32px;border-top:1px solid var(--line)}
+.footer-cols h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:400;margin-bottom:14px}
+.footer-cols ul{list-style:none;display:grid;gap:8px}
+.footer-cols a{color:#d4daf5;transition:color .2s}
+.footer-cols a:hover{color:var(--gold)}
+.copy-btn{display:inline-flex;align-items:center;gap:8px;font-size:15px;color:#d4daf5;user-select:all}
+.copy-btn small{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dawn)}
+.legal{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;color:var(--muted);font-size:13px}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1100px){
+  .nav a .gate{display:none}
+  .nav a{padding:9px 12px}
+  .dest-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rail{display:none}
+}
+@media (max-width:900px){
+  .nav,.topbar-cta .btn{display:none}
+  .menu-btn{display:grid}
+  .sec-head h2,.sec-head .lede{grid-column:1/-1}
+  .routes,.booking,.faq{grid-template-columns:minmax(0,1fr)}
+  .pass-wrap{position:relative;top:0;order:-1}
+  .footer-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hud-left{grid-template-columns:repeat(2,auto)}
+  .hud-right{display:none}
+  .scroll-cue{display:none}
+  .chapter{top:auto;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:none}
+  .hero-shade{background:linear-gradient(0deg,rgba(6,10,28,.9) 0%,rgba(6,10,28,.4) 50%,transparent 75%)}
+  .process{height:auto}
+  .process-stage{position:relative;height:auto;padding-block:clamp(96px,14vw,180px)}
+  .track{flex-direction:column;width:auto;transform:none!important}
+  .step{width:100%;min-height:0;transform:none!important}
+  .path{display:none}
+  .styles{flex-direction:column;height:auto}
+  .style{min-height:120px;flex:none}
+  .style:hover,.style:focus-within,.style.open{flex:none;min-height:360px}
+  .style-v{writing-mode:horizontal-tb;transform:none;bottom:22px}
+}
+@media (max-width:640px){
+  .dest-grid{grid-template-columns:minmax(0,1fr)}
+  .form{grid-template-columns:minmax(0,1fr)}
+  .hero{height:420vh}
+  .hud-left{gap:8px 20px;font-size:10px}
+  .hud-left b{font-size:13px}
+  .chapter h1{font-size:clamp(46px,14vw,80px)}
+  .chapter h2{font-size:clamp(40px,12vw,70px)}
+  .card-body p{max-height:120px;opacity:1}
+  .pass-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .footer-cols{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
+  .ticker-track{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Cargador -->
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <div class="loader-top"><span class="loader-brand">Alisio</span><span class="loader-pct" id="loader-pct">000</span></div>
+    <div class="loader-route"><svg class="loader-plane" id="loader-plane" viewBox="0 0 24 24" fill="currentColor"><use href="#i-plane"/></svg></div>
+    <div class="loader-codes label"><span>MAD · Embarcando</span><span>FL370</span></div>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <path id="i-plane" d="M12 1.5c.9 0 1.5.8 1.5 1.7v5.6l8 4.7v2.2l-8-2.5v5l2.4 1.9v1.7L12 20.9l-3.9.9v-1.7l2.4-1.9v-5l-8 2.5v-2.2l8-4.7V3.2c0-.9.6-1.7 1.5-1.7z"/>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 32 32"><circle cx="16" cy="20" r="9" fill="#ff9a6a"/><path d="M3 20h26" stroke="#060a1c" stroke-width="2.4"/><path d="M4 24.5h24M7 28.5h18" stroke="#ffd09a" stroke-width="1.6" stroke-linecap="round"/><path d="M9 9c3-3 9-3 14 0" fill="none" stroke="#8db6ff" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor" aria-hidden="true">
+  <div class="cursor-dot" id="cursor-dot"></div>
+  <div class="cursor-ring" id="cursor-ring"><div class="cursor-ring-inner"><span class="cursor-label" id="cursor-label">Ver</span></div></div>
+</div>
+
+<!-- Cabecera -->
+<header class="topbar" id="topbar">
+  <div class="wrap topbar-row">
+    <a class="brand" href="#inicio" aria-label="Alisio, volver al inicio"><svg><use href="#i-logo"/></svg>Alisio</a>
+    <nav class="nav" aria-label="Secciones principales">
+      <a href="#destinos" data-sec="destinos"><span class="gate">A1</span>Destinos</a>
+      <a href="#rutas" data-sec="rutas"><span class="gate">A2</span>Rutas</a>
+      <a href="#salidas" data-sec="salidas"><span class="gate">A3</span>Salidas</a>
+      <a href="#proceso" data-sec="proceso"><span class="gate">A4</span>Cómo trabajamos</a>
+      <a href="#estilos" data-sec="estilos"><span class="gate">A5</span>Estilos</a>
+      <a href="#faq" data-sec="faq"><span class="gate">A6</span>Preguntas</a>
+    </nav>
+    <div class="topbar-cta">
+      <a class="btn btn-small magnetic" href="#reservar">Diseñar mi viaje<svg><use href="#i-arrow"/></svg></a>
+      <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú"><span></span></button>
+    </div>
+  </div>
+  <div class="flightline" aria-hidden="true"><span class="flightline-fill" id="fl-fill"></span><svg class="flightline-plane" id="fl-plane" viewBox="0 0 24 24" fill="currentColor"><use href="#i-plane"/></svg></div>
+</header>
+
+<nav class="mobile-menu" id="mobile-menu" aria-label="Menú móvil">
+  <a href="#destinos"><span class="gate">A1</span>Destinos</a>
+  <a href="#rutas"><span class="gate">A2</span>Rutas</a>
+  <a href="#salidas"><span class="gate">A3</span>Salidas</a>
+  <a href="#proceso"><span class="gate">A4</span>Cómo trabajamos</a>
+  <a href="#estilos"><span class="gate">A5</span>Estilos</a>
+  <a href="#faq"><span class="gate">A6</span>Preguntas</a>
+  <a href="#reservar"><span class="gate">→</span>Diseñar mi viaje</a>
+</nav>
+
+<nav class="rail on-hero" id="rail" aria-label="Progreso por secciones">
+  <a href="#inicio" data-sec="inicio"><span>Despegue</span><i></i></a>
+  <a href="#destinos" data-sec="destinos"><span>A1 · Destinos</span><i></i></a>
+  <a href="#rutas" data-sec="rutas"><span>A2 · Rutas</span><i></i></a>
+  <a href="#salidas" data-sec="salidas"><span>A3 · Salidas</span><i></i></a>
+  <a href="#proceso" data-sec="proceso"><span>A4 · Cómo trabajamos</span><i></i></a>
+  <a href="#estilos" data-sec="estilos"><span>A5 · Estilos</span><i></i></a>
+  <a href="#reservar" data-sec="reservar"><span>Reservar</span><i></i></a>
+  <a href="#faq" data-sec="faq"><span>A6 · Preguntas</span><i></i></a>
+</nav>
+
+<main>
+  <!-- HERO: despegue -->
+  <section class="hero" id="inicio" aria-label="Despegue">
+    <div class="hero-stage" id="hero-stage">
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="hero-shade"></div>
+
+      <div class="chapter is-active" data-ch="0">
+        <div class="chapter-eyebrow fade" style="--d:0"><span class="label">Alisio · Viajes de autor desde Madrid</span></div>
+        <h1 data-split>Más allá del <span class="hl">horizonte</span></h1>
+        <p class="lead fade" style="--d:350">Diseñamos viajes a medida a 62 países. Tú eliges el destino; nosotros cuidamos cada escala, cada hotel y cada traslado.</p>
+        <div class="actions fade" style="--d:500">
+          <a class="btn magnetic" href="#reservar">Diseñar mi viaje<svg><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost magnetic" href="#destinos">Ver destinos</a>
+        </div>
+      </div>
+
+      <div class="chapter" data-ch="1">
+        <div class="chapter-eyebrow fade"><span class="label">Ascenso · FL120 → FL370</span></div>
+        <h2 data-split>Cada ruta, trazada a mano.</h2>
+        <p class="lead fade" style="--d:300">Un diseñador de viajes te acompaña desde la primera llamada hasta que vuelves a casa. Sin paquetes cerrados ni itinerarios de catálogo.</p>
+      </div>
+
+      <div class="chapter" data-ch="2">
+        <div class="chapter-eyebrow fade"><span class="label">Crucero · Rumbo al amanecer</span></div>
+        <h2 data-split>Tu próximo <span class="hl">amanecer</span> empieza aquí.</h2>
+        <div class="actions fade" style="--d:400">
+          <a class="btn magnetic" href="#destinos">Explorar destinos<svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+
+      <div class="hud hud-left" aria-hidden="true">
+        <div><span>ALT</span><b id="hud-alt">12.000 ft</b></div>
+        <div><span>GS</span><b id="hud-gs">310 kt</b></div>
+        <div><span>HDG</span><b id="hud-hdg">042°</b></div>
+        <div><span>POS</span><b id="hud-pos">40.47N 3.56W</b></div>
+      </div>
+      <div class="hud hud-right" aria-hidden="true">
+        <span id="hud-utc">UTC 00:00:00</span>
+        <div class="phase" id="phase"><span class="on">Despegue</span><span>Ascenso</span><span>Crucero</span></div>
+      </div>
+      <div class="scroll-cue" id="scroll-cue" aria-hidden="true"><div class="mouse"></div><span class="label">Desliza para despegar</span></div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+
+  <!-- A1 Destinos -->
+  <section class="section" id="destinos" aria-labelledby="destinos-title">
+    <div class="spot"></div>
+    <div class="wrap">
+      <header class="sec-head">
+        <div class="gate-tag" data-reveal><span class="code">A1</span><span class="label">Puerta A1 · Destinos</span></div>
+        <h2 id="destinos-title" data-reveal>Seis lugares que hemos recorrido a pie.</h2>
+        <p class="lede" data-reveal>Cada destino lo ha visitado alguien del equipo en los últimos 18 meses. Pasa el ratón por las tarjetas para ver el viaje que proponemos.</p>
+      </header>
+      <div class="dest-grid" id="dest-grid"></div>
+    </div>
+  </section>
+
+  <!-- A2 Rutas -->
+  <section class="section" id="rutas" aria-labelledby="rutas-title" style="padding-top:0">
+    <div class="wrap">
+      <header class="sec-head">
+        <div class="gate-tag" data-reveal><span class="code">A2</span><span class="label">Puerta A2 · Rutas desde Madrid</span></div>
+        <h2 id="rutas-title" data-reveal>El mundo, a una escala de distancia.</h2>
+        <p class="lede" data-reveal>Elige una ruta para centrar el globo. También puedes arrastrarlo para girarlo.</p>
+      </header>
+      <div class="routes">
+        <div class="route-list" id="route-list" role="list"></div>
+        <div class="globe-box" data-reveal>
+          <div class="globe-fallback"></div>
+          <canvas id="globe-canvas" aria-label="Globo con las rutas desde Madrid" data-cursor="Girar"></canvas>
+          <span class="globe-hint label">Arrastra para girar</span>
+          <div class="globe-readout" aria-live="polite">
+            <span class="label" id="ro-route">MAD → 6 destinos</span>
+            <strong id="ro-city">Madrid-Barajas</strong>
+            <span class="label" id="ro-data">40.47° N · 3.56° O</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A3 Salidas -->
+  <section class="section" id="salidas" aria-labelledby="salidas-title" style="padding-top:0">
+    <div class="wrap">
+      <header class="sec-head">
+        <div class="gate-tag" data-reveal><span class="code">A3</span><span class="label">Puerta A3 · Próximas salidas en grupo</span></div>
+        <h2 id="salidas-title" data-reveal>Salidas con plazas este trimestre.</h2>
+        <p class="lede" data-reveal>Grupos de 8 a 12 viajeros con diseñador acompañante. Pasa el ratón sobre una fila para actualizarla.</p>
+      </header>
+      <div class="board" data-reveal>
+        <div class="board-head">
+          <div class="board-title"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#i-plane"/></svg>Salidas</div>
+          <div class="board-clock" id="board-clock">MADRID 00:00</div>
+        </div>
+        <div class="board-scroll">
+          <div class="board-table" id="board-table" role="table" aria-label="Próximas salidas">
+            <div class="board-row head" role="row"><span role="columnheader">Fecha</span><span role="columnheader">Vuelo</span><span role="columnheader">Destino</span><span role="columnheader">IATA</span><span role="columnheader">Duración</span><span role="columnheader">Desde</span><span role="columnheader">Estado</span></div>
+          </div>
+        </div>
+        <div class="board-foot label"><span>Precios por persona en habitación doble, vuelos incluidos</span><span>Terminal Alisio · Madrid</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A4 Proceso -->
+  <section class="process" id="proceso" aria-labelledby="proceso-title">
+    <div class="process-stage">
+      <div class="wrap process-head">
+        <div style="display:grid;gap:18px">
+          <div class="gate-tag" style="display:flex;align-items:center;gap:14px"><span class="code">A4</span><span class="label">Puerta A4 · Cómo trabajamos</span></div>
+          <h2 id="proceso-title">De la primera llamada al regreso.</h2>
+        </div>
+        <div class="process-count" aria-hidden="true">Fase <b id="proc-num">1</b> / 5</div>
+      </div>
+      <div class="track-wrap">
+        <div class="track" id="track">
+          <article class="step"><div class="step-top"><span class="step-num">01</span><span class="label">Día 0</span></div><div><h3>Conversación</h3><p>Una llamada de 30 minutos con tu diseñador de viajes. Hablamos de ritmo, presupuesto y de lo que no quieres repetir.</p></div><div class="step-meta"><span>Duración</span><b>30 min</b></div></article>
+          <article class="step"><div class="step-top"><span class="step-num">02</span><span class="label">Día 1–3</span></div><div><h3>Propuesta a medida</h3><p>Recibes un itinerario con mapa, alojamientos elegidos uno a uno y alternativas para cada noche.</p></div><div class="step-meta"><span>Entrega</span><b>72 h</b></div></article>
+          <article class="step"><div class="step-top"><span class="step-num">03</span><span class="label">Semana 1</span></div><div><h3>Ajustes y reserva</h3><p>Cambiamos lo que haga falta hasta que encaje. Después reservamos vuelos, hoteles y guías con un único pago.</p></div><div class="step-meta"><span>Revisiones</span><b>Sin límite</b></div></article>
+          <article class="step"><div class="step-top"><span class="step-num">04</span><span class="label">En ruta</span></div><div><h3>Asistencia 24/7</h3><p>Una persona del equipo responde por WhatsApp a cualquier hora, en tu idioma y en tu zona horaria.</p></div><div class="step-meta"><span>Respuesta media</span><b>6 min</b></div></article>
+          <article class="step"><div class="step-top"><span class="step-num">05</span><span class="label">Al volver</span></div><div><h3>Regreso</h3><p>Repasamos el viaje contigo y guardamos tus preferencias, para que el siguiente empiece con ventaja.</p></div><div class="step-meta"><span>Siguiente viaje</span><b>Ya empezado</b></div></article>
+        </div>
+      </div>
+      <div class="path" aria-hidden="true"><span class="path-fill" id="path-fill"></span><svg class="path-plane" id="path-plane" viewBox="0 0 24 24" fill="currentColor"><use href="#i-plane"/></svg></div>
+    </div>
+  </section>
+
+  <!-- A5 Estilos -->
+  <section class="section" id="estilos" aria-labelledby="estilos-title">
+    <div class="spot"></div>
+    <div class="wrap">
+      <header class="sec-head">
+        <div class="gate-tag" data-reveal><span class="code">A5</span><span class="label">Puerta A5 · Estilos de viaje</span></div>
+        <h2 id="estilos-title" data-reveal>Viajes a tu ritmo, no al nuestro.</h2>
+        <p class="lede" data-reveal>Cinco formas de viajar que diseñamos cada semana. Pasa el ratón o toca un panel para abrirlo.</p>
+      </header>
+      <div class="styles" id="styles"></div>
+    </div>
+  </section>
+
+  <!-- Reserva -->
+  <section class="section" id="reservar" aria-labelledby="reservar-title" style="padding-top:0">
+    <div class="wrap">
+      <header class="sec-head">
+        <div class="gate-tag" data-reveal><span class="code">→</span><span class="label">Mostrador · Diseña tu viaje</span></div>
+        <h2 id="reservar-title" data-reveal>Cuéntanos a dónde. Te preparamos la tarjeta.</h2>
+        <p class="lede" data-reveal>Rellena el formulario y verás tu tarjeta de embarque cambiar en directo. La propuesta inicial es gratuita.</p>
+      </header>
+      <div class="booking">
+        <form class="form" id="form" novalidate>
+          <div class="field">
+            <label for="f-from">Salgo desde</label>
+            <select id="f-from" name="from">
+              <option value="MAD|Madrid">Madrid · MAD</option>
+              <option value="BCN|Barcelona">Barcelona · BCN</option>
+              <option value="VLC|Valencia">Valencia · VLC</option>
+              <option value="AGP|Málaga">Málaga · AGP</option>
+              <option value="SVQ|Sevilla">Sevilla · SVQ</option>
+              <option value="BIO|Bilbao">Bilbao · BIO</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-to">Quiero ir a</label>
+            <select id="f-to" name="to"></select>
+          </div>
+          <div class="field">
+            <label for="f-date">Fecha de salida</label>
+            <input id="f-date" name="date" type="date">
+          </div>
+          <div class="field">
+            <label for="f-pax">Viajeros</label>
+            <div class="stepper">
+              <button type="button" data-step="-1" aria-label="Quitar un viajero">−</button>
+              <input id="f-pax" name="pax" type="number" min="1" max="12" value="2" inputmode="numeric">
+              <button type="button" data-step="1" aria-label="Añadir un viajero">+</button>
+            </div>
+          </div>
+          <div class="field full">
+            <div class="range-head"><label for="f-nights">Noches</label><output id="o-nights" for="f-nights">10</output></div>
+            <input id="f-nights" name="nights" type="range" min="3" max="21" value="10">
+          </div>
+          <fieldset class="field full">
+            <legend>Estilo</legend>
+            <div class="chips" id="chips"></div>
+          </fieldset>
+          <div class="field">
+            <label for="f-name">Nombre y apellido</label>
+            <input id="f-name" name="name" type="text" autocomplete="name" placeholder="Lucía Romero">
+          </div>
+          <div class="field">
+            <label for="f-email">Correo electrónico</label>
+            <input id="f-email" name="email" type="email" autocomplete="email" placeholder="lucia@correo.com">
+          </div>
+          <p class="form-error" id="form-error" hidden></p>
+          <div class="form-foot">
+            <button class="btn magnetic" type="submit">Generar mi tarjeta<svg><use href="#i-arrow"/></svg></button>
+            <p class="form-note">Sin compromiso. Un diseñador revisa cada solicitud y responde en menos de 24 h laborables.</p>
+          </div>
+        </form>
+
+        <div class="pass-wrap">
+          <div class="pass" id="pass" data-cursor="Inclinar">
+            <div class="pass-top"><span class="brand"><svg style="width:24px;height:24px"><use href="#i-logo"/></svg>Alisio</span><span class="label">Tarjeta de embarque</span></div>
+            <div class="pass-main">
+              <div class="pass-route">
+                <div><div class="code" id="p-from">MAD</div><small id="p-from-city">Madrid</small></div>
+                <svg viewBox="0 0 24 24" fill="currentColor"><use href="#i-plane"/></svg>
+                <div class="to"><div class="code" id="p-to">KIX</div><small id="p-to-city">Kioto</small></div>
+              </div>
+              <dl class="pass-grid">
+                <div><dt>Pasajero</dt><dd id="p-name">Tu nombre</dd></div>
+                <div><dt>Salida</dt><dd id="p-date">—</dd></div>
+                <div><dt>Noches</dt><dd id="p-nights">10</dd></div>
+                <div><dt>Viajeros</dt><dd id="p-pax">2</dd></div>
+                <div><dt>Estilo</dt><dd id="p-style">Luna de miel</dd></div>
+                <div><dt>Puerta</dt><dd>A1</dd></div>
+              </dl>
+            </div>
+            <div class="pass-tear"></div>
+            <div class="pass-stub">
+              <canvas id="barcode" width="520" height="112" aria-hidden="true"></canvas>
+              <div class="seat"><span class="label" style="color:#6a7090">Asiento</span><b id="p-seat">2A</b></div>
+            </div>
+            <div class="stamp" id="stamp">Solicitud lista</div>
+            <div class="pass-sheen"></div>
+          </div>
+          <p class="pass-caption" id="pass-caption" aria-live="polite">Vista previa en directo de tu solicitud.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A6 FAQ -->
+  <section class="section" id="faq" aria-labelledby="faq-title" style="padding-top:0">
+    <div class="wrap faq">
+      <div style="display:grid;gap:18px;align-content:start">
+        <div class="gate-tag" style="display:flex;align-items:center;gap:14px" data-reveal><span class="code">A6</span><span class="label">Puerta A6 · Preguntas</span></div>
+        <h2 id="faq-title" data-reveal style="font-size:clamp(38px,4.6vw,64px)">Antes de despegar.</h2>
+      </div>
+      <div class="faq-list" data-reveal>
+        <details open><summary>¿Cuánto cuesta diseñar un viaje con Alisio?<i></i></summary><p>La propuesta inicial es gratuita. Si decides reservar, el honorario de diseño, desde 150 € por viaje, se descuenta del precio total.</p></details>
+        <details><summary>¿Con cuánta antelación debo escribiros?<i></i></summary><p>Para viajes de larga distancia, lo ideal son entre 3 y 6 meses. Para escapadas por Europa o el norte de África suelen bastar tres semanas.</p></details>
+        <details><summary>¿Qué pasa si surge un problema durante el viaje?<i></i></summary><p>Tienes un número de WhatsApp atendido por el equipo las 24 horas. Cambiamos vuelos, hoteles o traslados por ti y te avisamos cuando está resuelto.</p></details>
+        <details><summary>¿Los vuelos están incluidos?<i></i></summary><p>Sí, gestionamos vuelos, traslados, alojamiento, guías y actividades. Si ya tienes los vuelos, diseñamos el resto alrededor de tus horarios.</p></details>
+        <details><summary>¿Puedo cancelar o cambiar fechas?<i></i></summary><p>Las condiciones dependen de cada proveedor. Te las detallamos por escrito antes de cualquier pago y te recomendamos un seguro con cobertura de cancelación.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer" id="footer">
+  <div class="wrap">
+    <div class="footer-cta">
+      <h2 data-reveal>¿A dónde vamos esta vez?</h2>
+      <a class="btn magnetic" href="#reservar">Diseñar mi viaje<svg><use href="#i-arrow"/></svg></a>
+    </div>
+    <div class="wordmark" id="wordmark" aria-label="Alisio"><span>A</span><span>L</span><span>I</span><span>S</span><span>I</span><span>O</span></div>
+    <div class="footer-cols">
+      <div><h4>Escríbenos</h4><button class="copy-btn" id="copy-mail" type="button">hola@alisio.travel <small id="copy-label">Copiar</small></button></div>
+      <div><h4>Estudio</h4><ul><li>Madrid · lunes a viernes, 9–19 h</li><li>Asistencia en ruta 24/7</li></ul></div>
+      <div><h4>Explorar</h4><ul><li><a href="#destinos">Destinos</a></li><li><a href="#rutas">Rutas</a></li><li><a href="#salidas">Salidas en grupo</a></li><li><a href="#estilos">Estilos de viaje</a></li></ul></div>
+      <div><h4>Agencia</h4><ul><li><a href="#proceso">Cómo trabajamos</a></li><li><a href="#faq">Preguntas frecuentes</a></li><li><a href="#reservar">Solicitar propuesta</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 Alisio Viajes de Autor</span><span>Diseñado para volar · Hecho en Madrid</span></div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(() => {
+'use strict';
+/* ================= Utilidades ================= */
+const $ = (s, c = document) => c.querySelector(s);
+const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+const isSmall = () => innerWidth <= 900;
+const hasGSAP = !!(window.gsap && window.ScrollTrigger);
+const webglOK = (() => { try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'))); } catch (e) { return false; } })();
+const has3D = !!window.THREE && webglOK;
+if (!has3D) document.documentElement.classList.add('no-webgl');
+const D2R = Math.PI / 180;
+const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+function rng(seed) { let s = seed % 2147483647; if (s <= 0) s += 2147483646; return () => (s = s * 16807 % 2147483647, (s - 1) / 2147483646); }
+
+const pointer = { x: innerWidth / 2, y: innerHeight / 2, nx: 0, ny: 0 };
+addEventListener('pointermove', e => {
+  pointer.x = e.clientX; pointer.y = e.clientY;
+  pointer.nx = e.clientX / innerWidth * 2 - 1; pointer.ny = e.clientY / innerHeight * 2 - 1;
+}, { passive: true });
+
+/* ================= Datos ================= */
+const MAD = { code: 'MAD', city: 'Madrid', lat: 40.47, lon: -3.56 };
+const DESTS = [
+  { id: 'kyoto', city: 'Kioto', country: 'Japón', code: 'KIX', flight: '14 h 05 min', season: 'Mar–May', nights: 12, price: 3450, lat: 35.01, lon: 135.77, blurb: 'Templos al amanecer, ryokan con onsen privado y una ceremonia del té en Uji.' },
+  { id: 'santorini', city: 'Santorini', country: 'Grecia', code: 'JTR', flight: '4 h 10 min', season: 'May–Oct', nights: 7, price: 1290, lat: 36.39, lon: 25.46, blurb: 'Navegación por la caldera, catas de assyrtiko y atardeceres en Oia lejos de las multitudes.' },
+  { id: 'patagonia', city: 'Torres del Paine', country: 'Patagonia · Chile', code: 'PNT', flight: '17 h 30 min', season: 'Nov–Mar', nights: 14, price: 4180, lat: -50.94, lon: -72.99, blurb: 'El circuito W con guía privado y noches en lodge frente al macizo.' },
+  { id: 'marrakech', city: 'Marrakech', country: 'Marruecos', code: 'RAK', flight: '1 h 55 min', season: 'Oct–Abr', nights: 5, price: 690, lat: 31.63, lon: -7.99, blurb: 'Riad en la medina, cocina con una familia bereber y una noche bajo las estrellas en Agafay.' },
+  { id: 'iceland', city: 'Islandia', country: 'Costa sur · Snæfellsnes', code: 'KEF', flight: '4 h 00 min', season: 'Sep–Mar', nights: 8, price: 1840, lat: 64.15, lon: -21.94, blurb: 'Auroras boreales, glaciares a pie y cabañas lejos de cualquier contaminación lumínica.' },
+  { id: 'maldives', city: 'Maldivas', country: 'Atolón de Baa', code: 'MLE', flight: '13 h 40 min', season: 'Nov–Abr', nights: 9, price: 3960, lat: 4.18, lon: 73.51, blurb: 'Villa sobre el agua, snorkel con mantas en Hanifaru y cena en un banco de arena.' },
+];
+function haversine(a, b) {
+  const R = 6371, dLat = (b.lat - a.lat) * D2R, dLon = (b.lon - a.lon) * D2R;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * D2R) * Math.cos(b.lat * D2R) * Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+}
+DESTS.forEach(d => d.km = haversine(MAD, d));
+
+/* ================= Cargador ================= */
+const loader = $('#loader');
+const loaderPct = $('#loader-pct');
+const loaderPlane = $('#loader-plane');
+let pct = 0, loaderDone = false;
+const tStart = performance.now();
+const chapters = $$('.chapter');
+chapters[0].classList.remove('is-active');
+function finishLoader() {
+  if (loaderDone) return; loaderDone = true;
+  loader.classList.add('done');
+  if (lenis) lenis.start();
+  setTimeout(() => { chapters[0].classList.add('is-active'); }, 350);
+}
+function tickLoader() {
+  const target = document.readyState === 'complete' ? 100 : 82;
+  pct = Math.min(target, pct + (target - pct) * 0.06 + 0.35);
+  loaderPct.textContent = String(Math.round(pct)).padStart(3, '0');
+  loaderPlane.style.left = pct + '%';
+  if (pct >= 99.5 && performance.now() - tStart > (reduce ? 200 : 1300)) finishLoader();
+  else requestAnimationFrame(tickLoader);
+}
+requestAnimationFrame(tickLoader);
+setTimeout(finishLoader, 5500);
+
+/* ================= Texto partido en palabras ================= */
+$$('[data-split]').forEach(el => {
+  let i = 0;
+  const walk = node => {
+    [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.className = 'w';
+          const inner = document.createElement('span'); inner.textContent = part; inner.style.setProperty('--i', i++);
+          w.appendChild(inner); frag.appendChild(w);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1) walk(n);
+    });
+  };
+  walk(el);
+});
+
+/* ================= Scroll suave ================= */
+let lenis = null;
+if (window.Lenis && !reduce) {
+  lenis = new Lenis({ lerp: 0.085, smoothWheel: true });
+  lenis.stop();
+  if (hasGSAP) {
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(t => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+  } else {
+    const raf = t => { lenis.raf(t); requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
+  }
+}
+function scrollToEl(el) {
+  if (lenis) lenis.scrollTo(el, { offset: 0, duration: 1.8, easing: t => 1 - Math.pow(1 - t, 4) });
+  else el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const id = a.getAttribute('href').slice(1);
+  const el = id && document.getElementById(id);
+  if (!el) return;
+  e.preventDefault();
+  setMenu(false);
+  scrollToEl(el);
+});
+
+/* ================= Menú móvil ================= */
+const menuBtn = $('#menu-btn');
+function setMenu(open) {
+  document.documentElement.classList.toggle('menu-open', open);
+  menuBtn.setAttribute('aria-expanded', open);
+  menuBtn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  if (lenis) open ? lenis.stop() : lenis.start();
+}
+menuBtn.addEventListener('click', () => setMenu(!document.documentElement.classList.contains('menu-open')));
+addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+
+/* ================= Cursor ================= */
+const cursor = $('#cursor');
+if (finePointer && !reduce) {
+  document.documentElement.classList.add('has-cursor');
+  const dot = $('#cursor-dot'), ring = $('#cursor-ring'), label = $('#cursor-label');
+  let rx = pointer.x, ry = pointer.y;
+  const loop = () => {
+    dot.style.transform = `translate(${pointer.x}px,${pointer.y}px)`;
+    rx = lerp(rx, pointer.x, 0.17); ry = lerp(ry, pointer.y, 0.17);
+    ring.style.transform = `translate(${rx}px,${ry}px)`;
+    requestAnimationFrame(loop);
+  };
+  loop();
+  document.addEventListener('pointerover', e => {
+    const lab = e.target.closest('[data-cursor]');
+    const link = e.target.closest('a,button,summary,label,select,input');
+    cursor.classList.toggle('is-label', !!lab && !link);
+    cursor.classList.toggle('is-link', !!link);
+    if (lab) label.textContent = lab.dataset.cursor;
+  });
+  document.addEventListener('pointerleave', () => cursor.style.opacity = 0);
+  document.addEventListener('pointerenter', () => cursor.style.opacity = 1);
+}
+
+/* ================= Botones magnéticos ================= */
+if (finePointer && !reduce) {
+  $$('.magnetic').forEach(b => {
+    b.addEventListener('pointermove', e => {
+      const r = b.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+      b.style.transform = `translate(${dx * 0.25}px,${dy * 0.35}px)`;
+    });
+    b.addEventListener('pointerleave', () => b.style.transform = '');
+  });
+}
+
+/* ================= Foco de luz en secciones ================= */
+$$('.spot').forEach(s => {
+  const sec = s.parentElement;
+  sec.addEventListener('pointermove', e => {
+    const r = sec.getBoundingClientRect();
+    s.style.setProperty('--sx', (e.clientX - r.left) + 'px');
+    s.style.setProperty('--sy', (e.clientY - r.top) + 'px');
+  });
+});
+
+/* ================= Teletipo ================= */
+(() => {
+  const t = $('#ticker-track');
+  const item = d => `<span><i>MAD</i><svg viewBox="0 0 24 24" fill="currentColor"><use href="#i-plane"/></svg><b>${d.city}</b><i>${d.code} · ${fmt(d.km)} km</i></span>`;
+  const html = DESTS.map(item).join('');
+  t.innerHTML = html + html;
+})();
+
+/* ================= Escenas SVG de destinos ================= */
+function ridgeD(seed, base, amp, rough = 0.55, iters = 7) {
+  const r = rng(seed); let pts = [0, 0]; let disp = 1;
+  for (let k = 0; k < iters; k++) {
+    const n = [];
+    for (let i = 0; i < pts.length - 1; i++) n.push(pts[i], (pts[i] + pts[i + 1]) / 2 + (r() - .5) * disp);
+    n.push(pts[pts.length - 1]); pts = n; disp *= rough;
+  }
+  const mn = Math.min(...pts), mx = Math.max(...pts), N = pts.length - 1;
+  let d = 'M-20 560 ';
+  pts.forEach((v, i) => { d += `L${(-20 + i / N * 440).toFixed(1)} ${(base - (v - mn) / (mx - mn || 1) * amp).toFixed(1)} `; });
+  return d + 'L420 560Z';
+}
+const svg = (inner, defs = '') => `<svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>${defs}</defs>${inner}</svg>`;
+const lg = (id, stops, vertical = true) => `<linearGradient id="${id}" x1="0" y1="0" x2="${vertical ? 0 : 1}" y2="${vertical ? 1 : 0}">${stops.map((c, i) => `<stop offset="${i / (stops.length - 1)}" stop-color="${c}"/>`).join('')}</linearGradient>`;
+function stars(seed, n, maxY) { const r = rng(seed); let s = ''; for (let i = 0; i < n; i++) s += `<circle cx="${(r() * 400).toFixed(1)}" cy="${(r() * maxY).toFixed(1)}" r="${(r() * 1.1 + .3).toFixed(2)}" fill="#fff" opacity="${(r() * .7 + .2).toFixed(2)}"/>`; return s; }
+function palm(x, base, h, lean, color) {
+  const tx = x + lean, ty = base - h;
+  let s = `<path d="M${x} ${base} Q${x + lean * .2} ${base - h * .5} ${tx} ${ty}" stroke="${color}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  [[-46, 10], [-30, 26], [-8, 30], [20, 26], [44, 12], [36, -10], [-36, -8]].forEach(([dx, dy]) => {
+    s += `<path d="M${tx} ${ty} Q${tx + dx * .5} ${ty - 18 + (dy < 0 ? -6 : 0)} ${tx + dx} ${ty + dy}" stroke="${color}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  });
+  return s;
+}
+const SCENES = {
+  kyoto(id) {
+    const pagoda = (() => {
+      const c = '#25122f', cx = 230; let y = 420, w = 128, s = '';
+      for (let i = 0; i < 5; i++) {
+        const bh = 22 - i * 1.6, bw = w * .52;
+        s += `<rect x="${cx - bw / 2}" y="${y - bh}" width="${bw}" height="${bh}" fill="${c}"/>`; y -= bh;
+        s += `<path d="M${cx - w / 2 - 10} ${y - 4} Q${cx - w / 2 + 2} ${y + 1} ${cx - w / 2 + 10} ${y} L${cx + w / 2 - 10} ${y} Q${cx + w / 2 - 2} ${y + 1} ${cx + w / 2 + 10} ${y - 4} L${cx + bw / 2} ${y - 11} L${cx - bw / 2} ${y - 11}Z" fill="${c}"/>`;
+        y -= 11; w *= .85;
+      }
+      s += `<rect x="${cx - 1.5}" y="${y - 50}" width="3" height="50" fill="${c}"/>`;
+      for (let k = 0; k < 6; k++) s += `<ellipse cx="${cx}" cy="${y - 8 - k * 7}" rx="6" ry="1.8" fill="${c}"/>`;
+      return s;
+    })();
+    const torii = `<g fill="#3a0f1f"><rect x="34" y="330" width="12" height="190"/><rect x="128" y="330" width="12" height="190"/><rect x="20" y="352" width="134" height="9"/><path d="M6 318 Q87 330 168 318 L170 330 Q87 342 4 330Z"/></g>`;
+    return [
+      svg(`<rect width="400" height="500" fill="url(#${id}s)"/><circle cx="120" cy="250" r="64" fill="#ffe2c6" opacity=".95"/>`, lg(id + 's', ['#2a1a52', '#9a4c7a', '#f08a6a', '#ffc79a'])),
+      svg(`<path d="${ridgeD(11, 360, 90)}" fill="#7b4a7c" opacity=".85"/><path d="${ridgeD(12, 400, 60)}" fill="#5a2f63"/>`),
+      svg(`${pagoda}<path d="${ridgeD(13, 440, 30, .4)}" fill="#25122f"/>`),
+      svg(`${torii}<path d="${ridgeD(14, 500, 24, .5)}" fill="#140818"/>`),
+    ];
+  },
+  santorini(id) {
+    const r = rng(7); let houses = '';
+    for (let i = 0; i < 16; i++) {
+      const x = 150 + i * 16 + r() * 8, w = 18 + r() * 14, h = 16 + r() * 18, top = 300 - (x - 150) * .38 - r() * 10;
+      houses += `<rect x="${x}" y="${top - h}" width="${w}" height="${h + 40}" fill="#f6f2ea"/><rect x="${x + w * .65}" y="${top - h}" width="${w * .35}" height="${h + 40}" fill="#d9d2c4"/>`;
+      if (r() > .62) houses += `<path d="M${x + 2} ${top - h} a${w / 2 - 2} ${w / 2 - 2} 0 0 1 ${w - 4} 0Z" fill="#2457ad"/>`;
+      if (r() > .7) houses += `<rect x="${x + w * .3}" y="${top - h + 6}" width="4" height="6" fill="#2457ad"/>`;
+    }
+    return [
+      svg(`<rect width="400" height="500" fill="url(#${id}s)"/><circle cx="96" cy="140" r="36" fill="#fff8e6"/>`, lg(id + 's', ['#4f97de', '#a6d2f3', '#fbe5c9'])),
+      svg(`<rect y="300" width="400" height="200" fill="url(#${id}w)"/><path d="M0 330 Q120 316 240 330" stroke="#8fc3f0" stroke-width="2" fill="none" opacity=".6"/><path d="M-20 310 L40 296 L90 300 L120 310Z" fill="#7d93ad"/>`, lg(id + 'w', ['#2c6fb8', '#123e7a'])),
+      svg(`<path d="M120 520 L140 330 L200 300 L300 260 L420 230 L420 520Z" fill="#a8664d"/><path d="M120 520 L140 330 L200 300 L300 260 L420 230 L420 270 L300 300 L180 340 L150 520Z" fill="#c78a6c"/>${houses}`),
+      svg(`<path d="M-20 520 L-20 430 Q60 420 120 450 Q160 470 180 520Z" fill="#5b3326"/><path d="M0 470 Q30 460 70 470" stroke="#e8c2a8" stroke-width="2" fill="none" opacity=".4"/>`),
+    ];
+  },
+  patagonia(id) {
+    const towers = `M90 360 L120 250 L132 190 L140 168 L150 160 L158 180 L166 240 L180 200 L190 140 L198 126 L208 132 L216 190 L226 230 L240 170 L250 120 L258 108 L268 126 L276 200 L300 280 L330 360Z`;
+    return [
+      svg(`<rect width="400" height="500" fill="url(#${id}s)"/>`, lg(id + 's', ['#0f2747', '#3b6c99', '#e9b993', '#f6d3ae'])),
+      svg(`<path d="${ridgeD(21, 360, 110, .6)}" fill="#8aa6c4"/><path d="${ridgeD(22, 380, 70, .6)}" fill="#5c7a9c"/>`),
+      svg(`<path d="${towers}" fill="#2b3346"/><path d="M140 168 L150 160 L158 180 L150 176Z M198 126 L208 132 L212 150 L200 140Z M258 108 L268 126 L262 132 L254 118Z" fill="#f1f4fb"/><path d="M60 380 L120 330 L170 350 L230 320 L300 345 L360 330 L420 360 L420 400 L60 400Z" fill="#3c4a5e"/>`),
+      svg(`<rect y="395" width="400" height="125" fill="url(#${id}l)"/><path d="M-20 520 L-20 450 Q80 430 140 460 Q200 480 260 520Z" fill="#1d2a22"/><path d="M40 420 L120 420 M200 432 L300 432" stroke="#bdf2f2" stroke-width="2" opacity=".5"/>`, lg(id + 'l', ['#4cc1cc', '#1b6f86'])),
+    ];
+  },
+  marrakech(id) {
+    const c = '#3b1220';
+    let wall = `<rect x="-20" y="410" width="440" height="110" fill="${c}"/>`;
+    for (let x = -20; x < 420; x += 22) wall += `<rect x="${x}" y="398" width="12" height="14" fill="${c}"/>`;
+    const minaret = `<rect x="238" y="230" width="40" height="190" fill="${c}"/><rect x="248" y="196" width="20" height="36" fill="${c}"/>${[0, 1, 2, 3, 4].map(i => `<rect x="${236 + i * 9}" y="222" width="5" height="9" fill="${c}"/>`).join('')}<path d="M252 196 a6 6 0 0 1 12 0Z" fill="${c}"/><rect x="257" y="170" width="2" height="22" fill="${c}"/><circle cx="258" cy="182" r="3" fill="${c}"/><circle cx="258" cy="174" r="2.2" fill="${c}"/><path d="M250 270 v-12 a8 8 0 0 1 16 0 v12Z M250 320 v-12 a8 8 0 0 1 16 0 v12Z" fill="#e76a43" opacity=".7"/>`;
+    return [
+      svg(`<rect width="400" height="500" fill="url(#${id}s)"/><circle cx="150" cy="330" r="96" fill="#ffd38a" opacity=".95"/>`, lg(id + 's', ['#4a1830', '#b8473a', '#ef8a4e', '#ffbf7a'])),
+      svg(`<path d="${ridgeD(31, 380, 80, .5)}" fill="#8e3c3a" opacity=".85"/>`),
+      svg(`${minaret}${palm(110, 420, 120, -18, c)}${palm(330, 420, 100, 16, c)}`),
+      svg(`${wall}<path d="M-20 520 Q120 470 260 500 Q340 512 420 480 L420 520Z" fill="#22080f"/>`),
+    ];
+  },
+  iceland(id) {
+    const aur = (d, col, op) => `<path d="${d}" stroke="${col}" stroke-width="38" fill="none" opacity="${op}" filter="url(#${id}b)" stroke-linecap="round"/>`;
+    return [
+      svg(`<rect width="400" height="500" fill="url(#${id}s)"/>${stars(5, 90, 300)}${aur('M-30 170 C80 90 160 230 260 140 S400 120 440 90', '#5effb4', .55)}${aur('M-30 230 C90 170 200 260 300 190 S420 170 440 160', '#2fd3c0', .4)}${aur('M40 120 C120 60 220 140 320 80', '#b78bff', .25)}`, lg(id + 's', ['#02050f', '#081a33', '#11314d']) + `<filter id="${id}b" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>`),
+      svg(`<path d="${ridgeD(41, 380, 120, .55)}" fill="#0e1828"/><path d="M150 300 L170 285 L190 300 L178 298 L170 292 L162 300Z" fill="#cfe2f2" opacity=".7"/>`),
+      svg(`<path d="${ridgeD(42, 420, 40, .4)}" fill="#0a1220"/><g transform="translate(250 380)"><rect x="0" y="16" width="40" height="22" fill="#05080f"/><path d="M-4 18 L20 2 L44 18Z" fill="#05080f"/><rect x="2" y="0" width="10" height="20" fill="#05080f"/><path d="M0 2 L7 -10 L14 2Z" fill="#05080f"/><rect x="24" y="24" width="5" height="8" fill="#ffd38a"/></g>`),
+      svg(`<rect y="440" width="400" height="80" fill="#06101d"/><path d="M60 452 C120 448 160 456 220 452 M100 470 C160 466 220 474 300 470" stroke="#5effb4" stroke-width="3" opacity=".35" fill="none"/>`),
+    ];
+  },
+  maldives(id) {
+    let villas = '', pier = 'M30 392';
+    for (let i = 0; i < 6; i++) {
+      const s = 1 - i * .12, x = 70 + i * 52 * (1 - i * .05), y = 360 - i * 9, w = 46 * s, h = 18 * s;
+      pier += ` L${(x + w / 2).toFixed(1)} ${(y + 18 * s).toFixed(1)}`;
+      villas += `<g><rect x="${x}" y="${y - h}" width="${w}" height="${h}" fill="#6b4a33"/><path d="M${x - 6 * s} ${y - h} L${x + w / 2} ${y - h - 20 * s} L${x + w + 6 * s} ${y - h}Z" fill="#c9a26a"/><path d="M${x - 6 * s} ${y - h} L${x + w / 2} ${y - h - 20 * s} L${x + w / 2} ${y - h}Z" fill="#a8824e"/>${[0, .33, .66, 1].map(t => `<rect x="${x + t * (w - 2)}" y="${y}" width="2" height="${26 * s}" fill="#4a3324"/>`).join('')}</g>`;
+    }
+    villas = `<path d="${pier}" stroke="#5a3e2b" stroke-width="4" fill="none"/>` + villas;
+    return [
+      svg(`<rect width="400" height="500" fill="url(#${id}s)"/><circle cx="300" cy="120" r="34" fill="#fffbe9"/>`, lg(id + 's', ['#1979c2', '#73c8ec', '#ffeacb'])),
+      svg(`<rect y="300" width="400" height="200" fill="url(#${id}w)"/><path d="M-10 302 Q60 296 120 302" stroke="#e6fbff" stroke-width="2" opacity=".6" fill="none"/>`, lg(id + 'w', ['#3fd2d6', '#13a3c0', '#0a6b98'])),
+      svg(`${villas}<path d="M0 420 Q100 410 200 420 T400 420" stroke="#d9fbff" stroke-width="2" opacity=".5" fill="none"/>`),
+      svg(`<path d="M-20 520 L-20 462 Q80 448 180 470 Q300 498 420 466 L420 520Z" fill="#f2e3c4"/>${palm(40, 470, 170, 34, '#0b3a2e')}${palm(350, 480, 120, -22, '#0b3a2e')}`),
+    ];
+  },
+};
+
+/* ================= Tarjetas de destino ================= */
+(() => {
+  const grid = $('#dest-grid');
+  const depths = [6, 16, 28, 42];
+  grid.innerHTML = DESTS.map(d => `
+    <article class="card" data-cursor="Explorar" data-reveal>
+      <div class="card-inner">
+        <div class="card-scene">${SCENES[d.id](d.id).map((l, i) => `<div class="layer" style="--d:${depths[i]}">${l}</div>`).join('')}</div>
+        <div class="card-scrim"></div>
+        <div class="card-glare"></div>
+        <div class="card-top"><span class="iata">MAD → ${d.code}</span><span class="label">${d.flight}</span></div>
+        <div class="card-body">
+          <span class="country">${d.country}</span>
+          <h3>${d.city}</h3>
+          <p>${d.blurb}</p>
+          <dl class="card-meta"><div><dt>Temporada</dt><dd>${d.season}</dd></div><div><dt>Estancia</dt><dd>${d.nights} noches</dd></div><div><dt>Desde</dt><dd>${fmt(d.price)} €</dd></div></dl>
+          <button class="card-cta" type="button" data-book="${d.id}">Reservar este destino <svg style="width:16px;height:16px"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+    </article>`).join('');
+  if (!finePointer) return;
+  $$('.card', grid).forEach(card => {
+    const inner = $('.card-inner', card);
+    card.addEventListener('pointerenter', () => card.classList.add('hovering'));
+    card.addEventListener('pointermove', e => {
+      const r = inner.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      inner.style.setProperty('--rx', ((0.5 - py) * 14).toFixed(2) + 'deg');
+      inner.style.setProperty('--ry', ((px - 0.5) * 18).toFixed(2) + 'deg');
+      inner.style.setProperty('--px', ((px - 0.5) * 2).toFixed(3));
+      inner.style.setProperty('--py', ((py - 0.5) * 2).toFixed(3));
+      inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+      inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+    });
+    card.addEventListener('pointerleave', () => {
+      card.classList.remove('hovering');
+      ['--rx', '--ry', '--px', '--py'].forEach(p => inner.style.removeProperty(p));
+    });
+  });
+})();
+
+/* ================= Panel de salidas ================= */
+(() => {
+  const ROWS = [
+    ['14 NOV', 'AL 214', 'SANTORINI', 'JTR', '4H10', '1.290€', ['Embarcando', 'board-now']],
+    ['21 NOV', 'AL 390', 'MARRAKECH', 'RAK', '1H55', '690€', ['Plazas libres', 'ok']],
+    ['03 DIC', 'AL 608', 'REIKIAVIK', 'KEF', '4H00', '1.840€', ['Últimas 2', 'warn']],
+    ['12 ENE', 'AL 731', 'MALDIVAS', 'MLE', '13H40', '3.960€', ['Plazas libres', 'ok']],
+    ['28 MAR', 'AL 852', 'KIOTO', 'KIX', '14H05', '3.450€', ['Últimas 4', 'warn']],
+    ['09 FEB', 'AL 977', 'TORRES PAINE', 'PNT', '17H30', '4.180€', ['Plazas libres', 'ok']],
+  ];
+  const WIDTHS = [6, 6, 12, 3, 5, 6];
+  const CH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const table = $('#board-table');
+  const rows = ROWS.map(r => {
+    const row = document.createElement('div'); row.className = 'board-row'; row.setAttribute('role', 'row');
+    const cells = [];
+    r.slice(0, 6).forEach((txt, i) => {
+      const g = document.createElement('span'); g.className = 'flaps'; g.setAttribute('role', 'cell'); g.setAttribute('aria-label', txt);
+      const s = txt.padEnd(WIDTHS[i], ' ');
+      [...s].forEach(ch => { const f = document.createElement('span'); f.className = 'flap'; f.setAttribute('aria-hidden', 'true'); f.dataset.ch = ch; f.textContent = ch; g.appendChild(f); cells.push(f); });
+      row.appendChild(g);
+    });
+    const st = document.createElement('span'); st.setAttribute('role', 'cell');
+    st.innerHTML = `<span class="status ${r[6][1]}">${r[6][0]}</span>`;
+    row.appendChild(st);
+    table.appendChild(row);
+    return { row, cells };
+  });
+  function flapRow(cells, baseDelay = 0) {
+    cells.forEach((f, i) => {
+      const final = f.dataset.ch;
+      if (final === ' ' || reduce) { f.textContent = final; return; }
+      let n = 5 + Math.floor(Math.random() * 9);
+      const step = () => {
+        f.classList.remove('flip'); void f.offsetWidth; f.classList.add('flip');
+        f.textContent = n > 0 ? CH[Math.floor(Math.random() * CH.length)] : final;
+        if (n-- > 0) setTimeout(step, 55);
+      };
+      setTimeout(step, baseDelay + i * 18);
+    });
+  }
+  let seen = false;
+  new IntersectionObserver((ents, obs) => {
+    if (ents[0].isIntersecting && !seen) { seen = true; rows.forEach((r, i) => flapRow(r.cells, i * 160)); obs.disconnect(); }
+  }, { threshold: .25 }).observe(table);
+  rows.forEach(r => {
+    let last = 0;
+    r.row.addEventListener('pointerenter', () => { const now = Date.now(); if (now - last > 1200) { last = now; flapRow(r.cells); } });
+  });
+  setInterval(() => { if (seen && !document.hidden) flapRow(rows[Math.floor(Math.random() * rows.length)].cells); }, 6500);
+  const clock = $('#board-clock'), utc = $('#hud-utc');
+  const tick = () => {
+    const now = new Date();
+    try { clock.textContent = 'MADRID ' + now.toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch (e) { clock.textContent = now.toLocaleTimeString('es-ES'); }
+    utc.textContent = 'UTC ' + now.toISOString().slice(11, 19);
+  };
+  tick(); setInterval(tick, 1000);
+})();
+
+/* ================= Estilos de viaje ================= */
+(() => {
+  const STYLES = [
+    { name: 'Luna de miel', text: 'Dos personas, ningún horario. Villas con piscina privada, cenas preparadas para vosotros y días sin despertador.', ex: 'Ejemplo · 11 noches en Bali y Lombok · desde 4.600 €', c: ['#ff9a6a', '#7a2f62', '#1b1240'] },
+    { name: 'Aventura', text: 'Treks, kayak y noches de refugio con guías locales certificados. Exigente, pero siempre con red.', ex: 'Ejemplo · Circuito W en Patagonia · 9 noches', c: ['#7fd0c8', '#2d5d74', '#0b1a2c'] },
+    { name: 'Gastronomía', text: 'Mercados al amanecer, cocinas de casa y mesas que no salen en las guías. Reservas imposibles incluidas.', ex: 'Ejemplo · De Tokio a Kanazawa · 12 noches', c: ['#ffd09a', '#b8473a', '#2a0f1a'] },
+    { name: 'Familias', text: 'Ritmo pausado, habitaciones comunicadas y actividades pensadas para cada edad, de los 4 a los 74 años.', ex: 'Ejemplo · Costa Rica con niños · 10 noches', c: ['#b4e08a', '#3f7a52', '#0d2219'] },
+    { name: 'Expediciones', text: 'Antártida, Svalbard o Galápagos en barcos pequeños con naturalistas a bordo. Plazas muy limitadas.', ex: 'Ejemplo · Antártida desde Ushuaia · 11 noches', c: ['#cfe6ff', '#4b6fa8', '#0a1430'] },
+  ];
+  const box = $('#styles');
+  box.innerHTML = STYLES.map((s, i) => `
+    <article class="style${i === 0 ? ' open' : ''}" data-reveal>
+      <div class="style-bg"><canvas width="600" height="700" aria-hidden="true"></canvas></div>
+      <button class="style-toggle" type="button" aria-label="Abrir ${s.name}"></button>
+      <span class="style-v" aria-hidden="true">${s.name}</span>
+      <div class="style-content"><span class="label">0${i + 1} · Estilo</span><h3>${s.name}</h3><p>${s.text}</p><span class="label">${s.ex}</span></div>
+    </article>`).join('');
+  const arts = $$('.style', box);
+  arts.forEach((a, i) => {
+    const cv = $('canvas', a), g = cv.getContext('2d'), [c1, c2, c3] = STYLES[i].c, r = rng(100 + i);
+    const grd = g.createLinearGradient(0, 0, 0, 700); grd.addColorStop(0, c3); grd.addColorStop(.55, c2); grd.addColorStop(1, c1);
+    g.fillStyle = grd; g.fillRect(0, 0, 600, 700);
+    for (let k = 0; k < 7; k++) {
+      const x = r() * 600, y = r() * 700, rad = 120 + r() * 260;
+      const rg = g.createRadialGradient(x, y, 0, x, y, rad); rg.addColorStop(0, c1 + '88'); rg.addColorStop(1, c1 + '00');
+      g.fillStyle = rg; g.fillRect(0, 0, 600, 700);
+    }
+    g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 1.2;
+    for (let k = 0; k < 14; k++) {
+      g.beginPath(); const y0 = 250 + k * 34;
+      for (let x = 0; x <= 600; x += 10) g.lineTo(x, y0 + Math.sin(x * .012 + k * .7 + i) * (18 + k * 2));
+      g.stroke();
+    }
+    a.addEventListener('pointerenter', () => { if (finePointer) { arts.forEach(o => o.classList.remove('open')); a.classList.add('open'); } });
+    $('.style-toggle', a).addEventListener('click', () => { arts.forEach(o => o.classList.toggle('open', o === a)); });
+  });
+})();
+
+/* ================= Reserva + tarjeta de embarque ================= */
+(() => {
+  const form = $('#form'), to = $('#f-to'), chips = $('#chips');
+  to.innerHTML = DESTS.map(d => `<option value="${d.id}">${d.city} · ${d.code}</option>`).join('') + '<option value="surprise">Sorpréndeme · ???</option>';
+  ['Luna de miel', 'Aventura', 'Gastronomía', 'Familias', 'Expediciones'].forEach((s, i) => {
+    chips.insertAdjacentHTML('beforeend', `<input type="radio" name="style" id="st-${i}" value="${s}"${i === 0 ? ' checked' : ''}><label for="st-${i}">${s}</label>`);
+  });
+  const date = $('#f-date');
+  const d0 = new Date(); d0.setDate(d0.getDate() + 60);
+  date.value = d0.toISOString().slice(0, 10);
+  date.min = new Date().toISOString().slice(0, 10);
+  const el = id => document.getElementById(id);
+  const bc = el('barcode'), bg = bc.getContext('2d');
+  function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function barcode(seed) {
+    const r = rng(seed || 1); bg.clearRect(0, 0, bc.width, bc.height); bg.fillStyle = '#141a3b';
+    let x = 0; while (x < bc.width) { const w = 2 + Math.floor(r() * 7); if (r() > .42) bg.fillRect(x, 0, w, bc.height); x += w + 2 + Math.floor(r() * 4); }
+  }
+  function update() {
+    const [fc, fcity] = el('f-from').value.split('|');
+    const dest = DESTS.find(d => d.id === to.value);
+    const name = el('f-name').value.trim();
+    const pax = clamp(parseInt(el('f-pax').value, 10) || 1, 1, 12);
+    el('p-from').textContent = fc; el('p-from-city').textContent = fcity;
+    el('p-to').textContent = dest ? dest.code : '???'; el('p-to-city').textContent = dest ? dest.city : 'Destino sorpresa';
+    el('p-name').textContent = name || 'Tu nombre';
+    el('p-nights').textContent = el('f-nights').value; el('o-nights').textContent = el('f-nights').value;
+    el('p-pax').textContent = pax;
+    el('p-style').textContent = (form.querySelector('input[name=style]:checked') || {}).value || '—';
+    const dv = date.value ? new Date(date.value + 'T12:00:00') : null;
+    el('p-date').textContent = dv && !isNaN(dv) ? dv.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    const h = hash(name + to.value + date.value);
+    el('p-seat').textContent = (2 + h % 28) + 'ABCDEF'[h % 6];
+    barcode(h);
+    el('pass').classList.remove('stamped');
+  }
+  form.addEventListener('input', update);
+  form.addEventListener('change', update);
+  $$('.stepper button', form).forEach(b => b.addEventListener('click', () => {
+    const i = el('f-pax'); i.value = clamp((parseInt(i.value, 10) || 1) + +b.dataset.step, 1, 12); update();
+  }));
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-book]'); if (!b) return;
+    to.value = b.dataset.book; update(); scrollToEl($('#reservar'));
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const err = el('form-error'), name = el('f-name').value.trim(), email = el('f-email').value.trim();
+    const problems = [];
+    if (name.length < 2) problems.push('escribe tu nombre');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) problems.push('revisa el correo, falta la @ o el dominio');
+    if (problems.length) { err.hidden = false; err.textContent = 'Casi listo: ' + problems.join(' y ') + '.'; (name.length < 2 ? el('f-name') : el('f-email')).focus(); return; }
+    err.hidden = true;
+    el('pass').classList.add('stamped');
+    el('pass-caption').textContent = `Tarjeta generada para ${name}. En la web en producción, esta solicitud llega directamente al equipo de diseño.`;
+  });
+  // Inclinación 3D de la tarjeta
+  const pass = el('pass');
+  if (finePointer) {
+    pass.addEventListener('pointerenter', () => pass.classList.add('hovering'));
+    pass.addEventListener('pointermove', e => {
+      const r = pass.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      pass.style.setProperty('--rx', ((0.5 - py) * 16).toFixed(2) + 'deg');
+      pass.style.setProperty('--ry', ((px - 0.5) * 20).toFixed(2) + 'deg');
+      pass.style.setProperty('--sheen', (100 - px * 100).toFixed(1) + '%');
+    });
+    pass.addEventListener('pointerleave', () => { pass.classList.remove('hovering'); pass.style.removeProperty('--rx'); pass.style.removeProperty('--ry'); });
+  }
+  update();
+})();
+
+/* ================= Copiar correo ================= */
+$('#copy-mail').addEventListener('click', () => {
+  const lab = $('#copy-label'), txt = 'hola@alisio.travel';
+  const done = ok => { lab.textContent = ok ? 'Copiado' : 'Selecciona y copia'; setTimeout(() => lab.textContent = 'Copiar', 1800); };
+  try { navigator.clipboard.writeText(txt).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+});
+
+/* ================= Logotipo del pie ================= */
+(() => {
+  const wm = $('#wordmark'), letters = $$('span', wm);
+  if (!finePointer || reduce) return;
+  wm.parentElement.addEventListener('pointermove', e => {
+    letters.forEach(l => {
+      const r = l.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const dx = (e.clientX - cx) / innerWidth, dist = Math.hypot(e.clientX - cx, (e.clientY - cy) * .6);
+      const k = clamp(1 - dist / 420);
+      l.style.transform = `translateY(${-k * 40}px) rotateX(${k * 18}deg) rotateY(${dx * 30}deg)`;
+      l.style.color = k > .25 ? 'var(--dawn)' : '';
+    });
+  });
+  wm.parentElement.addEventListener('pointerleave', () => letters.forEach(l => { l.style.transform = ''; l.style.color = ''; }));
+})();
+
+/* ================= HERO 3D ================= */
+const hero = has3D ? initHero() : null;
+function initHero() {
+  const canvas = $('#hero-canvas'), stage = $('#hero-stage');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, isSmall() ? 1.5 : 1.75));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
+  scene.fog = new THREE.Fog(0x121a4a, 40, 380);
+
+  // Cielo
+  const skyU = {
+    top: { value: new THREE.Color() }, mid: { value: new THREE.Color() }, bot: { value: new THREE.Color() },
+    sunDir: { value: new THREE.Vector3(0.35, 0.07, -1).normalize() }, sunColor: { value: new THREE.Color() }, sunAmt: { value: 0 },
+  };
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), new THREE.ShaderMaterial({
+    uniforms: skyU, side: THREE.BackSide, depthWrite: false, fog: false,
+    vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: `uniform vec3 top; uniform vec3 mid; uniform vec3 bot; uniform vec3 sunColor; uniform vec3 sunDir; uniform float sunAmt; varying vec3 vDir;
+      void main(){ float h = vDir.y; vec3 c = h > 0.0 ? mix(mid, top, smoothstep(0.0, 0.5, h)) : mix(mid, bot, smoothstep(0.0, 0.3, -h));
+      float s = max(dot(normalize(vDir), normalize(sunDir)), 0.0);
+      c += sunColor * (pow(s, 6.0) * 0.5 + pow(s, 220.0) * 2.0) * sunAmt; gl_FragColor = vec4(c, 1.0); }`,
+  }));
+  sky.renderOrder = -2; scene.add(sky);
+
+  // Estrellas
+  const starGeo = new THREE.BufferGeometry(); const sp = [];
+  for (let i = 0; i < 1600; i++) { const th = Math.random() * Math.PI * 2, ph = Math.acos(Math.random() * 0.95); sp.push(800 * Math.sin(ph) * Math.cos(th), 800 * Math.cos(ph), 800 * Math.sin(ph) * Math.sin(th)); }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, fog: false, depthWrite: false });
+  const starsPts = new THREE.Points(starGeo, starMat); starsPts.renderOrder = -1; scene.add(starsPts);
+
+  // Nubes
+  function puff(seed) {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const r = rng(seed);
+    for (let i = 0; i < 26; i++) {
+      const x = 128 + (r() - .5) * 130, y = 140 + (r() - .5) * 70, rad = 30 + r() * 62;
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, 'rgba(255,255,255,.5)'); gr.addColorStop(.6, 'rgba(255,255,255,.18)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+    }
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  }
+  const cloudMats = [1, 2, 3].map(s => new THREE.SpriteMaterial({ map: puff(s * 31), transparent: true, depthWrite: false, fog: true, opacity: .92 }));
+  const clouds = []; const SPAN = 460;
+  const cr = rng(42);
+  const addCloud = (x, y, z, sc) => { const s = new THREE.Sprite(cloudMats[clouds.length % 3]); s.position.set(x, y, z); s.scale.set(sc, sc * .6, 1); scene.add(s); clouds.push(s); };
+  const nC = isSmall() ? 150 : 240;
+  for (let i = 0; i < nC; i++) {
+    let x, y;
+    do { x = (cr() - .5) * 120; y = (cr() - .5) * 34; } while (Math.abs(x + 5) < 10 && Math.abs(y) < 6);
+    addCloud(x, y, 40 - cr() * SPAN, 10 + cr() * 22);
+  }
+  for (let i = 0; i < (isSmall() ? 60 : 110); i++) addCloud((cr() - .5) * 320, -22 - cr() * 6, 40 - cr() * SPAN, 40 + cr() * 50);
+
+  // Avión
+  const plane = buildPlane(); scene.add(plane.group);
+
+  // Luces
+  const hemi = new THREE.HemisphereLight(0x9fb4ff, 0x20183a, 0.6); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 1); scene.add(sun); scene.add(sun.target);
+  const rim = new THREE.DirectionalLight(0x8db6ff, 0.7); scene.add(rim); scene.add(rim.target);
+
+  // Estelas
+  const N = 110;
+  const trailGeo = new THREE.BufferGeometry();
+  const tPos = new Float32Array(N * 2 * 3), tAge = new Float32Array(N * 2);
+  for (let i = 0; i < N; i++) { tAge[i] = tAge[N + i] = i / (N - 1); }
+  trailGeo.setAttribute('position', new THREE.BufferAttribute(tPos, 3));
+  trailGeo.setAttribute('aAge', new THREE.BufferAttribute(tAge, 1));
+  const trailU = { uScale: { value: 300 }, uOpacity: { value: 0 } };
+  const trail = new THREE.Points(trailGeo, new THREE.ShaderMaterial({
+    uniforms: trailU, transparent: true, depthWrite: false,
+    vertexShader: 'attribute float aAge; uniform float uScale; varying float vA; void main(){ vA = 1.0 - aAge; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = (0.25 + aAge * 1.4) * uScale / -mv.z; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'uniform float uOpacity; varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d) * vA * vA * uOpacity * 0.55; gl_FragColor = vec4(vec3(1.0), a); }',
+  }));
+  trail.frustumCulled = false; scene.add(trail);
+  let trailInit = false;
+
+  // Trayectoria de cámara relativa al avión
+  const camPath = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-6.8, 1.4, -9.8),
+    new THREE.Vector3(-15.5, 0.6, -1.5),
+    new THREE.Vector3(-6.4, 2.6, 9),
+    new THREE.Vector3(-1.6, 2.2, 14),
+    new THREE.Vector3(0, 3.2, 19),
+  ], false, 'catmullrom', 0.5);
+
+  const C = {
+    night: { top: '#03061a', mid: '#1a2258', bot: '#070b24', fog: '#121a4a', cloud: '#5a659e', sun: '#ff7a50', amt: .16, light: '#9fb2ff', li: .9 },
+    dawn: { top: '#16306f', mid: '#ff9f78', bot: '#2c2f6a', fog: '#c98a86', cloud: '#ffd8c4', sun: '#ffb070', amt: 1, light: '#ffc9a0', li: 1.7 },
+  };
+  const col = k => { const o = {}; for (const key of ['top', 'mid', 'bot', 'fog', 'cloud', 'sun', 'light']) o[key] = new THREE.Color(C.night[key]).lerp(new THREE.Color(C.dawn[key]), k); return o; };
+
+  let w = 0, h = 0;
+  function resize() {
+    w = stage.clientWidth; h = stage.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h;
+    camera.fov = w < h ? 58 : 42; camera.updateProjectionMatrix();
+    trailU.uScale.value = h * renderer.getPixelRatio() * 0.5;
+  }
+  resize(); addEventListener('resize', resize);
+
+  const tmp = new THREE.Vector3(), right = new THREE.Vector3(), target = new THREE.Vector3(), eL = new THREE.Vector3(), eR = new THREE.Vector3();
+  const sm = { x: 0, y: 0 };
+  let dist = 0, lastT = performance.now();
+
+  function update(p, t) {
+    const now = performance.now(), dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    const mx = finePointer ? pointer.nx : Math.sin(t * .4) * .35, my = finePointer ? pointer.ny : Math.cos(t * .3) * .2;
+    sm.x = lerp(sm.x, mx, 0.05); sm.y = lerp(sm.y, my, 0.05);
+    dist += dt * (reduce ? 4 : 16);
+    const k = smooth(0.1, 0.92, p);
+    const c = col(k);
+    skyU.top.value.copy(c.top); skyU.mid.value.copy(c.mid); skyU.bot.value.copy(c.bot);
+    skyU.sunColor.value.copy(c.sun); skyU.sunAmt.value = lerp(C.night.amt, C.dawn.amt, k);
+    scene.fog.color.copy(c.fog);
+    cloudMats.forEach(m => m.color.copy(c.cloud));
+    starMat.opacity = 1 - smooth(0.25, 0.75, p);
+
+    // Avión
+    const climb = smooth(0.78, 1, p);
+    const baseZ = -(dist + p * 320);
+    const g = plane.group;
+    const bank = Math.sin(clamp((p - .25) / .35) * Math.PI) * 0.45;
+    g.position.set(sm.x * 1.3, Math.sin(t * .8) * .25 - sm.y * .8 + climb * climb * 26, baseZ - climb * 30);
+    g.rotation.set(-sm.y * .14 + climb * .32 + Math.sin(t * .6) * .02, -sm.x * .25 + bank * .25, -sm.x * .42 - bank + Math.sin(t * .5) * .05);
+    plane.update(t);
+
+    // Cámara
+    camPath.getPoint(clamp(p), tmp);
+    tmp.x += sm.x * 1.6; tmp.y += -sm.y * 1.1;
+    camera.position.set(tmp.x, tmp.y + climb * climb * 26 * .35, baseZ + tmp.z);
+    target.copy(g.position); target.y += .3;
+    const shift = isSmall() ? 0 : lerp(3.4, 3.7, smooth(.12, .42, p)) * (1 - smooth(.56, .7, p)) + smooth(.64, .8, p) * 3.2 * (1 - climb * .5);
+    camera.lookAt(target);
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    target.addScaledVector(right, -shift);
+    if (isSmall()) target.y -= 3.6 * (1 - climb * .5);
+    camera.lookAt(target);
+    sky.position.copy(camera.position); starsPts.position.copy(camera.position);
+
+    // Luces
+    sun.color.copy(c.light); sun.intensity = lerp(C.night.li, C.dawn.li, k);
+    sun.position.set(g.position.x + lerp(-20, 25, k), g.position.y + lerp(40, 8, k), g.position.z + lerp(10, -60, k));
+    sun.target.position.copy(g.position);
+    rim.position.set(g.position.x + 10, g.position.y + 5, g.position.z + 30); rim.target.position.copy(g.position);
+    hemi.intensity = lerp(.55, .9, k);
+
+    // Nubes infinitas
+    for (const s of clouds) {
+      if (s.position.z - camera.position.z > 40) s.position.z -= SPAN;
+      else if (s.position.z - camera.position.z < 40 - SPAN) s.position.z += SPAN;
+    }
+
+    // Estelas
+    plane.engL.localToWorld(eL.set(0, 0, 0.8)); plane.engR.localToWorld(eR.set(0, 0, 0.8));
+    if (!trailInit) { for (let i = 0; i < N; i++) { tPos.set([eL.x, eL.y, eL.z], i * 3); tPos.set([eR.x, eR.y, eR.z], (N + i) * 3); } trailInit = true; }
+    tPos.copyWithin(3, 0, (N - 1) * 3); tPos.copyWithin((N + 1) * 3, N * 3, (2 * N - 1) * 3);
+    tPos[0] = eL.x; tPos[1] = eL.y; tPos[2] = eL.z;
+    tPos[N * 3] = eR.x; tPos[N * 3 + 1] = eR.y; tPos[N * 3 + 2] = eR.z;
+    trailGeo.attributes.position.needsUpdate = true;
+    trailU.uOpacity.value = smooth(0.4, 0.62, p);
+
+    renderer.render(scene, camera);
+  }
+  return { update };
+}
+
+function buildPlane() {
+  const group = new THREE.Group(); group.rotation.order = 'YXZ';
+  // Textura del fuselaje (u = contorno, v = longitud)
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
+  x.fillStyle = '#f3f5fb'; x.fillRect(0, 0, 1024, 1024);
+  const belly = x.createLinearGradient(0, 0, 1024, 0);
+  belly.addColorStop(0, 'rgba(30,40,90,0)'); belly.addColorStop(.4, 'rgba(30,40,90,0)'); belly.addColorStop(.5, 'rgba(30,40,90,.22)'); belly.addColorStop(.6, 'rgba(30,40,90,0)'); belly.addColorStop(1, 'rgba(30,40,90,0)');
+  x.fillStyle = belly; x.fillRect(0, 0, 1024, 1024);
+  const yv = v => (1 - v) * 1024;
+  // Líneas de librea bajo las ventanillas
+  [[256 + 18, 256 + 30], [768 - 30, 768 - 18]].forEach(([a, b]) => { x.fillStyle = '#ff9a6a'; x.fillRect(a, yv(.92), 9, yv(.06) - yv(.92)); x.fillStyle = '#1a2560'; x.fillRect(b, yv(.9), 6, yv(.06) - yv(.9)); });
+  // Ventanillas
+  x.fillStyle = '#1b2340';
+  for (let v = .2; v < .84; v += .0135) {
+    if (Math.abs(v - .47) < .02) continue;
+    x.beginPath(); x.ellipse(256 - 22, yv(v), 8, 3, 0, 0, 7); x.fill();
+    x.beginPath(); x.ellipse(768 + 22, yv(v), 8, 3, 0, 0, 7); x.fill();
+  }
+  // Puertas
+  x.strokeStyle = 'rgba(27,35,64,.45)'; x.lineWidth = 2;
+  [[.86], [.18]].forEach(([v]) => { x.strokeRect(256 - 38, yv(v) - 9, 30, 18); x.strokeRect(768 + 8, yv(v) - 9, 30, 18); });
+  // Cabina
+  x.fillStyle = '#121933';
+  x.beginPath(); x.moveTo(140, yv(.935)); x.lineTo(232, yv(.925)); x.lineTo(232, yv(.905)); x.lineTo(150, yv(.915)); x.fill();
+  x.beginPath(); x.moveTo(884, yv(.935)); x.lineTo(792, yv(.925)); x.lineTo(792, yv(.905)); x.lineTo(874, yv(.915)); x.fill();
+  x.beginPath(); x.moveTo(0, yv(.94)); x.lineTo(130, yv(.938)); x.lineTo(130, yv(.918)); x.lineTo(0, yv(.92)); x.fill();
+  x.beginPath(); x.moveTo(1024, yv(.94)); x.lineTo(894, yv(.938)); x.lineTo(894, yv(.918)); x.lineTo(1024, yv(.92)); x.fill();
+  // Rótulo
+  x.save(); x.fillStyle = '#1a2560'; x.font = '700 30px sans-serif';
+  x.translate(256 - 60, yv(.62)); x.rotate(-Math.PI / 2); x.fillText('ALISIO', 0, 0); x.restore();
+  x.save(); x.fillStyle = '#1a2560'; x.font = '700 30px sans-serif';
+  x.translate(768 + 60, yv(.52)); x.rotate(Math.PI / 2); x.fillText('ALISIO', 0, 0); x.restore();
+  const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+
+  const white = new THREE.MeshStandardMaterial({ color: 0xeef1f8, roughness: .38, metalness: .25 });
+  const body = new THREE.MeshStandardMaterial({ map: tex, roughness: .32, metalness: .2 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0xb8bfd0, roughness: .3, metalness: .75 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x0c1124, roughness: .6, metalness: .3 });
+  const navy = new THREE.MeshStandardMaterial({ color: 0x1a2560, roughness: .4, metalness: .2 });
+  const dawnM = new THREE.MeshStandardMaterial({ color: 0xff9a6a, roughness: .4, metalness: .1, emissive: 0x401608 });
+
+  // Fuselaje
+  const prof = [[0, -4.4], [.14, -4.25], [.3, -3.8], [.46, -2.9], [.55, -1.8], [.56, 0], [.56, 2.5], [.52, 3.2], [.42, 3.75], [.26, 4.12], [.1, 4.32], [0, 4.38]].map(([a, b]) => new THREE.Vector2(a, b));
+  const curve = new THREE.SplineCurve(prof);
+  const fus = new THREE.Mesh(new THREE.LatheGeometry(curve.getPoints(60), 48), body);
+  fus.rotation.x = -Math.PI / 2; group.add(fus);
+
+  // Alas
+  const wing = new THREE.Shape(); wing.moveTo(0, 1.0); wing.lineTo(4.7, -1.0); wing.lineTo(4.75, -1.38); wing.lineTo(0, -1.0); wing.closePath();
+  const wGeo = new THREE.ExtrudeGeometry(wing, { depth: .09, bevelEnabled: true, bevelThickness: .03, bevelSize: .03, bevelSegments: 2 }); wGeo.rotateX(-Math.PI / 2);
+  const mkWing = (side, light) => {
+    const m = new THREE.Mesh(wGeo, white); m.position.set(0, -.28, .45); m.scale.x = side; m.rotation.z = .06 * side;
+    const wl = new THREE.Mesh(new THREE.BoxGeometry(.05, .5, .38), white); wl.position.set(4.74, .22, 1.18); wl.rotation.z = -.25; m.add(wl);
+    const navL = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 10), new THREE.MeshBasicMaterial({ color: light })); navL.position.set(4.74, .48, 1.05); m.add(navL);
+    group.add(m); return m;
+  };
+  mkWing(1, 0x3dff9c); mkWing(-1, 0xff3b4a);
+
+  // Motores
+  const engGeo = new THREE.CylinderGeometry(.32, .27, 1.3, 32, 1, true); engGeo.rotateX(Math.PI / 2);
+  const mkEngine = side => {
+    const e = new THREE.Group(); e.position.set(1.75 * side, -.62, -.25);
+    const shell = new THREE.Mesh(engGeo, white); shell.material = white; e.add(shell);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(.31, .035, 10, 32), metal); lip.position.z = -.65; e.add(lip);
+    const fan = new THREE.Mesh(new THREE.CircleGeometry(.29, 24), dark); fan.position.z = -.6; fan.rotation.y = Math.PI; e.add(fan);
+    const spinner = new THREE.Mesh(new THREE.ConeGeometry(.09, .22, 16), metal); spinner.rotation.x = -Math.PI / 2; spinner.position.z = -.66; e.add(spinner);
+    const nozzle = new THREE.Mesh(new THREE.ConeGeometry(.18, .5, 20, 1, true), metal); nozzle.rotation.x = Math.PI / 2; nozzle.position.z = .85; e.add(nozzle);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(.323, .315, .12, 32, 1, true), dawnM); band.rotation.x = Math.PI / 2; band.position.z = -.25; e.add(band);
+    const pylon = new THREE.Mesh(new THREE.BoxGeometry(.07, .32, .8), white); pylon.position.set(0, .3, .15); e.add(pylon);
+    group.add(e); return e;
+  };
+  const engR = mkEngine(1), engL = mkEngine(-1);
+
+  // Deriva
+  const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(-1.75, 0); fin.lineTo(-2.25, 2.0); fin.lineTo(-1.6, 2.0); fin.closePath();
+  const fGeo = new THREE.ExtrudeGeometry(fin, { depth: .08, bevelEnabled: true, bevelThickness: .02, bevelSize: .02, bevelSegments: 1 });
+  fGeo.translate(0, 0, -.04); fGeo.rotateY(Math.PI / 2);
+  const finM = new THREE.Mesh(fGeo, navy); finM.position.set(0, .22, 2.45); group.add(finM);
+  [1, -1].forEach(s => {
+    const sunDisc = new THREE.Mesh(new THREE.CircleGeometry(.34, 32, 0, Math.PI), dawnM);
+    sunDisc.position.set(.075 * s, 1.0, 3.95); sunDisc.rotation.y = s * Math.PI / 2; group.add(sunDisc);
+  });
+  // Estabilizadores
+  const st = new THREE.Shape(); st.moveTo(0, .55); st.lineTo(1.9, -.35); st.lineTo(1.92, -.62); st.lineTo(0, -.45); st.closePath();
+  const sGeo = new THREE.ExtrudeGeometry(st, { depth: .05, bevelEnabled: true, bevelThickness: .015, bevelSize: .015, bevelSegments: 1 }); sGeo.rotateX(-Math.PI / 2);
+  [1, -1].forEach(s => { const m = new THREE.Mesh(sGeo, white); m.position.set(0, .05, 3.55); m.scale.x = s; m.rotation.z = .08 * s; group.add(m); });
+
+  // Luces estroboscópicas
+  const glowC = document.createElement('canvas'); glowC.width = glowC.height = 64; const gx = glowC.getContext('2d');
+  const gr = gx.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  gx.fillStyle = gr; gx.fillRect(0, 0, 64, 64);
+  const glowT = new THREE.CanvasTexture(glowC);
+  const strobes = [];
+  [[4.78, .1, 1.5, 0xffffff], [-4.78, .1, 1.5, 0xffffff], [0, 2.25, 4.45, 0xffffff], [0, -.58, .2, 0xff3b4a]].forEach(([a, b, cz, colr], i) => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, color: colr, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false }));
+    s.position.set(a, b, cz); s.scale.set(1.4, 1.4, 1); group.add(s); strobes.push([s, i]);
+  });
+  function update(t) {
+    strobes.forEach(([s, i]) => {
+      const ph = (t * (i === 3 ? 1.1 : 1) + i * .13) % 1.4;
+      const on = i === 3 ? (Math.sin(t * 6) > .6 ? 1 : 0) : (ph < .06 || (ph > .16 && ph < .22) ? 1 : 0);
+      s.material.opacity = on; s.scale.setScalar(on ? 1.6 : .01);
+    });
+  }
+  return { group, engL, engR, update };
+}
+
+/* ================= GLOBO ================= */
+const globe = has3D ? initGlobe() : null;
+function initGlobe() {
+  const canvas = $('#globe-canvas'), box = canvas.parentElement;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, .1, 100); camera.position.set(0, 0, 4.4);
+  const grp = new THREE.Group(); scene.add(grp);
+  const ll = (lat, lon, r = 1) => { const phi = (90 - lat) * D2R, th = (lon + 180) * D2R; return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(th), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(th)); };
+
+  grp.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.ShaderMaterial({
+    vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'varying vec3 vN; void main(){ float f = pow(1.0 - max(vN.z, 0.0), 2.6); vec3 c = mix(vec3(0.035,0.06,0.17), vec3(0.32,0.45,0.95), f); gl_FragColor = vec4(c, 1.0); }',
+  })));
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.16, 64, 48), new THREE.ShaderMaterial({
+    side: THREE.BackSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'varying vec3 vN; void main(){ float i = pow(0.68 - dot(vN, vec3(0.0,0.0,1.0)), 3.0); gl_FragColor = vec4(0.45,0.62,1.0,1.0) * i * 1.6; }',
+  })));
+
+  // Continentes (polígonos aproximados lon/lat)
+  const LAND = [
+    [[-165,65],[-160,71],[-140,70],[-120,71],[-100,69],[-85,70],[-80,64],[-70,62],[-60,56],[-55,50],[-65,45],[-70,42],[-75,38],[-76,35],[-81,31],[-80,26],[-83,29],[-90,30],[-97,27],[-97,22],[-94,18],[-88,16],[-84,11],[-79,9],[-82,8],[-86,12],[-92,15],[-105,20],[-110,24],[-112,30],[-117,33],[-121,36],[-124,41],[-124,47],[-130,54],[-140,60],[-150,60],[-158,57],[-165,60]],
+    [[-55,60],[-45,60],[-20,70],[-18,78],[-30,83],[-60,82],[-72,78],[-58,70]],
+    [[-79,9],[-72,12],[-62,11],[-52,5],[-50,0],[-44,-2],[-35,-5],[-35,-9],[-39,-15],[-41,-22],[-48,-26],[-53,-34],[-58,-38],[-62,-40],[-65,-45],[-68,-50],[-70,-55],[-74,-50],[-75,-42],[-73,-35],[-71,-25],[-70,-18],[-76,-14],[-81,-6],[-80,0],[-77,4],[-78,8]],
+    [[-10,36],[-9,43],[-2,44],[-5,48],[-2,49],[3,51],[8,54],[9,57],[5,59],[5,62],[12,66],[18,70],[28,71],[40,68],[45,68],[60,70],[70,73],[80,73],[100,77],[115,74],[130,72],[140,72],[160,70],[180,68],[180,65],[170,60],[162,56],[156,51],[155,57],[142,59],[137,54],[141,48],[132,43],[129,40],[126,38],[127,35],[122,38],[122,31],[120,25],[110,21],[108,18],[106,10],[103,10],[100,13],[99,8],[104,1],[101,3],[98,8],[98,16],[94,17],[92,22],[88,22],[80,15],[78,8],[73,17],[72,21],[67,25],[62,25],[57,26],[56,24],[59,22],[52,16],[44,12],[43,15],[39,22],[35,28],[34,31],[36,36],[30,37],[27,37],[26,40],[23,40],[22,37],[20,40],[19,42],[16,42],[18,40],[16,38],[12,41],[10,44],[8,44],[3,43],[3,42],[0,39],[-1,37],[-5,36]],
+    [[-5,50],[1,51],[2,53],[-2,56],[-3,58],[-6,58],[-5,55],[-3,54],[-5,52]],
+    [[-10,52],[-6,52],[-6,55],[-8,55]],
+    [[-17,21],[-16,28],[-10,30],[-6,36],[10,37],[11,33],[20,31],[25,32],[32,31],[34,28],[38,18],[43,12],[51,12],[48,5],[40,-2],[40,-10],[35,-20],[33,-26],[28,-33],[20,-35],[18,-30],[14,-22],[12,-13],[13,-6],[9,-1],[9,4],[5,6],[-2,5],[-8,4],[-13,8],[-17,14]],
+    [[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+    [[114,-22],[114,-34],[118,-35],[124,-34],[132,-32],[136,-35],[140,-38],[147,-38],[150,-36],[153,-30],[153,-25],[146,-18],[145,-14],[142,-11],[141,-15],[136,-12],[131,-11],[126,-14],[122,-18]],
+    [[130,31],[132,34],[136,35],[140,36],[141,39],[142,43],[145,44],[141,45],[140,41],[139,38],[137,37],[133,35],[130,34]],
+    [[109,1],[117,7],[119,1],[116,-4],[110,-3]],
+    [[95,5],[98,4],[106,-6],[102,-5]],
+    [[131,-1],[141,-3],[150,-10],[141,-9],[137,-5]],
+    [[172,-35],[178,-38],[174,-41],[168,-46],[166,-45],[172,-40]],
+    [[-24,64],[-14,64],[-13,66],[-22,66.5]],
+  ];
+  const inPoly = (x, y, poly) => { let ins = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins; } return ins; };
+  const dots = [];
+  for (let lat = -58; lat <= 82; lat += 1.3) {
+    const step = 1.3 / Math.max(.2, Math.cos(lat * D2R));
+    for (let lon = -180; lon < 180; lon += step) if (LAND.some(p => inPoly(lon, lat, p))) { const v = ll(lat, lon, 1.002); dots.push(v.x, v.y, v.z); }
+  }
+  const dGeo = new THREE.BufferGeometry(); dGeo.setAttribute('position', new THREE.Float32BufferAttribute(dots, 3));
+  const dMat = new THREE.PointsMaterial({ color: 0x9cbcff, size: .016, transparent: true, opacity: .9 });
+  grp.add(new THREE.Points(dGeo, dMat));
+
+  // Rutas
+  const glowC = document.createElement('canvas'); glowC.width = glowC.height = 64; const gx = glowC.getContext('2d');
+  const rg = gx.createRadialGradient(32, 32, 0, 32, 32, 32); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(.3, 'rgba(255,200,160,.6)'); rg.addColorStop(1, 'rgba(255,160,110,0)');
+  gx.fillStyle = rg; gx.fillRect(0, 0, 64, 64);
+  const glowT = new THREE.CanvasTexture(glowC);
+  const A = ll(MAD.lat, MAD.lon);
+  const madPin = new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffd09a })); madPin.position.copy(A); grp.add(madPin);
+  const SEG = 90;
+  const routes = DESTS.map((d, idx) => {
+    const B = ll(d.lat, d.lon), ang = A.angleTo(B), pts = [];
+    for (let i = 0; i <= SEG; i++) { const t = i / SEG; const v = new THREE.Vector3().copy(A).lerp(B, t).normalize(); v.multiplyScalar(1 + Math.sin(Math.PI * t) * (0.06 + ang * .14)); pts.push(v); }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: 0xff9a6a, transparent: true, opacity: .85 });
+    const line = new THREE.Line(geo, mat); grp.add(line);
+    const head = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false })); head.scale.set(.12, .12, 1); grp.add(head);
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(.018, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff })); pin.position.copy(B); grp.add(pin);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.03, .04, 32), new THREE.MeshBasicMaterial({ color: 0xff9a6a, transparent: true, side: THREE.DoubleSide }));
+    ring.position.copy(B).multiplyScalar(1.003); ring.lookAt(B.clone().multiplyScalar(2)); grp.add(ring);
+    return { d, pts, line, mat, head, ring, B, off: idx * .17 };
+  });
+
+  // Lista de rutas
+  const list = $('#route-list');
+  list.innerHTML = DESTS.map(d => `<button class="route" type="button" role="listitem" data-id="${d.id}"><span class="code">MAD → ${d.code}</span><span class="city">${d.city}</span><span class="km">${fmt(d.km)} km<br>${d.flight}</span></button>`).join('');
+  let focus = null;
+  const roRoute = $('#ro-route'), roCity = $('#ro-city'), roData = $('#ro-data');
+  function setFocus(id) {
+    focus = id ? routes.find(r => r.d.id === id) : null;
+    $$('.route', list).forEach(b => b.classList.toggle('active', b.dataset.id === id));
+    if (focus) { const d = focus.d; roRoute.textContent = `MAD → ${d.code}`; roCity.textContent = `${d.city}, ${d.country.split(' · ').pop()}`; roData.textContent = `${fmt(d.km)} km · ${d.flight}`; }
+    else { roRoute.textContent = 'MAD → 6 destinos'; roCity.textContent = 'Madrid-Barajas'; roData.textContent = '40.47° N · 3.56° O'; }
+  }
+  $$('.route', list).forEach(b => {
+    b.addEventListener('pointerenter', () => setFocus(b.dataset.id));
+    b.addEventListener('focus', () => setFocus(b.dataset.id));
+    b.addEventListener('click', () => setFocus(b.dataset.id));
+  });
+  list.addEventListener('pointerleave', () => setFocus(null));
+
+  // Arrastre
+  let drag = false, px = 0, py = 0, vy = 0, vx = 0;
+  canvas.addEventListener('pointerdown', e => { drag = true; px = e.clientX; py = e.clientY; canvas.setPointerCapture(e.pointerId); setFocus(null); });
+  canvas.addEventListener('pointermove', e => { if (!drag) return; vy = (e.clientX - px) * .006; vx = (e.clientY - py) * .004; grp.rotation.y += vy; grp.rotation.x = clamp(grp.rotation.x + vx, -.9, .9); px = e.clientX; py = e.clientY; });
+  const end = () => drag = false;
+  canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+  canvas.style.touchAction = 'pan-y';
+
+  grp.rotation.set(.45, Math.atan2(-A.x, A.z) - .6, 0);
+  let visible = false;
+  new IntersectionObserver(e => visible = e[0].isIntersecting, { rootMargin: '100px' }).observe(box);
+  function resize() { const s = box.clientWidth; renderer.setSize(s, s, false); camera.aspect = 1; camera.updateProjectionMatrix(); dMat.size = .016 * (s / 600) * 1.4 + .006; }
+  resize(); addEventListener('resize', resize);
+  const tmp = new THREE.Vector3();
+  function update(t) {
+    if (!visible) return;
+    if (focus) {
+      const mid = focus.pts[Math.floor(SEG / 2)];
+      const ty = Math.atan2(-mid.x, mid.z), tx = Math.asin(clamp(mid.y / mid.length(), -1, 1));
+      let dy = ty - grp.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      grp.rotation.y += dy * .06; grp.rotation.x += (tx - grp.rotation.x) * .06;
+    } else if (!drag) {
+      vy *= .95; vx *= .9;
+      grp.rotation.y += (reduce ? 0 : .0018) + vy * .5;
+    }
+    routes.forEach(r => {
+      const on = !focus || focus === r;
+      r.mat.opacity = lerp(r.mat.opacity, on ? .9 : .12, .1);
+      const prog = ((t * .22 + r.off) % 1.3);
+      const n = Math.floor(clamp(prog) * SEG);
+      r.line.geometry.setDrawRange(0, Math.max(2, focus === r ? SEG + 1 : n + 1));
+      const hp = r.pts[Math.min(SEG, n)]; r.head.position.copy(hp);
+      r.head.material.opacity = on && prog <= 1 ? 1 : 0;
+      const pulse = (t * .8 + r.off) % 1; r.ring.scale.setScalar(1 + pulse * 2.2); r.ring.material.opacity = (1 - pulse) * (on ? 1 : .2);
+    });
+    renderer.render(scene, camera);
+  }
+  return { update };
+}
+
+/* ================= Proceso horizontal ================= */
+const proc = $('#proceso'), track = $('#track'), steps = $$('.step', track);
+const procNum = $('#proc-num'), pathFill = $('#path-fill'), pathPlane = $('#path-plane');
+function updateProcess() {
+  if (isSmall()) return;
+  const r = proc.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > innerHeight) return;
+  const p = clamp(-r.top / (r.height - innerHeight));
+  const max = Math.max(0, track.scrollWidth - innerWidth);
+  const e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+  const pp = lerp(p, e, .4);
+  track.style.transform = `translate3d(${-pp * max}px,0,0)`;
+  const cx = innerWidth / 2; let best = 0, bestD = 1e9;
+  steps.forEach((s, i) => {
+    const b = s.getBoundingClientRect(), d = (b.left + b.width / 2 - cx) / innerWidth;
+    s.style.setProperty('--ry', (clamp(d, -1, 1) * -22).toFixed(2) + 'deg');
+    s.style.setProperty('--tz', (-Math.abs(d) * 140).toFixed(1) + 'px');
+    if (Math.abs(d) < bestD) { bestD = Math.abs(d); best = i; }
+  });
+  steps.forEach((s, i) => s.classList.toggle('near', i === best));
+  procNum.textContent = best + 1;
+  pathFill.style.transform = `scaleX(${pp})`;
+  pathPlane.style.left = (pp * 100) + '%';
+}
+
+/* ================= Navegación activa + progreso ================= */
+const topbar = $('#topbar'), flFill = $('#fl-fill'), flPlane = $('#fl-plane'), rail = $('#rail'), cue = $('#scroll-cue');
+const navLinks = $$('[data-sec]');
+const secIds = ['inicio', 'destinos', 'rutas', 'salidas', 'proceso', 'estilos', 'reservar', 'faq'];
+const secEls = secIds.map(id => document.getElementById(id));
+let currentSec = '';
+const heroEl = $('#inicio'), phaseEls = $$('#phase span');
+const hudAlt = $('#hud-alt'), hudGs = $('#hud-gs'), hudHdg = $('#hud-hdg'), hudPos = $('#hud-pos');
+let heroP = 0, heroPS = 0, activeCh = -1;
+function updateNav() {
+  const y = scrollY, max = document.documentElement.scrollHeight - innerHeight;
+  const p = clamp(y / max);
+  flFill.style.transform = `scaleX(${p})`;
+  flPlane.style.left = (p * 100) + '%';
+  topbar.classList.toggle('scrolled', y > innerHeight * .5);
+  let cur = 'inicio';
+  secEls.forEach((el, i) => { if (el && el.getBoundingClientRect().top <= innerHeight * .4) cur = secIds[i]; });
+  if (cur !== currentSec) {
+    currentSec = cur;
+    navLinks.forEach(a => a.classList.toggle('active', a.dataset.sec === cur));
+    rail.classList.toggle('on-hero', cur === 'inicio');
+  }
+}
+function updateHeroUI(p) {
+  const ch = !loaderDone ? 0 : p < .27 ? 0 : p < .64 ? 1 : 2;
+  if (ch !== activeCh && loaderDone) {
+    activeCh = ch;
+    chapters.forEach((c, i) => c.classList.toggle('is-active', i === ch));
+    phaseEls.forEach((s, i) => s.classList.toggle('on', i <= ch));
+  }
+  cue.style.opacity = p > .04 ? 0 : 1;
+  const alt = Math.round((12000 + smooth(0, .9, p) * 25000) / 100) * 100;
+  hudAlt.textContent = fmt(alt) + ' ft';
+  hudGs.textContent = Math.round(310 + smooth(0, .9, p) * 177) + ' kt';
+  hudHdg.textContent = String(Math.round(42 + p * 16 + pointer.nx * 6 + 360) % 360).padStart(3, '0') + '°';
+  hudPos.textContent = (40.47 + p * 2.1).toFixed(2) + 'N ' + (3.56 - p * 4.4 < 0 ? (Math.abs(3.56 - p * 4.4)).toFixed(2) + 'E' : (3.56 - p * 4.4).toFixed(2) + 'W');
+}
+
+/* ================= Revelados con GSAP ================= */
+if (hasGSAP && !reduce) {
+  gsap.registerPlugin(ScrollTrigger);
+  $$('[data-reveal]').forEach(el => {
+    gsap.from(el, { y: 60, opacity: 0, rotateX: el.classList.contains('card') ? -12 : 0, transformPerspective: 900, duration: 1.2, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+  });
+  gsap.utils.toArray('.ticker-track').forEach(t => {
+    ScrollTrigger.create({ trigger: t, start: 'top bottom', end: 'bottom top', onUpdate: self => gsap.to(t, { skewX: clamp(self.getVelocity() / -300, -8, 8), duration: .4, overwrite: true }) });
+  });
+}
+
+/* ================= Bucle principal ================= */
+const t0 = performance.now();
+function frame(now) {
+  const t = (now - t0) / 1000;
+  updateNav();
+  const hr = heroEl.getBoundingClientRect();
+  heroP = clamp(-hr.top / (hr.height - innerHeight));
+  heroPS = reduce ? heroP : lerp(heroPS, heroP, .09);
+  if (hr.bottom > 0) { updateHeroUI(heroPS); if (hero) hero.update(heroPS, t); }
+  updateProcess();
+  if (globe) globe.update(t);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
