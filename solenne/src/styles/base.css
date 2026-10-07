@@ -214,7 +214,7 @@ input, textarea { caret-color: var(--brass); accent-color: var(--brass); }
 [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
 [data-reveal='fade'] { transform: none; }
 [data-reveal='words'] { opacity: 1; transform: none; filter: none; }
-.w { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.12em; margin-bottom: -0.12em; }
+.w { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0.16em 0 0.12em; margin: -0.16em 0 -0.12em; }
 .w > span { display: inline-block; transform: translateY(112%); transition: transform 1.15s var(--ease-out); transition-delay: calc(var(--i, 0) * 55ms + var(--d, 0s)); }
 .is-in .w > span, .w.is-in > span { transform: none; }
 .no-js [data-reveal], .reduce [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }

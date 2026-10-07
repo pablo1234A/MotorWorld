@@ -1,7 +1,7 @@
 {
   "name": "solenne",
   "version": "1.0.0",
-  "description": "Solenne \u2014 immersive luxury real-estate experience (fictional brand)",
+  "description": "Solenne — immersive luxury real-estate experience (fictional brand)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -17,5 +17,8 @@
     "vite": "^8.3.3"
   },
   "private": true,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "vite-plugin-singlefile": "^2.3.3"
+  }
 }
