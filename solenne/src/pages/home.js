@@ -1,26 +1,12 @@
 import { VILLAS } from '../data/villas.js';
-import { STAGES } from '../world/shots.js';
 import { icon } from '../ui/icons.js';
-import { Tour } from '../ui/tour.js';
+import { Tour, tourLayers, SHOTS } from '../ui/tour.js';
 import { mountCatalog } from '../ui/catalog.js';
 import { mountViewingForm } from '../ui/form.js';
 import { counters, depthTiles, magnetic, reveals } from '../ui/fx.js';
 import { money, num } from '../ui/utils.js';
 
 const hero = VILLAS[0];
-
-const STAGE_COPY = [
-  { t: 'Villa Aurelia', b: '' },
-  { t: 'The approach', b: 'One road through the olive trees, and then the house arrives all at once: two long planes of travertine, and nothing between them but glass.' },
-  { t: 'The entrance', b: 'A screen of oak slats filters the light and keeps the sea a secret for three more steps.' },
-  { t: 'The salon', b: 'Six metres of glass, floor to ceiling. The Mediterranean is the only wall that matters.' },
-  { t: 'The kitchen', b: 'Honed stone, smoked oak, and a table that seats twelve beneath a staircase that seems to hover.' },
-  { t: 'The principal suite', b: 'At the top of the stair, a bed that faces the horizon and a ceiling lowered for sleep.' },
-  { t: 'The bathroom', b: 'A freestanding tub set against the glass: timber on one side, open sea on the other.' },
-  { t: 'The terrace', b: 'A covered balcony for the hours when the light is too good to leave.' },
-  { t: 'The pool', b: 'Twenty-four metres of still water that ends exactly where the sea begins.' },
-  { t: 'Villa Aurelia', b: 'Seven hundred and eighty square metres, five suites, one address. Marbella, Costa del Sol.', final: true },
-];
 
 export function homePage() {
   const el = document.createElement('main');
@@ -29,17 +15,14 @@ export function homePage() {
   el.innerHTML = `
     <section class="tour" id="experience" aria-label="Walkthrough of ${hero.name}">
       <div class="tour__pin">
-        <div class="tour__stills" aria-hidden="true">
-          ${[0, 2, 4, 6, 7, 10, 12, 13, 15, 16].map((n) => `<img class="still" src="assets/villas/tour/s${String(n).padStart(2, '0')}.webp" alt="" decoding="async" ${n === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>`).join('')}
-        </div>
-        <canvas class="tour__canvas" aria-hidden="true"></canvas>
-        <p class="sr">An animated walkthrough of Villa Aurelia, controlled by scrolling: exterior, approach, entrance, salon, kitchen, principal suite, bathroom, terrace, pool and the estate at night. Use the stage buttons or the skip link to move on.</p>
+        <div class="tour__shots" aria-hidden="true">${tourLayers()}</div>
+        <p class="sr">A photographic walkthrough of Villa Aurelia, controlled by scrolling: the exterior and approach, the salon, the kitchen, the pool and the estate from above. Use the stage buttons or the skip link to move on.</p>
         <div class="tour__vignette" aria-hidden="true"></div>
 
         <div class="tour__hero">
           <div class="tour__hero-main">
             <h1 class="display tour__title">Villa <em>Aurelia</em></h1>
-            <div class="tour__meta"><p class="tour__line">A house built around the horizon.</p><p class="tour__place">${icon.pin}<span>${hero.place}, ${hero.region}</span></p></div>
+            <div class="tour__meta"><p class="tour__line">An Andalusian house in a garden of palms.</p><p class="tour__place">${icon.pin}<span>${hero.place}, ${hero.region}</span></p></div>
             <div class="tour__cta">
               <a class="btn" href="#/villa/${hero.slug}" data-magnetic>View the residence <span class="btn__dot">${icon.arrowUR}</span></a>
               <button class="btn btn--ghost" type="button" data-go="1" data-magnetic>Begin the walkthrough</button>
@@ -53,7 +36,7 @@ export function homePage() {
         </div>
 
         <div class="tour__captions">
-          ${STAGE_COPY.map((c, i) => i === 0 ? '<div class="cap cap--empty" aria-hidden="true"></div>' : `
+          ${SHOTS.map((c, i) => i === 0 ? '<div class="cap cap--empty" aria-hidden="true"></div>' : `
             <div class="cap ${c.final ? 'cap--final' : ''}">
               <h2 class="display cap__title">${c.t}</h2>
               <p class="cap__body">${c.b}</p>
@@ -63,7 +46,7 @@ export function homePage() {
 
         <nav class="rail" aria-label="Walkthrough stages">
           <span class="rail__line"><i class="rail__fill"></i></span>
-          <ol>${STAGES.map((s, i) => `<li><button class="rail__dot ${i === 0 ? 'is-on' : ''}" type="button" aria-label="Go to ${s.label}"><span class="rail__label">${s.label}</span></button></li>`).join('')}</ol>
+          <ol>${SHOTS.map((s, i) => `<li><button class="rail__dot ${i === 0 ? 'is-on' : ''}" type="button" aria-label="Go to ${s.label}"><span class="rail__label">${s.label}</span></button></li>`).join('')}</ol>
         </nav>
 
         <div class="tour__hint" aria-hidden="true"><span>Scroll to walk through</span><i></i></div>

@@ -28,9 +28,11 @@ export function villaPage(slug) {
   if (!v) return null;
   const idx = VILLAS.indexOf(v);
   const next = VILLAS[(idx + 1) % VILLAS.length];
-  const galleryItems = [
-    { key: 'front', label: 'Arrival' }, ...GALLERY, { key: 'aerial', label: 'The estate' },
-  ];
+  const LABELS = { front: 'Arrival', living: 'Salon', kitchen: 'Kitchen', kitchen2: 'Kitchen island', pool: 'From above' };
+  const galleryItems = v.photos
+    ? v.photos.map((key) => ({ key, label: LABELS[key] || key }))
+    : [{ key: 'front', label: 'Arrival' }, ...GALLERY, { key: 'aerial', label: 'The estate' }];
+  const has = (key) => !v.photos || v.photos.includes(key) || key === 'hero';
 
   const el = document.createElement('main');
   el.id = 'main';
@@ -102,7 +104,7 @@ export function villaPage(slug) {
       </div>
     </section>
 
-    <section class="vtime" aria-labelledby="vt-h">
+    ${v.photos ? '' : `    <section class="vtime" aria-labelledby="vt-h">
       <div class="wrap">
         <div class="vtime__head">
           <h2 class="display" id="vt-h" data-reveal="words">One house, <em>three</em> lights</h2>
@@ -125,7 +127,7 @@ export function villaPage(slug) {
           <button type="button" class="vtime__stop" data-t="200" aria-label="Night">${icon.moon}<span>Night</span></button>
         </div>
       </div>
-    </section>
+    </section>`}
 
     <section class="vplan" aria-labelledby="vp-h">
       <div class="wrap vplan__grid">
@@ -353,6 +355,7 @@ export function villaPage(slug) {
       card.querySelector('.vplan__name').textContent = r.name;
       card.querySelector('.vplan__area').textContent = `≈ ${num(area)} m²`;
       card.querySelector('.vplan__note').textContent = r.note;
+      card.querySelector('.vplan__thumb').hidden = !has(r.shot);
       const src = `assets/villas/${v.slug}/${r.shot}-960.webp`;
       if (!thumb.src.endsWith(src)) {
         thumb.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' }).finished.then(() => { thumb.src = src; thumb.alt = `${r.name}`; thumb.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 700, easing: 'cubic-bezier(0.16,1,0.3,1)', fill: 'forwards' }); });
@@ -406,7 +409,7 @@ export function villaPage(slug) {
     mount() {
       mountViewingForm(q('#vf-host'), { slug: v.slug });
       offs.push(reveals(el), counters(el), magnetic(el), parallax(el), depthTiles(el));
-      gallery(); dayNight(); plan(); location();
+      gallery(); if (q('.vtime')) dayNight(); plan(); location();
     },
     destroy() { offs.forEach((f) => f?.()); offs.length = 0; },
   };

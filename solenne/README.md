@@ -19,7 +19,7 @@ npm run preview
 
 | Zona | Dónde | Qué hace |
 | --- | --- | --- |
-| Recorrido 3D | `src/ui/tour.js`, `src/world/*` | El scroll mueve la cámara por una ruta (exterior → entrada → salón → cocina → escalera → suite → baño → terraza → piscina → vista nocturna). Three.js, sin modelos descargados: la villa se genera por código. |
+| Recorrido | `src/ui/tour.js`, `src/data/tour.js` | Recorrido fotográfico de Villa Aurelia controlado por el scroll: movimientos de cámara (acercamientos, paneos, giro de dron) sobre fotos reales y transiciones de iris, barrido y revelado. Las tomas se definen en `src/data/tour.js`. |
 | Catálogo | `src/ui/catalog.js` | Búsqueda + ubicación + tipo + habitaciones + precio + superficie + orden. Animación FLIP al filtrar. |
 | Ficha de villa | `src/pages/villa.js` | Hero, cifras, galería horizontal por scroll + visor a pantalla completa, control Día / Atardecer / Noche, plano interactivo (2 plantas), mapa de distancias, formulario. |
 | Formulario | `src/ui/form.js` | Validación de nombre, email, teléfono, residencia, fecha y mensaje. **No hay backend**: confirma en pantalla y no envía nada. |
@@ -62,3 +62,9 @@ La skill `scroll-world` genera el recorrido con **vídeo** (Higgsfield / Seedanc
 seguido su arquitectura (escenario fijo, progreso suavizado, permanencia por escena, transición continua, respaldo
 móvil / reduced-motion) pero con **3D en tiempo real**, que es gratis y editable. Si más adelante quieres clips
 de vídeo, el `Tour` puede sustituirse por su motor sin tocar el resto.
+
+## Fotografías del recorrido
+
+Las fotos de Villa Aurelia (`public/assets/tour/`) las aportó el cliente y llevan la marca de agua de la agencia que las tomó. Antes de publicar la web hay que usar fotos propias o con licencia.
+
+`src/world/*` y `tools/render-all.mjs` siguen generando los renders 3D provisionales del resto de villas.

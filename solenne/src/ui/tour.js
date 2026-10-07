@@ -1,22 +1,19 @@
-import * as THREE from 'three';
-import { TOUR, STAGES } from '../world/shots.js';
+import { PHOTOS, SHOTS } from '../data/tour.js';
 import { clamp, coarse, damp, lerp, loop, reduced, smooth } from './utils.js';
 
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
 /**
- * Scroll-driven walkthrough.
+ * Scroll-driven photographic walkthrough.
  *
- * One pinned stage; the scroll position is the camera's position on a path through
- * the house. Time on each room is authored with `hold` values in shots.js: the camera
- * settles at a key and lingers (the copy peaks there), then accelerates to the next.
- *
- * Modes
- *   live    real-time WebGL world (default)
- *   stills  pre-rendered frames cross-faded in sequence (no WebGL, reduced motion, very slow GPUs)
+ * One pinned stage. The scroll position drives a virtual camera over real photographs:
+ * push-ins, pans and a slow drone roll, authored per shot in data/tour.js. When the
+ * photo changes, the outgoing frame keeps travelling forward while the next one
+ * dissolves in, so each cut reads as stepping into the next room.
  */
 
-const SEG_WEIGHT = [0.55, 0.5, 0.5, 0.55, 0.35, 0.3, 0.75, 0.65, 0.4, 0.4, 0.6, 0.35, 0.6, 0.55, 0.5, 0.55];
 const START_PAD = 0.035, END_PAD = 0.07;
-const STILL_KEYS = ['s00', 's02', 's04', 's06', 's07', 's10', 's12', 's13', 's15', 's16'];
+const DISSOLVE = 0.32;                 // overlap between photos, in shot-weight units
 
 const hermite = (t, m0, m1) => {
   const t2 = t * t, t3 = t2 * t;
@@ -24,185 +21,58 @@ const hermite = (t, m0, m1) => {
 };
 
 export class Tour {
-  constructor(root, { onReady, stillsBase }) {
+  constructor(root, { onReady }) {
     this.root = root;
-    this.pin = root.querySelector('.tour__pin');
-    this.canvas = root.querySelector('.tour__canvas');
     this.caps = [...root.querySelectorAll('.cap')];
     this.rail = [...root.querySelectorAll('.rail__dot')];
     this.heroEl = root.querySelector('.tour__hero');
     this.hint = root.querySelector('.tour__hint');
-    this.stills = [...root.querySelectorAll('.still')];
     this.fillBar = root.querySelector('.rail__fill');
     this.onReady = onReady;
-    this.stillsBase = stillsBase;
-    this.mode = 'live';
     this.progress = 0; this.target = 0;
     this.mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    this.visible = false;
+    this.visible = true;
     this.stage = 0;
     this.disposers = [];
+    this.calm = reduced();
 
-    const sum = SEG_WEIGHT.reduce((a, b) => a + b, 0);
-    let acc = 0;
-    this.cum = [0, ...SEG_WEIGHT.map((w) => (acc += w) / sum)];
-    this.stageAt = STAGES.map((s) => s.at);
+    // timeline in weight units
+    let t = 0;
+    this.shots = SHOTS.map((s, i) => { const a = t; t += s.w; return { ...s, i, a, b: t }; });
+    this.total = t;
+
+    // one layer per run of consecutive shots on the same photo
+    this.layers = [];
+    this.shots.forEach((s) => {
+      const last = this.layers[this.layers.length - 1];
+      if (last && last.photo === s.photo) { last.shots.push(s); last.B = s.b; }
+      else this.layers.push({ photo: s.photo, shots: [s], A: s.a, B: s.b });
+    });
+    this.layers.forEach((l) => { l.el = root.querySelector(`.shot[data-photo="${l.photo}"][data-run="${l.A}"]`); l.img = l.el?.querySelector('img'); });
   }
 
   async init() {
-    const wantStills = reduced() || !this.webglOK();
-    this.setLength(wantStills);
-    if (wantStills) { this.startStills(); return; }
-    try {
-      await this.startLive();
-    } catch (err) {
-      console.warn('[tour] WebGL unavailable, falling back to stills', err);
-      this.startStills();
-    }
-  }
-
-  webglOK() {
-    try {
-      const c = document.createElement('canvas');
-      return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
-    } catch { return false; }
-  }
-
-  /** Section height = pinned viewport + scroll distance. */
-  setLength(stills) {
-    const mobile = window.matchMedia('(max-width: 820px)').matches;
-    const vh = stills ? 0.8 * (STAGES.length - 1) + 0.6 : SEG_WEIGHT.reduce((a, b) => a + b, 0) * (mobile ? 0.95 : 1.1) + 0.5;
-    this.root.style.setProperty('--tour-scroll', `${vh * 100}dvh`);
-  }
-
-  /* ------------------------------------------------------------- live mode */
-
-  async startLive() {
-    const [{ World }, { VILLAS }] = await Promise.all([import('../world/world.js'), import('../data/villas.js')]);
-    const hero = VILLAS[0];
-    const weak = coarse() || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
-    this.quality = weak ? 'low' : 'high';
-    await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 30)));
-    this.world = new World(this.canvas, hero.render, { quality: this.quality, tod: 1 });
-    this.baseDpr = this.world.pixelRatioCap;
-    this.root.classList.add('is-live');
-
-    // camera path
-    const pts = (k) => TOUR.map((t) => new THREE.Vector3(...t[k]));
-    this.posCurve = new THREE.CatmullRomCurve3(pts('pos'), false, 'centripetal');
-    this.lookCurve = new THREE.CatmullRomCurve3(pts('look'), false, 'centripetal');
-
-    const resize = () => {
-      const r = this.canvas.getBoundingClientRect();
-      this.world.resize(Math.max(2, r.width), Math.max(2, r.height));
-      this.aspectFov();
-    };
-    const ro = new ResizeObserver(resize);
-    ro.observe(this.canvas);
-    this.disposers.push(() => ro.disconnect());
-
-    this.bindShared();
-    this.updateCamera(0, 0, true);
-    this.world.render(0.016);
-    this.world.render(0.016);
+    this.root.style.setProperty('--tour-scroll', `${this.total * (window.matchMedia('(max-width: 820px)').matches ? 0.95 : 1.1) * 100 + 50}dvh`);
+    const first = this.layers[0].img;
+    if (first && !first.complete) await new Promise((r) => { first.addEventListener('load', r, { once: true }); first.addEventListener('error', r, { once: true }); setTimeout(r, 4000); });
+    this.bind();
+    this.update(0, 0);
+    this.root.classList.add('is-ready');
     this.onReady?.();
-
-    const frameTimes = [];
-    const stop = loop((dt, t) => {
+    this.disposers.push(loop((dt, time) => {
       if (!this.visible || document.hidden) return;
-      this.progress = damp(this.progress, this.target, 7.5, dt);
-      if (Math.abs(this.progress - this.target) < 0.00005) this.progress = this.target;
-      this.mouse.x = damp(this.mouse.x, this.mouse.tx, 3.2, dt);
-      this.mouse.y = damp(this.mouse.y, this.mouse.ty, 3.2, dt);
-      this.updateCamera(this.progress, t);
-      this.world.render(dt);
-      this.updateUI(this.progress);
-      // adaptive resolution
-      frameTimes.push(dt); if (frameTimes.length > 50) frameTimes.shift();
-      if (frameTimes.length === 50) {
-        const avg = frameTimes.reduce((a, b) => a + b, 0) / 50;
-        const cap = this.world.pixelRatioCap;
-        if (avg > 1 / 40 && cap > 0.8) { this.world.pixelRatioCap = Math.max(0.8, cap - 0.2); resize(); frameTimes.length = 0; }
-        else if (avg < 1 / 62 && cap < this.baseDpr) { this.world.pixelRatioCap = Math.min(this.baseDpr, cap + 0.1); resize(); frameTimes.length = 0; }
-      }
-    });
-    this.disposers.push(stop);
-    this.disposers.push(() => this.world.dispose());
+      this.progress = damp(this.progress, this.target, 6.5, dt);
+      if (Math.abs(this.progress - this.target) < 0.00002) this.progress = this.target;
+      this.mouse.x = damp(this.mouse.x, this.mouse.tx, 2.6, dt);
+      this.mouse.y = damp(this.mouse.y, this.mouse.ty, 2.6, dt);
+      this.update(this.progress, time);
+    }));
   }
 
-  aspectFov() {
-    // keep horizontal coverage constant when the viewport is narrower than 16:9
-    this.aspectScale = this.world.camera.aspect;
-  }
-
-  /** Map overall scroll progress to a fractional keyframe index and the eased position along the path. */
-  mapProgress(p) {
-    const q = clamp((p - START_PAD) / (1 - START_PAD - END_PAD));
-    let i = 0;
-    while (i < this.cum.length - 2 && q >= this.cum[i + 1]) i++;
-    const f = clamp((q - this.cum[i]) / (this.cum[i + 1] - this.cum[i]));
-    const hA = TOUR[i].hold, hB = TOUR[i + 1].hold;
-    const e = clamp(hermite(f, 1 - 0.92 * hA, 1 - 0.92 * hB), 0, 1);
-    return { i, e, u: i + e };
-  }
-
-  updateCamera(p, time, first = false) {
-    const { i, e, u } = this.mapProgress(p);
-    const n = TOUR.length - 1;
-    const t = clamp(u / n);
-    const w = this.world;
-    const pos = this.posCurve.getPoint(t), look = this.lookCurve.getPoint(t);
-    const a = TOUR[i], b = TOUR[Math.min(i + 1, n)];
-    let fov = lerp(a.fov, b.fov, e);
-    const tod = lerp(a.tod, b.tod, e);
-
-    // living breath at the very start, so the opening frame is never static
-    const idle = 1 - smooth(0, 0.05, p);
-    pos.x += Math.sin(time * 0.35) * 0.9 * idle; pos.y += Math.sin(time * 0.5) * 0.25 * idle;
-
-    // pointer parallax: shift the look target a little, scaled by distance
-    const dist = pos.distanceTo(look);
-    const fwd = look.clone().sub(pos).normalize();
-    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
-    const k = dist * 0.035;
-    look.addScaledVector(right, this.mouse.x * k).addScaledVector(new THREE.Vector3(0, 1, 0), -this.mouse.y * k * 0.55);
-    pos.addScaledVector(right, this.mouse.x * k * 0.35);
-
-    // narrower than 16:9 → widen vertical fov so the same width stays in frame
-    const asp = w.camera.aspect;
-    if (asp < 16 / 9) {
-      const fh = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(fov) / 2) * (16 / 9));
-      fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(fh / 2) / asp));
-      fov = Math.min(fov, 88);
-    }
-    w.setCamera([pos.x, pos.y, pos.z], [look.x, look.y, look.z], fov);
-    // portrait: lift the subject into the upper part of the frame, clear of the copy
-    const { w: cw, h: ch } = w.size;
-    if (asp < 0.9) w.camera.setViewOffset(cw, ch, 0, ch * 0.16, cw, ch);
-    else if (w.camera.view?.enabled) w.camera.clearViewOffset();
-    if (first || Math.abs(tod - (this._tod ?? -9)) > 0.004) { this._tod = tod; w.setTimeOfDay(tod); }
-    this.u = u;
-  }
-
-  /* ------------------------------------------------------------ stills mode */
-
-  startStills() {
-    this.mode = 'stills';
-    this.root.classList.add('is-stills');
-    this.bindShared();
-    this.onReady?.();
-    const upd = () => { this.progress = this.target; this.updateUI(this.progress); };
-    this.disposers.push(loop(() => { if (this.visible) { this.progress = damp(this.progress, this.target, 9, 1 / 60); this.updateUI(this.progress); } }));
-    upd();
-  }
-
-  /* ------------------------------------------------------------- shared UI */
-
-  bindShared() {
+  bind() {
     const onScroll = () => {
       const r = this.root.getBoundingClientRect();
-      const range = Math.max(1, r.height - innerHeight);
-      this.target = clamp(-r.top / range);
+      this.target = clamp(-r.top / Math.max(1, r.height - innerHeight));
     };
     onScroll();
     addEventListener('scroll', onScroll, { passive: true });
@@ -213,34 +83,91 @@ export class Tour {
     io.observe(this.root);
     this.disposers.push(() => io.disconnect());
 
-    if (!coarse()) {
+    if (!coarse() && !this.calm) {
       const mv = (e) => { this.mouse.tx = (e.clientX / innerWidth - 0.5) * 2; this.mouse.ty = (e.clientY / innerHeight - 0.5) * 2; };
       addEventListener('pointermove', mv);
       this.disposers.push(() => removeEventListener('pointermove', mv));
     }
-
     this.rail.forEach((d, i) => d.addEventListener('click', () => this.goTo(i)));
-    this.jumpTop = this.root.querySelector('[data-skip]');
   }
 
-  /** Continuous stage index (0…STAGES-1) for the given overall progress. */
-  stageIndex(p) {
-    if (this.mode === 'live') {
-      const u = this.mapProgress(p).u, at = this.stageAt;
-      if (u <= at[0]) return 0;
-      for (let s = 0; s < at.length - 1; s++) if (u < at[s + 1]) return s + (u - at[s]) / (at[s + 1] - at[s]);
-      return at.length - 1;
+  /** Scroll progress → position on the shot timeline. */
+  tau(p) { return clamp((p - START_PAD) / (1 - START_PAD - END_PAD)) * this.total; }
+
+  /** Camera state of a shot at local fraction f, eased so held shots settle. */
+  pose(s, f) {
+    const prev = this.shots[s.i - 1], next = this.shots[s.i + 1];
+    const m0 = prev && prev.photo === s.photo ? 1 - 0.85 * Math.min(prev.hold ?? 0, s.hold) : 1 - 0.85 * s.hold;
+    const m1 = next && next.photo === s.photo ? 1 - 0.85 * Math.min(next.hold ?? 0, s.hold) : 1 - 0.6 * s.hold;
+    const e = clamp(hermite(f, m0, m1));
+    return {
+      s: lerp(s.from.s, s.to.s, e),
+      ox: lerp(s.from.o[0], s.to.o[0], e), oy: lerp(s.from.o[1], s.to.o[1], e),
+      r: lerp(s.from.r || 0, s.to.r || 0, e),
+    };
+  }
+
+  update(p, time) {
+    const T = this.tau(p);
+    const idle = 1 - smooth(0, 0.04, p);
+
+    this.layers.forEach((l, li) => {
+      if (!l.el) return;
+      let pose;
+      if (T <= l.A) pose = this.pose(l.shots[0], 0);
+      else if (T >= l.B) {
+        // keep travelling after our last shot so the dissolve feels like forward motion
+        const s = l.shots[l.shots.length - 1];
+        pose = this.pose(s, 1);
+        const over = clamp((T - l.B) / DISSOLVE);
+        pose.s *= 1 + over * 0.14;
+      } else {
+        const s = l.shots.find((x) => T >= x.a && T < x.b) || l.shots[0];
+        pose = this.pose(s, (T - s.a) / (s.b - s.a));
+      }
+      // transition in: 0 → 1 across the overlap with the previous photo
+      const f = li === 0 ? 1 : easeInOut(clamp((T - (l.A - DISSOLVE * 0.5)) / DISSOLVE));
+      const nextL = this.layers[li + 1];
+      const covered = nextL && T > nextL.A + DISSOLVE * 0.5;
+      const hidden = f <= 0.0005 || covered;
+      if (l.hidden !== hidden) { l.hidden = hidden; l.el.style.visibility = hidden ? 'hidden' : 'visible'; }
+      if (hidden) return;
+      const enter = PHOTOS[l.photo].enter;
+      if (this.calm || !enter) { l.el.style.opacity = f.toFixed(3); l.el.style.clipPath = ''; }
+      else {
+        l.el.style.opacity = '1';
+        l.el.style.clipPath = f >= 1 ? 'none'
+          : enter === 'iris' ? `circle(${(f * 78).toFixed(2)}% at ${(pose.ox * 100).toFixed(1)}% ${(pose.oy * 100).toFixed(1)}%)`
+          : enter === 'right' ? `inset(0 0 0 ${((1 - f) * 100).toFixed(2)}%)`
+          : `inset(0 0 ${((1 - f) * 100).toFixed(2)}% 0)`;
+        pose.s *= 1 + (1 - f) * 0.1;
+      }
+
+      let { s, ox, oy, r } = pose;
+      if (this.calm) { s = 1.02; r = 0; }
+      // living frame: breathing at rest, and a hand-held drift toward the pointer
+      s += Math.sin(time * 0.4) * 0.006 * idle;
+      const px = -this.mouse.x * 9, py = -this.mouse.y * 6;
+      l.img.style.transformOrigin = `${(ox * 100).toFixed(2)}% ${(oy * 100).toFixed(2)}%`;
+      l.img.style.transform = `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0) scale(${s.toFixed(4)}) rotate(${r.toFixed(3)}deg)`;
+    });
+
+    // which shot is speaking: s = i at the middle of shot i
+    const k = this.shots.findIndex((x) => T >= x.a && T < x.b);
+    const cur = k < 0 ? this.shots.length - 1 : k;
+    const sh = this.shots[cur];
+    const st = cur - 0.5 + clamp((T - sh.a) / (sh.b - sh.a));
+    const sIdx = k < 0 ? this.shots.length - 1 : st;
+    this.updateUI(p, sIdx, cur);
+  }
+
+  updateUI(p, s, cur) {
+    if (cur !== this.stage) {
+      this.stage = cur;
+      this.rail.forEach((d, i) => { d.classList.toggle('is-on', i === cur); if (i === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
     }
-    const q = clamp((p - 0.02) / 0.96);
-    return q * (STAGES.length - 1);
-  }
-
-  updateUI(p) {
-    const s = this.stageIndex(p);
-    const near = Math.round(s);
-    if (near !== this.stage) { this.stage = near; this.rail.forEach((d, i) => { d.classList.toggle('is-on', i === near); if (i === near) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); }); }
     this.caps.forEach((c, i) => {
-      const a = 1 - smooth(0.16, 0.44, Math.abs(s - i));
+      const a = i === this.caps.length - 1 && s >= i ? 1 : 1 - smooth(0.18, 0.46, Math.abs(s - i));
       c.style.opacity = a.toFixed(3);
       c.style.transform = `translate3d(0, ${((1 - a) * (s > i ? -26 : 26)).toFixed(1)}px, 0)`;
       c.style.visibility = a < 0.01 ? 'hidden' : 'visible';
@@ -254,32 +181,35 @@ export class Tour {
       this.heroEl.inert = heroA < 0.5;
     }
     if (this.hint) this.hint.style.opacity = (1 - smooth(0.004, 0.03, p)).toFixed(2);
-    if (this.fillBar) this.fillBar.style.transform = `scaleY(${clamp(s / (STAGES.length - 1)).toFixed(4)})`;
-    if (this.mode === 'stills') {
-      this.stills.forEach((im, i) => {
-        const a = 1 - smooth(0, 1, Math.abs(s - i));
-        im.style.opacity = a.toFixed(3);
-        im.style.transform = `scale(${(1.04 + (s - i) * 0.035).toFixed(4)})`;
-      });
-    }
+    if (this.fillBar) this.fillBar.style.transform = `scaleY(${clamp(this.tau(p) / this.total).toFixed(4)})`;
     this.root.style.setProperty('--p', p.toFixed(4));
   }
 
-  /** Scroll so that the given stage index is centred. */
-  goTo(stageIdx) {
+  /** Scroll to the middle of a shot (the first and last to their rest frame). */
+  goTo(i) {
+    const s = this.shots[i];
+    const t = i === 0 ? 0 : i === this.shots.length - 1 ? this.total : (s.a + s.b) / 2;
+    const p = START_PAD + (t / this.total) * (1 - START_PAD - END_PAD);
     const r = this.root.getBoundingClientRect();
-    const range = r.height - innerHeight;
-    let p;
-    if (this.mode === 'live') {
-      const q = this.cum[this.stageAt[stageIdx]];
-      p = START_PAD + q * (1 - START_PAD - END_PAD);
-    } else p = 0.02 + (stageIdx / (STAGES.length - 1)) * 0.96;
-    const y = window.scrollY + r.top + p * range;
-    window.scrollTo({ top: y, behavior: reduced() ? 'auto' : 'smooth' });
+    window.scrollTo({ top: window.scrollY + r.top + p * (r.height - innerHeight), behavior: reduced() ? 'auto' : 'smooth' });
   }
 
-  dispose() {
-    this.disposers.forEach((f) => f());
-    this.disposers = [];
-  }
+  dispose() { this.disposers.forEach((f) => f()); this.disposers = []; }
 }
+
+/** Markup for the photo layers (one per run of shots on the same photo). */
+export function tourLayers() {
+  const out = [];
+  let t = 0, prev = null;
+  SHOTS.forEach((s) => {
+    if (s.photo !== prev) {
+      const ph = PHOTOS[s.photo];
+      const first = out.length === 0;
+      out.push(`<div class="shot" data-photo="${s.photo}" data-run="${t}"><img src="${ph.src}.webp" srcset="${ph.src}-960.webp 960w, ${ph.src}.webp 1600w" sizes="100vw" alt="" style="object-position:${s.from.o[0] * 100}% ${s.from.o[1] * 100}%" decoding="async" ${first ? 'fetchpriority="high"' : ''} width="1600" height="1200"></div>`);
+    }
+    prev = s.photo; t += s.w;
+  });
+  return out.join('');
+}
+
+export { SHOTS };
