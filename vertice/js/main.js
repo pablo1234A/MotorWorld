@@ -160,10 +160,11 @@ class App {
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+function boot() {
   try { new App(); } catch (e) {
     console.error(e);
     document.getElementById('fatal').textContent = 'No se pudo iniciar WebGL: ' + e.message;
     document.getElementById('fatal').style.display = 'flex';
   }
-});
+}
+if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', boot); else boot();

@@ -54,11 +54,15 @@ export class Input {
     window.addEventListener('mouseup', this._mu);
     window.addEventListener('wheel', this._wheel, { passive: false });
     document.addEventListener('pointerlockchange', this._plc);
+    // si el navegador (p. ej. dentro de un iframe) no permite bloquear el puntero, pasar a controles en pantalla
+    this._ple = () => { this.lockFailed = true; if (!this.touchMode) { this.setTouchMode(true); if (this.onLockFail) this.onLockFail(); } };
+    document.addEventListener('pointerlockerror', this._ple);
     this._blockCtx = (e) => e.preventDefault();
     window.addEventListener('contextmenu', this._blockCtx);
     this.setTouchMode(this.detectTouch());
   }
   detectTouch() {
+    if (this.lockFailed) return true;
     const s = this.settings.touchControls;
     if (s === 'on') return true;
     if (s === 'off') return false;
@@ -74,15 +78,16 @@ export class Input {
     window.removeEventListener('pointerup', this._up); window.removeEventListener('pointercancel', this._up);
     window.removeEventListener('keydown', this._kd); window.removeEventListener('keyup', this._ku);
     window.removeEventListener('mousemove', this._mm); window.removeEventListener('mousedown', this._md); window.removeEventListener('mouseup', this._mu);
-    window.removeEventListener('wheel', this._wheel); document.removeEventListener('pointerlockchange', this._plc);
+    window.removeEventListener('wheel', this._wheel); document.removeEventListener('pointerlockchange', this._plc); document.removeEventListener('pointerlockerror', this._ple);
     window.removeEventListener('contextmenu', this._blockCtx);
     if (document.pointerLockElement) document.exitPointerLock();
     this.layer.innerHTML = '';
   }
   requestLock(el) {
-    if (this.touchMode || !el.requestPointerLock) return;
+    if (this.touchMode || this.lockFailed) return;
+    if (!el.requestPointerLock) { this._ple(); return; }
     this.lockTarget = el;
-    try { const p = el.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* */ }
+    try { const p = el.requestPointerLock(); if (p && p.catch) p.catch(() => this._ple()); } catch (e) { this._ple(); }
   }
 
   press(name) { this.pressed.add(name); this.held.add(name); }

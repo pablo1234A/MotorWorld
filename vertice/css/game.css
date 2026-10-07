@@ -59,6 +59,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .m-card { align-self: end; background: var(--panel); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .pc-name small, .pc-lo small, .pc-stats small { font-family: var(--fm); font-size: 9.5px; letter-spacing: 0.14em; color: var(--muted); display: block; }
 .pc-n { font-family: var(--fd); font-size: 24px; font-weight: 700; letter-spacing: 0.06em; text-align: left; border-bottom: 1px dashed var(--line2); }
+.pc-in { font-family: var(--fd); font-size: 22px; font-weight: 700; letter-spacing: 0.06em; width: 100%; background: transparent; color: var(--text); border: 0; border-bottom: 1px solid var(--amber); outline: none; text-transform: uppercase; }
 .pc-op b { font-family: var(--fd); font-size: 18px; letter-spacing: 0.1em; }
 .pc-op span { display: block; color: var(--muted); font-size: 12px; }
 .pc-lo { display: grid; gap: 6px; }

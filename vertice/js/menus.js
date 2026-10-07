@@ -303,8 +303,20 @@ export class Menus {
       }
       case 'toggle': P.settings[b.dataset.s] = !P.settings[b.dataset.s]; Profile.save(); this.app.applySettings(); this.show('settings', {}); break;
       case 'choice': { const s = b.dataset.s; P.settings[s] = isNaN(Number(v)) ? v : Number(v); Profile.save(); this.app.applySettings(); this.show('settings', {}); break; }
-      case 'rename': { const n = prompt('Nombre de operador (máx. 14):', P.name); if (n && n.trim()) { P.name = n.trim().slice(0, 14).toUpperCase(); Profile.save(); this.show('main'); } break; }
-      case 'resetProgress': if (confirm('¿Seguro? Se borrarán nivel, estadísticas y desbloqueos.')) { Profile.reset(); this.app.applySettings(); this.show('main'); } break;
+      case 'rename': {
+        const inp = document.createElement('input');
+        inp.id = 'pcName'; inp.className = 'pc-in'; inp.maxLength = 14; inp.value = P.name; inp.setAttribute('aria-label', 'Nombre de operador');
+        b.replaceWith(inp); inp.focus(); inp.select();
+        let done = false;
+        const commit = (save) => { if (done) return; done = true; const n = inp.value.trim(); if (save && n) { P.name = n.slice(0, 14).toUpperCase(); Profile.save(); } setTimeout(() => this.show('main'), 0); };
+        inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') commit(true); if (ev.key === 'Escape') commit(false); });
+        inp.addEventListener('blur', () => commit(true));
+        break;
+      }
+      case 'resetProgress':
+        if (b.dataset.armed) { Profile.reset(); this.app.applySettings(); this.show('main'); }
+        else { b.dataset.armed = '1'; b.textContent = 'PULSA OTRA VEZ PARA BORRAR TODO'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'RESTABLECER PROGRESO'; } }, 4000); }
+        break;
       case 'resume': this.hide(); this.app.resumeGame(); break;
       case 'quit': this.app.quitMatch(); break;
       default: break;

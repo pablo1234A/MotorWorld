@@ -179,7 +179,7 @@ export class Game {
     player.model.root.visible = false; this.scene.add(player.model.root);
     this.combatants.push(player);
     const mk = (team) => {
-      const bot = new Bot(this, { name: names[ni++ % names.length], team, look: this.randomLook(), loadout: this.randomLoadout() });
+      const bot = new Bot(this, { name: names[ni++ % names.length], team, look: this.randomLook(), loadout: this.randomLoadout(team) });
       this.combatants.push(bot);
       return bot;
     };
@@ -197,10 +197,13 @@ export class Game {
     const skins = ['urbano', 'desierto', 'bosque', 'medianoche'];
     return { operator: op.id, skin: choice(skins), headgear: 'default', facegear: 'default', backpack: Math.random() < 0.6 };
   }
-  randomLoadout() {
+  randomLoadout(team) {
     const d = this.diff.id;
     const pool = d === 'easy' ? ['vx9', 'mosca', 'mosca', 'bulldog', 'vx9'] : d === 'normal' ? ['vx9', 'mosca', 'kr4', 'bulldog', 'yunque', 'sable'] : ['vx9', 'kr4', 'kr4', 'mosca', 'yunque', 'centinela', 'sable', 'bulldog'];
-    const primary = choice(pool);
+    // como mucho un francotirador por equipo
+    this._snipers = this._snipers || {};
+    let primary = choice(pool);
+    if (primary === 'sable') { if (this._snipers[team]) primary = choice(['vx9', 'kr4']); else this._snipers[team] = true; }
     return {
       primary, secondary: choice(SECONDARIES), optic: choice(['iron', 'dot', 'holo', 'x3']), camo: choice(Object.keys(CAMOS).filter((k) => !CAMOS[k].challenge)),
       lethal: Math.random() < 0.75 ? 'frag' : 'impact', tactical: Math.random() < 0.5 ? 'smoke' : 'flash', perk: choice(Object.keys(PERKS)),
@@ -334,6 +337,7 @@ export class Game {
     this.started = true;
     this.input.enabled = true; this.input.clearAll();
     this.input.onUnlock = () => { if (!this.paused && !this.over && this.started && !this.input.touchMode) this.pause(); };
+    this.input.onLockFail = () => this.hud.notice('CONTROLES EN PANTALLA', 'ally', 'Este navegador no permite capturar el ratón: arrastra para mirar y usa los botones');
     const m = this.mode.def;
     const showMode = () => { if (this.cfg.mode !== 'sab' && !this.over) this.hud.notice(m.name, 'ally', m.desc); };
     const tutorial = !Profile.data.tutorialSeen;
