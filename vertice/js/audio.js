@@ -2,9 +2,15 @@
 // + reproducción posicional con PannerNode, buses y límites de voces.
 import { rand } from './util.js';
 
-const SR = 32000;
+const SR = 24000;
+const noiseCache = new Map();
 
 function makeNoise(ctx, dur, color = 'white') {
+  // búferes de ruido compartidos entre renderizados (mismo sampleRate)
+  const key = color + ctx.sampleRate;
+  const cached = noiseCache.get(key);
+  if (cached && cached.duration >= dur) return cached;
+  dur = Math.max(dur, 6);
   const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
   const b = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = b.getChannelData(0);
@@ -15,6 +21,7 @@ function makeNoise(ctx, dur, color = 'white') {
     else if (color === 'pink') { p0 = 0.99765 * p0 + w * 0.099046; p1 = 0.963 * p1 + w * 0.2965164; p2 = 0.57 * p2 + w * 1.0526913; d[i] = (p0 + p1 + p2 + w * 0.1848) * 0.2; }
     else d[i] = w;
   }
+  noiseCache.set(key, b);
   return b;
 }
 
@@ -395,6 +402,7 @@ export const Audio = {
     jobs.push(['swap', () => genSeq([{ t: 0.005, f: 1500, q: 1, d: 0.06, peak: 0.6 }, { t: 0.1, f: 2800, q: 3, d: 0.02, peak: 0.8, ping: 1900 }], 0.3)]);
     jobs.push(['pin', () => genSeq([{ t: 0.005, f: 5000, q: 6, d: 0.02, peak: 0.8, ping: 3200, pingPeak: 0.5 }], 0.3)]);
     jobs.push(['throw', () => genWhoosh(0.35, 400, 1600, 1)]);
+    jobs.push(['whiz', () => render(0.25, 1, (ctx) => { const wn = makeNoise(ctx, 1); const f = noiseLayer(ctx, ctx.destination, wn, 0.002, 'bandpass', 5200, 2.5, 0.01, 1, 0.12, rand(0, 2)); f.frequency.exponentialRampToValueAtTime(1400, 0.14); noiseLayer(ctx, ctx.destination, wn, 0.001, 'highpass', 6000, 0.7, 0.001, 0.6, 0.02, rand(0, 2)); })]);
     jobs.push(['bounce', () => genSeq([{ t: 0.003, f: 2800, q: 5, d: 0.02, peak: 1, ping: 2300, pingPeak: 0.4 }], 0.2)]);
     jobs.push(['whistle', () => render(1.9, 1, (ctx) => { const o = tone(ctx, ctx.destination, 0.01, 'sine', 1900, 520, 0.4, 0.5, 1.4, 1.8); const v = ctx.createOscillator(); v.frequency.value = 9; const vg = ctx.createGain(); vg.gain.value = 25; v.connect(vg); vg.connect(o.frequency); v.start(0); })]);
     jobs.push(['smoke', () => genWhoosh(2.6, 1500, 5000, 0.6)]);
@@ -408,13 +416,17 @@ export const Audio = {
     for (const k of ['rain', 'wind', 'drone', 'engine', 'fire']) jobs.push([`loop_${k}`, () => genLoop(k, k === 'wind' ? 8 : k === 'engine' ? 1 : 3)]);
     for (const k of ['click', 'hover', 'back', 'confirm', 'levelup', 'hit', 'head', 'kill', 'beep', 'alert']) jobs.push([`ui_${k}`, () => genUI(k)]);
     for (const k of ['win', 'lose', 'start']) jobs.push([`sting_${k}`, () => genSting(k)]);
-    jobs.push(['music', () => genMusic()]);
     let i = 0;
     for (const [name, fn] of jobs) {
       try { this.buffers[name] = await fn(); } catch (e) { console.warn('audio gen fail', name, e); }
       i++; if (progress) progress(i / jobs.length);
     }
     this.ready = true;
+  },
+  async generateMusic() {
+    if (typeof OfflineAudioContext === 'undefined' || this.buffers.music) return;
+    try { this.buffers.music = await genMusic(); } catch (e) { console.warn('music gen fail', e); }
+    if (this.wantMusic) { this.wantMusic = false; this.playMusic(); }
   },
 
   setListener(pos, fwd, up) {
@@ -487,6 +499,7 @@ export const Audio = {
   ui2d(name, vol = 1) { return this.play(name, { bus: 'ui', vol, priority: true }); },
 
   playMusic() {
+    if (this.ctx && !this.buffers.music) { this.wantMusic = true; return; }
     if (!this.ctx || !this.buffers.music || this.musicSrc) return;
     const s = this.ctx.createBufferSource(); s.buffer = this.buffers.music; s.loop = true;
     s.loopEnd = 16 * 4 * (60 / 96);
@@ -495,6 +508,7 @@ export const Audio = {
     this.musicSrc = s; this.musicGain = g;
   },
   stopMusic(fade = 1) {
+    this.wantMusic = false;
     if (!this.musicSrc) return;
     const s = this.musicSrc, g = this.musicGain, t = this.ctx.currentTime;
     g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.exponentialRampToValueAtTime(0.0001, t + fade);

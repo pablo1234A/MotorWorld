@@ -95,13 +95,30 @@ export class Combat {
       if (res.box.hp) g.map.damageBox(res.box, def.pellets > 1 ? def.dmg * 0.6 : def.dmg, out.point, shooter);
       const near = out.point.distanceToSquared(g.camera.position) < 900;
       if (near || Math.random() < 0.3) Audio.play('imp_' + (mat === 'metal' ? 'metal' : mat === 'wood' ? 'wood' : mat === 'dirt' || mat === 'ground' ? 'dirt' : 'concrete'), { pos: out.point, vol: 0.55, ref: 2.5, jitter: 0.15 });
-      // supresión: bala cerca de un bot
+      // supresión: bala cerca de un bot / chasquido cerca del jugador
       g.bulletNear(shooter, o, d, wt);
+      this.whiz(shooter, o, d, wt);
     } else {
       out.point.set(o.x + d.x * maxT, o.y + d.y * maxT, o.z + d.z * maxT); out.dist = maxT;
       g.bulletNear(shooter, o, d, maxT);
+      this.whiz(shooter, o, d, maxT);
     }
     return out;
+  }
+  // chasquido de bala cuando un proyectil enemigo pasa cerca del jugador
+  whiz(shooter, o, d, maxT) {
+    const g = this.g, P = g.player;
+    if (!P || !P.alive || shooter.isPlayer || !g.isEnemy(shooter, P) || g.time - (this._whizT || 0) < 0.09) return;
+    P.head(_e);
+    const cx = _e.x - o.x, cy = _e.y - o.y, cz = _e.z - o.z;
+    const s = cx * d.x + cy * d.y + cz * d.z;
+    if (s < 2 || s > maxT) return;
+    const qx = cx - d.x * s, qy = cy - d.y * s, qz = cz - d.z * s;
+    const dist = Math.sqrt(qx * qx + qy * qy + qz * qz);
+    if (dist > 2.2) return;
+    this._whizT = g.time;
+    _p.set(o.x + d.x * s, o.y + d.y * s, o.z + d.z * s);
+    Audio.play('whiz', { pos: _p, vol: 0.9 - dist * 0.25, ref: 1.5, jitter: 0.25, priority: true });
   }
   _actorBefore(shooter, o, d, t) {
     for (const c of this.g.combatants) {

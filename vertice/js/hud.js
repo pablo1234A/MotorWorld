@@ -41,6 +41,7 @@ const HTML = `
 <div class="h-scope" id="hScope"><div class="h-scope-ret"></div></div>
 <div class="h-smoke" id="hSmoke"></div>
 <div class="h-flash" id="hFlash"></div>
+<div class="h-cine"></div>
 <div class="h-vig" id="hVig"></div>
 <div class="h-design" id="hDesign"><div class="h-design-ret"></div><b>LLUVIA DE ACERO</b><span>Apunta y dispara para designar el objetivo</span><button class="hud-click" data-act="cancelDesign">CANCELAR</button></div>
 <div class="h-death" id="hDeath"><small>ELIMINADO POR</small><b id="hDK"></b><span id="hDW"></span><em id="hDT"></em></div>
@@ -69,7 +70,8 @@ export class HUD {
     this.mmCtx = E.hMM.getContext('2d');
     this.mmT = 0;
     // rachas
-    E.hStreaks.innerHTML = STREAKS.map((s, i) => `<button class="h-sk" data-btn="streak${i}" id="hSK${i}" title="${s.name}"><b>${s.icon}</b><span>${s.kills}</span></button>`).join('');
+    E.hStreaks.innerHTML = `<em class="h-skn" id="hSKN">0</em>` + STREAKS.map((s, i) => `<button class="h-sk" data-btn="streak${i}" id="hSK${i}" title="${s.name}"><b>${s.icon}</b><span>${s.kills}</span></button>`).join('');
+    this.els.hSKN = root.querySelector('#hSKN');
     this.cache = {};
     this.dmgInd = [];
     this.markerEls = new Map();
@@ -212,6 +214,8 @@ export class HUD {
     this.set('hAR', 'w', (P.armor / 50 * 100) + '%');
     this.set('hHP', 'cls', 'h-hpfill' + (hp < 35 ? ' low' : ''));
     this.set('hST', 'w', (P.stamina * 100) + '%');
+    this.set('hSKN', 'text', String(P.stats.streak));
+    this.set('hSKN', 'cls', 'h-skn' + (P.stats.streak >= 3 ? ' hot' : ''));
     const ws = P.weapon;
     this.set('hMag', 'text', String(ws.mag)); this.set('hRes', 'text', '/ ' + ws.reserve);
     this.set('hMag', 'cls', ws.mag <= Math.ceil(ws.def.mag * 0.25) ? 'low' : '');

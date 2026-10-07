@@ -45,6 +45,7 @@ class App {
     this.menuScene.setOperator(Profile.data.look, Profile.data.loadout.primary, Profile.data.loadout.camo);
     this.assetsReady = true;
     this.menus.setTitleProgress(1, true);
+    Audio.generateMusic();
   }
   onStartTap() {
     Audio.init(); Audio.resume(); Audio.applyVolumes();

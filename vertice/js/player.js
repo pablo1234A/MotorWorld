@@ -107,6 +107,18 @@ export class Player extends Combatant {
     this.grounded = res.ground;
     if (res.ground) { if (!wasGrounded && preVy < -6) { this.vm.land(-preVy); Audio.play('land', { vol: 0.7 }); this.landT = 0.25; } this.vy = Math.max(this.vy, -1); }
     if (res.ceiling) this.vy = Math.min(0, this.vy);
+    // colisión blanda con otros soldados
+    for (const c of g.combatants) {
+      if (c === this || !c.alive || c.inVehicle) continue;
+      const dx = this.pos.x - c.pos.x, dz = this.pos.z - c.pos.z;
+      if (Math.abs(this.pos.y - c.pos.y) > 1.5) continue;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < 0.36 && d2 > 1e-6) {
+        const d = Math.sqrt(d2), push = 0.6 - d;
+        const nx = this.pos.x + (dx / d) * push, nz = this.pos.z + (dz / d) * push;
+        if (!g.world.overlapsSolid(nx - this.radius, this.pos.y + 0.1, nz - this.radius, nx + this.radius, this.pos.y + this.height, nz + this.radius)) { this.pos.x = nx; this.pos.z = nz; }
+      }
+    }
     this.moveSpeed = Math.hypot(this.vel.x, this.vel.z);
     // pasos
     if (this.grounded && this.moveSpeed > 1.2) {

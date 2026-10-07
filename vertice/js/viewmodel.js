@@ -129,7 +129,7 @@ export class ViewModel {
     // posición base (cadera) vs apuntado
     const A = this.ads * (1 - this.sprint);
     const pistol = this.gun.pistol;
-    const hip = pistol ? _hipP.set(0.12, -0.13, -0.4) : _hip.set(0.15, -0.145, -0.4);
+    const hip = pistol ? _hipP.set(0.12, -0.13, -0.42) : _hip.set(0.15, -0.145, -0.43);
     const adsZ = def.scope ? -0.16 : (pistol ? -0.36 : -0.24 - (this.gun.sightZ || 0));
     const ads = _ads.set(0, -this.gun.sightY, adsZ);
     const p = this.gunPivot.position.lerpVectors(hip, ads, A);
@@ -148,7 +148,7 @@ export class ViewModel {
     // agacharse: ligera inclinación
     rz += this.crouch * 0.06 * (1 - A);
     // retroceso
-    p.z += this.kick * (def.scope ? 0.06 : 0.035) * (1 - A * 0.4);
+    p.z += this.kick * (def.scope ? 0.05 : 0.022) * (1 - A * 0.4);
     rx += this.kickRot * (pistol ? 0.16 : 0.07);
     ry += this.kickSide * this.kickRot * 0.04;
     // recarga
