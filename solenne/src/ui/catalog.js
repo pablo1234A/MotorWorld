@@ -133,7 +133,10 @@ export function mountCatalog(host) {
 
     // 1 — fade out whatever leaves
     if (!fast && leaving.length) {
-      await Promise.all(leaving.map((t) => t.el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.96)' }], { duration: 260, easing: 'cubic-bezier(0.65,0,0.35,1)', fill: 'forwards' }).finished.catch(() => {})));
+      await Promise.race([
+        Promise.all(leaving.map((t) => t.el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.96)' }], { duration: 260, easing: 'cubic-bezier(0.65,0,0.35,1)', fill: 'forwards' }).finished.catch(() => {}))),
+        new Promise((r) => setTimeout(r, 340)), // never let a slow frame rate stall the filter
+      ]);
       if (my !== token) return;
     }
 
