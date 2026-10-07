@@ -105,6 +105,23 @@ export class HUD {
     this.els.hSlots.innerHTML = p.weapons.map((w, i) => `<span class="h-slot" id="hSlot${i}">${i + 1}<em>${w.def.name}</em></span>`).join('');
   }
 
+  showTutorial(touch, onClose) {
+    const d = document.createElement('div'); d.className = 'tut hud-click';
+    d.innerHTML = touch ? `
+      <span class="tt c" style="left:60%;top:33%">⟵ ARRASTRA PARA MIRAR ⟶</span>
+      <span class="tt" style="left:calc(240px * var(--hud) + var(--safe-l));bottom:calc(150px * var(--hud))">MOVER<small>al máximo = sprint</small></span>
+      <div class="tt-leg"><span><i class="amb"></i>DISPARAR · ◎ APUNTAR · ↻ RECARGAR</span><span>GRANADA: mantén para apuntar, suelta</span><b>TOCA PARA EMPEZAR</b></div>
+      <span class="tt c" style="left:50%;bottom:calc(112px * var(--hud))">TOCA PARA CAMBIAR DE ARMA</span>` : `
+      <div class="tt-keys"><h4>CONTROLES</h4><p><kbd>WASD</kbd> mover · <kbd>Ratón</kbd> mirar · <kbd>Clic</kbd> disparar · <kbd>Clic der.</kbd> apuntar</p>
+      <p><kbd>Shift</kbd> sprint · <kbd>C</kbd> agacharse/deslizar · <kbd>Espacio</kbd> saltar · <kbd>R</kbd> recargar · <kbd>Q</kbd> cambiar arma</p>
+      <p><kbd>G</kbd> granada · <kbd>T</kbd> táctica · <kbd>E</kbd> usar · <kbd>3-5</kbd> rachas · <kbd>Tab</kbd> marcador · <kbd>Esc</kbd> pausa</p><b class="tt-x">CLIC PARA EMPEZAR</b></div>`;
+    this.root.appendChild(d);
+    let done = false;
+    const close = () => { if (done) return; done = true; d.classList.add('out'); setTimeout(() => d.remove(), 400); if (onClose) onClose(); };
+    d.addEventListener('click', close);
+    setTimeout(close, 9000);
+  }
+
   // ------------------------------------------------------------ eventos
   hitmarker(head, kill) {
     const el = this.els.hHit;

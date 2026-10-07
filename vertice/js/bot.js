@@ -229,6 +229,9 @@ class Brain {
         this.state = 'engage'; this.engageMove = 'advance'; this.setPath(tgt.pos.x, tgt.pos.z); return;
       }
       if (this.state === 'cover' || this.state === 'retreat') return; // gestionado en movimiento
+      // mantener la decisión de movimiento un tiempo (evita titubeos)
+      if (this.state === 'engage' && t < (this.engageDecideT || 0) && (this.engageMove !== 'advance' || this.path)) return;
+      this.engageDecideT = t + rand(1.2, 2.4);
       this.state = 'engage';
       // movimiento en combate
       const optimal = Math.min(b.weapon.def.range[1] * 0.75, 45);
@@ -499,7 +502,7 @@ class Brain {
     const tol = Math.atan(0.9 / dist) + (ws.def.scope ? 0.3 : 1.5) * DEG;
     if (diff > tol + Math.abs(this.errY)) return;
     if (dist > ws.def.range[1] * 1.6 && ws.def.pellets > 1) return; // escopeta fuera de alcance
-    if (ws.def.scope && t - this.lastFire < 1.2) return;
+    if (ws.def.scope && (t - this.lastFire < 1.2 || t - this.engageStart < (D.id === 'easy' ? 2.2 : D.id === 'normal' ? 1.4 : 0.9))) return;
     if (this.burstLeft <= 0) this.burstLeft = randInt(D.burst[0], D.burst[1]) * (ws.def.auto ? 1 : 0.5) + 1;
     const moving = this.speedNow > 1.2;
     let spread = (dist < 8 ? ws.def.spreadHip * 0.7 : ws.def.spreadAds + 0.3 + (moving ? ws.def.moveSpread * 0.35 : 0)) * D.spreadMul;

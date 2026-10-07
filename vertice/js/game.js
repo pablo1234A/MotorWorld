@@ -335,13 +335,16 @@ export class Game {
     this.input.enabled = true; this.input.clearAll();
     this.input.onUnlock = () => { if (!this.paused && !this.over && this.started && !this.input.touchMode) this.pause(); };
     const m = this.mode.def;
-    if (this.cfg.mode !== 'sab') this.hud.notice(m.name, 'ally', m.desc);
+    const showMode = () => { if (this.cfg.mode !== 'sab' && !this.over) this.hud.notice(m.name, 'ally', m.desc); };
+    const tutorial = !Profile.data.tutorialSeen;
+    if (!tutorial) showMode();
     Audio.ui2d('sting_start', 0.55);
     this.ambient.push(Audio.play('loop_wind', { loop: true, vol: 0.25, bus: 'amb' }));
     if (this.cfg.atmos === 'storm') this.ambient.push(Audio.play('loop_rain', { loop: true, vol: 0.55, bus: 'amb' }));
     for (const f of this.map.fires.slice(0, 4)) this.ambient.push(Audio.play('loop_fire', { pos: new THREE.Vector3(f.x, f.y, f.z), loop: true, vol: 0.6, ref: 3, maxDist: 400 }));
     this.nextLightning = 6 + Math.random() * 8; this.nextFlyby = 40 + Math.random() * 30; this.nextDistant = 8;
     this.app.lockPointer();
+    if (tutorial) { Profile.data.tutorialSeen = true; Profile.save(); this.hud.showTutorial(this.input.touchMode, showMode); }
   }
   pause() {
     if (this.over || this.paused) return;

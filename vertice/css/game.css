@@ -388,6 +388,20 @@ tr.me td { background: rgba(255, 176, 0, 0.1); color: var(--amber2); }
 .pause-btn i { width: 4px; height: 14px; background: #fff; }
 .h-fps { position: absolute; left: calc(14px + var(--safe-l)); top: calc(170px * var(--hud) + var(--safe-t)); font-family: var(--fm); font-size: 10px; color: var(--ok); }
 
+.tut { position: absolute; inset: 0; background: rgba(5, 7, 10, 0.55); pointer-events: auto; z-index: 3; transition: opacity .35s; animation: rise .4s; }
+.tut.out { opacity: 0; }
+.tt { position: absolute; font-size: 14px; letter-spacing: 0.12em; color: var(--amber2); border-left: 2px solid var(--amber); padding: 2px 8px; background: rgba(8, 10, 14, 0.75); display: flex; flex-direction: column; }
+.tt.r { border-left: 0; border-right: 2px solid var(--amber); text-align: right; }
+.tt small { font-family: var(--fb); font-size: 11px; letter-spacing: 0; color: #d7dde4; }
+.tt.c { transform: translateX(-50%); }
+.tt-leg { position: absolute; left: 60%; top: 44%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: var(--fm); font-size: 11px; letter-spacing: 0.08em; color: #e3e8ee; background: rgba(8, 10, 14, 0.7); padding: 8px 14px; border: 1px solid var(--line2); white-space: nowrap; }
+.tt-leg b { font-family: var(--fd); font-size: 15px; letter-spacing: 0.22em; color: #fff; margin-top: 4px; animation: pulse2 1.4s infinite; }
+.tt-leg .amb { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--amber); margin-right: 6px; vertical-align: -1px; }
+.tt-x { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); font-size: 18px; letter-spacing: 0.24em; color: #fff; animation: pulse2 1.4s infinite; }
+.tt-keys { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--panel2); border: 1px solid var(--line2); padding: 18px 22px; display: flex; flex-direction: column; gap: 8px; font-family: var(--fb); font-size: 13px; color: #d7dde4; text-shadow: none; }
+.tt-keys h4 { font-family: var(--fm); font-size: 11px; letter-spacing: 0.2em; color: var(--amber); }
+.tt-keys .tt-x { position: static; transform: none; margin-top: 8px; text-align: center; font-family: var(--fd); }
+
 /* ===================================================================== CONTROLES TÁCTILES */
 #touch { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
 body:not(.ingame) #touch { display: none !important; }

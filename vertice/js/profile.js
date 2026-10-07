@@ -26,6 +26,7 @@ function defaults() {
     },
     xp: 0, level: 1,
     claimed: {}, // retos completados
+    tutorialSeen: false,
   };
 }
 
