@@ -129,7 +129,7 @@ export class ViewModel {
     // posición base (cadera) vs apuntado
     const A = this.ads * (1 - this.sprint);
     const pistol = this.gun.pistol;
-    const hip = pistol ? _hipP.set(0.12, -0.15, -0.42) : _hip.set(0.15, -0.17, -0.44);
+    const hip = pistol ? _hipP.set(0.12, -0.13, -0.4) : _hip.set(0.15, -0.145, -0.4);
     const adsZ = def.scope ? -0.16 : (pistol ? -0.36 : -0.24 - (this.gun.sightZ || 0));
     const ads = _ads.set(0, -this.gun.sightY, adsZ);
     const p = this.gunPivot.position.lerpVectors(hip, ads, A);

@@ -11,6 +11,8 @@ function geo(kind, a, b, c) {
     if (kind === 'box') g = new THREE.BoxGeometry(a, b, c);
     else if (kind === 'cyl') g = new THREE.CylinderGeometry(a, a, b, c || 12);
     else if (kind === 'cone') g = new THREE.CylinderGeometry(a, b, c, 12);
+    else if (kind === 'tube') { g = new THREE.CylinderGeometry(a, a, b, c || 16, 1, true); }
+    else if (kind === 'ring') { g = new THREE.CylinderGeometry(a, b, c, 16, 1, true); }
     geoCache.set(k, g);
   }
   return g;
@@ -29,6 +31,8 @@ function mats(camoId, detail) {
     steel: new THREE.MeshStandardMaterial({ color: 0x2c2e31, metalness: 0.95, roughness: 0.3 }),
     wood: new THREE.MeshStandardMaterial({ color: 0x5a3b22, metalness: 0.0, roughness: 0.6 }),
     lens: new THREE.MeshStandardMaterial({ color: 0x0a1418, metalness: 0.9, roughness: 0.05, emissive: 0x051018 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x6f9fb8, metalness: 0.2, roughness: 0.05, transparent: true, opacity: 0.18, depthWrite: false }),
+    tubeIn: new THREE.MeshStandardMaterial({ color: 0x111214, metalness: 0.3, roughness: 0.8, side: THREE.DoubleSide }),
     chrome: new THREE.MeshStandardMaterial({ color: 0xb9bcc0, metalness: 1.0, roughness: 0.18 }),
   };
   matCache.set(k, m);
@@ -177,8 +181,8 @@ export function buildGun(def, opts = {}) {
     const z = (railZ0 + railZ1) / 2 + 0.03;
     if (optic === 'dot') {
       add(geo('box', 0.03, 0.012, 0.06), M.poly, 0, railY + 0.006, z);
-      add(geo('cyl', 0.019, 0.055, 14), M.poly, 0, railY + 0.034, z, cylX);
-      add(geo('cyl', 0.016, 0.004, 14), M.lens, 0, railY + 0.034, z - 0.028, cylX);
+      add(geo('tube', 0.019, 0.055, 16), M.tubeIn, 0, railY + 0.034, z, cylX);
+      add(geo('cyl', 0.017, 0.002, 14), M.glass, 0, railY + 0.034, z - 0.026, cylX);
       info.sightY = railY + 0.034;
     } else {
       add(geo('box', 0.04, 0.014, 0.08), M.poly, 0, railY + 0.007, z);
@@ -196,10 +200,10 @@ export function buildGun(def, opts = {}) {
     const len = optic === 'scope' ? 0.3 : 0.17, r = optic === 'scope' ? 0.022 : 0.019;
     const z = optic === 'scope' ? -0.08 : (railZ0 + railZ1) / 2;
     add(geo('box', 0.02, 0.025, 0.04), M.poly, 0, railY + 0.012, z - len * 0.3); add(geo('box', 0.02, 0.025, 0.04), M.poly, 0, railY + 0.012, z + len * 0.3);
-    add(geo('cyl', r, len, 14), M.poly, 0, railY + 0.045, z, cylX);
-    add(geo('cone', r * 1.45, r, 0.05), M.poly, 0, railY + 0.045, z - len / 2 - 0.02, cylX);
-    add(geo('cyl', r * 1.3, 0.003, 14), M.lens, 0, railY + 0.045, z - len / 2 - 0.046, cylX);
-    add(geo('cyl', r * 1.05, 0.003, 14), M.lens, 0, railY + 0.045, z + len / 2 + 0.001, cylX);
+    add(geo('tube', r, len, 16), M.tubeIn, 0, railY + 0.045, z, cylX);
+    add(geo('ring', r * 1.45, r, 0.05), M.tubeIn, 0, railY + 0.045, z - len / 2 - 0.02, cylX);
+    add(geo('cyl', r * 1.3, 0.003, 14), M.glass, 0, railY + 0.045, z - len / 2 - 0.046, cylX);
+    add(geo('cyl', r * 1.0, 0.002, 14), M.glass, 0, railY + 0.045, z + len / 2 + 0.001, cylX);
     if (optic === 'scope') add(geo('cyl', 0.009, 0.03, 8), M.poly, 0, railY + 0.075, z, 0);
     info.sightY = railY + 0.045; info.sightZ = z;
     if (detail && optic === 'x3') {

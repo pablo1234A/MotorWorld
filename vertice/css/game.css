@@ -315,7 +315,7 @@ tr.me td { background: rgba(255, 176, 0, 0.1); color: var(--amber2); }
 .h-medals { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .medal { font-size: 20px; letter-spacing: 0.16em; color: #fff; padding: 2px 14px; border-top: 1px solid var(--amber); border-bottom: 1px solid var(--amber); background: linear-gradient(90deg, transparent, rgba(255, 176, 0, 0.18), transparent); animation: medal 2.2s forwards; }
 @keyframes medal { 0% { opacity: 0; transform: scale(1.6); letter-spacing: 0.5em; } 10% { opacity: 1; transform: none; letter-spacing: 0.16em; } 80% { opacity: 1; } 100% { opacity: 0; } }
-.h-notice { position: absolute; left: 50%; top: 32%; transform: translate(-50%, -50%); text-align: center; opacity: 0; transition: opacity .3s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.h-notice { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); text-align: center; opacity: 0; transition: opacity .3s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .h-notice.show { opacity: 1; animation: rise .4s; }
 .h-notice b { font-size: clamp(26px, 6vh, 42px); letter-spacing: 0.18em; }
 .h-notice span { font-family: var(--fm); font-size: 11px; letter-spacing: 0.16em; color: #d3d9e0; }
@@ -334,7 +334,7 @@ tr.me td { background: rgba(255, 176, 0, 0.1); color: var(--amber2); }
 .h-hp span { position: absolute; right: -32px; top: -5px; font-size: 18px; }
 .h-stam { height: 2px; background: rgba(255, 255, 255, 0.08); }
 .h-stam i { display: block; height: 100%; background: var(--amber); opacity: 0.8; }
-.h-streaks { display: flex; gap: 6px; margin-bottom: 4px; }
+.h-streaks { position: absolute; left: calc(12px + var(--safe-l)); top: calc(8px + 160px * var(--hud) + var(--safe-t)); transform: scale(var(--hud)); transform-origin: top left; display: flex; gap: 6px; }
 .h-sk { width: 40px; height: 40px; display: grid; place-items: center; position: relative; background: rgba(8, 10, 14, 0.5); border: 1px solid var(--line2); opacity: 0.5; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 .h-sk b { font-size: 16px; }
 .h-sk span { position: absolute; bottom: 3px; font-family: var(--fm); font-size: 8px; }
@@ -387,9 +387,10 @@ tr.me td { background: rgba(255, 176, 0, 0.1); color: var(--amber2); }
 
 /* ===================================================================== CONTROLES TÁCTILES */
 #touch { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+body:not(.ingame) #touch { display: none !important; }
 #touch .tbtn, #touch .joy-zone { pointer-events: auto; }
 .joy-zone { position: absolute; left: 0; top: 18%; bottom: 0; width: 42%; pointer-events: none !important; }
-.joy { position: absolute; left: calc(110px + var(--safe-l)); top: calc(100% - 110px - var(--safe-b)); width: calc(124px * var(--hud)); height: calc(124px * var(--hud)); margin: calc(-62px * var(--hud)) 0 0 calc(-62px * var(--hud)); border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.18); background: radial-gradient(circle, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); opacity: 0.55; transition: opacity .15s; }
+.joy { position: absolute; left: calc(170px + var(--safe-l)); top: calc(100% - 110px - var(--safe-b)); width: calc(124px * var(--hud)); height: calc(124px * var(--hud)); margin: calc(-62px * var(--hud)) 0 0 calc(-62px * var(--hud)); border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.18); background: radial-gradient(circle, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); opacity: 0.55; transition: opacity .15s; }
 .joy.active { opacity: 1; transition: none; }
 .joy-knob { position: absolute; left: 50%; top: 50%; width: 46%; height: 46%; border-radius: 50%; background: rgba(255, 255, 255, 0.28); border: 1.5px solid rgba(255, 255, 255, 0.55); transform: translate(-50%, -50%); box-shadow: 0 0 12px rgba(0, 0, 0, 0.4); }
 .tbtn { position: absolute; width: calc(58px * var(--hud)); height: calc(58px * var(--hud)); border-radius: 50%; display: grid; place-items: center; background: rgba(12, 15, 20, 0.42); border: 1.5px solid rgba(255, 255, 255, 0.28); color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); touch-action: none; transition: transform .06s, background .06s; }
@@ -398,7 +399,7 @@ tr.me td { background: rgba(255, 176, 0, 0.1); color: var(--amber2); }
 .tbtn .cnt { position: absolute; right: -2px; top: -2px; font-family: var(--fm); font-size: 10px; background: #111; border: 1px solid var(--line2); border-radius: 8px; padding: 0 4px; }
 .tbtn.fire { right: calc(30px + var(--safe-r)); bottom: calc(104px * var(--hud) + var(--safe-b)); width: calc(86px * var(--hud)); height: calc(86px * var(--hud)); border-color: rgba(255, 176, 0, 0.7); color: var(--amber2); background: rgba(40, 28, 0, 0.35); }
 .tbtn.fire.on { background: rgba(255, 176, 0, 0.35); }
-.tbtn.fire2 { left: calc(26px + var(--safe-l)); bottom: calc(196px * var(--hud) + var(--safe-b)); width: calc(60px * var(--hud)); height: calc(60px * var(--hud)); border-color: rgba(255, 176, 0, 0.6); color: var(--amber2); display: none; }
+.tbtn.fire2 { left: calc(22px + var(--safe-l)); top: calc(214px * var(--hud) + var(--safe-t)); width: calc(60px * var(--hud)); height: calc(60px * var(--hud)); border-color: rgba(255, 176, 0, 0.6); color: var(--amber2); display: none; }
 #touch.left-fire .tbtn.fire2 { display: grid; }
 .tbtn.ads { right: calc(128px * var(--hud) + var(--safe-r)); bottom: calc(166px * var(--hud) + var(--safe-b)); width: calc(64px * var(--hud)); height: calc(64px * var(--hud)); }
 .tbtn.jump { right: calc(24px + var(--safe-r)); bottom: calc(24px + var(--safe-b)); }

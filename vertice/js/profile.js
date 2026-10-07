@@ -1,5 +1,5 @@
 // Perfil persistente: ajustes, equipamiento, personalización, estadísticas y progresión
-import { WEAPONS, OPTICS, CAMOS, SKINS, LETHALS, TACTICALS, PERKS, CHALLENGES, MAX_LEVEL, xpForLevel } from './data.js';
+import { WEAPONS, PRIMARIES, SECONDARIES, OPTICS, CAMOS, SKINS, LETHALS, TACTICALS, PERKS, CHALLENGES, MAX_LEVEL, xpForLevel } from './data.js';
 
 const KEY = 'vertice_profile_v1';
 
@@ -83,8 +83,8 @@ export const Profile = {
   },
   validate() {
     const L = this.data.loadout;
-    if (!WEAPONS[L.primary] || !this.isUnlocked('weapon', L.primary)) L.primary = 'vx9';
-    if (!WEAPONS[L.secondary] || !this.isUnlocked('weapon', L.secondary)) L.secondary = 'ronin';
+    if (!PRIMARIES.includes(L.primary) || !this.isUnlocked('weapon', L.primary)) L.primary = 'vx9';
+    if (!SECONDARIES.includes(L.secondary) || !this.isUnlocked('weapon', L.secondary)) L.secondary = 'ronin';
     if (!OPTICS[L.optic] || !this.isUnlocked('optic', L.optic)) L.optic = 'dot';
     if (!CAMOS[L.camo] || !this.isUnlocked('camo', L.camo)) L.camo = 'pavonado';
     if (!LETHALS[L.lethal] || !this.isUnlocked('lethal', L.lethal)) L.lethal = 'frag';

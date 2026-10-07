@@ -106,11 +106,13 @@ class App {
     this.renderScale = 1; this.resize();
     this.menus.hide();
     this.menuActive = false;
+    document.body.classList.add('ingame');
     g.start();
   }
   showPause() { this.menus.show('pause'); }
   resumeGame() { if (this.game) this.game.resume(); }
   quitMatch() {
+    document.body.classList.remove('ingame');
     if (this.game) { this.game.dispose(); this.game = null; }
     this.input.enabled = false;
     this.menus.show('main');
@@ -118,6 +120,7 @@ class App {
   }
   showResults(summary) {
     if (!this.game) return;
+    document.body.classList.remove('ingame');
     this.game.dispose(); this.game = null;
     this.input.enabled = false;
     this.menus.show('results', { summary });

@@ -26,8 +26,8 @@ const HTML = `
 <div class="h-medals" id="hMedals"></div>
 <div class="h-notice" id="hNotice"><b></b><span></span></div>
 <div class="h-interact" id="hInt"><span></span><i><i></i></i></div>
+<div class="h-streaks" id="hStreaks"></div>
 <div class="h-bl">
-  <div class="h-streaks" id="hStreaks"></div>
   <div class="h-hp"><i class="h-hpfill" id="hHP"></i><i class="h-arfill" id="hAR"></i><span id="hHPt">100</span></div>
   <div class="h-stam"><i id="hST"></i></div>
 </div>
