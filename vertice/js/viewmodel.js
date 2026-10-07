@@ -223,8 +223,8 @@ export class ViewModel {
     _q.copy(worldCam.quaternion).invert();
     _v1.copy(sunDir).applyQuaternion(_q);
     this.sun.position.copy(_v1).multiplyScalar(5); this.sun.target.position.set(0, 0, 0);
-    this.sun.color.copy(sunColor); this.sun.intensity = sunInt * 0.9;
-    this.hemi.color.copy(hemiSky); this.hemi.groundColor.copy(hemiGround); this.hemi.intensity = hemiInt * 1.1;
+    this.sun.color.copy(sunColor); this.sun.intensity = Math.max(1.4, sunInt * 0.9);
+    this.hemi.color.copy(hemiSky); this.hemi.groundColor.copy(hemiGround); this.hemi.intensity = Math.max(1.25, hemiInt * 1.1);
     // el "suelo" del hemisferio sigue al mundo
     _v2.set(0, 1, 0).applyQuaternion(_q); this.hemi.position.copy(_v2);
   }

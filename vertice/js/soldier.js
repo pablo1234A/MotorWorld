@@ -48,6 +48,7 @@ function atlasFor(look, accent) {
   t.minFilter = THREE.LinearMipmapLinearFilter;
   const mat = new THREE.MeshStandardMaterial({ map: t, roughness: 0.82, metalness: 0.05 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 1.1, roughness: 0.5 });
+  mat.userData.shared = true; accentMat.userData.shared = true;
   const res = { mat, accentMat };
   atlasCache.set(key, res);
   return res;
@@ -141,6 +142,7 @@ function geometryFor(op, hg, fg, pack) {
   G.upper = mergeParts([[B.upper, -1], [B.pad, SW.vest, 0, 0, 0, 0, 0, 0, 1, 0.9, 1]]);
   G.upperL = mergeParts([[B.upper, -1], [B.pad, SW.vest, 0, 0, 0, 0, 0, 0, 1, 0.9, 1], [B.band, SW.accent, 0, -0.08, 0]]);
   G.fore = mergeParts([[B.fore, -1], [B.hand, SW.glove]]);
+  for (const k in G) G[k].userData.shared = true;
   geoCache.set(key, G);
   return G;
 }
@@ -148,6 +150,7 @@ function geometryFor(op, hg, fg, pack) {
 // arma en tercera persona: una sola malla con colores planos
 const gunGeoCache = new Map();
 const gunMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.5 });
+gunMat.userData.shared = true;
 function gunMesh(id) {
   let g = gunGeoCache.get(id);
   if (!g) {
@@ -166,6 +169,7 @@ function gunMesh(id) {
     });
     g = { geo: mergeGeometries(parts, false), grip: info.grip.clone(), fore: info.fore.clone(), magHome: info.magHome ? info.magHome.clone() : null, pistol: !!info.pistol };
     parts.forEach((p) => p.dispose());
+    g.geo.userData.shared = true;
     gunGeoCache.set(id, g);
   }
   return g;

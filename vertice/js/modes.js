@@ -57,18 +57,39 @@ class Mode {
   // patrulla/caza genérica
   huntGoal(bot, squad) {
     const g = this.g;
+    // equipos de fuego de 2-3 soldados que avanzan juntos hacia un mismo objetivo
+    if (squad && this.def.teams && squad.members.length > 1) {
+      const alive = squad.members.filter((m) => m.alive);
+      const idx = Math.max(0, alive.indexOf(bot));
+      const teams = Math.max(1, Math.round(alive.length / 2.5));
+      const key = 'ft' + (idx % teams);
+      let ft = squad.memo[key];
+      if (!ft || g.time > ft.until || (ft.enemy && !ft.enemy.alive)) {
+        const fresh = squad.freshEnemies(20);
+        if (fresh.length && Math.random() < 0.85) { const f = fresh[Math.floor(Math.random() * fresh.length)]; ft = { x: f.pos.x, z: f.pos.z, kind: 'hunt', enemy: f.e, face: { x: f.pos.x, z: f.pos.z } }; }
+        else { const p = this.patrolPoint(bot); ft = { x: p.x, z: p.z, kind: 'patrol', face: this.enemyBaseDir(bot.team) }; }
+        ft.until = g.time + rand(12, 20);
+        squad.memo[key] = ft;
+      }
+      return { x: ft.x + rand(-5, 5), z: ft.z + rand(-5, 5), r: 6, kind: ft.kind, face: ft.face };
+    }
     const fresh = squad ? squad.freshEnemies(20) : [];
     if (fresh.length && Math.random() < 0.85) {
       const f = fresh[Math.floor(Math.random() * fresh.length)];
       return { x: f.pos.x + rand(-6, 6), z: f.pos.z + rand(-6, 6), r: 6, kind: 'hunt', face: f.pos };
     }
+    const p = this.patrolPoint(bot);
+    return { x: p.x, z: p.z, r: 5, kind: 'patrol', face: this.def.teams ? this.enemyBaseDir(bot.team) : null };
+  }
+  patrolPoint(bot) {
+    const g = this.g;
     const hs = g.map.spawns.ffa;
     // preferir el centro y la mitad enemiga
     let p = hs[Math.floor(Math.random() * hs.length)];
     if (this.def.teams) {
-      for (let k = 0; k < 4; k++) { const q = hs[Math.floor(Math.random() * hs.length)]; const e = this.enemyBaseDir(bot.team); if (Math.hypot(q.x - e.x, q.z - e.z) < Math.hypot(p.x - e.x, p.z - e.z)) p = q; }
+      for (let k = 0; k < 3; k++) { const q = hs[Math.floor(Math.random() * hs.length)]; const e = this.enemyBaseDir(bot.team); if (Math.hypot(q.x - e.x, q.z - e.z) < Math.hypot(p.x - e.x, p.z - e.z)) p = q; }
     }
-    return { x: p.x, z: p.z, r: 5, kind: 'patrol', face: this.def.teams ? this.enemyBaseDir(bot.team) : null };
+    return p;
   }
 }
 

@@ -13,6 +13,7 @@ function geo(kind, a, b, c) {
     else if (kind === 'cone') g = new THREE.CylinderGeometry(a, b, c, 12);
     else if (kind === 'tube') { g = new THREE.CylinderGeometry(a, a, b, c || 16, 1, true); }
     else if (kind === 'ring') { g = new THREE.CylinderGeometry(a, b, c, 16, 1, true); }
+    g.userData.shared = true;
     geoCache.set(k, g);
   }
   return g;
@@ -35,6 +36,7 @@ function mats(camoId, detail) {
     tubeIn: new THREE.MeshStandardMaterial({ color: 0x111214, metalness: 0.3, roughness: 0.8, side: THREE.DoubleSide }),
     chrome: new THREE.MeshStandardMaterial({ color: 0xb9bcc0, metalness: 1.0, roughness: 0.18 }),
   };
+  for (const key in m) m[key].userData.shared = true;
   matCache.set(k, m);
   return m;
 }

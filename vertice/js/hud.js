@@ -239,7 +239,8 @@ export class HUD {
     this.set('hWName', 'text', ws.def.name);
     this.set('hLeth', 'text', '◆ ' + P.lethals); this.set('hTac', 'text', '▣ ' + P.tacticals);
     for (let i = 0; i < 2; i++) { const el = this.root.querySelector('#hSlot' + i); if (el) el.classList.toggle('on', P.slot === i); }
-    this.set('hSlots', 'op', P.inVehicle ? '0' : '1');
+    this.set('hSlots', 'op', P.inVehicle || !P.alive ? '0' : '1');
+    if (this.cache.brAlive !== P.alive) { this.cache.brAlive = P.alive; this.root.querySelector('.h-br').style.opacity = P.alive ? '1' : '0'; }
     const showReload = P.alive && !ws.reloading && ws.mag <= Math.ceil(ws.def.mag * 0.2) && ws.reserve > 0 && !P.inVehicle;
     this.set('hRes', 'text', P.inVehicle && P.inVehicle.gun ? (ws.reloading ? 'RECARGANDO' : '∞') : '/ ' + ws.reserve);
     this.set('hReload', 'show', showReload);

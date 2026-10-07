@@ -194,7 +194,7 @@ export class Game {
   }
   randomLook() {
     const op = choice(OPERATORS);
-    const skins = Object.keys(SKINS).filter((k) => !SKINS[k].challenge);
+    const skins = ['urbano', 'desierto', 'bosque', 'medianoche'];
     return { operator: op.id, skin: choice(skins), headgear: 'default', facegear: 'default', backpack: Math.random() < 0.6 };
   }
   randomLoadout() {
@@ -640,6 +640,13 @@ export class Game {
 
   dispose() {
     const app = this.app;
+    // liberar toda la memoria de GPU propia de la partida (las cachés compartidas se conservan)
+    const free = (root) => root.traverse((o) => {
+      if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
+      const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+      for (const m of mats) if (!m.userData.shared) m.dispose();
+    });
+    free(this.scene); free(this.vm.scene);
     for (const a of this.ambient) if (a) a.stop();
     this.streaks.dispose(); this.projectiles.dispose();
     for (const v of this.vehicles) if (v.dispose) v.dispose();
@@ -647,7 +654,7 @@ export class Game {
     this.fx.dispose();
     this.hud.destroy();
     this.map.dispose();
-    this.scene.traverse((o) => { if (o.isMesh && o.geometry && !o.geometry._shared) { /* geometrías propias del mapa ya liberadas */ } });
+    if (this.pickGeo) this.pickGeo.dispose(); if (this.dropGeo) this.dropGeo.dispose();
     if (this.envRT) this.envRT.dispose();
     this.sky.geometry.dispose(); this.skyMat.dispose();
     this.scene.clear();

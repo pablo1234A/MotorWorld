@@ -52,14 +52,15 @@ export class MenuScene {
     this.mode = 'operator'; this.t = 0; this.rotY = 0.35; this.dragV = 0; this.dragY = 0;
     this.soldier = null; this.gun = null;
   }
+  _free(root) { root.traverse((o) => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); if (o.material && !o.material.userData.shared) o.material.dispose(); }); }
   setOperator(look, weaponId, camo) {
-    if (this.soldier) this.opGroup.remove(this.soldier.root);
+    if (this.soldier) { this.opGroup.remove(this.soldier.root); this._free(this.soldier.root); }
     this.soldier = new Soldier(look, look.accent ? new THREE.Color(look.accent).getHex() : TEAMS[0].hex, weaponId, { camo });
     this.soldier.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; } });
     this.opGroup.add(this.soldier.root);
   }
   setWeapon(id, optic, camo) {
-    if (this.gun) this.gunGroup.remove(this.gun.group);
+    if (this.gun) { this.gunGroup.remove(this.gun.group); this._free(this.gun.group); }
     const def = WEAPONS[id];
     this.gun = buildGun(def, { optic, camo, detail: true });
     const g = this.gun.group;
