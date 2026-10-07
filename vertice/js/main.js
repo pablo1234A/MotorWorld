@@ -1,6 +1,6 @@
 // Arranque de VÉRTICE: renderizador, bucle con límite de FPS y resolución dinámica,
 // flujo MENÚ → MODO → EQUIPAMIENTO → CARGA → PARTIDA → RESULTADOS → JUGAR DE NUEVO.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Profile } from './profile.js';
 import { Audio } from './audio.js';
 import { Input } from './input.js';

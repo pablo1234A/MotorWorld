@@ -1,5 +1,5 @@
 // Combatiente base (jugador y bots): salud, armadura, armas, estadísticas e impactos.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { WeaponState } from './weapons.js';
 import { LETHALS, TACTICALS } from './data.js';
 import { raySphere } from './util.js';

@@ -1,5 +1,5 @@
 // Texturas procedurales (PBR: color + normal) generadas en tiempo de carga. 100 % originales.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { mulberry32, nextFrame } from './util.js';
 
 let ANISO = 4;

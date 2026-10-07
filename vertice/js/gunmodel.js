@@ -1,5 +1,5 @@
 // Modelos de armas procedurales originales. El cañón apunta a -Z; origen en la empuñadura.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { camoTexture } from './textures.js';
 import { CAMOS } from './data.js';
 

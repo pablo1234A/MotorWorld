@@ -40,7 +40,7 @@ WASD mover · ratón mirar · clic izq. disparar · clic der. apuntar · R recar
 - **Armas**: VX-9 Halcón, KR-4 Tormenta, Mosca R5, Bulldog 12, Sable LR-8, Yunque 7, Centinela M-DMR, Ronin P9, Toro .44 y Avispa MP, con daño por zona y distancia, cadencia, retroceso recuperable, dispersión, recarga táctica/vacía y apuntado. Ópticas (miras, punto rojo, holográfica, 3x) y 8 camuflajes.
 - **Equipo**: granada de fragmentación, de impacto, humo y aturdidora; ventajas (kevlar, atleta, manos rápidas, carroñero, fantasma).
 - **Rachas**: OJO DE HALCÓN (5), LLUVIA DE ACERO (8, designada) y ESPECTRO (12, dron artillado derribable). La IA también las gana y usa.
-- **Vehículo**: Jabalí 4x4 conducible, con atropellos, daño y explosión.
+- **Vehículos**: JABALÍ 4x4 (ligero, rápido, atropellos) y RINOCERONTE 8x8 blindado con torreta pesada que dispara donde apuntas; ambos con daño, explosión y reaparición. Apoyo aéreo mediante las rachas.
 - **Personalización**: 6 operadores, 8 aspectos, casco/gorra/capucha, accesorios faciales, mochila y color de acento.
 - **Progresión**: XP, 30 niveles, desbloqueos, retos con recompensas cosméticas y estadísticas de carrera guardadas en el dispositivo.
 - **Ajustes**: sensibilidad H/V/apuntado, asistencia de apuntado, invertir eje, controles táctiles, tamaño del HUD, calidad BAJA/MEDIA/ALTA, FPS objetivo 30/60/120, resolución dinámica, FOV y volúmenes.

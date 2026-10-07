@@ -1,7 +1,7 @@
 // Jugador: movimiento con aceleración, sprint con resistencia, deslizamiento, agacharse,
 // salto, disparo con retroceso recuperable, apuntado, recarga, cambio, granadas con
 // trayectoria, interacción contextual y asistencia de apuntado configurable.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Combatant } from './actors.js';
 import { Audio } from './audio.js';
 import { clamp, damp, DEG, wrapAngle } from './util.js';

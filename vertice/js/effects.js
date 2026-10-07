@@ -1,6 +1,6 @@
 // Efectos visuales con pools: partículas (2 draw calls), trazadoras, calcomanías,
 // fogonazos, explosiones, humo (que bloquea la visión de la IA), fuego y lluvia en GPU.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { rand, clamp } from './util.js';
 
 const PVS = `

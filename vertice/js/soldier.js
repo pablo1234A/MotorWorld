@@ -1,7 +1,7 @@
 // Soldado en tercera persona. Cada hueso es UNA malla fusionada que usa un atlas
 // (camuflaje + muestras de color), así cada soldado cuesta ~12 draw calls.
 // Animación procedural por código e IK de dos huesos para los brazos.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { mergeGeometries } from './lib/BufferGeometryUtils.js';
 import { SKINS, OPERATORS, WEAPONS } from './data.js';
 import { buildGun } from './gunmodel.js';

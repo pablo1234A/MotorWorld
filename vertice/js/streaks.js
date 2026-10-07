@@ -1,6 +1,6 @@
 // Rachas de bajas originales: OJO DE HALCÓN (reconocimiento), LLUVIA DE ACERO (artillería
 // designada) y ESPECTRO (dron artillado autónomo). La IA también las obtiene y las usa.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Audio } from './audio.js';
 import { STREAKS } from './data.js';
 import { rand, spreadDir } from './util.js';

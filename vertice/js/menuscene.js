@@ -1,6 +1,6 @@
 // Escena 3D del menú: estudio oscuro con iluminación cinematográfica, operador animado y
 // vitrina de armas para el equipamiento.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Soldier } from './soldier.js';
 import { buildGun } from './gunmodel.js';
 import { WEAPONS, TEAMS } from './data.js';

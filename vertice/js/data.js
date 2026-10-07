@@ -84,6 +84,14 @@ export const WEAPONS = {
     ads: 0.15, zoom: 1.2, move: 1.06, sound: 'mp', model: { type: 'mp', len: 0.3, barrel: 0.04, color: 0x262829 },
   },
 };
+// Arma montada del blindado RINOCERONTE (no seleccionable)
+WEAPONS.hmg = {
+  id: 'hmg', name: 'TORRETA RINOCERONTE', cls: 'Vehículo', slot: 'vehicle', unlock: 99,
+  dmg: 44, head: 1.3, range: [60, 150], minMul: 0.8, rpm: 460, auto: true, pellets: 1,
+  mag: 80, reserve: 99999, reload: 3.2, reloadEmpty: 3.2, swap: 0,
+  spreadHip: 0.9, spreadAds: 0.9, moveSpread: 0.4, recoil: { v: 0.2, h: 0.2, rec: 10 },
+  ads: 0.2, zoom: 1.3, move: 1, sound: 'turret', model: { type: 'lmg', len: 1, barrel: 0.6, color: 0x333333 },
+};
 export const PRIMARIES = ['vx9', 'mosca', 'bulldog', 'sable', 'kr4', 'yunque', 'centinela'];
 export const SECONDARIES = ['ronin', 'toro', 'avispa'];
 

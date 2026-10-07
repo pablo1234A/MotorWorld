@@ -1,6 +1,6 @@
 // Granadas físicas con rebotes, vista previa de trayectoria y detonaciones
 // (fragmentación, impacto, humo y aturdidora).
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Audio } from './audio.js';
 import { clamp } from './util.js';
 

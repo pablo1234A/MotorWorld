@@ -1,6 +1,6 @@
 // Mapa "PUERTO VARGA": distrito urbano-industrial con plaza central, mercado (oeste),
 // almacenes y patio de contenedores (este), parque, gasolinera e interiores.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Builder, F } from './builder.js';
 import { World } from './world.js';
 import { Nav } from './nav.js';
@@ -688,7 +688,7 @@ export function buildMap(T, Q, atmos, sizeT) {
     { n: 'CALLE SUR', x0: -80, z0: 46, x1: 80, z1: 64 }, { n: 'AVENIDA', x0: -7, z0: -46, x1: 7, z1: 46 },
     { n: 'CALLEJÓN', x0: -26, z0: -46, x1: 26, z1: 46 },
   ];
-  const vehicleSpawns = [{ x: -40, z: 54.5, yaw: Math.PI / 2, team: 0 }, { x: 40, z: -54.5, yaw: -Math.PI / 2, team: 1 }];
+  const vehicleSpawns = [{ x: -40, z: 54.5, yaw: Math.PI / 2, team: 0, kind: 'jeep' }, { x: 40, z: -54.5, yaw: -Math.PI / 2, team: 1, kind: 'jeep' }, { x: 44, z: 53.5, yaw: Math.PI / 2, team: 0, kind: 'apc' }, { x: -44, z: -53.5, yaw: -Math.PI / 2, team: 1, kind: 'apc' }];
   extras.supplies.push({ x: 0, z: 54, kind: 'ammo' }, { x: 0, z: -54, kind: 'ammo' }, { x: 17, z: -6.5, kind: 'ammo' }, { x: -66, z: 10, kind: 'ammo' }, { x: 66, z: 5, kind: 'ammo' }, { x: 44, z: -30, kind: 'ammo' }, { x: -58, z: 40, kind: 'ammo' }, { x: 58, z: 30, kind: 'ammo' });
 
   // ============================================================= MINIMAPA

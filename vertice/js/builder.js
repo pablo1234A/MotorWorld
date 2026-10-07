@@ -1,5 +1,5 @@
 // Constructor de geometría estática fusionada por material y por bloque (chunk) espacial.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 
 export const F = { px: 1, nx: 2, py: 4, ny: 8, pz: 16, nz: 32, all: 63, sides: 1 | 2 | 16 | 32 };
 

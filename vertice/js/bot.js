@@ -2,7 +2,7 @@
 // supresión), memoria de amenazas, tiempo de reacción, modelo de puntería con error que
 // converge, cobertura con asomado, flanqueo, retirada, granadas, presión al recargar y
 // objetivos de modo asignados por la escuadra. La dificultad cambia el comportamiento.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Combatant } from './actors.js';
 import { Soldier } from './soldier.js';
 import { Audio } from './audio.js';

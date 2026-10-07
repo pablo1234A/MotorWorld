@@ -1,6 +1,6 @@
 // Sistema de combate: disparo hitscan con dispersión, penetración de cristal, daño
 // por zona y distancia, explosiones con oclusión, bajas, asistencias y medallas.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Audio } from './audio.js';
 import { spreadDir } from './util.js';
 import { SCORE, WEAPONS, LETHALS } from './data.js';
@@ -66,7 +66,7 @@ export class Combat {
     // vehículos
     let veh = null;
     if (g.vehicles) for (const v of g.vehicles) {
-      if (!v.alive) continue;
+      if (!v.alive || v === shooter.inVehicle) continue;
       const t = v.rayHit(o, d, Math.min(vt, wt));
       if (t !== null && t < Math.min(vt, wt)) { veh = v; vt = t; victim = null; }
     }
@@ -74,7 +74,7 @@ export class Combat {
     if (veh) {
       out.point.set(o.x + d.x * vt, o.y + d.y * vt, o.z + d.z * vt); out.dist = vt;
       g.fx.impact(out.point, _n.copy(d).negate(), 'metal');
-      veh.damage(def.dmg * ws.falloff(vt) * 0.6, shooter);
+      veh.damage(def.dmg * ws.falloff(vt) * (veh.bulletMul ?? 0.6), shooter);
       return out;
     }
     if (victim) {
@@ -138,6 +138,7 @@ export class Combat {
     if (g.time < victim.spawnProtect && !self) amount *= 0.2;
     if (victim.isPlayer && attacker && !attacker.isPlayer) amount *= g.diff.dmgMul;
     if (victim.isPlayer && g.godMode) amount = 0;
+    if (victim.inVehicle && !info.explosive && !self) amount *= 0.6; // el chasis protege parcialmente
     if (victim.armor > 0) { const ab = Math.min(victim.armor, amount * 0.5); victim.armor -= ab; amount -= ab; }
     victim.health -= amount;
     victim.lastDamageTime = g.time;

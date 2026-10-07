@@ -1,6 +1,6 @@
 // Arma en primera persona: escena separada, brazos con IK, animaciones de
 // balanceo, retroceso, recarga, cambio, sprint, apuntado y lanzamiento.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { buildGun } from './gunmodel.js';
 import { camoTexture } from './textures.js';
 import { SKINS } from './data.js';

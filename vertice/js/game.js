@@ -1,6 +1,6 @@
 // Partida: crea la escena, la atmósfera, el mapa, los combatientes y todos los sistemas,
 // y ejecuta el bucle de juego completo hasta la victoria o la derrota.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { buildTextures, setAniso } from './textures.js';
 import { buildMap } from './map.js';
 import { Effects } from './effects.js';
@@ -290,7 +290,7 @@ export class Game {
     const m = this.mode.interactionFor(p);
     if (m) return m;
     if (p.inVehicle) { const v = p.inVehicle; return { key: 'exit', label: 'BAJAR DEL VEHÍCULO', instant: true, action: () => v.eject(p) }; }
-    for (const v of this.vehicles) if (v.canEnter && v.canEnter(p)) return { key: 'veh', label: 'SUBIR AL JABALÍ', instant: true, action: () => v.enter(p) };
+    for (const v of this.vehicles) if (v.canEnter && v.canEnter(p)) return { key: 'veh' + v.kind, label: 'SUBIR AL ' + v.name, instant: true, action: () => v.enter(p) };
     return null;
   }
   onPlayerDamaged(att, amount, info) {
@@ -379,6 +379,10 @@ export class Game {
     }
     for (const v of this.vehicles) if (v.update) v.update(dt);
     if (!this.over) {
+      for (const c of this.combatants) {
+        if (!c.alive || c.inVehicle) continue;
+        for (const v of this.vehicles) if (v.pushOut && v.alive !== undefined) v.pushOut(c.pos, c.radius);
+      }
       for (const c of this.combatants) if (c.brain && !c._sabFrozen) c.update(dt); else if (c.brain) { c.model.root.position.copy(c.pos); c.model.update(dt, { speed: 0, crouch: false, aimPitch: 0, grounded: true }); }
       for (const s of this.squads) if (s) s.update(dt);
       this.projectiles.update(dt);
@@ -416,6 +420,19 @@ export class Game {
       fov = S.fov / (1 + (z - 1) * P.adsT);
       if (P.sprint) fov += 5;
       this.deathCam = null;
+    } else if (P.alive && P.inVehicle && P.inVehicle.turret) {
+      // blindado: cámara de artillero (la mira central dispara la torreta)
+      const v = P.inVehicle;
+      const yaw = P.yaw, pitch = clamp(P.pitch, -0.35, 0.5);
+      P.pitch = pitch;
+      const tx = v.pos.x, ty = v.pos.y + 3.1, tz = v.pos.z;
+      let cx = tx + Math.sin(yaw) * 6.5, cy = ty + 0.8, cz = tz + Math.cos(yaw) * 6.5;
+      const dx = cx - tx, dy = cy - ty, dz = cz - tz, L = Math.hypot(dx, dy, dz);
+      const r = this.world.raycast(tx, ty, tz, dx / L, dy / L, dz / L, L, 'solid', {});
+      if (r) { const k = Math.max(1.2, r.t - 0.3) / L; cx = tx + dx * k; cy = ty + dy * k; cz = tz + dz * k; }
+      cam.position.set(cx, cy, cz);
+      cam.rotation.set(pitch - 0.08, yaw, 0);
+      fov = S.fov;
     } else if (P.alive && P.inVehicle) {
       const v = P.inVehicle;
       const yaw = P.yaw, pitch = clamp(P.pitch, -0.6, 0.35);

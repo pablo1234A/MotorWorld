@@ -1,5 +1,5 @@
 // Modos de juego: Duelo por equipos, Dominio, Sabotaje (rondas) y Todos contra todos.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { Audio } from './audio.js';
 import { MODES, SCORE, TEAMS } from './data.js';
 import { rand, fmtTime } from './util.js';

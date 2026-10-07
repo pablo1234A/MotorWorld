@@ -1,6 +1,6 @@
 // HUD minimalista: salud, munición, minimapa giratorio, marcador, tiempo, objetivos,
 // killfeed, marcadores de impacto, indicadores de daño, medallas y marcador completo.
-import * as THREE from 'three';
+import * as THREE from './lib/three.module.min.js';
 import { TEAMS, STREAKS } from './data.js';
 import { clamp, DEG } from './util.js';
 
@@ -216,13 +216,15 @@ export class HUD {
     this.set('hST', 'w', (P.stamina * 100) + '%');
     this.set('hSKN', 'text', String(P.stats.streak));
     this.set('hSKN', 'cls', 'h-skn' + (P.stats.streak >= 3 ? ' hot' : ''));
-    const ws = P.weapon;
-    this.set('hMag', 'text', String(ws.mag)); this.set('hRes', 'text', '/ ' + ws.reserve);
+    const ws = P.inVehicle && P.inVehicle.gun ? P.inVehicle.gun : P.weapon;
+    this.set('hMag', 'text', String(ws.mag));
     this.set('hMag', 'cls', ws.mag <= Math.ceil(ws.def.mag * 0.25) ? 'low' : '');
     this.set('hWName', 'text', ws.def.name);
     this.set('hLeth', 'text', '◆ ' + P.lethals); this.set('hTac', 'text', '▣ ' + P.tacticals);
     for (let i = 0; i < 2; i++) { const el = this.root.querySelector('#hSlot' + i); if (el) el.classList.toggle('on', P.slot === i); }
+    this.set('hSlots', 'op', P.inVehicle ? '0' : '1');
     const showReload = P.alive && !ws.reloading && ws.mag <= Math.ceil(ws.def.mag * 0.2) && ws.reserve > 0 && !P.inVehicle;
+    this.set('hRes', 'text', P.inVehicle && P.inVehicle.gun ? (ws.reloading ? 'RECARGANDO' : '∞') : '/ ' + ws.reserve);
     this.set('hReload', 'show', showReload);
     this.set('hReload', 'text', ws.mag === 0 ? (ws.reserve > 0 ? 'RECARGAR' : 'SIN MUNICIÓN') : 'MUNICIÓN BAJA');
     if (ws.reloading) this.set('hReload', 'show', false);
@@ -231,7 +233,7 @@ export class HUD {
     const scoped = ads && ws.def.scope && P.alive;
     this.set('hScope', 'show', scoped);
     g.vm.root.visible = !scoped && g.vm.visible;
-    const hideX = !P.alive || P.sprint || ads || P.inVehicle || g.streaks.designating;
+    const hideX = !P.alive || P.sprint || ads || (P.inVehicle && !P.inVehicle.gun) || g.streaks.designating;
     this.set('hX', 'show', !hideX);
     if (!hideX) {
       const spread = ws.spread(false, P.moveSpeed > 1, P.crouch, !P.grounded);
@@ -300,7 +302,7 @@ export class HUD {
       if (c.pos.distanceToSquared(cam.position) > 70 * 70) continue;
       list.push({ key: 'c' + c.id, x: c.pos.x, y: c.pos.y + c.height + 0.45, z: c.pos.z, label: c.name, cls: 'ally' });
     }
-    for (const v of g.vehicles) if (v.driver === null && v.alive && v.halfW && v.pos.distanceToSquared(cam.position) < 50 * 50) list.push({ key: 'v' + v.spawn.x, x: v.pos.x, y: 2.6, z: v.pos.z, label: '⛟', cls: 'veh' });
+    for (const v of g.vehicles) if (v.driver === null && v.alive && v.halfW && v.pos.distanceToSquared(cam.position) < 50 * 50) list.push({ key: 'v' + v.spawn.x, x: v.pos.x, y: v.height + 0.9, z: v.pos.z, label: '⛟', cls: 'veh' });
     const seen = new Set();
     for (const m of list) {
       _w.set(m.x, m.y, m.z).project(cam);
