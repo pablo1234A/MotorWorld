@@ -1,0 +1,21 @@
+{
+  "name": "solenne",
+  "version": "1.0.0",
+  "description": "Solenne \u2014 immersive luxury real-estate experience (fictional brand)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "render": "node tools/render-all.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "playwright-core": "^1.63.0",
+    "sharp": "^0.35.5",
+    "three": "^0.186.1",
+    "vite": "^8.3.3"
+  },
+  "private": true,
+  "type": "module"
+}
