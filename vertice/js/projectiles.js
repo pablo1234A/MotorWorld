@@ -11,7 +11,7 @@ const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 export class Projectiles {
   constructor(game) {
     this.g = game; this.list = [];
-    const G = this.geo = {
+    this.geo = {
       frag: new THREE.IcosahedronGeometry(0.055, 1),
       cyl: new THREE.CylinderGeometry(0.035, 0.035, 0.12, 10),
     };

@@ -73,7 +73,7 @@ export function buildGun(def, opts = {}) {
   const cylX = Math.PI / 2;
 
   if (t === 'ar' || t === 'dmr') {
-    const L = def.model.len, bl = def.model.barrel;
+    const bl = def.model.barrel;
     add(geo('box', 0.058, 0.085, 0.34), M.body, 0, 0.012, -0.07);
     add(geo('box', 0.05, 0.03, 0.32), M.poly, 0, 0.04, -0.06);
     add(geo('box', 0.056, 0.066, 0.27), M.poly, 0, 0.012, -0.36);

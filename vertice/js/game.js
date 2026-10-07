@@ -116,7 +116,7 @@ export class Game {
     progress(0.92, 'Calibrando sistemas'); await nextFrame();
     // precompilar shaders para evitar tirones
     this.updateCamera(0);
-    try { app.renderer.compile(scene, this.camera); app.renderer.compile(this.vm.scene, this.vm.camera); } catch (e) { /* opcional */ }
+    try { app.renderer.compile(scene, this.camera); app.renderer.compile(this.vm.scene, this.vm.camera); this.render(); } catch (e) { /* opcional */ }
     this.onResize();
     progress(1, 'Listo');
     window.__game = this;

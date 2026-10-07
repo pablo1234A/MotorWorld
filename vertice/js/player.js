@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { Combatant } from './actors.js';
 import { Audio } from './audio.js';
-import { clamp, damp, DEG, rand, wrapAngle } from './util.js';
+import { clamp, damp, DEG, wrapAngle } from './util.js';
 import { OPTICS } from './data.js';
 
 const _v = new THREE.Vector3(), _f = new THREE.Vector3(), _r = new THREE.Vector3(), _o = new THREE.Vector3(), _t = new THREE.Vector3(), _mres = {};

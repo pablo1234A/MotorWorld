@@ -4,7 +4,7 @@ import { Audio } from './audio.js';
 import { MODES, SCORE, TEAMS } from './data.js';
 import { rand, fmtTime } from './util.js';
 
-const _v = new THREE.Vector3(), _h = new THREE.Vector3();
+const _v = new THREE.Vector3();
 
 class Mode {
   constructor(game, cfg) {

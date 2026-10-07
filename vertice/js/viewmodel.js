@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { buildGun } from './gunmodel.js';
 import { camoTexture } from './textures.js';
 import { SKINS } from './data.js';
-import { clamp, lerp, damp } from './util.js';
+import { clamp, damp } from './util.js';
 
 const DOWN = new THREE.Vector3(0, -1, 0);
 const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _q = new THREE.Quaternion();

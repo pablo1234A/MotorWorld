@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Audio } from './audio.js';
 import { clamp, damp, wrapAngle } from './util.js';
 
-const _a = new THREE.Vector3(), _o = new THREE.Vector3(), _d = new THREE.Vector3();
+const _a = new THREE.Vector3(), _d = new THREE.Vector3();
 
 function buildJeep(T) {
   const g = new THREE.Group();

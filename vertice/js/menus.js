@@ -5,7 +5,7 @@ import { Profile } from './profile.js';
 import { Audio } from './audio.js';
 import {
   GAME_NAME, GAME_SUB, WEAPONS, PRIMARIES, SECONDARIES, OPTICS, CAMOS, LETHALS, TACTICALS, PERKS, OPERATORS, SKINS,
-  HEADGEAR, FACEGEAR, ACCENTS, MODES, DIFFICULTIES, ATMOS, MAP_INFO, STREAKS, CHALLENGES, QUALITY, xpForLevel, TEAMS,
+  HEADGEAR, FACEGEAR, ACCENTS, MODES, DIFFICULTIES, ATMOS, MAP_INFO, STREAKS, CHALLENGES, QUALITY, xpForLevel,
 } from './data.js';
 
 export const LOGO = `<svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M4 12h15l13 31 13-31h15L37 58h-10z" fill="currentColor"/><path d="M32 2v12M26 8h12" stroke="var(--amber)" stroke-width="3.2" stroke-linecap="square"/></svg>`;

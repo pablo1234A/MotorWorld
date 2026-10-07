@@ -8,6 +8,7 @@ import { mulberry32 } from './util.js';
 import { tex } from './textures.js';
 
 export const BOUNDS = { minX: -80, minZ: -64, maxX: 80, maxZ: 64 };
+const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
 
 function makeMaterials(T, atmos) {
   const wet = atmos === 'storm';
@@ -47,7 +48,7 @@ function makeMaterials(T, atmos) {
 
 export function buildMap(T, Q, atmos, sizeT) {
   const { minX, minZ, maxX, maxZ } = BOUNDS;
-  const B = new Builder(minX, minZ, 64);
+  const B = new Builder(minX, minZ, 1000);
   const W = new World(minX, minZ, maxX, maxZ, 4);
   const M = makeMaterials(T, atmos);
   const rnd = mulberry32(90210);
@@ -150,10 +151,8 @@ export function buildMap(T, Q, atmos, sizeT) {
       if (glass) {
         const gx0 = sd.axis === 'x' ? X0 : (f0 + f1) / 2 - 0.03, gx1 = sd.axis === 'x' ? X1 : (f0 + f1) / 2 + 0.03;
         const gz0 = sd.axis === 'x' ? (f0 + f1) / 2 - 0.03 : Z0, gz1 = sd.axis === 'x' ? (f0 + f1) / 2 + 0.03 : Z1;
-        const mesh = new THREE.Mesh(G.box, glassMat);
-        mesh.position.set((gx0 + gx1) / 2, (y0 + y1) / 2, (gz0 + gz1) / 2); mesh.scale.set(gx1 - gx0, y1 - y0, gz1 - gz0);
-        mesh.renderOrder = 2; group.add(mesh);
-        const bx = solid(gx0, y0, gz0, gx1, y1, gz1, { mat: 'glass', sight: false, hp: 1, data: { type: 'glass', mesh } });
+        const pane = { idx: extras.breakGlass.length, position: new THREE.Vector3((gx0 + gx1) / 2, (y0 + y1) / 2, (gz0 + gz1) / 2), scale: new THREE.Vector3(gx1 - gx0, y1 - y0, gz1 - gz0), visible: true };
+        const bx = solid(gx0, y0, gz0, gx1, y1, gz1, { mat: 'glass', sight: false, hp: 1, data: { type: 'glass', mesh: pane } });
         extras.breakGlass.push(bx);
         return;
       }
@@ -647,14 +646,22 @@ export function buildMap(T, Q, atmos, sizeT) {
   extras.crates.forEach((c, i) => { crateMesh.setMatrixAt(i, mat4(c.x, c.y + c.s / 2, c.z, R(-0.05, 0.05), c.s, c.s, c.s)); });
   crateMesh.instanceMatrix.needsUpdate = true;
   group.add(crateMesh);
-  // barriles explosivos
+  // cristales destructibles (instanciados)
+  const glassMesh = new THREE.InstancedMesh(G.box, glassMat, Math.max(1, extras.breakGlass.length));
+  glassMesh.renderOrder = 2;
+  extras.breakGlass.forEach((bx, i) => { const p = bx.data.mesh; glassMesh.setMatrixAt(i, new THREE.Matrix4().compose(p.position, new THREE.Quaternion(), p.scale)); });
+  glassMesh.instanceMatrix.needsUpdate = true; group.add(glassMesh);
+  // barriles explosivos (instanciados)
   const barrelMat = new THREE.MeshStandardMaterial({ map: T.metal.map, color: 0xb3261b, roughness: 0.5, metalness: 0.5 });
   const barrelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.9, 14);
-  for (const b of extras.barrels) {
-    const m = new THREE.Mesh(barrelGeo, barrelMat); m.position.set(b.x, 0.45, b.z); m.castShadow = true; m.receiveShadow = true;
-    group.add(m); b.mesh = m;
+  const barrelMesh = new THREE.InstancedMesh(barrelGeo, barrelMat, Math.max(1, extras.barrels.length));
+  barrelMesh.castShadow = true; barrelMesh.receiveShadow = true;
+  extras.barrels.forEach((b, i) => {
+    barrelMesh.setMatrixAt(i, mat4(b.x, 0.45, b.z, R(0, 3)));
+    b.idx = i; b.mesh = { position: new THREE.Vector3(b.x, 0.45, b.z) };
     b.box = solid(b.x - 0.3, 0, b.z - 0.3, b.x + 0.3, 0.9, b.z + 0.3, { mat: 'metal', hp: 22, data: { type: 'barrel', ref: b } });
-  }
+  });
+  barrelMesh.instanceMatrix.needsUpdate = true; group.add(barrelMesh);
 
   // ============================================================= NAVEGACIÓN
   const nav = new Nav(W, minX, minZ, maxX, maxZ, 1);
@@ -699,6 +706,7 @@ export function buildMap(T, Q, atmos, sizeT) {
       const d = box.data;
       if (d && d.type === 'glass') {
         box.dead = true; d.mesh.visible = false;
+        glassMesh.setMatrixAt(d.mesh.idx, ZERO); glassMesh.instanceMatrix.needsUpdate = true;
         if (this.onBreak) this.onBreak('glass', d.mesh.position, box);
         return true;
       }
@@ -707,10 +715,10 @@ export function buildMap(T, Q, atmos, sizeT) {
       box.dead = true;
       if (d && d.type === 'crate') {
         const c = extras.crates[d.idx];
-        crateMesh.setMatrixAt(d.idx, new THREE.Matrix4().makeScale(0, 0, 0)); crateMesh.instanceMatrix.needsUpdate = true;
+        crateMesh.setMatrixAt(d.idx, ZERO); crateMesh.instanceMatrix.needsUpdate = true;
         if (this.onBreak) this.onBreak('crate', new THREE.Vector3(c.x, c.y + c.s / 2, c.z), box);
       } else if (d && d.type === 'barrel') {
-        d.ref.mesh.visible = false;
+        barrelMesh.setMatrixAt(d.ref.idx, ZERO); barrelMesh.instanceMatrix.needsUpdate = true;
         if (this.onExplode) this.onExplode(new THREE.Vector3(d.ref.x, 0.6, d.ref.z), attacker, 'barrel');
       }
       return false;

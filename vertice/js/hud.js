@@ -1,7 +1,7 @@
 // HUD minimalista: salud, munición, minimapa giratorio, marcador, tiempo, objetivos,
 // killfeed, marcadores de impacto, indicadores de daño, medallas y marcador completo.
 import * as THREE from 'three';
-import { TEAMS, STREAKS, WEAPONS } from './data.js';
+import { TEAMS, STREAKS } from './data.js';
 import { clamp, DEG } from './util.js';
 
 const HTML = `
