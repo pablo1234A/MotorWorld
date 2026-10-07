@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUREA Estates — Villas de lujo en España</title>
+<meta name="description" content="Villas de lujo en Marbella, Ibiza, Mallorca y Costa Brava. Compra directa, financiación y propiedades off-market con asesoramiento privado.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0b0a'/%3E%3Cpath d='M6 24 16 7l10 17z' fill='none' stroke='%23c8a96a' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c0b0a; --ink2:#161412; --ink3:#211e1b;
+  --ivory:#f4efe6; --paper:#fbf8f2; --stone:#d9d1c2;
+  --gold:#c8a96a; --gold2:#e3cd9b; --muted:#8b8478; --line:rgba(255,255,255,.12); --line-d:rgba(12,11,10,.12);
+  --serif:'Cormorant Garamond',Georgia,serif; --sans:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,.8,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--ivory);font-family:var(--sans);font-weight:300;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+::selection{background:var(--gold);color:var(--ink)}
+.wrap{width:min(1240px,100% - 48px);margin-inline:auto}
+.eyebrow{font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:500}
+h1,h2,h3{font-family:var(--serif);font-weight:500;line-height:1.05;letter-spacing:-.01em}
+h2{font-size:clamp(2.4rem,5vw,4.2rem)}
+h2 em,h1 em{font-style:italic;color:var(--gold2)}
+.btn{display:inline-flex;align-items:center;gap:.7rem;padding:1rem 1.8rem;font-size:.75rem;letter-spacing:.22em;text-transform:uppercase;font-weight:500;border:1px solid var(--gold);color:var(--gold2);transition:.4s var(--ease)}
+.btn:hover{background:var(--gold);color:var(--ink)}
+.btn.solid{background:var(--gold);color:var(--ink)}
+.btn.solid:hover{background:var(--gold2)}
+.btn.dark{border-color:var(--ink);color:var(--ink)}
+.btn.dark:hover{background:var(--ink);color:var(--ivory)}
+
+/* NAV */
+nav{position:fixed;inset:0 0 auto 0;z-index:50;transition:.5s var(--ease)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:84px;transition:.5s var(--ease)}
+nav.solid{background:rgba(12,11,10,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+nav.solid .wrap{height:68px}
+.logo{font-family:var(--serif);font-size:1.7rem;letter-spacing:.34em;font-weight:500}
+.logo small{display:block;font-family:var(--sans);font-size:.55rem;letter-spacing:.5em;color:var(--gold);margin-top:-.2rem}
+.menu{display:flex;gap:2.4rem;align-items:center}
+.menu a{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;position:relative;padding:.3rem 0}
+.menu a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--gold);transition:.4s var(--ease)}
+.menu a:hover::after{width:100%}
+.burger{display:none;width:44px;height:44px;position:relative}
+.burger span{position:absolute;left:10px;right:10px;height:1px;background:var(--ivory);transition:.4s var(--ease)}
+.burger span:nth-child(1){top:17px}.burger span:nth-child(2){top:26px}
+.burger.open span:nth-child(1){top:21px;transform:rotate(45deg)}.burger.open span:nth-child(2){top:21px;transform:rotate(-45deg)}
+
+/* TOUR */
+.tour{position:relative;height:620vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--ink)}
+.scene{position:absolute;inset:0;opacity:0;will-change:transform,opacity}
+.scene .bg{position:absolute;inset:0}
+.scene img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:linear-gradient(180deg,rgba(12,11,10,.55) 0%,rgba(12,11,10,0) 28%,rgba(12,11,10,0) 45%,rgba(12,11,10,.85) 100%),
+  radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(0,0,0,.45) 100%)}
+.chapters{position:absolute;inset:0;z-index:5;pointer-events:none}
+.chap{position:absolute;left:0;right:0;bottom:11vh;opacity:0;will-change:transform,opacity}
+.chap .wrap{display:grid;grid-template-columns:1.25fr 1fr;gap:4rem;align-items:end}
+.chap h1,.chap h2.t{font-size:clamp(3rem,8.4vw,8rem);line-height:.95;margin:1rem 0 1.4rem}
+.chap h2.t{font-size:clamp(2.6rem,6vw,5.6rem)}
+.chap p{max-width:46ch;color:rgba(244,239,230,.82);font-size:1.02rem}
+.chap .specs{display:flex;gap:2.2rem;flex-wrap:wrap;justify-content:flex-end;text-align:right}
+.chap .spec b{display:block;font-family:var(--serif);font-size:2.6rem;font-weight:500;line-height:1}
+.chap .spec span{font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold2)}
+.chap .cta{pointer-events:auto;margin-top:2rem}
+.hud{position:absolute;z-index:6;right:32px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1.1rem;align-items:flex-end}
+.hud button{display:flex;align-items:center;gap:.9rem;font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.55);transition:.4s}
+.hud button i{display:block;width:22px;height:1px;background:currentColor;transition:.5s var(--ease)}
+.hud button.on{color:var(--gold2)}
+.hud button.on i{width:56px}
+.counter{position:absolute;z-index:6;left:32px;top:50%;transform:translateY(-50%) rotate(-90deg);transform-origin:left center;font-size:.62rem;letter-spacing:.4em;color:rgba(244,239,230,.6);white-space:nowrap}
+.progress{position:absolute;z-index:6;left:0;bottom:0;height:2px;width:100%;transform-origin:left;transform:scaleX(0);background:var(--gold)}
+.scrollhint{position:absolute;z-index:6;left:50%;bottom:30px;transform:translateX(-50%);font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;color:rgba(244,239,230,.7);text-align:center;transition:opacity .5s}
+.scrollhint::after{content:"";display:block;width:1px;height:38px;margin:.7rem auto 0;background:linear-gradient(var(--gold),transparent);animation:drip 2s ease-in-out infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* TRUST BAR */
+.trust{background:var(--ink2);border-block:1px solid var(--line)}
+.trust .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
+.trust div{padding:2.6rem 1rem;text-align:center;border-right:1px solid var(--line)}
+.trust div:last-child{border:0}
+.trust b{display:block;font-family:var(--serif);font-size:3rem;font-weight:500;color:var(--gold2);line-height:1}
+.trust span{font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted)}
+
+/* LISTINGS */
+.listings{background:var(--ivory);color:var(--ink);padding:8rem 0}
+.listings h2 em{color:#9a7b3c}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:2rem;flex-wrap:wrap;margin-bottom:3rem}
+.sec-head p{max-width:42ch;color:#5d574d}
+.search{background:var(--ink);color:var(--ivory);padding:1.6rem;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:1rem;align-items:end;box-shadow:0 30px 60px -30px rgba(0,0,0,.45)}
+.field label{display:block;font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem}
+.field input[type=search],.field select{width:100%;height:50px;background:var(--ink2);border:1px solid var(--line);padding:0 1rem;border-radius:0;appearance:none;-webkit-appearance:none;color:var(--ivory)}
+.field select{background-image:linear-gradient(45deg,transparent 50%,var(--gold) 50%),linear-gradient(135deg,var(--gold) 50%,transparent 50%);background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:2.4rem}
+.field input::placeholder{color:var(--muted)}
+.field input:focus,.field select:focus{border-color:var(--gold);outline:0}
+.search .btn{height:50px;padding-inline:1.6rem}
+.filters{display:flex;flex-wrap:wrap;gap:2rem 3rem;align-items:center;padding:1.6rem 0 2.2rem;border-bottom:1px solid var(--line-d);margin-bottom:2.4rem}
+.fgroup{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap}
+.fgroup>span{font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#7a7366}
+.chip{padding:.55rem 1rem;border:1px solid var(--line-d);font-size:.76rem;transition:.3s var(--ease);background:transparent}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--ivory);border-color:var(--ink)}
+.range{display:flex;align-items:center;gap:1rem}
+.range output{font-family:var(--serif);font-size:1.4rem;min-width:7.5ch;font-weight:500}
+input[type=range]{-webkit-appearance:none;appearance:none;width:200px;height:1px;background:var(--ink);outline-offset:8px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid var(--ink);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--gold);border:3px solid var(--ink);cursor:pointer}
+.resultbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.6rem;font-size:.85rem;color:#5d574d;flex-wrap:wrap;gap:1rem}
+.resultbar b{font-family:var(--serif);font-size:1.5rem;color:var(--ink);font-weight:600}
+.resultbar select{background:transparent;border:0;border-bottom:1px solid var(--ink);padding:.4rem 1.4rem .4rem 0;color:var(--ink);font-size:.85rem}
+.reset{text-decoration:underline;text-underline-offset:4px;font-size:.8rem}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+.card{background:var(--paper);position:relative;cursor:pointer;transition:transform .6s var(--ease),box-shadow .6s var(--ease);display:flex;flex-direction:column;animation:rise .7s var(--ease) both}
+.card:hover{transform:translateY(-8px);box-shadow:0 40px 60px -35px rgba(12,11,10,.5)}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.card .ph{position:relative;aspect-ratio:4/3;overflow:hidden}
+.card .ph .fb{position:absolute;inset:0}
+.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.card:hover .ph img{transform:scale(1.07)}
+.tag{position:absolute;top:1rem;left:1rem;z-index:2;background:var(--ink);color:var(--gold2);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;padding:.4rem .8rem}
+.fav{position:absolute;top:.6rem;right:.6rem;z-index:2;width:44px;height:44px;display:grid;place-items:center;color:#fff}
+.fav svg{width:22px;height:22px;fill:rgba(0,0,0,.25);stroke:#fff;stroke-width:1.5;transition:.3s}
+.fav[aria-pressed=true] svg{fill:var(--gold);stroke:var(--gold)}
+.card .bd{padding:1.5rem 1.6rem 1.7rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+.card .loc{font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;color:#8a7440;font-weight:500}
+.card h3{font-size:1.9rem}
+.card .price{font-family:var(--serif);font-size:1.7rem;font-weight:500;margin-top:.3rem}
+.card .meta{display:flex;gap:1.2rem;padding-top:1rem;margin-top:auto;border-top:1px solid var(--line-d);font-size:.78rem;color:#5d574d;flex-wrap:wrap}
+.empty{grid-column:1/-1;text-align:center;padding:5rem 1rem;color:#5d574d}
+.empty h3{font-size:2.2rem;color:var(--ink);margin-bottom:.6rem}
+
+/* BUY */
+.buy{padding:8rem 0;background:var(--ink)}
+.buy .sec-head p{color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);margin-bottom:0}
+.tabs button{padding:1.5rem 1rem 1.4rem;text-align:left;border-top:2px solid transparent;margin-top:-1px;color:var(--muted);transition:.4s;display:flex;flex-direction:column;gap:.3rem}
+.tabs button b{font-family:var(--serif);font-size:1.5rem;font-weight:500;color:inherit}
+.tabs button small{font-size:.62rem;letter-spacing:.26em;text-transform:uppercase}
+.tabs button[aria-selected=true]{color:var(--ivory);border-top-color:var(--gold)}
+.tabs button:hover{color:var(--ivory)}
+.panel{display:none;grid-template-columns:1.1fr 1fr;gap:5rem;padding:3.5rem 0 0;align-items:start}
+.panel.on{display:grid;animation:rise .6s var(--ease)}
+.panel h3{font-size:2.6rem;margin-bottom:1rem}
+.panel p{color:rgba(244,239,230,.75);max-width:50ch}
+.panel ul{list-style:none;margin:1.8rem 0 2.2rem;display:grid;gap:.8rem}
+.panel li{padding-left:1.8rem;position:relative;font-size:.95rem}
+.panel li::before{content:"";position:absolute;left:0;top:.75em;width:.9rem;height:1px;background:var(--gold)}
+.box{background:var(--ink2);border:1px solid var(--line);padding:2.2rem}
+.box .big{font-family:var(--serif);font-size:3.4rem;color:var(--gold2);line-height:1;margin:.4rem 0 1.4rem}
+.box .row{display:flex;justify-content:space-between;padding:.9rem 0;border-top:1px solid var(--line);font-size:.88rem}
+.box .row span:first-child{color:var(--muted)}
+.calc .field{margin-bottom:1.4rem}
+.calc .lab{display:flex;justify-content:space-between;font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem}
+.calc .lab output{font-family:var(--serif);font-size:1.2rem;letter-spacing:0;color:var(--ivory);text-transform:none}
+.calc input[type=range]{width:100%;background:var(--muted)}
+.calc input[type=range]::-webkit-slider-thumb{border-color:var(--ink2)}
+.calc input[type=range]::-moz-range-thumb{border-color:var(--ink2)}
+.note{font-size:.72rem;color:var(--muted);margin-top:1.2rem}
+
+/* SERVICES */
+.services{background:var(--paper);color:var(--ink);padding:8rem 0}
+.services h2 em{color:#9a7b3c}
+.svc{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line-d);border-left:1px solid var(--line-d);margin-top:3.5rem}
+.svc article{padding:2.6rem 2.2rem 3rem;border-right:1px solid var(--line-d);border-bottom:1px solid var(--line-d);transition:.5s var(--ease)}
+.svc article:hover{background:var(--ink);color:var(--ivory)}
+.svc .n{font-family:var(--serif);font-size:1rem;color:#9a7b3c;letter-spacing:.2em}
+.svc h3{font-size:2rem;margin:1.2rem 0 .8rem}
+.svc p{font-size:.92rem;color:#5d574d}
+.svc article:hover p{color:rgba(244,239,230,.7)}
+.quote{margin-top:6rem;display:grid;grid-template-columns:1fr 1.6fr;gap:4rem;align-items:center}
+.quote .face{aspect-ratio:1;background:linear-gradient(135deg,#2a241c,#0c0b0a);position:relative;overflow:hidden}
+.quote .face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.quote blockquote{font-family:var(--serif);font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.25;font-style:italic}
+.quote cite{display:block;margin-top:1.6rem;font-style:normal;font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:#7a7366}
+
+/* CONTACT */
+.contact{padding:8rem 0;background:var(--ink)}
+.contact .wrap{display:grid;grid-template-columns:1fr 1fr;gap:6rem}
+.contact p.lead{color:rgba(244,239,230,.75);margin:1.6rem 0 2.4rem;max-width:44ch}
+.cinfo{display:grid;gap:1.4rem}
+.cinfo div{border-top:1px solid var(--line);padding-top:1rem}
+.cinfo span{display:block;font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+.cinfo b{font-family:var(--serif);font-size:1.6rem;font-weight:500}
+form.cf{display:grid;gap:1.2rem;align-content:start}
+form.cf .two{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+form.cf input,form.cf select,form.cf textarea{width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);padding:.9rem 0;border-radius:0;color:var(--ivory);font:inherit;appearance:none;-webkit-appearance:none}
+form.cf select option{color:#000}
+form.cf textarea{resize:vertical;min-height:110px}
+form.cf input:focus,form.cf select:focus,form.cf textarea:focus{outline:0;border-color:var(--gold)}
+form.cf ::placeholder{color:var(--muted)}
+.ok{display:none;padding:1.2rem;border:1px solid var(--gold);color:var(--gold2);font-size:.9rem}
+footer{background:#070605;border-top:1px solid var(--line);padding:3rem 0;font-size:.75rem;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center}
+
+/* MODAL */
+.modal{position:fixed;inset:0;z-index:100;background:rgba(7,6,5,.92);backdrop-filter:blur(8px);display:none;overflow-y:auto;padding:4vh 0}
+.modal.on{display:block;animation:fade .4s}
+@keyframes fade{from{opacity:0}}
+.mbox{width:min(1100px,100% - 32px);margin:auto;background:var(--ink);border:1px solid var(--line);position:relative}
+.mclose{position:absolute;top:12px;right:12px;z-index:3;width:48px;height:48px;background:rgba(12,11,10,.7);font-size:1.6rem;line-height:1}
+.mgal{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:4px;height:min(56vh,520px)}
+.mgal div{position:relative;overflow:hidden}
+.mgal div:first-child{grid-row:1/3}
+.mgal .fb,.mgal img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.minfo{display:grid;grid-template-columns:1.5fr 1fr;gap:3rem;padding:2.6rem}
+.minfo h3{font-size:3rem;margin:.5rem 0 1rem}
+.minfo p{color:rgba(244,239,230,.78)}
+.mfeat{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.6rem}
+.mfeat span{border:1px solid var(--line);padding:.45rem .9rem;font-size:.75rem}
+.mside{border:1px solid var(--line);padding:1.8rem;align-self:start}
+.mside .big{font-family:var(--serif);font-size:2.6rem;color:var(--gold2);line-height:1.1;margin-bottom:1rem}
+.mside .row{display:flex;justify-content:space-between;padding:.7rem 0;border-top:1px solid var(--line);font-size:.85rem}
+.mside .row span:first-child{color:var(--muted)}
+.mside .btn{width:100%;justify-content:center;margin-top:1.2rem}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(30px);transition:1s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:1000px){
+  .menu{position:fixed;inset:0;background:var(--ink);flex-direction:column;justify-content:center;gap:2rem;opacity:0;pointer-events:none;transition:.5s var(--ease)}
+  .menu.open{opacity:1;pointer-events:auto}
+  .menu a{font-size:1rem}
+  .burger{display:block;z-index:60}
+  .chap .wrap{grid-template-columns:1fr;gap:1.6rem}
+  .chap .specs{justify-content:flex-start;text-align:left;gap:1.6rem}
+  .chap .spec b{font-size:2rem}
+  .hud,.counter{display:none}
+  .search{grid-template-columns:1fr 1fr}
+  .search .field:first-child{grid-column:1/-1}
+  .search .btn{grid-column:1/-1;justify-content:center}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .trust .wrap{grid-template-columns:repeat(2,1fr)}
+  .trust div:nth-child(2){border-right:0}
+  .trust div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .tabs{grid-template-columns:repeat(2,1fr)}
+  .panel,.contact .wrap,.quote,.minfo{grid-template-columns:1fr;gap:2.5rem}
+  .svc{grid-template-columns:repeat(2,1fr)}
+  .quote .face{max-width:320px}
+}
+@media(max-width:620px){
+  .wrap{width:min(1240px,100% - 32px)}
+  .grid,.svc{grid-template-columns:1fr}
+  .search{grid-template-columns:1fr}
+  .chap{bottom:14vh}
+  .chap p{font-size:.92rem}
+  .mgal{grid-template-columns:1fr;grid-template-rows:1fr;height:40vh}
+  .mgal div:not(:first-child){display:none}
+  .minfo{padding:1.6rem}
+  form.cf .two{grid-template-columns:1fr}
+  input[type=range]{width:150px}
+  .listings,.buy,.services,.contact{padding:5rem 0}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .card,.modal.on,.panel.on{animation:none}
+  .scrollhint::after{animation:none}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap">
+    <a href="#top" class="logo" aria-label="AUREA Estates">AUREA<small>ESTATES</small></a>
+    <div class="menu" id="menu">
+      <a href="#propiedades">Propiedades</a>
+      <a href="#compra">Cómo comprar</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#contacto" class="btn" style="padding:.8rem 1.4rem">Visita privada</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- RECORRIDO -->
+<header class="tour" id="top">
+  <div class="stage" id="stage">
+    <div id="scenes"></div>
+    <div class="chapters" id="chapters"></div>
+    <div class="counter" id="counter"></div>
+    <div class="hud" id="hud" aria-label="Recorrido de la villa"></div>
+    <div class="scrollhint" id="hint">Desliza para entrar</div>
+    <div class="progress" id="bar"></div>
+  </div>
+</header>
+
+<section class="trust" aria-label="AUREA en cifras">
+  <div class="wrap">
+    <div><b data-count="1.8" data-dec="1" data-suf=" mM€">0</b><span>Vendido en 2025</span></div>
+    <div><b data-count="320" data-suf="+">0</b><span>Villas transaccionadas</span></div>
+    <div><b data-count="14">0</b><span>Años de trayectoria</span></div>
+    <div><b data-count="38">0</b><span>Nacionalidades atendidas</span></div>
+  </div>
+</section>
+
+<!-- PROPIEDADES -->
+<section class="listings" id="propiedades">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow" style="color:#8a7440">Colección 2026</p>
+        <h2 style="margin-top:.8rem">Villas en <em>venta</em></h2>
+      </div>
+      <p>Una selección privada de propiedades verificadas por nuestro equipo. Visitas con helicóptero o yate disponibles bajo petición.</p>
+    </div>
+
+    <form class="search" id="search" role="search" onsubmit="return false">
+      <div class="field"><label for="q">Buscar</label><input id="q" type="search" placeholder="Nombre, zona o característica…" autocomplete="off"></div>
+      <div class="field"><label for="zona">Destino</label><select id="zona"><option value="">Todos</option></select></div>
+      <div class="field"><label for="tipo">Estilo</label><select id="tipo"><option value="">Todos</option></select></div>
+      <div class="field"><label for="hab">Dormitorios</label>
+        <select id="hab"><option value="0">Cualquiera</option><option value="4">4+</option><option value="5">5+</option><option value="6">6+</option><option value="8">8+</option></select></div>
+      <button class="btn solid" type="button" id="go">Buscar</button>
+    </form>
+
+    <div class="filters">
+      <div class="fgroup range"><span>Precio máx.</span>
+        <input type="range" id="precio" min="2000000" max="25000000" step="500000" value="25000000" aria-label="Precio máximo">
+        <output id="precioOut"></output></div>
+      <div class="fgroup" id="feat"><span>Incluye</span></div>
+    </div>
+
+    <div class="resultbar">
+      <div><b id="count">0</b> propiedades <button class="reset" id="reset" hidden>Limpiar filtros</button></div>
+      <label>Ordenar&nbsp;
+        <select id="orden"><option value="rel">Destacadas</option><option value="asc">Precio ascendente</option><option value="desc">Precio descendente</option><option value="m2">Mayor superficie</option></select></label>
+    </div>
+
+    <div class="grid" id="grid" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- COMPRA -->
+<section class="buy" id="compra">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div><p class="eyebrow">Opciones de compra</p><h2 style="margin-top:.8rem">Cuatro caminos <em>hacia su villa</em></h2></div>
+      <p>Estructuramos cada operación según su perfil fiscal, su horizonte y su forma de vivir la propiedad.</p>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" aria-selected="true" data-t="0"><small>01</small><b>Compra directa</b></button>
+      <button role="tab" aria-selected="false" data-t="1"><small>02</small><b>Financiación</b></button>
+      <button role="tab" aria-selected="false" data-t="2"><small>03</small><b>Off-market</b></button>
+      <button role="tab" aria-selected="false" data-t="3"><small>04</small><b>Inversión</b></button>
+    </div>
+
+    <div class="panel on" role="tabpanel">
+      <div><h3>Compra directa en 30 días</h3>
+        <p>La vía más limpia: negociación a su favor, due diligence legal completa y escritura en notaría sin intermediarios financieros.</p>
+        <ul><li>Asesor legal y fiscal propio durante todo el proceso</li><li>Negociación media del 6,4 % sobre el precio de salida</li><li>Gestión de NIE, cuenta bancaria y suministros</li><li>Entrega con servicio de mayordomía el primer mes</li></ul>
+        <a href="#contacto" class="btn">Iniciar compra</a></div>
+      <div class="box"><span class="eyebrow">Plazo medio</span><div class="big">30 días</div>
+        <div class="row"><span>Reserva</span><span>1 % del precio</span></div>
+        <div class="row"><span>Contrato privado</span><span>10 % a los 10 días</span></div>
+        <div class="row"><span>Escritura</span><span>Resto + impuestos</span></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="calc"><h3>Calcule su cuota</h3>
+        <p style="margin-bottom:2rem">Hipoteca para no residentes y residentes con bancos privados de primer nivel. Simulación orientativa.</p>
+        <div class="field"><div class="lab"><span>Precio</span><output id="cP"></output></div><input type="range" id="rP" min="2000000" max="25000000" step="250000" value="6500000"></div>
+        <div class="field"><div class="lab"><span>Entrada</span><output id="cE"></output></div><input type="range" id="rE" min="30" max="80" step="5" value="40"></div>
+        <div class="field"><div class="lab"><span>Plazo</span><output id="cY"></output></div><input type="range" id="rY" min="5" max="30" step="1" value="20"></div></div>
+      <div class="box"><span class="eyebrow">Cuota mensual estimada</span><div class="big" id="cuota"></div>
+        <div class="row"><span>Importe financiado</span><span id="fin"></span></div>
+        <div class="row"><span>Entrada</span><span id="ent"></span></div>
+        <div class="row"><span>Tipo fijo orientativo</span><span>3,15 % TAE</span></div>
+        <a href="#contacto" class="btn solid" style="margin-top:1.4rem">Solicitar estudio</a>
+        <p class="note">Cálculo ilustrativo sin valor contractual. Sujeto a aprobación bancaria.</p></div>
+    </div>
+
+    <div class="panel">
+      <div><h3>Propiedades que no verá en ningún portal</h3>
+        <p>El 40 % de nuestras operaciones se cierra antes de salir al mercado. Acceda a villas discretas de propietarios que priorizan la privacidad.</p>
+        <ul><li>Acuerdo de confidencialidad y perfil de comprador verificado</li><li>Alertas privadas por WhatsApp antes que nadie</li><li>Visitas acompañadas por el director de la zona</li></ul>
+        <a href="#contacto" class="btn">Acceder al listado privado</a></div>
+      <div class="box"><span class="eyebrow">Cartera confidencial</span><div class="big">+45 villas</div>
+        <div class="row"><span>Rango de precio</span><span>8 – 60 M€</span></div>
+        <div class="row"><span>Destinos</span><span>Costa del Sol · Baleares</span></div></div>
+    </div>
+
+    <div class="panel">
+      <div><h3>Villa que trabaja para usted</h3>
+        <p>Adquiera una villa con licencia turística vigente y gestión integral: de la puesta a punto al revenue management de alta gama.</p>
+        <ul><li>Licencia turística y cumplimiento normativo incluido</li><li>Gestión llave en mano con 1.<wbr>200 reseñas medias de 4,9★</li><li>Informe trimestral de ocupación y rentabilidad</li></ul>
+        <a href="#contacto" class="btn">Ver villas con licencia</a></div>
+      <div class="box"><span class="eyebrow">Rentabilidad bruta media</span><div class="big">5,8 % anual</div>
+        <div class="row"><span>Ocupación media</span><span>64 % · 233 noches</span></div>
+        <div class="row"><span>Tarifa media / noche</span><span>2.850 €</span></div>
+        <div class="row"><span>Comisión gestión</span><span>18 %</span></div>
+        <p class="note">Datos históricos de la cartera AUREA Collection. Resultados pasados no garantizan rendimientos futuros.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="services" id="servicios">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow" style="color:#8a7440">Más que una agencia</p>
+    <h2 style="margin-top:.8rem">Un solo equipo, <em>todo resuelto</em></h2></div>
+    <div class="svc rv">
+      <article><span class="n">I</span><h3>Búsqueda a medida</h3><p>Definimos su perfil y rastreamos mercado y off-market. Solo recibe propiedades que merecen su tiempo.</p></article>
+      <article><span class="n">II</span><h3>Legal y fiscal</h3><p>Verificación registral, licencias, urbanismo y planificación fiscal con despachos de referencia.</p></article>
+      <article><span class="n">III</span><h3>Interiorismo y reforma</h3><p>Estudios de interiorismo asociados para entregar su villa lista para vivir, con su sello.</p></article>
+      <article><span class="n">IV</span><h3>Venta con alcance global</h3><p>¿Quiere vender? Producción cinematográfica, tour inmersivo y red de compradores en 38 países.</p></article>
+      <article><span class="n">V</span><h3>Gestión patrimonial</h3><p>Mantenimiento, personal, seguridad y alquiler. Su villa siempre impecable, esté o no.</p></article>
+      <article><span class="n">VI</span><h3>Concierge</h3><p>Chef, yate, helicóptero, colegio, club. Le abrimos las puertas del lugar desde el primer día.</p></article>
+    </div>
+    <div class="quote rv">
+      <div class="face" role="img" aria-label="Retrato de cliente"><img alt="" loading="lazy" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80" onerror="this.remove()"></div>
+      <div><blockquote>“Compramos Villa Serena sin pisar España hasta la escritura. Sabían exactamente lo que buscábamos. Cerramos en 26 días.”</blockquote>
+      <cite>Henrik &amp; Sofie L. — Copenhague · Marbella, 2025</cite></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section class="contact" id="contacto">
+  <div class="wrap">
+    <div class="rv"><p class="eyebrow">Contacto privado</p>
+      <h2 style="margin-top:.8rem">Hablemos de su <em>próxima villa</em></h2>
+      <p class="lead">Un asesor senior le responderá en menos de 2 horas laborables. Sin compromiso y con total confidencialidad.</p>
+      <div class="cinfo">
+        <div><span>Teléfono / WhatsApp</span><b>+34 952 000 100</b></div>
+        <div><span>Email</span><b>privado@aurea-estates.es</b></div>
+        <div><span>Oficinas</span><b>Marbella · Palma · Madrid</b></div>
+      </div></div>
+    <form class="cf rv" id="cf" novalidate>
+      <div class="two"><input name="n" placeholder="Nombre" required aria-label="Nombre"><input name="t" type="tel" placeholder="Teléfono" aria-label="Teléfono"></div>
+      <input name="e" type="email" placeholder="Email" required aria-label="Email">
+      <div class="two">
+        <select name="d" aria-label="Destino"><option value="">Destino de interés</option><option>Marbella / Costa del Sol</option><option>Ibiza / Formentera</option><option>Mallorca / Menorca</option><option>Costa Brava</option><option>Otro</option></select>
+        <select name="b" aria-label="Presupuesto"><option value="">Presupuesto</option><option>2 – 5 M€</option><option>5 – 10 M€</option><option>10 – 20 M€</option><option>Más de 20 M€</option></select>
+      </div>
+      <textarea name="m" placeholder="Cuéntenos qué busca…" aria-label="Mensaje"></textarea>
+      <button class="btn solid" type="submit" style="justify-self:start">Enviar solicitud</button>
+      <div class="ok" id="ok" role="status">Gracias. Hemos recibido su solicitud y le contactaremos en breve.</div>
+    </form>
+  </div>
+</section>
+
+<footer><div class="wrap"><span class="logo" style="font-size:1.1rem">AUREA</span><span>© 2026 AUREA Estates S.L. · Web de demostración, propiedades y precios ficticios.</span><span>Aviso legal · Privacidad · Cookies</span></div></footer>
+
+<!-- MODAL -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="mbox" id="mbox"></div></div>
+
+<script>
+/* ---------- Datos ---------- */
+const U=(id,w=1600)=>`https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+const eur=n=>new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+const FB=['linear-gradient(135deg,#3a3126,#14110e)','linear-gradient(135deg,#1f3a4a,#0e1a22)','linear-gradient(135deg,#4a3a2a,#1a130c)','linear-gradient(135deg,#2c2c34,#101014)','linear-gradient(135deg,#43392d,#1b1610)'];
+
+/* Recorrido: 5 estancias de Villa Aurelia */
+const TOUR=[
+ {k:'Llegada',img:'photo-1613490493576-7fde63acd811',fb:'linear-gradient(180deg,#26384a,#8a6a46 70%,#1a130c)',
+  h:'Villa <em>Aurelia</em>',eb:'Marbella · Milla de Oro · 2026',
+  p:'Una residencia contemporánea de 1.240 m² sobre 6.500 m² de jardín mediterráneo, con vistas abiertas al mar y a Gibraltar.',
+  sp:[['1.240','m² construidos'],['8','Dormitorios'],['18 M€','Precio']],hero:true},
+ {k:'Salón',img:'photo-1600607687939-ce8a6c25118c',fb:'linear-gradient(135deg,#4a3d2e,#15110d)',
+  h:'El salón <em>sin límites</em>',eb:'01 · Planta principal',
+  p:'Doble altura de 7 m, ventanales de suelo a techo que desaparecen y chimenea escultórica en travertino.',
+  sp:[['112','m² de salón'],['7 m','Doble altura']]},
+ {k:'Cocina',img:'photo-1600585154340-be6161a56a0c',fb:'linear-gradient(135deg,#3b3b3f,#121214)',
+  h:'Cocina <em>de autor</em>',eb:'02 · Gastronomía',
+  p:'Isla de mármol Calacatta de 5 metros, cocina profesional Gaggenau y bodega climatizada con 600 referencias.',
+  sp:[['5 m','Isla central'],['600','Botellas']]},
+ {k:'Suite',img:'photo-1618221195710-dd6b41faaea6',fb:'linear-gradient(135deg,#5a4a38,#1b140d)',
+  h:'La suite <em>principal</em>',eb:'03 · Planta alta',
+  p:'Terraza privada sobre los jardines, vestidor de 40 m², baño en piedra natural con bañera exenta frente al horizonte.',
+  sp:[['92','m² de suite'],['40','m² vestidor']]},
+ {k:'Piscina',img:'photo-1512917774080-9991f1c4c750',fb:'linear-gradient(180deg,#d98a4a,#2b4a63 55%,#10202c)',
+  h:'Atardecer <em>infinito</em>',eb:'04 · Terraza y piscina',
+  p:'Piscina infinita de 22 metros climatizada, cocina exterior, spa con hammam y la mejor puesta de sol de la Costa del Sol.',
+  sp:[['22 m','Piscina infinita'],['Spa','Hammam + gimnasio']],cta:true}
+];
+
+const VILLAS=[
+ {id:1,n:'Villa Serena',z:'Marbella',t:'Moderna',p:9800000,m:820,h:6,b:7,pl:4200,img:'photo-1613977257363-707ba9348227',f:['Piscina infinita','Vista mar','Domótica','Spa'],tag:'Exclusiva',d:'Arquitectura de líneas puras en la Milla de Oro con jardín subtropical y suite de invitados independiente.'},
+ {id:2,n:'Casa Blanca Ibiza',z:'Ibiza',t:'Mediterránea',p:7400000,m:640,h:5,b:5,pl:3100,img:'photo-1600596542815-ffad4c1539a9',f:['Piscina infinita','Vista mar','Domótica'],tag:'Nueva',d:'Villa de cal blanca y madera natural sobre Cala Jondal, con atardeceres sobre Formentera.'},
+ {id:3,n:'Son Marroig Estate',z:'Mallorca',t:'Finca',p:12500000,m:1450,h:9,b:10,pl:48000,img:'photo-1580587771525-78b9dba3b914',f:['Piscina infinita','Spa','Cine','Vista mar'],tag:'Finca histórica',d:'Finca del siglo XVIII restaurada en la Serra de Tramuntana, con olivar centenario y capilla privada.'},
+ {id:4,n:'Villa Cala Rossa',z:'Costa Brava',t:'Frente al mar',p:15900000,m:1100,h:7,b:8,pl:5600,img:'photo-1564013799919-ab600027ffc6',f:['Embarcadero','Vista mar','Piscina infinita','Spa'],tag:'Primera línea',d:'Acceso directo a cala privada y embarcadero para 18 metros de eslora. Obra firmada por estudio internacional.'},
+ {id:5,n:'The Glass House',z:'Marbella',t:'Moderna',p:21500000,m:1680,h:9,b:11,pl:9800,img:'photo-1600566753190-17f0baa2a6c3',f:['Cine','Spa','Domótica','Piscina infinita','Vista mar'],tag:'Trofeo',d:'Pabellones de cristal suspendidos sobre Sierra Blanca. Cine, spa, garaje para 8 coches y helipuerto.'},
+ {id:6,n:'Villa Es Vedrà',z:'Ibiza',t:'Frente al mar',p:18200000,m:960,h:7,b:8,pl:7400,img:'photo-1582268611958-ebfd161ef9cf',f:['Vista mar','Embarcadero','Piscina infinita','Domótica'],tag:'Off-market',d:'Frente a la isla de Es Vedrà. Terrazas escalonadas, cala propia y cocina exterior de 80 m².'},
+ {id:7,n:'Sotogrande Residence',z:'Sotogrande',t:'Mediterránea',p:5900000,m:710,h:6,b:6,pl:3900,img:'photo-1600585154526-990dced4db0d',f:['Piscina infinita','Domótica','Cine'],tag:'Golf',d:'Villa en primera línea de golf con pista de pádel, casa de invitados y gimnasio completo.'},
+ {id:8,n:'Finca Sa Torre',z:'Menorca',t:'Finca',p:4300000,m:580,h:5,b:5,pl:22000,img:'photo-1600047509807-ba8f99d2cdde',f:['Piscina infinita','Vista mar'],tag:'Oportunidad',d:'Finca menorquina entre muros de piedra seca, caballerizas reformadas y camino privado a la playa.'},
+ {id:9,n:'Villa Altea Sky',z:'Jávea',t:'Moderna',p:3200000,m:520,h:5,b:5,pl:2300,img:'photo-1600607687920-4e2a09cf159d',f:['Piscina infinita','Vista mar','Domótica'],tag:'Nueva',d:'Diseño bioclimático en ladera con vistas panorámicas a la bahía y piscina de 15 metros.'}
+];
+const FEATS=['Piscina infinita','Vista mar','Spa','Cine','Embarcadero','Domótica'];
+
+/* ---------- Utilidades ---------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- Nav ---------- */
+const nav=$('#nav'), burger=$('#burger'), menu=$('#menu');
+burger.onclick=()=>{const o=menu.classList.toggle('open');burger.classList.toggle('open',o);burger.setAttribute('aria-expanded',o)};
+menu.addEventListener('click',e=>{if(e.target.closest('a')){menu.classList.remove('open');burger.classList.remove('open');burger.setAttribute('aria-expanded',false)}});
+
+/* ---------- Recorrido ---------- */
+const N=TOUR.length, tour=$('#top'), scenesEl=$('#scenes'), chapEl=$('#chapters'), hud=$('#hud');
+TOUR.forEach((s,i)=>{
+  scenesEl.insertAdjacentHTML('beforeend',`<div class="scene"><div class="bg" style="background:${s.fb}"></div><img alt="${s.k} de Villa Aurelia" ${i<2?'':'loading="lazy"'} src="${U(s.img.replace('photo-',''),2000)}" onerror="this.remove()"></div>`);
+  const Tag=s.hero?'h1':'h2';
+  chapEl.insertAdjacentHTML('beforeend',`<div class="chap"><div class="wrap"><div><p class="eyebrow">${s.eb}</p><${Tag} class="${s.hero?'':'t'}">${s.h}</${Tag}><p>${s.p}</p>${s.cta?'<a class="btn solid cta" href="#propiedades">Ver todas las villas</a>':''}</div><div class="specs">${s.sp.map(x=>`<div class="spec"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')}</div></div></div>`);
+  hud.insertAdjacentHTML('beforeend',`<button data-i="${i}" aria-label="Ir a ${s.k}">${s.k}<i></i></button>`);
+});
+const scenes=$$('.scene'), chaps=$$('.chap'), hudBtns=$$('.hud button'), bar=$('#bar'), counter=$('#counter'), hint=$('#hint');
+hud.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  const max=tour.offsetHeight-innerHeight;scrollTo({top:tour.offsetTop+max*(b.dataset.i/(N-1)),behavior:reduced?'auto':'smooth'})});
+
+let target=0,cur=0;
+function readScroll(){const max=tour.offsetHeight-innerHeight;target=clamp((scrollY-tour.offsetTop)/max)}
+function render(){
+  const t=cur*(N-1);
+  scenes.forEach((el,i)=>{
+    const d=clamp(t-i,-1,1);
+    const op=d<0?clamp((d+.62)/.62):1-clamp((d-.38)/.62);
+    el.style.opacity=op;
+    el.style.visibility=op<.01?'hidden':'visible';
+    el.style.zIndex=i;
+    /* cámara que avanza: acercamiento continuo hacia la siguiente estancia */
+    el.style.transform=`translate3d(0,${d*-1.5}%,0) scale(${1.22+d*.2})`;
+    const c=chaps[i], a=Math.abs(t-i);
+    const co=1-clamp((a-.14)/.3);
+    c.style.opacity=co;
+    c.style.transform=`translate3d(0,${(t-i)*-60}px,0)`;
+    c.style.visibility=co<.01?'hidden':'visible';
+    c.style.pointerEvents=co>.5?'auto':'none';
+  });
+  const act=Math.round(t);
+  hudBtns.forEach((b,i)=>b.classList.toggle('on',i===act));
+  bar.style.transform=`scaleX(${cur})`;
+  counter.textContent=`0${act+1} / 0${N} — ${TOUR[act].k.toUpperCase()}`;
+  hint.style.opacity=cur<.02?1:0;
+  nav.classList.toggle('solid',scrollY>tour.offsetTop+tour.offsetHeight-innerHeight-40||false);
+}
+function loop(){
+  cur+=(target-cur)*(reduced?1:.09);
+  if(Math.abs(target-cur)<.0004)cur=target;
+  render();requestAnimationFrame(loop)
+}
+addEventListener('scroll',readScroll,{passive:true});addEventListener('resize',readScroll);
+readScroll();cur=target;loop();
+
+/* ---------- Contadores y reveal ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+$$('.rv').forEach(el=>io.observe(el));
+const cio=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;cio.unobserve(e.target);
+  const el=e.target,end=parseFloat(el.dataset.count),dec=+el.dataset.dec||0,suf=el.dataset.suf||'',t0=performance.now();
+  const step=now=>{const k=reduced?1:clamp((now-t0)/1600),v=end*(1-Math.pow(1-k,3));
+    el.textContent=v.toLocaleString('es-ES',{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;if(k<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step)}),{threshold:.6});
+$$('[data-count]').forEach(el=>cio.observe(el));
+
+/* ---------- Buscador y filtros ---------- */
+const zonaSel=$('#zona'), tipoSel=$('#tipo'), habSel=$('#hab'), q=$('#q'), precio=$('#precio'), orden=$('#orden'), grid=$('#grid'), featBox=$('#feat');
+[...new Set(VILLAS.map(v=>v.z))].sort().forEach(z=>zonaSel.add(new Option(z,z)));
+[...new Set(VILLAS.map(v=>v.t))].sort().forEach(t=>tipoSel.add(new Option(t,t)));
+const feats=new Set();
+FEATS.forEach(f=>{const b=document.createElement('button');b.className='chip';b.type='button';b.textContent=f;b.setAttribute('aria-pressed','false');
+  b.onclick=()=>{feats.has(f)?feats.delete(f):feats.add(f);b.setAttribute('aria-pressed',feats.has(f));draw()};featBox.append(b)});
+let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('aurea-favs')||'[]'))}catch(e){}
+const saveFavs=()=>{try{localStorage.setItem('aurea-favs',JSON.stringify([...favs]))}catch(e){}};
+const heart='<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.4 4.5c2.1 0 3.8 1.2 5.6 3.3 1.8-2.1 3.5-3.3 5.6-3.3 3.7 0 5.5 3.9 4 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+
+function filtered(){
+  const term=norm(q.value.trim()), maxP=+precio.value, minH=+habSel.value;
+  let r=VILLAS.filter(v=>
+    (!term||norm([v.n,v.z,v.t,v.d,...v.f].join(' ')).includes(term))&&
+    (!zonaSel.value||v.z===zonaSel.value)&&(!tipoSel.value||v.t===tipoSel.value)&&
+    v.p<=maxP&&v.h>=minH&&[...feats].every(f=>v.f.includes(f)));
+  const o=orden.value;
+  if(o==='asc')r.sort((a,b)=>a.p-b.p);else if(o==='desc')r.sort((a,b)=>b.p-a.p);else if(o==='m2')r.sort((a,b)=>b.m-a.m);
+  return r;
+}
+function cardHTML(v,i){
+  return `<article class="card" tabindex="0" data-id="${v.id}" style="animation-delay:${i*60}ms">
+  <div class="ph"><div class="fb" style="background:${FB[v.id%FB.length]}"></div><img loading="lazy" alt="${v.n}, villa en ${v.z}" src="${U(v.img,900)}" onerror="this.remove()">
+  <span class="tag">${v.tag}</span>
+  <button class="fav" aria-label="Guardar ${v.n}" aria-pressed="${favs.has(v.id)}" data-fav="${v.id}">${heart}</button></div>
+  <div class="bd"><span class="loc">${v.z} · ${v.t}</span><h3>${v.n}</h3><div class="price">${eur(v.p)}</div>
+  <div class="meta"><span>${v.h} dorm.</span><span>${v.b} baños</span><span>${v.m.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')} m²</span><span>${v.pl.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')} m² parcela</span></div></div></article>`;
+}
+function draw(){
+  const r=filtered();
+  $('#count').textContent=r.length;
+  $('#precioOut').textContent=+precio.value>=25000000?'Sin límite':eur(+precio.value);
+  grid.innerHTML=r.length?r.map(cardHTML).join(''):'<div class="empty"><h3>Sin resultados</h3><p>Pruebe a ampliar el presupuesto o quitar algún filtro. También tenemos propiedades off-market: consúltenos.</p></div>';
+  $('#reset').hidden=!(q.value||zonaSel.value||tipoSel.value||+habSel.value||+precio.value<25000000||feats.size);
+}
+['input','change'].forEach(ev=>[q,zonaSel,tipoSel,habSel,precio,orden].forEach(el=>el.addEventListener(ev,draw)));
+$('#go').onclick=()=>{draw();$('#grid').scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'})};
+$('#reset').onclick=()=>{q.value='';zonaSel.value='';tipoSel.value='';habSel.value='0';precio.value=25000000;feats.clear();$$('#feat .chip').forEach(c=>c.setAttribute('aria-pressed','false'));draw()};
+grid.addEventListener('click',e=>{
+  const f=e.target.closest('[data-fav]');
+  if(f){const id=+f.dataset.fav;favs.has(id)?favs.delete(id):favs.add(id);saveFavs();f.setAttribute('aria-pressed',favs.has(id));return}
+  const c=e.target.closest('.card');if(c)openModal(+c.dataset.id);
+});
+grid.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('card'))openModal(+e.target.dataset.id)});
+draw();
+
+/* ---------- Modal ---------- */
+const modal=$('#modal'), mbox=$('#mbox'); let lastFocus=null;
+function openModal(id){
+  const v=VILLAS.find(x=>x.id===id); lastFocus=document.activeElement;
+  const others=VILLAS.filter(x=>x.id!==id).slice(id%5,(id%5)+2);
+  const imgs=[v.img,...others.map(o=>o.img)];
+  mbox.innerHTML=`<button class="mclose" aria-label="Cerrar" id="mClose">×</button>
+  <div class="mgal">${imgs.map((im,i)=>`<div><div class="fb" style="background:${FB[(v.id+i)%FB.length]}"></div><img alt="${v.n} — imagen ${i+1}" src="${U(im,i?900:1600)}" onerror="this.remove()"></div>`).join('')}</div>
+  <div class="minfo"><div><span class="eyebrow">${v.z} · ${v.t}</span><h3 id="mTitle">${v.n}</h3><p>${v.d}</p>
+  <div class="mfeat">${v.f.map(f=>`<span>${f}</span>`).join('')}</div></div>
+  <aside class="mside"><div class="big">${eur(v.p)}</div>
+  <div class="row"><span>Dormitorios</span><span>${v.h}</span></div><div class="row"><span>Baños</span><span>${v.b}</span></div>
+  <div class="row"><span>Construido</span><span>${v.m.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')} m²</span></div><div class="row"><span>Parcela</span><span>${v.pl.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')} m²</span></div>
+  <div class="row"><span>Referencia</span><span>AUR-${String(1000+v.id*37)}</span></div>
+  <a class="btn solid" href="#contacto" id="mCta">Solicitar visita privada</a></aside></div>`;
+  modal.classList.add('on');document.body.style.overflow='hidden';$('#mClose').focus();
+  $('#mCta').onclick=closeModal;$('#mClose').onclick=closeModal;
+}
+function closeModal(){modal.classList.remove('on');document.body.style.overflow='';lastFocus&&lastFocus.focus&&lastFocus.focus()}
+modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('on'))closeModal()});
+
+/* ---------- Compra: tabs y calculadora ---------- */
+const tabs=$$('#tabs button'), panels=$$('.panel');
+tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.setAttribute('aria-selected',x===b));panels.forEach((p,i)=>p.classList.toggle('on',i==b.dataset.t))});
+const rP=$('#rP'),rE=$('#rE'),rY=$('#rY');
+function calc(){
+  const P=+rP.value,e=+rE.value/100,y=+rY.value,loan=P*(1-e),i=.0315/12,n=y*12;
+  const m=loan*i/(1-Math.pow(1+i,-n));
+  $('#cP').textContent=eur(P);$('#cE').textContent=rE.value+' %';$('#cY').textContent=y+' años';
+  $('#cuota').textContent=eur(m)+' /mes';$('#fin').textContent=eur(loan);$('#ent').textContent=eur(P*e);
+}
+[rP,rE,rY].forEach(r=>r.addEventListener('input',calc));calc();
+
+/* ---------- Formulario ---------- */
+$('#cf').addEventListener('submit',e=>{e.preventDefault();const f=e.target;
+  if(!f.n.value.trim()||!/^\S+@\S+\.\S+$/.test(f.e.value)){(f.n.value.trim()?f.e:f.n).focus();return}
+  f.querySelectorAll('input,select,textarea,button').forEach(x=>x.disabled=true);$('#ok').style.display='block'});
+</script>
+</body>
+</html>
