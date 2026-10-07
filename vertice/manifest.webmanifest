@@ -1,0 +1,10 @@
+{
+  "name": "VÉRTICE · Frente Urbano",
+  "short_name": "VÉRTICE",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07090c",
+  "theme_color": "#07090c",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
