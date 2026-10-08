@@ -4,6 +4,7 @@ import * as THREE from './lib/three.module.min.js';
 import { Soldier } from './soldier.js';
 import { buildGun } from './gunmodel.js';
 import { WEAPONS, TEAMS } from './data.js';
+import { view } from './util.js';
 
 export class MenuScene {
   constructor(app) {
@@ -87,7 +88,7 @@ export class MenuScene {
       this.soldier.spine.rotation.x += Math.sin(this.t * 1.6) * 0.01;
     }
     if (this.mode === 'weapon') { this.gunGroup.rotation.y = Math.PI / 2 + Math.sin(this.t * 0.5) * 0.45 + this.dragY; this.gunGroup.rotation.x = Math.sin(this.t * 0.6) * 0.06; this.gunGroup.rotation.z = 0.04; }
-    const narrow = window.innerWidth <= 760;
+    const narrow = view.w <= 760;
     const wpn = this.mode === 'weapon';
     const targetX = wpn ? (narrow ? -0.45 : 0.12) : -0.85;
     this.rim.intensity = wpn ? 12 : 55; this.rim2.intensity = wpn ? 20 : 35;

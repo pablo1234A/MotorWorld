@@ -1,3 +1,4 @@
+import { view } from './util.js';
 // Entrada: controles táctiles multitáctiles (joystick flotante + zona de mirada + botones)
 // y teclado/ratón con bloqueo de puntero para escritorio.
 
@@ -112,46 +113,48 @@ export class Input {
     if (e.target.closest('.menu-layer, .modal, .pause-btn, .hud-click')) return;
     const btn = e.target.closest('[data-btn]');
     e.preventDefault();
+    const [lx, ly] = view.toLocal(e.clientX, e.clientY);
     if (btn) {
       const name = btn.dataset.btn;
-      this.touches.set(e.pointerId, { kind: 'btn', name, x: e.clientX, y: e.clientY, el: btn });
+      this.touches.set(e.pointerId, { kind: 'btn', name, x: lx, y: ly, el: btn });
       btn.classList.add('on');
       if (name === 'ads') { if (this.settings.adsMode === 'toggle') this.adsToggle = !this.adsToggle; this.press('ads'); }
       else this.press(name);
       if (this.settings.haptics && navigator.vibrate && (name === 'fire')) { try { navigator.vibrate(8); } catch (err) { /* */ } }
       return;
     }
-    const W = window.innerWidth;
-    if (e.clientX < W * 0.42 && ![...this.touches.values()].some((t) => t.kind === 'joy')) {
-      this.touches.set(e.pointerId, { kind: 'joy', ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY });
+    const W = view.w;
+    if (lx < W * 0.42 && ![...this.touches.values()].some((t) => t.kind === 'joy')) {
+      this.touches.set(e.pointerId, { kind: 'joy', ox: lx, oy: ly, x: lx, y: ly });
       this.joy.classList.add('active');
-      this.joy.style.left = e.clientX + 'px'; this.joy.style.top = e.clientY + 'px';
+      this.joy.style.left = lx + 'px'; this.joy.style.top = ly + 'px';
       this.knob.style.transform = 'translate(-50%,-50%)';
       return;
     }
-    this.touches.set(e.pointerId, { kind: 'look', x: e.clientX, y: e.clientY });
+    this.touches.set(e.pointerId, { kind: 'look', x: lx, y: ly });
   }
   onMove(e) {
     const t = this.touches.get(e.pointerId);
     if (!t) return;
     e.preventDefault();
+    const [cx, cy] = view.toLocal(e.clientX, e.clientY);
     if (t.kind === 'joy') {
       const R = 58 * (this.settings.hudScale || 1);
-      let dx = e.clientX - t.ox, dy = e.clientY - t.oy;
+      let dx = cx - t.ox, dy = cy - t.oy;
       const L = Math.hypot(dx, dy);
       // joystick flotante: si te pasas, el centro te sigue
-      if (L > R * 1.6) { const k = (L - R * 1.6) / L; t.ox += dx * k; t.oy += dy * k; dx = e.clientX - t.ox; dy = e.clientY - t.oy; this.joy.style.left = t.ox + 'px'; this.joy.style.top = t.oy + 'px'; }
+      if (L > R * 1.6) { const k = (L - R * 1.6) / L; t.ox += dx * k; t.oy += dy * k; dx = cx - t.ox; dy = cy - t.oy; this.joy.style.left = t.ox + 'px'; this.joy.style.top = t.oy + 'px'; }
       const L2 = Math.hypot(dx, dy); const m = Math.min(1, L2 / R);
       this.move.x = L2 > 0 ? (dx / L2) * m : 0; this.move.y = L2 > 0 ? (dy / L2) * m : 0;
       this.joyMag = L2 / R;
       const kx = Math.min(L2, R) * (L2 > 0 ? dx / L2 : 0), ky = Math.min(L2, R) * (L2 > 0 ? dy / L2 : 0);
       this.knob.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
     } else if (t.kind === 'look' || (t.kind === 'btn' && t.name === 'fire')) {
-      this.lookDX += e.clientX - t.x; this.lookDY += e.clientY - t.y; this.lookSrc = 'touch';
-      t.x = e.clientX; t.y = e.clientY;
+      this.lookDX += cx - t.x; this.lookDY += cy - t.y; this.lookSrc = 'touch';
+      t.x = cx; t.y = cy;
     } else if (t.kind === 'btn' && (t.name === 'lethal' || t.name === 'tactical')) {
-      this.lookDX += (e.clientX - t.x) * 0.6; this.lookDY += (e.clientY - t.y) * 0.6; this.lookSrc = 'touch';
-      t.x = e.clientX; t.y = e.clientY;
+      this.lookDX += (cx - t.x) * 0.6; this.lookDY += (cy - t.y) * 0.6; this.lookSrc = 'touch';
+      t.x = cx; t.y = cy;
     }
   }
   onUp(e) {

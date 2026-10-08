@@ -2,7 +2,7 @@
 // killfeed, marcadores de impacto, indicadores de daño, medallas y marcador completo.
 import * as THREE from './lib/three.module.min.js';
 import { TEAMS, STREAKS } from './data.js';
-import { clamp, DEG } from './util.js';
+import { clamp, DEG, view } from './util.js';
 
 const HTML = `
 <div class="h-top">
@@ -255,7 +255,7 @@ export class HUD {
     this.set('hX', 'show', !hideX);
     if (!hideX) {
       const spread = ws.spread(false, P.moveSpeed > 1, P.crouch, !P.grounded);
-      const focal = (window.innerHeight / 2) / Math.tan(cam.fov * DEG / 2);
+      const focal = (view.h / 2) / Math.tan(cam.fov * DEG / 2);
       const gap = Math.round(Math.max(6, Math.tan(spread * DEG) * focal));
       if (this.cache.gap !== gap) { this.cache.gap = gap; E.hX.style.setProperty('--g', gap + 'px'); }
       E.hX.classList.toggle('enemy', !!P.aimTarget || !!this.aimedEnemy);
@@ -312,7 +312,7 @@ export class HUD {
   }
   updateMarkers() {
     const g = this.g, P = g.player, cam = g.camera;
-    const W = window.innerWidth, H = window.innerHeight;
+    const W = view.w, H = view.h;
     const list = [];
     if (g.mode.worldMarkers) for (const m of g.mode.worldMarkers(P.team)) list.push({ key: 'o' + m.label, x: m.x, y: m.y, z: m.z, label: m.label, cls: 'obj ' + m.cls, clamp: true });
     if (g.mode.def.teams) for (const c of g.combatants) {

@@ -119,3 +119,9 @@ export class MinHeap {
     return top;
   }
 }
+
+// Vista lógica: si el móvil está en vertical, el juego se dibuja girado 90° en horizontal
+export const view = {
+  w: typeof window !== 'undefined' ? window.innerWidth : 1, h: typeof window !== 'undefined' ? window.innerHeight : 1, rot: false,
+  toLocal(x, y) { return this.rot ? [y, window.innerWidth - x] : [x, y]; },
+};

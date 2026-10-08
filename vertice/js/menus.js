@@ -1,3 +1,4 @@
+import { view } from './util.js';
 // Menús: título, principal (PLAY · LOADOUT · CUSTOMIZE · GAME MODES · SETTINGS · STATS),
 // selección de modo, equipamiento, personalización, ajustes, estadísticas, carga,
 // resultados y pausa. Todo conectado al perfil persistente.
@@ -43,8 +44,8 @@ export class Menus {
     this.root.addEventListener('pointerover', (e) => { const b = e.target.closest('button'); if (b && b !== this._hover && e.pointerType === 'mouse') { this._hover = b; Audio.ui2d('ui_hover', 0.25); } });
     // arrastrar para girar el modelo del menú
     let drag = null;
-    this.root.addEventListener('pointerdown', (e) => { if (e.target.closest('.m-stage')) drag = e.clientX; });
-    window.addEventListener('pointermove', (e) => { if (drag !== null) { this.app.menuScene.drag(e.clientX - drag); drag = e.clientX; } });
+    this.root.addEventListener('pointerdown', (e) => { if (e.target.closest('.m-stage')) drag = view.toLocal(e.clientX, e.clientY)[0]; });
+    window.addEventListener('pointermove', (e) => { if (drag !== null) { const x = view.toLocal(e.clientX, e.clientY)[0]; this.app.menuScene.drag(x - drag); drag = x; } });
     window.addEventListener('pointerup', () => { drag = null; });
   }
   get P() { return Profile.data; }

@@ -8,7 +8,7 @@ import { Menus } from './menus.js';
 import { MenuScene } from './menuscene.js';
 import { Game } from './game.js';
 import { QUALITY } from './data.js';
-import { nextFrame } from './util.js';
+import { nextFrame, view } from './util.js';
 
 class App {
   constructor() {
@@ -76,7 +76,19 @@ class App {
     this.resize();
   }
   resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    const W = window.innerWidth, H = window.innerHeight;
+    // en vertical (táctil) se gira todo el juego para jugar siempre en horizontal
+    const rot = this.input.touchMode && H > W;
+    view.rot = rot; view.w = rot ? H : W; view.h = rot ? W : H;
+    const appEl = document.getElementById('app');
+    appEl.style.width = view.w + 'px'; appEl.style.height = view.h + 'px';
+    appEl.style.transform = rot ? `translate(${W}px,0) rotate(90deg)` : 'none';
+    const root = document.documentElement;
+    root.classList.toggle('compact', view.h <= 460);
+    root.classList.toggle('narrow', view.w <= 760);
+    root.classList.toggle('rot', rot);
+    root.style.setProperty('--vw', view.w / 100 + 'px'); root.style.setProperty('--vh', view.h / 100 + 'px');
+    const w = view.w, h = view.h;
     const Q = this.Q;
     const dpr = Math.min(window.devicePixelRatio || 1, Q.maxDpr) * Q.pixelRatio * (Profile.s.dynRes ? this.renderScale : 1);
     this.renderer.setPixelRatio(Math.max(0.4, dpr));
