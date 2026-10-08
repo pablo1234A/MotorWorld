@@ -41,7 +41,7 @@ Todo el contenido se ha contrastado con fuentes públicas (octubre de 2026). No 
 1. **Fotografías (opcional).** Si la clínica aporta fotos reales, pueden sumarse al hero, al equipo o a una galería de instalaciones.
 2. **Fotos del equipo**: avatares con inicial hasta tener retratos reales y permiso de cada persona. Añadir más profesionales solo con nombre y cargo confirmados.
 3. **Reseñas**: confirmar el texto completo de cada extracto en Google y si la clínica quiere mostrar nombres (con permiso).
-4. **WhatsApp**: los botones apuntan a `wa.me/34661125257`. Confirmar que ese número tiene WhatsApp.
+4. **WhatsApp**: confirmado. Los botones apuntan a `wa.me/34661125257`.
 5. **Formulario**: ahora valida y prepara el mensaje para enviarlo por WhatsApp o email. Para recibirlo directamente,
    conectar el `submit` de `#cita` (script al final de `index.html`) a un endpoint (PHP del hosting, Formspree, etc.).
 6. **Legal**: completar CIF, datos registrales y autorización sanitaria en los diálogos legales de `index.html` y revisarlo con un profesional.
