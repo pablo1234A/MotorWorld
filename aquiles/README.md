@@ -1,21 +1,20 @@
 # Aquiles · Fisioterapia Córdoba (concepto 2026)
 
 Propuesta de nueva web para la Clínica de Fisioterapia Aquiles (Av. Virgen de los Dolores, 17, 14004 Córdoba).
-HTML, CSS y JavaScript sin dependencias ni proceso de compilación: se puede subir tal cual a cualquier hosting.
 
-```
-aquiles/
-├── index.html           Home: hero, método, opiniones, datos, tratamientos, tecnología, equipo, instalaciones, ubicación, cita
-├── tratamientos.html    Todos los tratamientos por áreas
-├── legal.html           Aviso legal, privacidad y cookies (borrador, ver "Pendiente")
-└── assets/
-    ├── css/site.css     Estilos y tokens (modo claro y oscuro)
-    ├── js/site.js       Menú, animaciones, carrusel, formulario, estado "abierto ahora"
-    ├── js/spine.js      Columna 3D en WebGL puro (≈10 KB), con fallback SVG
-    └── img/             Favicon, icono iOS e imagen para redes (Open Graph)
-```
+**Todo está en un único archivo: `index.html`** (≈155 KB, con estilos, código, iconos y la columna 3D dentro).
+Se abre con doble clic o se sube tal cual a cualquier hosting. Solo necesita internet para las tipografías de Google Fonts.
 
-Para verla en local: `python3 -m http.server` dentro de `aquiles/` y abrir `http://localhost:8000`.
+Contenido del archivo:
+- Home: hero con la columna 3D, método, opiniones, cifras, tratamientos, tecnología, equipo, ubicación y formulario de cita.
+- "Todos los tratamientos": acordeón con las 10 áreas (las tarjetas abren directamente su área).
+- Aviso legal, privacidad y cookies en ventanas modales (`#aviso-legal`, `#privacidad`, `#cookies` también funcionan como enlace directo).
+
+`assets/img/` contiene la imagen para redes sociales (Open Graph), que debe estar publicada en
+`https://fisioterapiaencordobaaquiles.com/assets/img/og-aquiles.jpg`.
+
+Esta versión no usa fotografías: los espacios visuales son piezas de diseño (escultura 3D, ilustración de radiofrecuencia,
+sombras de olivo, panel de datos del equipo). No se han usado fotos inventadas ni de stock.
 
 ## Datos usados y de dónde salen
 
@@ -39,22 +38,13 @@ Todo el contenido se ha contrastado con fuentes públicas (octubre de 2026). No 
 
 ## Pendiente antes de publicar
 
-1. **Fotografías reales.** Cada hueco fotográfico está marcado con `<!-- FOTO REAL: ... -->` y una etiqueta visible
-   "Foto real · …". Para sustituirlo basta con meter un `<img>` dentro del `div.ph` (el CSS ya lo ajusta a `object-fit: cover`):
-   ```html
-   <div class="ph hero__photo" ...>
-     <img src="assets/img/hero.webp" alt="..." width="1600" height="2000" fetchpriority="high">
-   </div>
-   ```
-   y borrar el `<svg class="ph__leaves">` y el `<span class="ph__tag">`. Recomendado: WebP/AVIF, 1600 px de lado mayor,
-   `loading="lazy"` en todas menos la del hero. Huecos: hero (tratamiento en cabina), fisioterapia deportiva, equipo INDIBA,
-   foto del equipo, cabina, recepción, sala de tecnología, fachada y espacio de tratamiento.
+1. **Fotografías (opcional).** Si la clínica aporta fotos reales, pueden sumarse al hero, al equipo o a una galería de instalaciones.
 2. **Fotos del equipo**: avatares con inicial hasta tener retratos reales y permiso de cada persona. Añadir más profesionales solo con nombre y cargo confirmados.
 3. **Reseñas**: confirmar el texto completo de cada extracto en Google y si la clínica quiere mostrar nombres (con permiso).
 4. **WhatsApp**: los botones apuntan a `wa.me/34661125257`. Confirmar que ese número tiene WhatsApp.
 5. **Formulario**: ahora valida y prepara el mensaje para enviarlo por WhatsApp o email. Para recibirlo directamente,
-   conectar el `submit` de `#cita` en `assets/js/site.js` a un endpoint (PHP del hosting, Formspree, etc.).
-6. **Legal**: completar CIF, datos registrales y autorización sanitaria en `legal.html` y revisarlo con un profesional.
+   conectar el `submit` de `#cita` (script al final de `index.html`) a un endpoint (PHP del hosting, Formspree, etc.).
+6. **Legal**: completar CIF, datos registrales y autorización sanitaria en los diálogos legales de `index.html` y revisarlo con un profesional.
 7. **Redes sociales**: no se han encontrado perfiles oficiales verificables, así que no se enlazan. Añadirlos al footer cuando la clínica los confirme.
 8. **Aseguradoras**: hay indicios (guía médica de FIATC) pero no se muestran hasta confirmarlo con la clínica.
 9. **Tipografías**: se cargan desde Google Fonts. Para un RGPD más estricto, alojarlas en el propio servidor.
@@ -65,6 +55,7 @@ Todo el contenido se ha contrastado con fuentes públicas (octubre de 2026). No 
 - **Paleta**: crema cálido, piedra, salvia y verde oliva profundo. Nada de azul hospitalario.
 - **Tipografía**: Instrument Serif (titulares, con cursiva para el matiz emocional) y Figtree (lectura).
 - **Naturaleza**: sombras desenfocadas de ramas de olivo, un guiño a Córdoba, en lugar de plantas de stock.
+- **Sin fotos**: la sección de instalaciones se ha sustituido por "Tecnología" en el menú, y la ubicación menciona las instalaciones.
 - **3D**: una única columna vertebral translúcida dibujada con un shader propio. Se mueve muy poco con el cursor y el scroll,
   sólo se renderiza cuando hace falta (no hay animación permanente) y usa imagen estática con `prefers-reduced-motion` y SVG si no hay WebGL.
 - **Detalle de movimiento**: la línea del método se dibuja al hacer scroll y va "alcanzando" cada fase.
