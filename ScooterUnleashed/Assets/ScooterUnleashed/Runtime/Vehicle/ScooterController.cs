@@ -93,6 +93,7 @@ namespace ScooterUnleashed.Vehicle
         public event Action Respawned;
         public event Action<bool> GrindExited;
         public event Action<float> Impact;
+        public event Action AutoReverted;
 
         // ---- Internals ---------------------------------------------------------------------------
         private Rigidbody _rb;
@@ -263,7 +264,8 @@ namespace ScooterUnleashed.Vehicle
             _prevNormal = n;
             _hadGround = true;
 
-            v += Vector3.down * t.Gravity * dt;
+            bool climbing = n.y < 0.95f && v.y > 0f;
+            v += Vector3.down * t.Gravity * (climbing ? t.RampGravityScale : 1f) * dt;
 
             // --- Heading on the surface
             Vector3 f = FrontContact && RearContact ? (_hitF.point - _hitR.point) : transform.forward;
@@ -292,7 +294,15 @@ namespace ScooterUnleashed.Vehicle
             float vf = Vector3.Dot(vt, f);
             Vector3 vLat = vt - f * vf;
             var sp = World.Surface.Properties(Surface);
-            vLat *= Mathf.Exp(-t.LateralGrip * sp.Grip * dt);
+            bool reverting = Mathf.Abs(_revertRemaining) > 0.01f;
+            if (!reverting) vLat *= Mathf.Exp(-t.LateralGrip * sp.Grip * dt);
+
+            // Rolling backwards (e.g. stalled on a ramp) on flat ground: pivot forward like a real revert.
+            if (!reverting && State == ScooterState.Riding && vf < -t.AutoRevertSpeed && n.y > 0.92f)
+            {
+                _revertRemaining = (Steer >= 0f ? 1f : -1f) * 180f;
+                AutoReverted?.Invoke();
+            }
 
             // --- Longitudinal forces
             float throttle = Mathf.Clamp01(Stick.y);
@@ -314,7 +324,8 @@ namespace ScooterUnleashed.Vehicle
 
             // --- Suspension along the normal
             float h = GroundDistance();
-            float err = t.RideHeight - h;
+            // Target includes the static sag so the wheels sit on the ground instead of sinking g/k into it.
+            float err = t.RideHeight + t.Gravity * Mathf.Max(0f, n.y) / t.SpringStiffness - h;
             float accN = t.SpringStiffness * err - t.SpringDamping * vn;
             accN = Mathf.Max(accN, -t.MaxPullDown);
             vn += accN * dt;
@@ -564,6 +575,9 @@ namespace ScooterUnleashed.Vehicle
             if (v.y > 1.5f && vertical < 0.15f) return false;
             float along = Vector3.Dot(v, hit.Tangent);
             if (Mathf.Abs(along) < 1.2f) return false;
+            // Never lock on while upside down, and only lock into copings from above (keeps vert airs clean).
+            if (transform.up.y < 0.5f) return false;
+            if (hit.Rail.Kind == RailKind.Coping && (v.y > 0.5f || vertical < 0f)) return false;
             dir = along >= 0f ? 1 : -1;
             return true;
         }
@@ -661,6 +675,9 @@ namespace ScooterUnleashed.Vehicle
             _prevNormal = Vector3.up;
             _hadGround = false;
             _revertRemaining = 0f;
+            AirTime = 0f;
+            AccumYaw = 0f;
+            AccumPitch = 0f;
             Steer = 0f;
             LeanAngle = 0f;
             ManualPitch = 0f;

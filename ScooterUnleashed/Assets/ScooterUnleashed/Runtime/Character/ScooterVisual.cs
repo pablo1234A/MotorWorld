@@ -208,6 +208,7 @@ namespace ScooterUnleashed.Character
         public void EndTumble()
         {
             if (_visualRoot == null || _tumble == null) return;
+            _tumble.isKinematic = true;
             Destroy(_tumble);
             Destroy(_visualRoot.GetComponent<BoxCollider>());
             _tumble = null;

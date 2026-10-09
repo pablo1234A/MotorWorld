@@ -106,6 +106,7 @@ namespace ScooterUnleashed.Tricks
             Scooter.Bailed += OnBailed;
             Scooter.GrindExited += OnGrindExited;
             Scooter.Respawned += OnRespawned;
+            Scooter.AutoReverted += OnAutoReverted;
         }
 
         private void OnDisable()
@@ -115,6 +116,13 @@ namespace ScooterUnleashed.Tricks
             Scooter.Bailed -= OnBailed;
             Scooter.GrindExited -= OnGrindExited;
             Scooter.Respawned -= OnRespawned;
+            Scooter.AutoReverted -= OnAutoReverted;
+        }
+
+        private void OnAutoReverted()
+        {
+            // A revert keeps a line alive (e.g. fakie out of a quarter pipe).
+            if (Combo.IsActive) AddTrick(TrickIds.Revert);
         }
 
         // ==========================================================================================
@@ -277,10 +285,13 @@ namespace ScooterUnleashed.Tricks
             var res = LandingEvaluator.Evaluate(input, Tolerances.Scaled(LandingAssist));
             if (!res.IsBail)
             {
+                int before = Combo.TrickCount;
                 ResolveAirSegment(phys.AirTime, phys.Height);
+                bool meaningful = Combo.TrickCount > before || phys.AirTime > 0.6f;
                 Combo.Land(res.Quality);
                 if (res.Fakie) AddTrick(TrickIds.Revert);
-                Feedback?.Invoke(LandingText(res));
+                // Only grade landings that matter (no "PERFECT" spam for every bump).
+                if (meaningful) Feedback?.Invoke(LandingText(res));
             }
             LandingJudged?.Invoke(res, phys);
             ClearAirTricks();

@@ -307,6 +307,7 @@ namespace ScooterUnleashed.Character
         public void EndRagdoll()
         {
             if (_root == null || !IsRagdoll) return;
+            _ragdoll.isKinematic = true;
             Destroy(_ragdoll);
             Destroy(_root.GetComponent<CapsuleCollider>());
             _ragdoll = null;

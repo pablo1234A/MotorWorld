@@ -44,11 +44,13 @@ namespace ScooterUnleashed.Vehicle
         [Header("Ground following")]
         public float ConvexStick = 1.1f;         // how much centripetal accel (in g) still follows a convex edge
         public float GlueSpeed = 3.2f;           // below this speed the scooter always follows the surface (drop-ins)
+        public float RampGravityScale = 0.8f;    // arcade: climbing transitions costs less speed (stands in for pumping)
+        public float AutoRevertSpeed = 1.2f;     // rolling backwards faster than this on flat ground pivots forward
         public float AlignSharpness = 22f;
 
         [Header("Jump")]
-        public float PopSpeedMin = 3.4f;
-        public float PopSpeedMax = 5.2f;
+        public float PopSpeedMin = 3.0f;          // ~0.37 m hop
+        public float PopSpeedMax = 4.4f;          // ~0.79 m hop, 0.72 s airtime on flat
         public float MaxChargeTime = 0.4f;
         public float CoyoteTime = 0.1f;
         public float JumpGroundIgnore = 0.12f;
