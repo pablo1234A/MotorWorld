@@ -14,4 +14,5 @@ fetch() {
 }
 fetch unityengine.modules 2021.3.33
 fetch unity3d.sdk 2021.1.14.1
+fetch nunit 3.13.3
 echo "Unity reference assemblies in $DIR"

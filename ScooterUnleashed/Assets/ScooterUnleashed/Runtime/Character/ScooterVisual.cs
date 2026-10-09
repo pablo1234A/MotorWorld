@@ -43,7 +43,7 @@ namespace ScooterUnleashed.Character
         /// <summary>Builds (or rebuilds) the scooter from a build + catalog.</summary>
         public void Build(ScooterBuild build, PartCatalog catalog)
         {
-            if (_visualRoot != null) Destroy(_visualRoot.gameObject);
+            if (_visualRoot != null) Compat.SafeDestroy(_visualRoot.gameObject);
             var deck = catalog.Get(build.Get(PartSlot.Deck)) ?? catalog.DefaultFor(PartSlot.Deck);
             var bars = catalog.Get(build.Get(PartSlot.Bars)) ?? catalog.DefaultFor(PartSlot.Bars);
             var wheels = catalog.Get(build.Get(PartSlot.Wheels)) ?? catalog.DefaultFor(PartSlot.Wheels);
@@ -132,7 +132,7 @@ namespace ScooterUnleashed.Character
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
-            Object.Destroy(go.GetComponent<Collider>());
+            Compat.SafeDestroy(go.GetComponent<Collider>());
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPos;
             go.transform.localScale = scale;
@@ -209,8 +209,8 @@ namespace ScooterUnleashed.Character
         {
             if (_visualRoot == null || _tumble == null) return;
             _tumble.isKinematic = true;
-            Destroy(_tumble);
-            Destroy(_visualRoot.GetComponent<BoxCollider>());
+            Compat.SafeDestroy(_tumble);
+            Compat.SafeDestroy(_visualRoot.GetComponent<BoxCollider>());
             _tumble = null;
             _visualRoot.SetParent(_tumbleParent, false);
             _visualRoot.localPosition = Vector3.zero;

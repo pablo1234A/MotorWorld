@@ -121,8 +121,16 @@ namespace ScooterUnleashed.Vehicle
         private Vector3 _grindTangent;
         private float _grindHeight;
 
-        private void Awake()
+        private bool _initialized;
+        private float _clock; // simulation clock (advances with physics steps, also in EditMode tests)
+
+        private void Awake() => Initialize();
+
+        /// <summary>Sets up the body and collider. Called from Awake; EditMode tests call it directly.</summary>
+        public void Initialize()
         {
+            if (_initialized) return;
+            _initialized = true;
             _rb = GetComponent<Rigidbody>();
             _rb.mass = Tuning.Mass;
             _rb.useGravity = false;
@@ -158,9 +166,12 @@ namespace ScooterUnleashed.Vehicle
         // ==========================================================================================
         // Physics loop
         // ==========================================================================================
-        private void FixedUpdate()
+        private void FixedUpdate() => PhysicsStep(Time.fixedDeltaTime);
+
+        /// <summary>One physics step. Runs from FixedUpdate; tests drive it manually alongside Physics.Simulate.</summary>
+        public void PhysicsStep(float dt)
         {
-            float dt = Time.fixedDeltaTime;
+            _clock += dt;
             switch (State)
             {
                 case ScooterState.Bailed:
@@ -565,7 +576,7 @@ namespace ScooterUnleashed.Vehicle
             Vector3 p = _rb.position;
             Vector3 v = _rb.GetVelocity();
             if (!GrindRail.FindNearest(p, 1.3f, out hit)) return false;
-            if (hit.Rail == _lastRail && Time.time - _lastRailExitTime < 0.4f) return false;
+            if (hit.Rail == _lastRail && _clock - _lastRailExitTime < 0.4f) return false;
             Vector3 toBody = p - hit.Point;
             float vertical = toBody.y;
             Vector3 lateral = toBody - hit.Tangent * Vector3.Dot(toBody, hit.Tangent);
@@ -630,7 +641,7 @@ namespace ScooterUnleashed.Vehicle
         {
             if (State != ScooterState.Grinding) return;
             _lastRail = _grindRail;
-            _lastRailExitTime = Time.time;
+            _lastRailExitTime = _clock;
             Vector3 up = Vector3.ProjectOnPlane(Vector3.up, _grindTangent).normalized;
             Vector3 v = _grindTangent * _grindSpeed + Vector3.up * (popped ? Mathf.Lerp(Tuning.PopSpeedMin, Tuning.PopSpeedMax, charge01) * 0.9f : 0.8f);
             _rb.isKinematic = false;
@@ -681,7 +692,7 @@ namespace ScooterUnleashed.Vehicle
             Steer = 0f;
             LeanAngle = 0f;
             ManualPitch = 0f;
-            _invulnerableUntil = Time.time + Tuning.RespawnInvulnerability;
+            _invulnerableUntil = _clock + Tuning.RespawnInvulnerability;
             _safePos = position;
             _safeRot = rotation;
             Physics.SyncTransforms();
@@ -731,7 +742,7 @@ namespace ScooterUnleashed.Vehicle
         private void HandleCollision(Collision c, bool enter)
         {
             if (State != ScooterState.Riding && State != ScooterState.Air && State != ScooterState.Manual) return;
-            if (Time.time < _invulnerableUntil) return;
+            if (_clock < _invulnerableUntil) return;
             int count = c.contactCount;
             for (int i = 0; i < count; i++)
             {

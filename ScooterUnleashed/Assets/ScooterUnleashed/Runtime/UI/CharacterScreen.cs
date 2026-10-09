@@ -29,8 +29,8 @@ namespace ScooterUnleashed.UI
                 int lockLvl = unlock != null ? unlock(value) : 1;
                 string name = names[Mathf.Clamp(value, 0, names.Length - 1)] + (lockLvl > level ? $"  (Nv {lockLvl})" : "");
                 UIKit.Label(new Rect(l.xMax, y, r.x - l.xMax, 38), name, 15, lockLvl > level ? UIKit.Muted : UIKit.Text, Anchor.Center);
-                if (UIKit.Button(l, "‹", ButtonKind.Ghost, true, 22)) value = (value + names.Length - 1) % names.Length;
-                if (UIKit.Button(r, "›", ButtonKind.Ghost, true, 22)) value = (value + 1) % names.Length;
+                if (UIKit.Button(l, "<", ButtonKind.Ghost, true, 22)) value = (value + names.Length - 1) % names.Length;
+                if (UIKit.Button(r, ">", ButtonKind.Ghost, true, 22)) value = (value + 1) % names.Length;
                 y += 42;
             }
             void Swatches(string label, ref int value, Color[] colors)

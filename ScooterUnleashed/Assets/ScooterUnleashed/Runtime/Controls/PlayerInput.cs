@@ -273,7 +273,7 @@ namespace ScooterUnleashed.Controls
             if (e.Kind == GestureKind.Swipe || e.Kind == GestureKind.HoldSwipe || e.Kind == GestureKind.Circle)
             {
                 LastGestureTime = Time.unscaledTime;
-                LastGestureLabel = e.Kind == GestureKind.Circle ? (e.CircleSign > 0 ? "↺ 180" : "↻ 180") : (e.Kind == GestureKind.HoldSwipe ? "MANTÉN + " : "") + Arrow(e.Direction);
+                LastGestureLabel = e.Kind == GestureKind.Circle ? (e.CircleSign > 0 ? "GIRO IZQ. 180" : "GIRO DCHA. 180") : (e.Kind == GestureKind.HoldSwipe ? "MANTÉN + " : "") + Arrow(e.Direction);
                 Game.Haptics.Pulse(8);
             }
             Tricks?.HandleGesture(e);

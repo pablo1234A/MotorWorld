@@ -78,7 +78,7 @@ namespace ScooterUnleashed.Character
         public void Build(CharacterData c, ScooterVisual scooter)
         {
             _scooter = scooter;
-            if (_root != null) Destroy(_root.gameObject);
+            if (_root != null) Compat.SafeDestroy(_root.gameObject);
             _segs.Clear();
             _root = new GameObject("RiderModel").transform;
             _root.gameObject.layer = Layers.Player;
@@ -138,7 +138,7 @@ namespace ScooterUnleashed.Character
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
-            Destroy(go.GetComponent<Collider>());
+            Compat.SafeDestroy(go.GetComponent<Collider>());
             go.layer = Layers.Player;
             go.transform.SetParent(_root, false);
             go.GetComponent<MeshRenderer>().sharedMaterial = m;
@@ -308,8 +308,8 @@ namespace ScooterUnleashed.Character
         {
             if (_root == null || !IsRagdoll) return;
             _ragdoll.isKinematic = true;
-            Destroy(_ragdoll);
-            Destroy(_root.GetComponent<CapsuleCollider>());
+            Compat.SafeDestroy(_ragdoll);
+            Compat.SafeDestroy(_root.GetComponent<CapsuleCollider>());
             _ragdoll = null;
             _root.SetParent(_originalParent, false);
             _root.localPosition = Vector3.zero;

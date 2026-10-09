@@ -6,7 +6,7 @@
     <Nullable>disable</Nullable>
     <AssemblyName>ScooterUnleashed.Editor.Check</AssemblyName>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <DefineConstants>UNITY_EDITOR;UNITY_COMPILE_CHECK</DefineConstants>
+    <DefineConstants>UNITY_EDITOR;UNITY_INCLUDE_TESTS;UNITY_COMPILE_CHECK</DefineConstants>
     <NoWarn>CS0649;CS0414;CS0618</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -14,7 +14,9 @@
     <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Core/**/*.cs" />
     <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Runtime/**/*.cs" />
     <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Editor/**/*.cs" />
+    <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Tests/**/*.cs" />
     <Reference Include="../../.unityref/unity3d.sdk/lib/UnityEngine.dll" Private="false" />
     <Reference Include="../../.unityref/unity3d.sdk/lib/UnityEditor.dll" Private="false" />
+    <Reference Include="../../.unityref/nunit/lib/netstandard2.0/nunit.framework.dll" Private="false" />
   </ItemGroup>
 </Project>

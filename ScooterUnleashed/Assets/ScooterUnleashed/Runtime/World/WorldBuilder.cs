@@ -72,7 +72,7 @@ namespace ScooterUnleashed.World
             _o.Ground("Asphalt", new Rect(SeaEdgeX, -310, 310 - SeaEdgeX, 620), 0f, 1f, Mat.Asphalt, SurfaceType.Asphalt, false);
             // Sea
             var sea = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            Object.Destroy(sea.GetComponent<Collider>());
+            Compat.SafeDestroy(sea.GetComponent<Collider>());
             sea.name = "Sea";
             sea.transform.SetParent(_o.Root, false);
             sea.transform.position = new Vector3(SeaEdgeX - 200f, -1.4f, 0f);
@@ -191,7 +191,7 @@ namespace ScooterUnleashed.World
             }
             _o.AddRail("FountainRim", rim, RailKind.Ledge, true);
             var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            Object.Destroy(water.GetComponent<Collider>());
+            Compat.SafeDestroy(water.GetComponent<Collider>());
             water.transform.SetParent(_o.Root, false);
             water.transform.position = center + Vector3.up * (h - 0.12f);
             water.transform.localScale = new Vector3(radius * 2f, 0.01f, radius * 2f);

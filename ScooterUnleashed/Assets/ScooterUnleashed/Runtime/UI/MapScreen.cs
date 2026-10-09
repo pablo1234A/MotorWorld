@@ -81,7 +81,7 @@ namespace ScooterUnleashed.UI
             // Zoom buttons
             if (UIKit.Button(new Rect(view.xMax - 64, view.y + 12, 52, 52), "+", ButtonKind.Secondary, true, 26)) Zoom(0.35f);
             if (UIKit.Button(new Rect(view.xMax - 64, view.y + 72, 52, 52), "−", ButtonKind.Secondary, true, 26)) Zoom(-0.35f);
-            if (UIKit.Button(new Rect(view.xMax - 64, view.y + 132, 52, 52), "◎", ButtonKind.Secondary, true, 22))
+            if (UIKit.Button(new Rect(view.xMax - 64, view.y + 132, 52, 52), "YO", ButtonKind.Secondary, true, 16))
             {
                 _mapZoom = 2.5f;
                 _mapPan = -new Vector2((pl.x - wr.center.x) * baseK * _mapZoom, -(pl.z - wr.center.y) * baseK * _mapZoom);

@@ -43,6 +43,14 @@ namespace ScooterUnleashed
 #endif
         }
 
+        /// <summary>Destroy that also works in edit mode (EditMode tests, editor tooling).</summary>
+        public static void SafeDestroy(Object o)
+        {
+            if (o == null) return;
+            if (Application.isPlaying) Object.Destroy(o);
+            else Object.DestroyImmediate(o);
+        }
+
         /// <summary>Frictionless material for the rider's body collider so it slides along walls instead of sticking.</summary>
         public static void MakeFrictionless(Collider c)
         {

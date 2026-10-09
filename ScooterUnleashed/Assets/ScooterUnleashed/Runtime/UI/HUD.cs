@@ -300,8 +300,8 @@ namespace ScooterUnleashed.UI
                 Btn(ControlsLayout.TrickRight, "→", op, false, 24);
                 Btn(ControlsLayout.TrickDiag, "↘", op, false, 24);
                 Btn(ControlsLayout.Body, "CUERPO", op, input.Held.Contains(TouchButton.Body), 12);
-                Btn(ControlsLayout.SpinLeft, "↺", op, false, 24);
-                Btn(ControlsLayout.SpinRight, "↻", op, false, 24);
+                Btn(ControlsLayout.SpinLeft, "GIRO\nIZQ", op, false, 12);
+                Btn(ControlsLayout.SpinRight, "GIRO\nDCHA", op, false, 12);
             }
             else
             {

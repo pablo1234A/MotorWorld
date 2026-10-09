@@ -445,7 +445,7 @@ namespace ScooterUnleashed.World
             for (int i = 0; i < 3; i++)
             {
                 var s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                Object.Destroy(s.GetComponent<Collider>());
+                Compat.SafeDestroy(s.GetComponent<Collider>());
                 s.name = "Canopy";
                 s.transform.SetParent(Root, false);
                 float a = i * 2.1f;

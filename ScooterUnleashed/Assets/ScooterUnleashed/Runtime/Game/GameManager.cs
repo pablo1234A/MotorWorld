@@ -219,6 +219,8 @@ namespace ScooterUnleashed.Game
         public void RebuildScooter()
         {
             Parts.Sanitize(Save.ActiveBuild);
+            // Detach the rider first: rebuilding destroys the old scooter model hierarchy.
+            _riderHost.SetParent(Visual.transform, false);
             Visual.Build(Save.ActiveBuild, Parts);
             _riderHost.SetParent(Visual.Model, false);
             _riderHost.localPosition = Vector3.zero;
@@ -391,6 +393,7 @@ namespace ScooterUnleashed.Game
         /// <summary>Shows a not-yet-equipped build on the 3D model (before/after comparison) without saving it.</summary>
         public void PreviewBuild(ScooterBuild temp)
         {
+            _riderHost.SetParent(Visual.transform, false);
             Visual.Build(temp, Parts);
             _riderHost.SetParent(Visual.Model, false);
             _riderHost.localPosition = Vector3.zero;

@@ -42,7 +42,7 @@ namespace ScooterUnleashed.Game
                 new Step { Title = "Salto", Text = "Mantén pulsada la zona derecha para agacharte y suelta para saltar. Cuanto más cargas, más alto.", Gesture = "MANTÉN · SUELTA", Done = dt => Consume() },
                 new Step { Title = "Barspin", Text = "Salta y, en el aire, desliza rápido a izquierda o derecha.", Gesture = "AIRE: ← o →", Done = dt => Consume() },
                 new Step { Title = "Tailwhip", Text = "En el aire, desliza hacia abajo: el deck da una vuelta alrededor del manillar. ¡Termínalo antes de aterrizar!", Gesture = "AIRE: ↓", Done = dt => Consume() },
-                new Step { Title = "Rotación", Text = "En el aire, mantén el stick a un lado o dibuja medio círculo en la zona derecha para girar 180°.", Gesture = "AIRE: ◜◞", Done = dt => Consume() },
+                new Step { Title = "Rotación", Text = "En el aire, mantén el stick a un lado o dibuja medio círculo en la zona derecha para girar 180°.", Gesture = "AIRE: GIRA", Done = dt => Consume() },
                 new Step { Title = "Grind", Text = "Salta y cae sobre un raíl, un banco o un bordillo. Mantén el equilibrio con el stick.", Gesture = "SALTA AL RAÍL", Done = dt => Consume() },
                 new Step { Title = "Manual", Text = "Rodando, desliza hacia abajo para levantar la rueda delantera. Equilibra con el stick ↑↓ durante 2 s.", Gesture = "SUELO: ↓", Done = dt => _manualTime >= 2f },
                 new Step { Title = "Combo", Text = "Encadena trucos sin parar (salto, truco, manual, grind...) y consigue un combo de 1.500 puntos.", Gesture = "ENCADENA", Done = dt => Consume() },
