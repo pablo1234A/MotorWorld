@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles Core + Runtime + Editor scripts against the monolithic UnityEngine/UnityEditor reference assemblies. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>ScooterUnleashed.Editor.Check</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>UNITY_EDITOR;UNITY_COMPILE_CHECK</DefineConstants>
+    <NoWarn>CS0649;CS0414;CS0618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Core/**/*.cs" />
+    <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Runtime/**/*.cs" />
+    <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Editor/**/*.cs" />
+    <Reference Include="../../.unityref/unity3d.sdk/lib/UnityEngine.dll" Private="false" />
+    <Reference Include="../../.unityref/unity3d.sdk/lib/UnityEditor.dll" Private="false" />
+  </ItemGroup>
+</Project>

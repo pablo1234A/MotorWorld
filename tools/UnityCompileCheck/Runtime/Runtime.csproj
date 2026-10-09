@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles Core + Runtime against the real UnityEngine reference assemblies (no Unity install required). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>ScooterUnleashed.Runtime.Check</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>UNITY_2021_3_OR_NEWER;UNITY_COMPILE_CHECK</DefineConstants>
+    <NoWarn>CS0649;CS0414</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Core/**/*.cs" />
+    <Compile Include="../../../ScooterUnleashed/Assets/ScooterUnleashed/Runtime/**/*.cs" />
+    <Reference Include="../../.unityref/unityengine.modules/lib/netstandard2.0/*.dll" Private="false" />
+  </ItemGroup>
+</Project>

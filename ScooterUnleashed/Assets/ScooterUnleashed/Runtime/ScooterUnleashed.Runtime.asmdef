@@ -1,0 +1,16 @@
+{
+    "name": "ScooterUnleashed.Runtime",
+    "rootNamespace": "ScooterUnleashed",
+    "references": [
+        "ScooterUnleashed.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
