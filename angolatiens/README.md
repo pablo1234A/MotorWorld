@@ -10,7 +10,11 @@ npm run build     # genera ./site
 npm test          # genera y comprueba enlaces internos, títulos, descripciones, h1, JSON-LD y sitemap
 npm run serve     # sirve ./site en http://localhost:8080
 node scripts/e2e.mjs   # pruebas de navegador (Playwright) con el servidor arrancado
+npm run single    # genera angolatiens.html: toda la web en un único archivo
+node scripts/e2e-single.mjs   # pruebas del archivo único (file://)
 ```
+
+**Archivo único:** `angolatiens.html` contiene todas las páginas, el CSS, las tipografías, los datos y las descargas. Se abre con doble clic, sin servidor ni conexión, y navega con rutas en el hash (`#/guias/...`). Sirve para revisarla o enseñarla. Para Google, publica la carpeta `site/`: Google indexa cada página por separado y no puede indexar rutas con hash.
 
 Despliegue: sube la carpeta `site/` a cualquier alojamiento estático (Cloudflare Pages, Netlify, GitHub Pages). Comando de build: `node src/build.mjs`; carpeta de salida: `site`. El servidor debe servir `404.html` para las rutas que no existen.
 

@@ -18,7 +18,23 @@
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
   };
 
+  // Modo archivo único (angolatiens.html): rutas en el hash (#/guias/...).
+  var SINGLE = !!window.ANG_SINGLE;
+  var currentPath = function () {
+    return SINGLE ? (location.hash.slice(1).split(/[?#]/)[0] || '/') : location.pathname;
+  };
+  var currentParams = function () {
+    if (!SINGLE) return new URLSearchParams(location.search);
+    var h = location.hash.slice(1).split('#')[0];
+    var i = h.indexOf('?');
+    return new URLSearchParams(i > -1 ? h.slice(i + 1) : '');
+  };
+  var setUrl = function (qs, frag) {
+    history.replaceState(null, '', (SINGLE ? '#' : '') + currentPath() + (qs ? '?' + qs : '') + (frag && !SINGLE ? frag : ''));
+  };
+
   /* ---------- Copiar prompts ---------- */
+  function initCopy() {
   $$('pre.prompt[data-copy]').forEach(function (pre) {
     var wrap = document.createElement('div');
     wrap.className = 'prompt-wrap';
@@ -50,10 +66,12 @@
     });
     wrap.appendChild(b);
   });
+  }
 
   /* ---------- Datos de herramientas ---------- */
   var toolsPromise = null;
   function loadTools() {
+    if (!toolsPromise && window.ANG_TOOLS) toolsPromise = Promise.resolve(window.ANG_TOOLS);
     if (!toolsPromise) {
       toolsPromise = fetch('/assets/tools.json').then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -213,11 +231,12 @@
       '</article>';
   }
 
+  function initFinder() {
   var finder = $('#finder');
   if (finder) {
     var out = $('#finder-results');
     var input = $('#finder-q', finder);
-    var params = new URLSearchParams(location.search);
+    var params = currentParams();
     if (params.get('q')) input.value = params.get('q');
     if (params.get('cat') && $('#f-cat', finder)) $('#f-cat', finder).value = params.get('cat');
     if (params.get('gratis') && $('#f-free', finder)) $('#f-free', finder).checked = true;
@@ -234,7 +253,7 @@
       if (!active && finder.hasAttribute('data-keep-default')) {
         out.innerHTML = '';
         if ($('#default-list')) $('#default-list').hidden = false;
-        if (pushState) history.replaceState(null, '', location.pathname);
+        if (pushState) setUrl('');
         return;
       }
       if (!active) { out.innerHTML = ''; return; }
@@ -249,7 +268,7 @@
           var p = new URLSearchParams();
           if (q) p.set('q', q);
           if (f.cat) p.set('cat', f.cat);
-          history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + '#resultados');
+          setUrl(p.toString(), '#resultados');
         }
         if (!res.length) {
           out.innerHTML = '<div class="state" role="status"><strong>No hemos encontrado herramientas para esa búsqueda</strong>' +
@@ -271,28 +290,38 @@
       });
     };
     finder.addEventListener('submit', function (e) {
-      if (finder.getAttribute('data-target')) return; // formulario de portada: navega a /herramientas/
+      if (finder.getAttribute('data-target')) { // formulario de portada: navega a /herramientas/
+        if (SINGLE) { e.preventDefault(); goSearch(); }
+        return;
+      }
       e.preventDefault();
       run(true);
     });
     $$('[data-suggest]', finder).forEach(function (c) {
       c.addEventListener('click', function () {
         input.value = c.getAttribute('data-suggest');
-        if (finder.getAttribute('data-target')) finder.submit(); else run(true);
+        if (finder.getAttribute('data-target')) goSearch(); else run(true);
       });
     });
     $$('input[type=checkbox], select', finder).forEach(function (el) {
       el.addEventListener('change', function () { run(true); });
     });
+    var goSearch = function () {
+      var q = encodeURIComponent(input.value.trim());
+      if (SINGLE) location.hash = '/herramientas/' + (q ? '?q=' + q : '');
+      else location.href = '/herramientas/' + (q ? '?q=' + q : '');
+    };
     if (!finder.getAttribute('data-target') && (params.get('q') || params.get('cat') || params.get('gratis'))) run(false);
+  }
   }
 
   /* ---------- Comparador ---------- */
+  function initComparator() {
   var cmp = $('#comparator');
   if (cmp) {
     var selects = $$('select', cmp);
     var tableBox = $('#compare-table');
-    var initial = (new URLSearchParams(location.search).get('h') || '').split(',').filter(Boolean).slice(0, 3);
+    var initial = (currentParams().get('h') || '').split(',').filter(Boolean).slice(0, 3);
     loadTools().then(function (tools) {
       var by = {};
       tools.forEach(function (t) { by[t.slug] = t; });
@@ -309,7 +338,7 @@
       function render() {
         var chosen = selects.map(function (s) { return by[s.value]; }).filter(Boolean);
         var ids = chosen.map(function (t) { return t.slug; });
-        history.replaceState(null, '', location.pathname + (ids.length ? '?h=' + ids.join(',') : ''));
+        setUrl(ids.length ? 'h=' + ids.join(',') : '');
         selection = ids.slice();
         store.set(SEL_KEY, selection);
         if (chosen.length < 2) {
@@ -341,6 +370,7 @@
     }).catch(function () {
       tableBox.innerHTML = '<div class="state" role="alert"><strong>No se ha podido cargar el catálogo</strong>Recarga la página para volver a intentarlo.</div>';
     });
+  }
   }
 
   /* ---------- Calculadoras ---------- */
@@ -408,6 +438,7 @@
       return true;
     }
   };
+  function initCalcs() {
   $$('form[data-calc]').forEach(function (form) {
     var fn = CALCS[form.getAttribute('data-calc')];
     var err = $('.calc-error', form.closest('.calc'));
@@ -420,7 +451,10 @@
     update();
   });
 
+  }
+
   /* ---------- Formularios de correo (sin backend) ---------- */
+  function initForms() {
   $$('form[data-mailto]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -438,4 +472,17 @@
       status.textContent = 'Se ha abierto tu programa de correo con el mensaje preparado.';
     });
   });
+  }
+
+  /* ---------- Arranque ---------- */
+  function initPage() {
+    initCopy();
+    initFinder();
+    initComparator();
+    initCalcs();
+    initForms();
+    syncCompareUI();
+  }
+  window.AngInit = initPage;
+  if (!SINGLE) initPage();
 })();

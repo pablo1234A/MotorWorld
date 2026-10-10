@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node src/build.mjs",
     "test": "node src/build.mjs && node scripts/check.mjs",
-    "serve": "npx http-server site -p 8080 -c-1"
+    "serve": "npx http-server site -p 8080 -c-1",
+    "single": "node src/build.mjs && node scripts/build-single.mjs"
   }
 }
