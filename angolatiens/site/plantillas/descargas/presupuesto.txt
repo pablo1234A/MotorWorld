@@ -1,0 +1,21 @@
+Presupuesto desde notas de visita — Angolatiens
+========================================
+
+Para qué sirve: Convierte tus notas en un presupuesto ordenado usando solo tus tarifas.
+Guía: https://www.angolatiens.com/guias/presupuestos-con-ia/
+
+Sustituye lo que está entre [corchetes] y revisa siempre el resultado.
+
+---
+
+Con mis notas de abajo, prepara un presupuesto para el cliente.
+Formato:
+1. Resumen del trabajo en 2-3 frases que entienda alguien no técnico.
+2. Tabla de partidas: concepto | cantidad | precio unitario | total.
+   USA SOLO los precios que te doy. Si falta un precio, escribe [PRECIO].
+3. Qué NO incluye el presupuesto (para evitar malentendidos).
+4. Plazos y condiciones: [validez 30 días, 50 % al aceptar, etc.].
+5. Una frase final invitando a resolver dudas.
+
+Mis tarifas: [lista de precios]
+Notas de la visita: [notas]

@@ -1,0 +1,21 @@
+Respuestas a preguntas frecuentes — Angolatiens
+========================================
+
+Para qué sirve: Genera las respuestas rápidas de WhatsApp o email a partir de tu lista de preguntas.
+Guía: https://www.angolatiens.com/guias/responder-clientes-whatsapp-email-ia/
+
+Sustituye lo que está entre [corchetes] y revisa siempre el resultado.
+
+---
+
+Actúa como el responsable de atención al cliente de [tipo de negocio] en [ciudad].
+Te paso las preguntas que más nos hacen. Para cada una, escribe una respuesta:
+- De 2 a 4 frases, cercana y profesional, tuteando al cliente.
+- Que termine con una pregunta o siguiente paso claro (reservar, enviar foto, llamar).
+- Sin inventar datos: si falta información, escribe [COMPLETAR].
+
+Datos del negocio: horario [..], zona de servicio [..], forma de pago [..].
+
+Preguntas:
+1. ...
+2. ...

@@ -1,0 +1,20 @@
+Respuesta a una reseña — Angolatiens
+========================================
+
+Para qué sirve: Borrador para responder reseñas de Google positivas o negativas.
+Guía: https://www.angolatiens.com/guias/responder-clientes-whatsapp-email-ia/
+
+Sustituye lo que está entre [corchetes] y revisa siempre el resultado.
+
+---
+
+Escribe una respuesta pública a esta reseña de mi negocio ([tipo de negocio]):
+"[texto de la reseña]"
+
+Requisitos:
+- Máximo 80 palabras, tono amable y profesional.
+- Si es negativa: agradece, reconoce el problema sin excusas, explica qué
+  vamos a hacer y ofrece continuar por privado en [teléfono o email del negocio].
+- Si es positiva: agradece de forma concreta mencionando lo que valoró.
+- No ofrezcas descuentos ni compensaciones.
+- No repitas datos personales del cliente.

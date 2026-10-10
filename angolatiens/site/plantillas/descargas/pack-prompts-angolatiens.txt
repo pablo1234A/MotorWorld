@@ -1,0 +1,93 @@
+Pack de prompts para pequeños negocios — Angolatiens
+Revisado: octubre de 2026
+
+## Respuestas a preguntas frecuentes
+Genera las respuestas rápidas de WhatsApp o email a partir de tu lista de preguntas.
+
+Actúa como el responsable de atención al cliente de [tipo de negocio] en [ciudad].
+Te paso las preguntas que más nos hacen. Para cada una, escribe una respuesta:
+- De 2 a 4 frases, cercana y profesional, tuteando al cliente.
+- Que termine con una pregunta o siguiente paso claro (reservar, enviar foto, llamar).
+- Sin inventar datos: si falta información, escribe [COMPLETAR].
+
+Datos del negocio: horario [..], zona de servicio [..], forma de pago [..].
+
+Preguntas:
+1. ...
+2. ...
+
+---
+
+## Presupuesto desde notas de visita
+Convierte tus notas en un presupuesto ordenado usando solo tus tarifas.
+
+Con mis notas de abajo, prepara un presupuesto para el cliente.
+Formato:
+1. Resumen del trabajo en 2-3 frases que entienda alguien no técnico.
+2. Tabla de partidas: concepto | cantidad | precio unitario | total.
+   USA SOLO los precios que te doy. Si falta un precio, escribe [PRECIO].
+3. Qué NO incluye el presupuesto (para evitar malentendidos).
+4. Plazos y condiciones: [validez 30 días, 50 % al aceptar, etc.].
+5. Una frase final invitando a resolver dudas.
+
+Mis tarifas: [lista de precios]
+Notas de la visita: [notas]
+
+---
+
+## Respuesta a una reseña
+Borrador para responder reseñas de Google positivas o negativas.
+
+Escribe una respuesta pública a esta reseña de mi negocio ([tipo de negocio]):
+"[texto de la reseña]"
+
+Requisitos:
+- Máximo 80 palabras, tono amable y profesional.
+- Si es negativa: agradece, reconoce el problema sin excusas, explica qué
+  vamos a hacer y ofrece continuar por privado en [teléfono o email del negocio].
+- Si es positiva: agradece de forma concreta mencionando lo que valoró.
+- No ofrezcas descuentos ni compensaciones.
+- No repitas datos personales del cliente.
+
+---
+
+## Plan de contenido mensual
+Doce ideas de publicaciones con texto, foto sugerida y llamada a la acción.
+
+Soy [profesión] en [ciudad]. Mis clientes suelen ser [tipo de cliente]
+y lo que más me preguntan es [dudas habituales].
+Propón 12 publicaciones para Instagram para el próximo mes, repartidas entre:
+- Trabajo realizado
+- Consejo útil
+- Detrás del negocio
+Para cada una: título, texto de 60-100 palabras, idea de foto que puedo hacer
+yo con el móvil y una llamada a la acción. Nada de emojis en exceso
+ni promesas exageradas.
+
+---
+
+## Seguimiento de un presupuesto sin respuesta
+Recordatorio educado para un cliente que no ha contestado a tu presupuesto.
+
+Escribe un email breve de seguimiento para un cliente al que envié un
+presupuesto hace [número] días y no ha respondido.
+Trabajo presupuestado: [descripción].
+Tono: cercano, sin presionar.
+Incluye: recordatorio en una frase, una pregunta para resolver dudas,
+y la fecha de validez del presupuesto ([fecha]).
+Máximo 90 palabras. Asunto incluido.
+
+---
+
+## Convertir una tarea en procedimiento
+Documenta una tarea para delegarla o automatizarla después.
+
+Te voy a describir cómo hago una tarea de mi negocio. Conviértela en un
+procedimiento claro:
+1. Objetivo de la tarea en una frase.
+2. Cuándo se hace y cada cuánto.
+3. Pasos numerados, con la herramienta que se usa en cada paso.
+4. Qué pasos son repetitivos y podrían automatizarse (márcalos con [AUTO]).
+5. Errores habituales y cómo evitarlos.
+
+Mi descripción: [cuéntalo como si se lo explicaras a alguien nuevo]

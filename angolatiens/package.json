@@ -1,0 +1,11 @@
+{
+  "name": "angolatiens",
+  "private": true,
+  "type": "module",
+  "description": "Angolatiens: IA práctica para autónomos y pequeños negocios. Sitio estático sin dependencias.",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "test": "node src/build.mjs && node scripts/check.mjs",
+    "serve": "npx http-server site -p 8080 -c-1"
+  }
+}

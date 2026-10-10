@@ -1,0 +1,17 @@
+Seguimiento de un presupuesto sin respuesta — Angolatiens
+========================================
+
+Para qué sirve: Recordatorio educado para un cliente que no ha contestado a tu presupuesto.
+Guía: https://www.angolatiens.com/guias/presupuestos-con-ia/
+
+Sustituye lo que está entre [corchetes] y revisa siempre el resultado.
+
+---
+
+Escribe un email breve de seguimiento para un cliente al que envié un
+presupuesto hace [número] días y no ha respondido.
+Trabajo presupuestado: [descripción].
+Tono: cercano, sin presionar.
+Incluye: recordatorio en una frase, una pregunta para resolver dudas,
+y la fecha de validez del presupuesto ([fecha]).
+Máximo 90 palabras. Asunto incluido.

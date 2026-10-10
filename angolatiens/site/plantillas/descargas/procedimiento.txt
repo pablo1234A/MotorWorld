@@ -1,0 +1,19 @@
+Convertir una tarea en procedimiento — Angolatiens
+========================================
+
+Para qué sirve: Documenta una tarea para delegarla o automatizarla después.
+Guía: https://www.angolatiens.com/guias/automatizar-formulario-hoja-aviso-make/
+
+Sustituye lo que está entre [corchetes] y revisa siempre el resultado.
+
+---
+
+Te voy a describir cómo hago una tarea de mi negocio. Conviértela en un
+procedimiento claro:
+1. Objetivo de la tarea en una frase.
+2. Cuándo se hace y cada cuánto.
+3. Pasos numerados, con la herramienta que se usa en cada paso.
+4. Qué pasos son repetitivos y podrían automatizarse (márcalos con [AUTO]).
+5. Errores habituales y cómo evitarlos.
+
+Mi descripción: [cuéntalo como si se lo explicaras a alguien nuevo]

@@ -1,0 +1,63 @@
+// Páginas por tipo de negocio. Cada caso de uso enlaza a herramientas y guías existentes.
+export const businesses = [
+  {
+    slug: 'peluquerias-estetica',
+    name: 'Peluquerías y centros de estética',
+    title: 'IA para peluquerías y centros de estética: por dónde empezar',
+    description: 'Usos prácticos de la IA para peluquerías y centros de estética: citas por WhatsApp, recordatorios, contenido para Instagram y respuestas a preguntas frecuentes.',
+    cover: { tone: 'rosa', text: 'Estética' },
+    intro: 'En un salón, el tiempo se va en contestar mensajes de citas, recordar a los clientes y mantener vivo Instagram. Son tareas repetitivas y muy fáciles de ordenar con herramientas gratuitas.',
+    uses: [
+      { title: 'Gestionar citas y preguntas por WhatsApp', text: 'Respuestas rápidas para precios, horarios y disponibilidad, y mensaje de ausencia fuera de horario.', tools: ['whatsapp-business', 'manychat'], guide: 'responder-clientes-whatsapp-email-ia' },
+      { title: 'Contenido para Instagram con constancia', text: 'Un mes de publicaciones con fotos reales de tus trabajos y plantillas de marca.', tools: ['canva', 'chatgpt'], guide: 'contenido-redes-un-mes-una-tarde' },
+      { title: 'Recordatorios y promociones a clientes', text: 'Boletín mensual o recordatorio de revisión, solo a quien te haya dado su consentimiento.', tools: ['brevo'], guide: 'ia-proteccion-datos-rgpd' },
+    ],
+    start: ['Configura WhatsApp Business con respuestas rápidas (gratis, 1 hora).', 'Crea 3 plantillas de Canva con tus colores.', 'Prepara 12 publicaciones con la guía de contenido.'],
+    warning: 'Pide permiso por escrito antes de publicar fotos en las que se reconozca a un cliente.',
+  },
+  {
+    slug: 'reformas-instalaciones',
+    name: 'Reformas, fontanería y electricidad',
+    title: 'IA para reformas e instaladores: presupuestos y solicitudes',
+    description: 'Cómo pueden ahorrar tiempo los profesionales de reformas, fontanería y electricidad con IA: presupuestos más rápidos, solicitudes ordenadas y seguimiento de clientes.',
+    cover: { tone: 'ocre', text: 'Reformas' },
+    intro: 'El cuello de botella suele ser el mismo: visitas, presupuestos que se preparan por la noche y solicitudes que se pierden entre llamadas y mensajes.',
+    uses: [
+      { title: 'Presupuestos a partir de las notas de la visita', text: 'Dicta tus notas al salir de la obra y conviértelas en un presupuesto ordenado con tus tarifas.', tools: ['chatgpt', 'claude', 'holded'], guide: 'presupuestos-con-ia' },
+      { title: 'Que ninguna solicitud se pierda', text: 'Formulario en la web que guarda cada solicitud en una hoja y te avisa al móvil.', tools: ['make'], guide: 'automatizar-formulario-hoja-aviso-make' },
+      { title: 'Facturación preparada para Verifactu', text: 'Revisa si tu forma de facturar cumplirá el nuevo reglamento.', tools: ['holded'], guide: 'verifactu-autonomos-2027' },
+    ],
+    start: ['Prueba el prompt de presupuestos con tu próxima visita.', 'Monta el formulario con aviso (plan gratuito de Make).', 'Pregunta a tu proveedor de facturación por Verifactu.'],
+    warning: 'Recalcula siempre los importes que te prepare un asistente de IA antes de enviarlos.',
+  },
+  {
+    slug: 'fisioterapia-clinicas',
+    name: 'Fisioterapia y clínicas pequeñas',
+    title: 'IA para fisioterapeutas y clínicas pequeñas: usos seguros',
+    description: 'Usos de la IA para fisioterapeutas y clínicas pequeñas que no comprometen los datos de salud: comunicación, contenido divulgativo, organización y reuniones.',
+    cover: { tone: 'verde', text: 'Clínicas' },
+    intro: 'Los datos de salud son una categoría especial en el RGPD. La IA puede ayudarte mucho en todo lo que rodea a la consulta, siempre que no metas historiales en herramientas no preparadas para ello.',
+    uses: [
+      { title: 'Contenido divulgativo para pacientes', text: 'Ejercicios y consejos generales para redes o para entregar en papel, revisados por ti.', tools: ['chatgpt', 'canva'], guide: 'contenido-redes-un-mes-una-tarde' },
+      { title: 'Respuestas a preguntas administrativas', text: 'Horarios, tarifas, mutuas aceptadas y cómo llegar, sin tocar información clínica.', tools: ['whatsapp-business'], guide: 'responder-clientes-whatsapp-email-ia' },
+      { title: 'Organizar procedimientos de la clínica', text: 'Protocolos internos, checklists y documentación en un solo sitio.', tools: ['notion'], guide: 'herramientas-ia-gratis-autonomos' },
+    ],
+    start: ['Lee la guía de IA y protección de datos antes de nada.', 'Configura respuestas rápidas solo para temas administrativos.', 'Prepara material divulgativo general.'],
+    warning: 'No introduzcas datos de salud de pacientes en asistentes de IA generalistas.',
+  },
+  {
+    slug: 'restauracion',
+    name: 'Bares y restaurantes',
+    title: 'IA para bares y restaurantes: reservas, reseñas y redes',
+    description: 'Ideas prácticas de IA para bares y restaurantes: responder reseñas, gestionar mensajes de reservas, crear contenido del día y traducir la carta.',
+    cover: { tone: 'rojo', text: 'Restauración' },
+    intro: 'Pocos sectores tienen menos tiempo para la pantalla. Por eso conviene centrarse en lo que más impacto tiene: reseñas, mensajes de reservas y presencia en redes.',
+    uses: [
+      { title: 'Responder reseñas con buen tono', text: 'Borradores de respuesta para reseñas positivas y negativas que luego personalizas.', tools: ['chatgpt', 'claude'], guide: 'responder-clientes-whatsapp-email-ia' },
+      { title: 'Traducir la carta', text: 'Traducciones a inglés, francés o alemán como base; revisa los nombres de los platos y los alérgenos.', tools: ['chatgpt', 'claude', 'gemini'], guide: 'herramientas-ia-gratis-autonomos' },
+      { title: 'Mensajes de reservas por Instagram', text: 'Respuesta automática con el enlace de reservas cuando alguien escribe "reserva".', tools: ['manychat', 'whatsapp-business'], guide: 'contenido-redes-un-mes-una-tarde' },
+    ],
+    start: ['Responde las reseñas pendientes con el prompt de la plantilla.', 'Configura respuestas rápidas para reservas.', 'Prepara una plantilla de Canva para el plato del día.'],
+    warning: 'La información de alérgenos debe revisarla siempre una persona: no confíes en una traducción automática.',
+  },
+];
