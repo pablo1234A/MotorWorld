@@ -114,6 +114,26 @@ nav.main-nav a.active::after{content:'';position:absolute;left:0;right:0;bottom:
 .btn-primary:hover{background:#ff2338;transform:translateY(-2px);}
 .btn-outline{border:1px solid var(--line);color:var(--text);}
 .btn-outline:hover{border-color:var(--text);transform:translateY(-2px);}
+
+/* ---------- PROMO MODELO 3D ---------- */
+nav.main-nav a.nav-3d{color:var(--text);display:inline-flex;align-items:center;gap:6px;}
+nav.main-nav a.nav-3d::before{content:'3D';font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;background:var(--red);color:#fff;padding:2px 5px;border-radius:2px;}
+.promo-3d{
+  position:relative;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:32px;
+  border:1px solid var(--line);background:linear-gradient(120deg,var(--surface) 0%,#16090b 100%);
+  padding:40px;overflow:hidden;transition:border-color .25s;
+}
+.promo-3d:hover{border-color:var(--red-dim);}
+.promo-3d h2{margin:12px 0 10px;}
+.promo-3d p{color:var(--muted);max-width:520px;font-size:15px;}
+.promo-3d .feats{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 26px;}
+.promo-3d .feats span{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);padding:6px 10px;color:var(--text);}
+.promo-3d .visual{position:relative;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;}
+.promo-3d .visual::before{content:'';position:absolute;inset:8% 4%;border-radius:50%;border:1px solid rgba(224,26,43,.35);transform:rotateX(70deg);}
+.promo-3d .visual svg{width:92%;position:relative;color:var(--red);filter:drop-shadow(0 20px 30px rgba(224,26,43,.25));animation:float3d 5s ease-in-out infinite;}
+@keyframes float3d{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@media (max-width:860px){ .promo-3d{grid-template-columns:1fr;padding:28px 22px;} .promo-3d .visual{order:-1;max-height:180px;} }
+@media (prefers-reduced-motion:reduce){ .promo-3d .visual svg{animation:none;} }
 .hero-visual{position:relative;aspect-ratio:4/3;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);}
 .speed-ring{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
 .speed-ring svg{width:78%;}
@@ -289,6 +309,7 @@ footer{border-top:1px solid var(--line);padding:60px 0 30px;background:var(--sur
       <a href="#/marcas" data-route="/marcas">Marcas</a>
       <a href="#/como-funciona" data-route="/como-funciona">Cómo funciona</a>
       <a href="#/noticias" data-route="/noticias">Noticias</a>
+      <a href="porsche-911-turbo-3d.html" class="nav-3d">911 en 3D</a>
     </nav>
     <div class="nav-right">
       <button class="search-toggle" id="searchToggle" aria-label="Buscar">
@@ -313,6 +334,7 @@ footer{border-top:1px solid var(--line);padding:60px 0 30px;background:var(--sur
   <a href="#/marcas">Marcas</a>
   <a href="#/como-funciona">Cómo funciona</a>
   <a href="#/noticias">Noticias</a>
+  <a href="porsche-911-turbo-3d.html">911 Turbo en 3D</a>
 </div>
 
 <main id="app"></main>
@@ -769,6 +791,19 @@ function revealOnScroll(){
 /* =========================================================
    RENDER: HOME
    ========================================================= */
+function promo3D(){
+  return `<a class="promo-3d reveal" href="porsche-911-turbo-3d.html">
+    <div>
+      <div class="eyebrow">Nuevo · Modelo 3D interactivo</div>
+      <h2>911 Turbo clásico,<br>en 3D y por dentro</h2>
+      <p>Gíralo 360°, cambia el color, abre el capó trasero y entra en su motor bóxer turbo: pistones, cigüeñal, válvulas y turbo funcionando en tiempo real.</p>
+      <div class="feats"><span>Vista 360°</span><span>Rayos X</span><span>Motor en corte</span><span>Despiece</span></div>
+      <span class="btn btn-primary">Abrir el modelo 3D</span>
+    </div>
+    <div class="visual" aria-hidden="true"><svg viewBox="0 0 200 90"><use href="#car-icon"/></svg></div>
+  </a>`;
+}
+
 function renderHome(){
   const popularBrandsSlugs=["ferrari","lamborghini","porsche","bmw","mercedes-benz","mclaren","bugatti","audi"];
   const popularModelSlugs=["laferrari","911","aventador","m3","amg-gt","chiron","urus","r8"];
@@ -802,6 +837,10 @@ function renderHome(){
         </div>
       </div>
     </div>
+  </section>
+
+  <section class="section">
+    <div class="container">${promo3D()}</div>
   </section>
 
   <section class="section">
@@ -967,6 +1006,8 @@ function renderModel(brandSlug,modelSlug){
       </div>
     </div>
   </section>
+
+  ${modelSlug==="911"?`<section class="section"><div class="container">${promo3D()}</div></section>`:""}
 
   <section class="section">
     <div class="container two-col">
