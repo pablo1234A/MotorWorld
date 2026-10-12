@@ -32,7 +32,9 @@ ok('La pantalla inicial no está vacía', menuStats.std > 6, `contraste ${menuSt
 const started = await page.evaluate(() => {
   if (window.__game?.start) { window.__game.start(); return 'window.__game.start()'; }
   const re = /jugar|play|start|empezar|comenzar|iniciar|desplegar|continuar/i;
-  const b = [...document.querySelectorAll('button, a, [role=button]')].find(x => re.test(x.textContent) && x.offsetParent);
+  const vis = x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden'; };
+  const b = [...document.querySelectorAll('button, a, [role=button]')].find(x => re.test(x.textContent) && vis(x))
+    || [...document.querySelectorAll('body *')].reverse().find(x => x.children.length === 0 && re.test(x.textContent) && x.textContent.trim().length < 25 && vis(x));   // también <div class="btn">
   if (b) { b.click(); return 'botón "' + b.textContent.trim().slice(0, 20) + '"'; }
   return null;
 });

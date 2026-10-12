@@ -55,7 +55,8 @@ async function movesWithW(b, file) {
     const fp = path.join(dir, 'node_modules/three', m[2].split('?')[0]); fs.existsSync(fp) ? route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(fp) }) : route.abort(); });
   try {
     await p.goto('file://' + file, { waitUntil: 'load' }); await p.waitForTimeout(2000);
-    const box = await p.evaluate(() => { const re = /jugar|play|start|empezar|comenzar|iniciar|desplegar/i; const el = [...document.querySelectorAll('button,a,[role=button]')].find(x => re.test(x.textContent) && x.offsetParent);
+    const box = await p.evaluate(() => { const re = /jugar|play|start|empezar|comenzar|iniciar|desplegar/i; const vis = x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden'; };
+      const el = [...document.querySelectorAll('button,a,[role=button]')].find(x => re.test(x.textContent) && vis(x)) || [...document.querySelectorAll('body *')].reverse().find(x => x.children.length === 0 && re.test(x.textContent) && x.textContent.trim().length < 25 && vis(x));
       if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     await p.mouse.click(box ? box.x : 640, box ? box.y : 360); await p.waitForTimeout(1500);
     const a = await p.screenshot(); await p.keyboard.down('KeyW'); await p.waitForTimeout(2000); await p.keyboard.up('KeyW'); const c = await p.screenshot();
@@ -68,7 +69,7 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXE, args: ['--use-gl=swiftshader','--enable-unsafe-swiftshader'] });
-  for (const evalDir of fs.readdirSync(it).filter(d => fs.existsSync(path.join(it, d, 'eval_metadata.json')))) {
+  for (const evalDir of fs.readdirSync(it).filter(d => fs.existsSync(path.join(it, d, 'eval_metadata.json')) && (!process.env.EVALS || process.env.EVALS.split(',').includes(d)))) {
     for (const cfg of (process.env.CFGS ? process.env.CFGS.split(',') : ['with_skill', 'old_skill', 'without_skill'])) {
       const run = path.join(it, evalDir, cfg); const outs = path.join(run, 'outputs');
       if (!fs.existsSync(outs)) continue;
