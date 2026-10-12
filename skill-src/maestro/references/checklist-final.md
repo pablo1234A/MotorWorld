@@ -17,6 +17,12 @@
 - [ ] Rendimiento: imágenes optimizadas, solo transform/opacity animados, reduced-motion respetado.
 - [ ] Secretos fuera del código; entradas validadas.
 
+**Verificación automática (usa los scripts incluidos; no escribas tu propio probador)**
+- [ ] Web: `node scripts/check-web.mjs index.html` sin fallos imprescindibles + capturas revisadas.
+- [ ] Juego: `node scripts/test-juego.mjs juego.html` en verde (el juego expone `window.__game.selfTest`).
+- [ ] Vídeo: `scripts/video.sh info archivo.mp4` → resolución, fps y volumen correctos.
+- [ ] Script/automatización: ejecutado con datos simulados.
+
 **Entrega**
 - [ ] Respuesta breve: qué se hizo, dónde, cómo ejecutarlo, qué queda pendiente.
 - [ ] Lo no verificado se dice explícitamente.

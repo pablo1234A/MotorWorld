@@ -29,3 +29,4 @@ addEventListener('resize', resize); resize();
 renderer.setAnimationLoop(t => { mesh.rotation.y = t/2000; renderer.render(scene, camera); });
 </script>
 ```
+> Para 3D en juegos (iluminación, posprocesado, assets, rendimiento) ve a `juegos/graficos.md`; esta guía es para 3D decorativo en webs.

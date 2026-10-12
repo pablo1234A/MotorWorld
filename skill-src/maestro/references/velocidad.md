@@ -16,7 +16,8 @@ El tiempo se pierde en cuatro sitios: **esperar** (pasos en serie que podrían i
 - Escribe cada archivo **completo a la primera** (planificado), no en 5 iteraciones.
 - Agrupa ediciones: todos los cambios de un archivo en una pasada.
 - No releas un archivo justo después de editarlo: la herramienta ya habría fallado si el cambio no se aplicó.
-- Verifica **una vez al final** con la comprobación más barata que dé confianza (abrir en navegador, un test, un build), no tras cada línea.
+- Verifica **una vez al final** con los scripts incluidos (`scripts/check-web.mjs`, `scripts/test-juego.mjs`, `scripts/video.sh info`): ya están hechos y probados, así que no gastas tiempo ni tokens escribiendo tu propio probador.
+- Si el script encuentra fallos, corrige todos de una pasada y vuelve a ejecutarlo una vez.
 - Si algo falla, lee el error completo y corrige la causa; no pruebes cambios al azar.
 
 ## 4. Quitar fricción (Claude Code)

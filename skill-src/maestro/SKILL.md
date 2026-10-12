@@ -1,76 +1,62 @@
 ---
 name: maestro
-description: Modo maestro para todo trabajo creativo y técnico de alto nivel con ahorro de tokens. Usar SIEMPRE que el usuario pida una página web, landing, diseño UI/UX, app (web, móvil, escritorio), automatización (n8n, Make, Zapier, scripts, APIs, agentes), vídeo (guion, edición, Remotion, ffmpeg, motion graphics), videojuego (web, Godot, Unity, Phaser, Three.js), copywriting, SEO, branding, e-commerce, 3D web, prompts para IA de imagen/vídeo o cualquier proyecto que deba quedar de calidad premium. También cuando pida "gastar menos créditos/tokens", "que Claude rinda al máximo" o "hazlo lo mejor posible".
+description: Director de estudio para producir trabajo de calidad profesional con el mínimo gasto de tokens. Úsala SIEMPRE que el usuario pida una página web, landing, tienda, rediseño, UI/UX, animaciones o scroll cinematográfico; una app (web, móvil, escritorio, SaaS); un videojuego de cualquier tipo (shooter/FPS, plataformas, carreras, Three.js, Phaser, Godot, Unity, Unreal); vídeo (guion, edición, color, sonido, subtítulos, Remotion, ffmpeg, vídeo con IA); automatizaciones o scripts con IA (n8n, Make, Zapier, Python, APIs, agentes); copywriting, SEO, branding o prompts para IA de imagen y vídeo. Úsala también cuando pida "hazlo profesional", "lo mejor posible", "que parezca de agencia", "como Call of Duty", "más rápido" o "gastando menos créditos", aunque no nombre la skill.
 ---
 
-# MAESTRO — calidad de estudio top, coste mínimo
+# MAESTRO — calidad de estudio, coste mínimo
 
-Dos objetivos a la vez: **(1) resultado de nivel estudio premium** y **(2) gastar los mínimos tokens posibles**. No son opuestos: el desperdicio casi siempre viene de rehacer trabajo mal enfocado.
+Objetivo doble: **resultado profesional verificado** y **mínimo gasto de tokens y tiempo**. No se contradicen: el desperdicio casi siempre es rehacer trabajo mal enfocado o no comprobado.
 
-## Paso 0 — Elige UNA referencia y léela solo a ella
+## 1. Lee solo lo que necesitas
 
-No leas todas las referencias. Carga solo la que corresponda (ahorro de contexto = ahorro de créditos):
+| Tarea | Lee primero | Base lista / herramienta |
+|---|---|---|
+| Web, landing, rediseño, UI | `references/web-diseno.md` | `examples/landing-premium.html` · `scripts/check-web.mjs` |
+| Efectos "firma" (scroll, texto, cursor, transiciones) | `references/web-interacciones.md` | GSAP 3.13 + Lenis, código listo |
+| Scroll cinematográfico tipo Scroll World | `references/web-diseno.md` §8 | `examples/scroll-scrub.html` + `scripts/video.sh scrub` |
+| Animación y microinteracciones | `references/animacion.md` | |
+| Videojuegos (cualquiera) | `references/juegos/README.md` → la guía concreta | `examples/fps-pro.html` · `scripts/test-juego.mjs` |
+| Vídeo (guion, edición, color, sonido, IA) | `references/video/README.md` → la guía concreta | `scripts/video.sh` · `examples/remotion-*.tsx` |
+| Apps | `references/apps.md` | |
+| Automatizaciones y scripts con IA | `references/automatizaciones.md` | `examples/automatizacion_leads.py` |
+| Copy, SEO, branding, e-commerce | `references/copywriting.md`, `seo-marketing.md`, `branding.md`, `ecommerce.md` | |
+| Prompts para imagen, vídeo, música, Claude | `references/prompts-ia.md` | |
+| 3D decorativo en webs | `references/web-3d.md` | |
+| Ahorrar tokens / ir más rápido | `references/eficiencia.md`, `velocidad.md` | `templates/` |
+| Antes de entregar cualquier cosa | `references/checklist-final.md` | |
 
-| Tarea | Archivo |
-|---|---|
-| Ahorrar tokens / cómo trabajar | `references/eficiencia.md` (léelo una vez por sesión larga) |
-| Ir más rápido sin perder calidad | `references/velocidad.md` |
-| Web, landing, UI, branding visual | `references/web-diseno.md` |
-| Animación, micro-interacciones, scroll | `references/animacion.md` |
-| Apps (web, móvil, escritorio, SaaS) | `references/apps.md` |
-| Automatizaciones, agentes, integraciones | `references/automatizaciones.md` |
-| Vídeo, edición, motion graphics | `references/video.md` |
-| Videojuegos | `references/videojuegos.md` |
-| Textos que venden (titulares, CTA, landing) | `references/copywriting.md` |
-| SEO, analítica, marketing técnico | `references/seo-marketing.md` |
-| Logo, identidad, paletas | `references/branding.md` |
-| Tienda online / checkout | `references/ecommerce.md` |
-| Prompts para Claude, imagen, vídeo, música | `references/prompts-ia.md` |
-| 3D / WebGL / Three.js | `references/web-3d.md` |
-| Control de calidad final de cualquier entrega | `references/checklist-final.md` |
+Las guías largas tienen índice: lee la sección que necesites, no el archivo entero. Si hay skills especializadas instaladas (`impeccable`, `emil-design-eng`, `scroll-world`, `design-taste-frontend`, `high-end-visual-design`, `apple-design`, `animate`, `mobile-native`, `break-ui`), úsalas en su área: esta skill dirige, ellas afinan.
 
-## Ejemplos listos (ábrelos solo si sirven de base; adapta, no copies a ciegas)
+## 2. Brief en 30 segundos
+En 3–5 líneas: **para quién**, **qué debe conseguir**, **tono/estética**, **restricciones**, **qué es "terminado"**. Si falta un dato que cambia el resultado, una sola pregunta agrupada; si no, decide, dilo en una línea y avanza.
 
-| Ejemplo | Archivo |
-|---|---|
-| Landing premium (tokens, modo oscuro, reveal, contador, a11y) | `examples/landing-premium.html` |
-| Motor de scroll cinematográfico (vídeo scrub + capítulos) | `examples/scroll-scrub.html` |
-| Juego con game feel (deltaTime, shake, hit-stop, partículas, récord) | `examples/juego-canvas.html` |
-| Intro de marca en vídeo con Remotion | `examples/remotion-intro.tsx` |
-| Automatización de leads con Claude (idempotente, reintentos, caché) | `examples/automatizacion_leads.py` |
+Di también el **alcance real** cuando haga falta, en una línea y sin sermones: por ejemplo, "un shooter en un HTML tendrá la sensación de juego de un AAA, pero no sus gráficos: esos dependen de assets y equipos grandes; con modelos y texturas reales se acerca mucho más". Luego ve a por el máximo posible dentro de ese alcance.
 
-Si hay skills especializadas instaladas (p. ej. `impeccable`, `emil-design-eng`, `scroll-world`, `design-taste-frontend`, `high-end-visual-design`, `apple-design`, `animate`, `mobile-native`, `break-ui`), úsalas para su área concreta: esta skill es el director de orquesta, ellas son los solistas.
+## 3. Dirección antes que código
+Nombra una dirección concreta ("editorial suizo, crema y negro, serif gigante"; "puerto industrial al atardecer, niebla naranja") en vez de "moderno". Una idea fuerte > diez efectos.
 
-## Paso 1 — Brief en 30 segundos (no un interrogatorio)
+## 4. Producir en una pasada
+- Parte de `examples/` cuando encaje: adaptar una base probada es más rápido y más fiable que empezar de cero.
+- Archivos completos y funcionales; sin `// resto del código`. Datos (armas, precios, textos) separados de la lógica.
+- Cambios mínimos con edits; no reescribas archivos enteros para tocar 5 líneas.
+- Todo lo independiente, a la vez (lecturas, búsquedas, archivos nuevos).
 
-Antes de producir, fija en 3–5 líneas: **para quién**, **qué acción debe hacer el usuario final**, **tono/estética**, **restricciones técnicas**, **qué es "terminado"**. Si falta algo que cambia el resultado, haz UNA sola pregunta agrupada; si no, decide con criterio, dilo en una línea y avanza.
+## 5. Verificar con las herramientas incluidas (no inventes las tuyas)
+```bash
+node scripts/check-web.mjs index.html         # web: errores, responsive, desbordes, a11y, contraste, SEO, CLS, capturas
+node scripts/test-juego.mjs juego.html        # juego: carga, FPS, partida simulada y window.__game.selfTest()
+scripts/video.sh info video.mp4               # vídeo: resolución, fps, códecs, LUFS
+```
+Requisitos: `npm i -D playwright && npx playwright install chromium` (los scripts sirven las CDN desde npm si la red las bloquea) y ffmpeg. En los juegos, expón `window.__game` con `selfTest()` como en `examples/fps-pro.html`: es la forma barata de demostrar que mover, disparar, morir y reiniciar funcionan. Si no puedes ejecutar algo, dilo.
 
-## Paso 2 — Dirección antes que código
+Corrige **todos** los fallos de una pasada, vuelve a ejecutar una vez y mira las capturas con ojo crítico (jerarquía, aire, alineación, legibilidad).
 
-Para trabajo visual: nombra una dirección concreta (p. ej. "editorial suizo, crema + negro, serif display gigante") en vez de "moderno y limpio". Una idea fuerte > diez efectos.
+## 6. Entregar
+Respuesta breve: qué hiciste, dónde está, cómo usarlo, qué se verificó y qué no, qué datos del cliente faltan (marcados `EDITAR`). Sin repetir el código en el chat.
 
-## Paso 3 — Producir en una pasada, completo
-
-- Entrega archivos completos y funcionales; nada de `// resto del código aquí`.
-- Edita con cambios mínimos (diffs) en lugar de reescribir archivos enteros.
-- Reutiliza lo que ya existe en el proyecto antes de crear algo nuevo.
-
-## Paso 4 — Verifica y cierra
-
-Pasa `references/checklist-final.md` mentalmente. Responde breve: qué hiciste, dónde está, qué falta (si falta algo). Sin relleno, sin repetir el código en el chat.
-
-## Modo turbo (siempre activo)
-
-- **Todo lo independiente, a la vez**: lecturas, búsquedas, archivos nuevos y comprobaciones que no dependen entre sí van en el mismo turno.
-- **Decide con los valores por defecto** de esta skill y parte de `examples/` cuando encaje.
-- **Cada archivo completo a la primera**; ediciones agrupadas; sin releer tras editar.
-- **Una verificación final** (navegador, test o build), no comprobaciones tras cada cambio.
-- Nunca se recorta accesibilidad, responsive, estados ni seguridad: eso sería retrabajo, no velocidad.
-
-## Reglas de oro (siempre activas)
-
-1. **Pensar caro, escribir barato**: decide bien una vez; no generes 3 versiones si no se pidieron.
-2. **Leer lo justo**: busca (grep/glob) antes de abrir archivos; lee rangos, no archivos gigantes enteros.
-3. **Cero relleno**: nada de "¡Claro! Aquí tienes…", resúmenes que repiten lo hecho, ni disculpas.
-4. **Calidad no negociable**: accesibilidad, responsive, rendimiento y estados vacíos/error/carga forman parte del "hecho".
-5. **Honestidad**: si algo no se pudo verificar, dilo.
+## Reglas de oro
+1. **Pensar caro, escribir barato**: decide bien una vez; no generes variantes que no se pidieron.
+2. **Leer lo justo**: busca antes de abrir; lee rangos y secciones.
+3. **Modelo pequeño por defecto en scripts con IA** (clasificar, extraer, resumir → familia Haiku), configurable por variable de entorno.
+4. **Calidad no negociable**: accesibilidad, responsive, rendimiento, estados de carga/vacío/error y seguridad forman parte de "terminado".
+5. **Honestidad**: lo no verificado se dice. Ningún archivo garantiza ventas, precios ni porcentajes de ahorro.

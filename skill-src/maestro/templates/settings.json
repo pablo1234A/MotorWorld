@@ -19,7 +19,12 @@
       "Bash(find*)",
       "Bash(ffmpeg*)",
       "Bash(python3 -m py_compile*)",
-      "Bash(pytest*)"
+      "Bash(pytest*)",
+      "Bash(node scripts/check-web.mjs*)",
+      "Bash(node scripts/test-juego.mjs*)",
+      "Bash(scripts/video.sh*)",
+      "Bash(ffprobe*)",
+      "Bash(npx remotion*)"
     ],
     "deny": [
       "Bash(rm -rf /*)",

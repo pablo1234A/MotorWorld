@@ -13,6 +13,9 @@ Lo que más créditos consume, por orden: (1) contexto acumulado en conversacion
 - **Edits, no rewrites**: modificar 5 líneas cuesta mucho menos que reescribir un archivo de 800.
 - **Skills con carga progresiva**: SKILL.md corto que apunta a referencias; solo se lee lo necesario.
 
+- **Reutiliza las herramientas de la skill**: en las pruebas, gran parte del gasto extra venía de escribir probadores desde cero. `scripts/` ya los trae.
+- **Lee solo la sección que necesitas** de cada guía (tienen índice); no cargues todas las guías "por si acaso".
+
 ## En Claude.ai (chat)
 - **Proyectos** con instrucciones y archivos de conocimiento: no re-pegues el mismo contexto en cada chat.
 - **Chat nuevo por tarea**: cuando un chat se alarga, pide un resumen de 10 líneas y empieza otro pegándolo.

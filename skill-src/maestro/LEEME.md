@@ -14,7 +14,16 @@ Reinicia Claude Code. Opcional: copia `templates/CLAUDE.md` a la raíz del proye
 ## Skills complementarias recomendadas
 Esta skill dirige; para el máximo nivel en cada área instala además (si tu cuenta las ofrece en el catálogo de skills o desde sus repositorios oficiales): Impeccable, Emil Kowalski (emil-design-eng), Scroll World, Design Taste, High-End Visual Design, Apple Design, Animate, Mobile Native, Break UI. No se incluyen copiadas aquí por respeto a sus licencias y autores.
 
-## Contenido
-- 15 guías en `references/` (web, animación, apps, automatizaciones, velocidad, vídeo, videojuegos, copywriting, SEO, branding, e-commerce, prompts IA, 3D web, eficiencia, checklist).
-- 5 ejemplos funcionales en `examples/` (ábrelos en el navegador o ejecútalos tal cual).
-- Plantillas `templates/CLAUDE.md` (ahorro de tokens) y `templates/settings.json` (permisos para que Claude Code no se pare a pedir confirmación en comandos seguros; cópialo a `.claude/settings.json` de tu proyecto y revísalo).
+## Contenido (versión 2.0.0, ver CHANGELOG.md)
+- `SKILL.md`: el director. Decide qué guía leer y cómo verificar.
+- `references/`: guías de web, interacciones, animación, apps, automatizaciones, copy, SEO, branding, e-commerce, prompts, 3D, eficiencia, velocidad y checklist; carpetas `juegos/` (9 guías) y `video/` (7 guías).
+- `examples/`: landing premium, scroll cinematográfico, FPS completo, minijuego, intro y subtítulos en Remotion, automatización con Claude.
+- `scripts/`: `check-web.mjs` (revisión de webs), `test-juego.mjs` (prueba de juegos), `video.sh` (exportaciones de vídeo).
+- `templates/`: `CLAUDE.md` (ahorro de tokens) y `settings.json` (permisos para que Claude Code no se pare en comandos seguros; cópialo a `.claude/settings.json` y revísalo).
+
+## Requisitos de los scripts
+- Node 18+ y Playwright: `npm i -D playwright && npx playwright install chromium`
+- ffmpeg para `video.sh` (y Whisper opcional para subtítulos: `pip install openai-whisper`)
+
+## Licencia
+Uso libre para el propietario. Las skills de terceros recomendadas mantienen sus propias licencias.

@@ -4,13 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atelier Norte — Estudio de arquitectura</title>
-<meta name="description" content="Casas que envejecen bien. Estudio de arquitectura en Bilbao: proyecto, licencia y obra con precio cerrado.">
+<meta name="description" content="Casas que envejecen bien. Estudio de arquitectura en Bilbao: proyecto, licencia y obra con un único interlocutor y precio cerrado por escrito.">
+<meta property="og:title" content="Atelier Norte — Casas que envejecen bien">
+<meta property="og:description" content="Proyecto, licencia y obra con precio cerrado por escrito. Bilbao.">
+<meta property="og:image" content="https://ejemplo.com/og-atelier-norte.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#F4F1EA">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ProfessionalService","name":"Atelier Norte","description":"Estudio de arquitectura","address":{"@type":"PostalAddress","addressLocality":"Bilbao","addressCountry":"ES"},"email":"hola@ejemplo.com","url":"https://ejemplo.com"}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=optional" rel="stylesheet">
 <style>
+/* display=optional: la fuente solo se usa si llega a tiempo → cero saltos de diseño (CLS) al cargar */
 :root{
-  --bg:#F4F1EA; --surface:#ECE7DC; --text:#16140F; --muted:#6B655A; --line:rgb(22 20 15 / .12); --accent:#B4532A;
+  --bg:#F4F1EA; --surface:#ECE7DC; --text:#16140F; --muted:#615B50; --line:rgb(22 20 15 / .12); --accent:#9E4523;
   --serif:"Instrument Serif",Georgia,serif; --sans:"Inter Tight",system-ui,sans-serif;
   --ease-out:cubic-bezier(.22,1,.36,1);
 }
@@ -21,12 +28,12 @@ body{background:var(--bg);color:var(--text);font:400 1.0625rem/1.6 var(--sans);-
 a{color:inherit}
 .wrap{width:min(1200px,100% - 32px);margin-inline:auto}
 header{display:flex;justify-content:space-between;align-items:center;padding:24px 0;border-bottom:1px solid var(--line)}
-.logo{font:400 1.5rem var(--serif);text-decoration:none}
+.logo{font:400 1.5rem var(--serif);text-decoration:none;display:inline-flex;align-items:center;min-height:44px}
 nav{display:flex;gap:28px;font-size:.9375rem}
 nav a{text-decoration:none;color:var(--muted);transition:color .15s}
 @media (hover:hover){nav a:hover{color:var(--text)}}
 .hero{padding:clamp(64px,12vw,160px) 0 clamp(48px,8vw,120px)}
-.eyebrow{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.eyebrow{font-size:.8125rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 h1{font:400 clamp(3rem,10vw,8.5rem)/.92 var(--serif);letter-spacing:-.035em;margin:20px 0 32px;text-wrap:balance}
 h1 em{color:var(--accent)}
 .lead{max-width:34ch;font-size:clamp(1.125rem,1.6vw,1.3rem);color:var(--muted);text-wrap:pretty}
