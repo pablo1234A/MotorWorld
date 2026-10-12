@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier Norte — Estudio de arquitectura</title>
+<meta name="description" content="Casas que envejecen bien. Estudio de arquitectura en Bilbao: proyecto, licencia y obra con precio cerrado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F1EA; --surface:#ECE7DC; --text:#16140F; --muted:#6B655A; --line:rgb(22 20 15 / .12); --accent:#B4532A;
+  --serif:"Instrument Serif",Georgia,serif; --sans:"Inter Tight",system-ui,sans-serif;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-color-scheme:dark){:root{--bg:#12110E;--surface:#1B1915;--text:#EDE8DE;--muted:#9D968A;--line:rgb(237 232 222 / .12);--accent:#E07A4F}}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font:400 1.0625rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{width:min(1200px,100% - 32px);margin-inline:auto}
+header{display:flex;justify-content:space-between;align-items:center;padding:24px 0;border-bottom:1px solid var(--line)}
+.logo{font:400 1.5rem var(--serif);text-decoration:none}
+nav{display:flex;gap:28px;font-size:.9375rem}
+nav a{text-decoration:none;color:var(--muted);transition:color .15s}
+@media (hover:hover){nav a:hover{color:var(--text)}}
+.hero{padding:clamp(64px,12vw,160px) 0 clamp(48px,8vw,120px)}
+.eyebrow{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font:400 clamp(3rem,10vw,8.5rem)/.92 var(--serif);letter-spacing:-.035em;margin:20px 0 32px;text-wrap:balance}
+h1 em{color:var(--accent)}
+.lead{max-width:34ch;font-size:clamp(1.125rem,1.6vw,1.3rem);color:var(--muted);text-wrap:pretty}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:40px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 24px;border-radius:999px;font:500 1rem var(--sans);text-decoration:none;border:1px solid var(--text);transition:transform .1s,background .2s,color .2s}
+.btn-primary{background:var(--text);color:var(--bg)}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (hover:hover){.btn-ghost:hover{background:var(--text);color:var(--bg)}}
+.note{font-size:.8125rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line)}
+.stat{padding:32px 0}
+.stat+.stat{border-left:1px solid var(--line);padding-left:24px}
+.stat b{display:block;font:400 clamp(2rem,5vw,3.5rem)/1 var(--serif);font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.875rem}
+section{padding:clamp(80px,10vw,140px) 0}
+h2{font:400 clamp(2.25rem,5vw,4rem)/1 var(--serif);letter-spacing:-.025em;max-width:16ch;text-wrap:balance}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;margin-top:56px}
+.card{background:var(--surface);border-radius:20px;padding:32px;display:flex;flex-direction:column;justify-content:flex-end;min-height:280px}
+.card:nth-child(1){grid-column:span 7;min-height:420px}
+.card:nth-child(2){grid-column:span 5}
+.card:nth-child(3){grid-column:span 5}
+.card:nth-child(4){grid-column:span 7}
+.card h3{font:500 1.25rem var(--sans);margin-bottom:8px}
+.card p{color:var(--muted);max-width:40ch}
+.num{font:italic 400 1rem var(--serif);color:var(--accent);margin-bottom:auto}
+blockquote{font:400 clamp(1.75rem,4vw,3rem)/1.15 var(--serif);max-width:24ch;letter-spacing:-.02em}
+cite{display:block;margin-top:24px;font:400 .9375rem var(--sans);font-style:normal;color:var(--muted)}
+.final{text-align:center;border-top:1px solid var(--line)}
+.final h2{margin-inline:auto}
+.final .ctas{justify-content:center}
+footer{padding:32px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--muted);font-size:.875rem;flex-wrap:wrap;gap:12px}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+.reveal.in{opacity:1;transform:none}
+@media (max-width:760px){
+  nav{display:none}
+  .grid>.card{grid-column:1/-1!important;min-height:220px!important}
+  .stats{grid-template-columns:1fr}.stat+.stat{border-left:0;border-top:1px solid var(--line);padding-left:0}
+}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="#">Atelier Norte</a>
+    <nav aria-label="Principal"><a href="#metodo">Método</a><a href="#obras">Obras</a><a href="#contacto">Contacto</a></nav>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="t">
+      <p class="eyebrow reveal">Estudio de arquitectura · Bilbao</p>
+      <h1 id="t" class="reveal">Casas que <em>envejecen</em> bien.</h1>
+      <p class="lead reveal">Proyecto, licencia y obra con un único interlocutor y precio cerrado por escrito desde el primer mes.</p>
+      <div class="ctas reveal">
+        <a class="btn btn-primary" href="#contacto">Reserva una visita de 30 min</a>
+        <a class="btn btn-ghost" href="#obras">Ver obras</a>
+      </div>
+      <p class="note reveal" style="margin-top:12px">Sin compromiso · Respuesta en 24 h</p>
+    </section>
+    <div class="stats reveal" role="list">
+      <div class="stat" role="listitem"><b data-count="148">148</b><span>viviendas entregadas</span></div>
+      <div class="stat" role="listitem"><b data-count="0">0</b><span>sobrecostes no pactados</span></div>
+      <div class="stat" role="listitem"><b data-count="17">17</b><span>años de oficio</span></div>
+    </div>
+    <section id="metodo" aria-labelledby="m">
+      <h2 id="m" class="reveal">Un método, cuatro fases, cero sorpresas.</h2>
+      <div class="grid">
+        <article class="card reveal"><span class="num">01</span><h3>Escucha</h3><p>Pasamos una mañana en tu casa actual para entender cómo vives, no cómo crees que deberías vivir.</p></article>
+        <article class="card reveal"><span class="num">02</span><h3>Proyecto</h3><p>Planos, maqueta y presupuesto cerrado en 6 semanas.</p></article>
+        <article class="card reveal"><span class="num">03</span><h3>Licencia</h3><p>Tramitamos todo con el ayuntamiento. Tú solo firmas.</p></article>
+        <article class="card reveal"><span class="num">04</span><h3>Obra</h3><p>Visita semanal, informe con fotos cada viernes y una única persona responsable hasta la entrega de llaves.</p></article>
+      </div>
+    </section>
+    <section id="obras" aria-label="Testimonio">
+      <blockquote class="reveal">“Entramos en la casa el día que dijeron y por el precio que dijeron. Eso no nos había pasado nunca.”<cite>— Itziar y Jon, casa en Getxo, 2025</cite></blockquote>
+    </section>
+    <section id="contacto" class="final" aria-labelledby="c">
+      <h2 id="c" class="reveal">Hablemos de tu casa.</h2>
+      <div class="ctas reveal" style="margin-top:32px"><a class="btn btn-primary" href="mailto:hola@ejemplo.com">Escríbenos</a></div>
+    </section>
+  </main>
+  <footer><span>© 2026 Atelier Norte</span><span>Bilbao · hola@ejemplo.com</span></footer>
+</div>
+<script>
+// Reveal al entrar en viewport (se omite con reduced-motion vía CSS)
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  e.target.classList.add('in'); io.unobserve(e.target);
+}), { rootMargin: '0px 0px -10% 0px' });
+document.querySelectorAll('.reveal').forEach((el, i) => {
+  el.style.transitionDelay = (i % 4) * 60 + 'ms'; io.observe(el);
+});
+// Contador numérico
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.querySelectorAll('[data-count]').forEach(el => {
+  const end = +el.dataset.count; if (reduce || !end) return;
+  new IntersectionObserver(([e], o) => {
+    if (!e.isIntersecting) return; o.disconnect();
+    const t0 = performance.now(), d = 1200;
+    const tick = t => { const p = Math.min((t - t0) / d, 1);
+      el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  }).observe(el);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+// Corrector objetivo. Uso: node grade.js <iteration-dir>
+const fs = require('fs'), path = require('path'), { execSync } = require('child_process');
+const { chromium } = require(process.env.PW || 'playwright');
+const it = process.argv[2];
+const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
+const allText = dir => { let s=''; const walk=d=>{ for (const f of fs.readdirSync(d)) { const p=path.join(d,f);
+  if (fs.statSync(p).isDirectory()) walk(p); else if (/\.(py|md|txt|html|js|toml|cfg|env|example|sh|json)$/i.test(f) || f.startsWith('.env')) s+='\n'+read(p);} }; try{walk(dir);}catch{} return s; };
+const findFile = (dir, re) => { let r=null; const walk=d=>{ for (const f of fs.readdirSync(d)) { const p=path.join(d,f);
+  if (fs.statSync(p).isDirectory()) walk(p); else if (!r && re.test(f)) r=p; } }; try{walk(dir);}catch{} return r; };
+
+async function pageChecks(file, b, extra) {
+  const out = {};
+  for (const w of [360, 1280]) {
+    const p = await b.newPage({ viewport: { width: w, height: 800 } });
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    p.on('console', m => { if (m.type()==='error' && !/favicon|net::ERR|Failed to load resource/.test(m.text())) errs.push(m.text()); });
+    await p.goto('file://' + file, { waitUntil: 'load', timeout: 30000 }).catch(e => errs.push('load: '+e.message));
+    await p.waitForTimeout(2500);
+    if (extra) await extra(p).catch(()=>{});
+    out['err'+w] = errs;
+    out['hscroll'+w] = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1).catch(()=>true);
+    await p.screenshot({ path: path.join(path.dirname(file), `shot-${w}.png`) }).catch(()=>{});
+    await p.close();
+  }
+  return out;
+}
+
+const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: String(evidence).slice(0, 300) });
+
+(async () => {
+  const b = await chromium.launch({ executablePath: EXE, args: ['--use-gl=swiftshader','--enable-unsafe-swiftshader'] });
+  for (const evalDir of fs.readdirSync(it).filter(d => fs.existsSync(path.join(it, d, 'eval_metadata.json')))) {
+    for (const cfg of ['with_skill', 'without_skill', 'old_skill']) {
+      const run = path.join(it, evalDir, cfg); const outs = path.join(run, 'outputs');
+      if (!fs.existsSync(outs)) continue;
+      const exp = [];
+      if (evalDir === 'landing-taller') {
+        const f = findFile(outs, /\.html$/i); const h = read(f);
+        exp.push(E('Entrega un único archivo HTML', f, f || 'no html'));
+        const pc = f ? await pageChecks(f, b) : {};
+        exp.push(E('Sin errores de JavaScript en consola (360 y 1280 px)', f && !pc.err360.length && !pc.err1280.length, JSON.stringify([pc.err360, pc.err1280])));
+        exp.push(E('Sin scroll horizontal en móvil (360 px)', f && !pc.hscroll360, 'hscroll360=' + pc.hscroll360));
+        exp.push(E('Respeta prefers-reduced-motion', /prefers-reduced-motion/.test(h), 'grep prefers-reduced-motion'));
+        exp.push(E('Estilos de foco visibles (:focus-visible)', /focus-visible/.test(h), 'grep focus-visible'));
+        exp.push(E('Exactamente un h1', (h.match(/<h1[\s>]/g)||[]).length === 1, 'h1 count=' + (h.match(/<h1[\s>]/g)||[]).length));
+        exp.push(E('Colores definidos como tokens CSS en :root', /:root\s*{[^}]*--/.test(h), 'grep :root --'));
+        exp.push(E('CTA de contacto directo (tel: o WhatsApp)', /href="(tel:|https:\/\/wa\.me)/.test(h), 'grep tel:/wa.me'));
+        exp.push(E('Datos estructurados LocalBusiness/AutoRepair (SEO local)', /"@type"\s*:\s*"(AutoRepair|LocalBusiness)"/.test(h), 'grep JSON-LD'));
+        exp.push(E('Meta description y Open Graph', /name="description"/.test(h) && /property="og:/.test(h), 'grep meta'));
+        exp.push(E('Sin texto de relleno (lorem/TODO)', !/lorem ipsum|TODO|placeholder text/i.test(h), 'grep lorem/TODO'));
+      } else if (evalDir === 'fps-navegador') {
+        const f = findFile(outs, /\.html$/i); const h = read(f);
+        exp.push(E('Entrega un archivo HTML', f, f || 'no html'));
+        exp.push(E('Three.js cargado con versión fijada', /three@\d+\.\d+\.\d+|three\/r?\d{3}|three\.js\/r\d+/.test(h), (h.match(/https?:[^"']*three[^"']*/)||['none'])[0]));
+        const pc = f ? await pageChecks(f, b, async p => { await p.mouse.click(640, 400); await p.keyboard.press('Enter'); await p.waitForTimeout(2000); }) : {};
+        exp.push(E('Carga y arranca sin errores de JavaScript', f && !pc.err1280.length, JSON.stringify(pc.err1280)));
+        exp.push(E('Usa Pointer Lock para apuntar con el ratón', /requestPointerLock/.test(h), 'grep requestPointerLock'));
+        exp.push(E('Controles WASD', /KeyW|'w'|"w"/.test(h) && /KeyS|'s'|"s"/.test(h), 'grep KeyW/KeyS'));
+        exp.push(E('Recarga con R', /KeyR|'r'|"r"/.test(h), 'grep KeyR'));
+        exp.push(E('Movimiento independiente de FPS (delta clamped)', /getDelta|Math\.min\([^)]*(dt|delta)|delta\s*=\s*Math\.min/.test(h), 'grep delta'));
+        exp.push(E('Pantalla de game over con reinicio', /game\s*over/i.test(h) && /(restart|reiniciar|reintentar|volver a jugar|play again)/i.test(h), 'grep game over/restart'));
+        exp.push(E('Retroceso de arma (recoil)', /recoil|retroceso/i.test(h), 'grep recoil'));
+        exp.push(E('Colisiones con el mapa (el jugador no atraviesa paredes)', /(collid|colisi|Box3|intersectsBox|AABB)/i.test(h), 'grep collision'));
+        exp.push(E('Soporte táctil o aviso para móvil', /touch|ontouchstart|pointer:\s*coarse|móvil|mobile/i.test(h), 'grep touch/mobile'));
+        exp.push(E('Sonido (Web Audio) en disparos', /AudioContext/.test(h), 'grep AudioContext'));
+      } else if (evalDir === 'gmail-claude-csv') {
+        const py = findFile(outs, /\.py$/); const all = allText(outs); const s = read(py);
+        let compiles = false; try { execSync(`python3 -I -m py_compile "${py}"`, { stdio: 'pipe' }); compiles = true; } catch (e) {}
+        exp.push(E('El script Python compila', py && compiles, py || 'no .py'));
+        exp.push(E('IMAP sobre SSL', /IMAP4_SSL/.test(s), 'grep IMAP4_SSL'));
+        exp.push(E('Credenciales desde variables de entorno (nada hardcodeado)', /os\.environ|getenv|dotenv/.test(s) && !/password\s*=\s*["'][^"'{]{6,}["']/i.test(s), 'grep environ'));
+        exp.push(E('Usa el SDK oficial de Anthropic', /import anthropic|from anthropic/.test(s), 'grep anthropic'));
+        exp.push(E('Restringe la salida a las 5 categorías válidas', /urgente/.test(s) && /factura/.test(s) && /(not in|in CATEG|enum|Literal|VALID|valid)/i.test(s), 'grep categories validation'));
+        exp.push(E('Fallback si la respuesta del modelo no es JSON válido', /(JSONDecodeError|except[^\n]*json|ValueError)/.test(s), 'grep JSONDecodeError'));
+        exp.push(E('Escribe con el módulo csv', /import csv|csv\.(writer|DictWriter)/.test(s), 'grep csv'));
+        exp.push(E('No marca como leídos sin querer (BODY.PEEK) o lo documenta', /BODY\.PEEK|PEEK/.test(s) || /marca(r)? como leído/i.test(all), 'grep PEEK'));
+        exp.push(E('Evita duplicados entre ejecuciones (UIDs guardados o dedupe)', /(uid|UID).*(seen|procesad|processed|state|guard)|processed|procesados/i.test(s), 'grep processed uids'));
+        exp.push(E('Limita el tamaño del texto enviado a Claude (ahorro de tokens)', /\[:\s*\d{3,5}\]|MAX_(BODY|CHARS)|truncat/i.test(s), 'grep truncation'));
+        exp.push(E('Instrucciones de contraseña de aplicación de Gmail', /contraseña de aplicación|app password|apppasswords/i.test(all), 'grep app password'));
+        exp.push(E('Instrucciones para programarlo cada mañana (cron/Programador de tareas)', /cron|Programador de tareas|Task Scheduler|launchd|schedule/i.test(all), 'grep cron'));
+      }
+      const passed = exp.filter(x => x.passed).length;
+      const grading = { expectations: exp, summary: { passed, failed: exp.length - passed, total: exp.length, pass_rate: +(passed / exp.length).toFixed(3) } };
+      fs.writeFileSync(path.join(run, 'grading.json'), JSON.stringify(grading, null, 1));
+      console.log(evalDir, cfg, `${passed}/${exp.length}`);
+    }
+  }
+  await b.close();
+})();

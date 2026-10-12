@@ -1,0 +1,8 @@
+{
+  "skill_name": "maestro",
+  "evals": [
+    {"id": 1, "prompt": "Hazme la landing de mi taller mecánico MotorWorld en Sevilla (mecánica general, neumáticos, ITV, coches de alta gama). Un solo archivo index.html, que parezca de agencia cara, con animaciones y que funcione perfecto en móvil.", "expected_output": "Un index.html autocontenido, premium, responsive, accesible, con animaciones respetando reduced-motion", "files": []},
+    {"id": 2, "prompt": "Quiero un shooter en primera persona tipo Call of Duty que funcione en el navegador. Un solo archivo HTML con Three.js: un mapa pequeño, enemigos que se mueven y disparan, armas con retroceso, munición, recarga, vida, puntuación y pantalla de game over.", "expected_output": "Un HTML jugable con FPS: pointer lock, WASD, disparo, enemigos con IA simple, HUD, game feel", "files": []},
+    {"id": 3, "prompt": "Necesito un script en Python que lea los correos no leídos de mi Gmail por IMAP, use Claude para clasificarlos (urgente, cliente, factura, spam, otro) y me guarde un resumen en un CSV cada mañana. Déjalo listo para usar.", "expected_output": "Script Python robusto: IMAP, clasificación con Claude en JSON, CSV, secretos en env, idempotencia, instrucciones de programación", "files": []}
+  ]
+}
