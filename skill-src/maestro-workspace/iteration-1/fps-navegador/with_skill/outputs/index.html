@@ -277,6 +277,8 @@ addBox(-17, -4, .6, 4, 1, MAT.barrier); addBox(17, 5, .6, 4, 1, MAT.barrier);
 addBox(8, 11, 4, .6, 1, MAT.barrier); addBox(-8, -12, 4, .6, 1, MAT.barrier);
 addBox(-20, -18, 4, .6, 1, MAT.barrier); addBox(20, -6, .6, 4, 1, MAT.barrier);
 
+scene.updateMatrixWorld(true); // matrices listas para raycasts antes del primer render
+
 /* ---------- Colisiones (AABB por ejes) ---------- */
 const STEP = 0.35, PH = 1.75;
 function overlapsXZ(b, x, z, r) { return x + r > b.minX && x - r < b.maxX && z + r > b.minZ && z - r < b.maxZ; }
@@ -439,7 +441,7 @@ function makeEnemy(x, z) {
   const mat = new THREE.MeshStandardMaterial({ color: 0x3d4434, roughness: .85 });
   const skin = new THREE.MeshStandardMaterial({ color: 0x222326, roughness: .6 });
   const g = new THREE.Group(); g.position.set(x, 0, z);
-  const e = { g, mat, skin, hp: 100, alive: true, parts: [], state: 'patrol', target: new THREE.Vector3(), alert: 0, reaction: .7, fireT: rand(.5, 1.5), burst: 0, burstT: 0, losT: 0, sees: false, lastKnown: new THREE.Vector3(), strafe: 1, strafeT: 0, stuckT: 0, walk: rand(0, 6), deathT: 0, flashT: 0, hurtT: 0 };
+  const e = { g, mat, skin, hp: 100, alive: true, parts: [], state: 'patrol', target: new THREE.Vector3(), alert: 0, reaction: .7, fireT: rand(.5, 1.5), burst: 0, losT: 0, burstT: 0, sees: false, lastKnown: new THREE.Vector3(), strafe: 1, strafeT: 0, stuckT: 0, walk: rand(0, 6), deathT: 0, flashT: 0, hurtT: 0 };
   const add = (geo, m, px, py, pz, tag) => { const mesh = new THREE.Mesh(geo, m); mesh.position.set(px, py, pz); mesh.castShadow = true; mesh.userData = { enemy: e, part: tag }; g.add(mesh); if (tag) e.parts.push(mesh); return mesh; };
   e.legL = add(eGeo.leg, skin, -.16, .8, 0, 'leg'); e.legR = add(eGeo.leg, skin, .16, .8, 0, 'leg');
   add(eGeo.torso, mat, 0, 1.15, 0, 'body');
@@ -635,14 +637,14 @@ function enemyShoot(e, dist) {
   e.flashT = .05; e.flash.rotation.z = Math.random() * 3;
   const from = e.flash.getWorldPosition(_v1);
   const moving = Math.hypot(player.vel.x, player.vel.z) > 4;
-  const chance = clamp(.72 - dist * .014 - (moving ? .18 : 0) - (player.grounded ? 0 : .15), .12, .8);
+  const chance = clamp(.62 - dist * .014 - (moving ? .18 : 0) - (player.grounded ? 0 : .15), .12, .8);
   const hit = Math.random() < chance;
   _v2.copy(eye); if (!hit) _v2.add(_v3.set(rand(-1, 1), rand(-.6, .8), rand(-1, 1)).normalize().multiplyScalar(rand(.5, 1.4)));
   tracer(from, _v2, 0xff9a6a);
   right.setFromMatrixColumn(camera.matrixWorld, 0);
   const pan = _v3.subVectors(from, eye).normalize().dot(right);
   sfx.enemyShot(dist, pan);
-  if (hit) hurtPlayer(Math.min(6 + wave * .8, 14), from);
+  if (hit) hurtPlayer(Math.min(5 + wave * .7, 12), from);
 }
 function hurtPlayer(dmg, from) {
   player.hp -= dmg; player.lastHurt = time; vigT = .5; shake = Math.min(shake + .6, 1.2);
