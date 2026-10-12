@@ -15,6 +15,6 @@ Reinicia Claude Code. Opcional: copia `templates/CLAUDE.md` a la raíz del proye
 Esta skill dirige; para el máximo nivel en cada área instala además (si tu cuenta las ofrece en el catálogo de skills o desde sus repositorios oficiales): Impeccable, Emil Kowalski (emil-design-eng), Scroll World, Design Taste, High-End Visual Design, Apple Design, Animate, Mobile Native, Break UI. No se incluyen copiadas aquí por respeto a sus licencias y autores.
 
 ## Contenido
-- 14 guías en `references/` (web, animación, apps, automatizaciones, vídeo, videojuegos, copywriting, SEO, branding, e-commerce, prompts IA, 3D web, eficiencia, checklist).
+- 15 guías en `references/` (web, animación, apps, automatizaciones, velocidad, vídeo, videojuegos, copywriting, SEO, branding, e-commerce, prompts IA, 3D web, eficiencia, checklist).
 - 5 ejemplos funcionales en `examples/` (ábrelos en el navegador o ejecútalos tal cual).
-- Plantilla `templates/CLAUDE.md` para ahorrar tokens en Claude Code.
+- Plantillas `templates/CLAUDE.md` (ahorro de tokens) y `templates/settings.json` (permisos para que Claude Code no se pare a pedir confirmación en comandos seguros; cópialo a `.claude/settings.json` de tu proyecto y revísalo).

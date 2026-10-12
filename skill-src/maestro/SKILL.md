@@ -14,6 +14,7 @@ No leas todas las referencias. Carga solo la que corresponda (ahorro de contexto
 | Tarea | Archivo |
 |---|---|
 | Ahorrar tokens / cómo trabajar | `references/eficiencia.md` (léelo una vez por sesión larga) |
+| Ir más rápido sin perder calidad | `references/velocidad.md` |
 | Web, landing, UI, branding visual | `references/web-diseno.md` |
 | Animación, micro-interacciones, scroll | `references/animacion.md` |
 | Apps (web, móvil, escritorio, SaaS) | `references/apps.md` |
@@ -57,6 +58,14 @@ Para trabajo visual: nombra una dirección concreta (p. ej. "editorial suizo, cr
 ## Paso 4 — Verifica y cierra
 
 Pasa `references/checklist-final.md` mentalmente. Responde breve: qué hiciste, dónde está, qué falta (si falta algo). Sin relleno, sin repetir el código en el chat.
+
+## Modo turbo (siempre activo)
+
+- **Todo lo independiente, a la vez**: lecturas, búsquedas, archivos nuevos y comprobaciones que no dependen entre sí van en el mismo turno.
+- **Decide con los valores por defecto** de esta skill y parte de `examples/` cuando encaje.
+- **Cada archivo completo a la primera**; ediciones agrupadas; sin releer tras editar.
+- **Una verificación final** (navegador, test o build), no comprobaciones tras cada cambio.
+- Nunca se recorta accesibilidad, responsive, estados ni seguridad: eso sería retrabajo, no velocidad.
 
 ## Reglas de oro (siempre activas)
 
