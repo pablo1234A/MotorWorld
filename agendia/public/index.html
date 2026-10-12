@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agendia — Chatbots de reservas con IA</title>
+<meta name="description" content="Crea un chatbot que reserva citas en tu Google Calendar con un solo prompt.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23121216'/%3E%3Ccircle cx='22' cy='10' r='4' fill='%23ff5b2e'/%3E%3Cpath d='M8 21h10M8 15h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="topbar">
+  <a href="#/" class="brand" aria-label="Agendia, inicio">
+    <span class="brand-mark" aria-hidden="true"><i></i></span>
+    agendia
+  </a>
+  <nav class="top-status" id="topStatus" aria-label="Estado de las integraciones"></nav>
+</header>
+<main id="view" class="view" tabindex="-1"></main>
+<div class="toast-zone" id="toasts" role="status" aria-live="polite"></div>
+<script src="/app.js" type="module"></script>
+</body>
+</html>
