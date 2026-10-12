@@ -2,6 +2,7 @@
 const fs = require('fs'), path = require('path'), { execSync } = require('child_process');
 const { chromium } = require(process.env.PW || 'playwright');
 const it = process.argv[2];
+const CACHE = path.join(__dirname, '.three-cache');
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
 const allText = dir => { let s=''; const walk=d=>{ for (const f of fs.readdirSync(d)) { const p=path.join(d,f);
@@ -13,6 +14,18 @@ async function pageChecks(file, b, extra) {
   const out = {};
   for (const w of [360, 1280]) {
     const p = await b.newPage({ viewport: { width: w, height: 800 } });
+    await p.route(/three/, async route => {
+      const u = route.request().url();
+      const m = u.match(/three@?([\d.]+)?\/(.*)$/) || u.match(/three\.js\/r(\d+)\/(.*)$/);
+      if (!m) return route.continue();
+      let ver = m[1] && m[1].includes('.') ? m[1] : (m[1] ? '0.' + m[1] + '.0' : '0.160.0');
+      const dir = path.join(CACHE, 'three-' + ver);
+      if (!fs.existsSync(path.join(dir, 'node_modules/three'))) execSync(`npm i -s --prefix "${dir}" three@${ver}`, { stdio: 'ignore' });
+      let rel = m[2].split('?')[0]; if (rel === '' || rel === 'three') rel = 'build/three.module.js';
+      const fp = path.join(dir, 'node_modules/three', rel);
+      if (!fs.existsSync(fp)) return route.fulfill({ status: 404, body: 'nf ' + rel });
+      route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(fp) });
+    });
     const errs = []; p.on('pageerror', e => errs.push(e.message));
     p.on('console', m => { if (m.type()==='error' && !/favicon|net::ERR|Failed to load resource/.test(m.text())) errs.push(m.text()); });
     await p.goto('file://' + file, { waitUntil: 'load', timeout: 30000 }).catch(e => errs.push('load: '+e.message));
