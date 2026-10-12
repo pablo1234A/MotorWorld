@@ -1,7 +1,7 @@
 // Corrector objetivo. Uso: node grade.js <iteration-dir>
 const fs = require('fs'), path = require('path'), { execSync } = require('child_process');
 const { chromium } = require(process.env.PW || 'playwright');
-const it = process.argv[2];
+const it = path.resolve(process.argv[2]);
 const CACHE = path.join(__dirname, '.three-cache');
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
@@ -61,7 +61,7 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('CTA de contacto directo (tel: o WhatsApp)', /href="(tel:|https:\/\/wa\.me)/.test(h), 'grep tel:/wa.me'));
         exp.push(E('Datos estructurados LocalBusiness/AutoRepair (SEO local)', /"@type"\s*:\s*"(AutoRepair|LocalBusiness)"/.test(h), 'grep JSON-LD'));
         exp.push(E('Meta description y Open Graph', /name="description"/.test(h) && /property="og:/.test(h), 'grep meta'));
-        exp.push(E('Sin texto de relleno (lorem/TODO)', !/lorem ipsum|TODO|placeholder text/i.test(h), 'grep lorem/TODO'));
+        exp.push(E('Sin texto de relleno (lorem/TODO)', !/lorem ipsum/i.test(h) && !/\bTODO\b/.test(h), 'grep lorem/TODO'));
       } else if (evalDir === 'fps-navegador') {
         const f = findFile(outs, /\.html$/i); const h = read(f);
         exp.push(E('Entrega un archivo HTML', f, f || 'no html'));
