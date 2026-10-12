@@ -1,6 +1,0 @@
-{
- "eval_id": 2,
- "eval_name": "fps-navegador",
- "prompt": "Quiero un shooter en primera persona tipo Call of Duty que funcione en el navegador. Un solo archivo HTML con Three.js: un mapa pequeño, enemigos que se mueven y disparan, armas con retroceso, munición, recarga, vida, puntuación y pantalla de game over.",
- "assertions": []
-}
