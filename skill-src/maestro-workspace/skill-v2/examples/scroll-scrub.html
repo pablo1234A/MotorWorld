@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll Scrub — motor mínimo</title>
+<style>
+body{margin:0;background:#0A0A0A;color:#F2F0EA;font:500 1rem/1.5 system-ui}
+.scrub{height:400vh;position:relative}
+.stage{position:sticky;top:0;height:100dvh;overflow:hidden}
+.stage video{width:100%;height:100%;object-fit:cover}
+.chapter{position:absolute;left:clamp(16px,6vw,96px);bottom:12vh;max-width:28ch;font:600 clamp(1.75rem,4vw,3.25rem)/1.05 system-ui;letter-spacing:-.02em;opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
+.chapter.on{opacity:1;transform:none}
+.after{min-height:60vh;display:grid;place-items:center}
+@media (prefers-reduced-motion:reduce){.chapter{transition:none}}
+</style>
+</head>
+<body>
+<!-- Codifica el vídeo con un keyframe por frame para que el scrub sea fluido:
+     ffmpeg -i in.mp4 -c:v libx264 -g 1 -crf 22 -pix_fmt yuv420p -movflags +faststart -an scrub.mp4 -->
+<section class="scrub" id="scrub">
+  <div class="stage">
+    <video id="v" src="scrub.mp4" muted playsinline preload="auto" poster="poster.jpg"></video>
+    <p class="chapter" data-from="0" data-to=".3">Empieza fuera.</p>
+    <p class="chapter" data-from=".3" data-to=".65">Entra sin cortes.</p>
+    <p class="chapter" data-from=".65" data-to="1.01">Termina dentro.</p>
+  </div>
+</section>
+<div class="after"><p>Contenido normal tras la secuencia.</p></div>
+<script>
+const sec = document.getElementById('scrub'), v = document.getElementById('v');
+const chapters = [...document.querySelectorAll('.chapter')];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let target = 0, current = 0;
+function progress(){ const r = sec.getBoundingClientRect();
+  return Math.min(Math.max(-r.top / (r.height - innerHeight), 0), 1); }
+function frame(){
+  const p = progress();
+  chapters.forEach(c => c.classList.toggle('on', p >= +c.dataset.from && p < +c.dataset.to));
+  if (v.duration && !reduce){
+    target = p * v.duration;
+    current += (target - current) * 0.15;          // suavizado (lerp) para que no tiemble
+    if (Math.abs(v.currentTime - current) > 0.01) v.currentTime = current;
+  }
+  requestAnimationFrame(frame);
+}
+v.addEventListener('loadedmetadata', () => v.pause());
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -39,12 +39,37 @@ async function pageChecks(file, b, extra) {
   return out;
 }
 
+const STRICT = process.env.STRICT === '1';
+const SK = path.join(__dirname, '..', 'skill-v2', 'scripts');
+function runScript(name, file, out, extra = []) {
+  let code = 0, err = '';
+  try { execSync(`node "${path.join(SK, name)}" "${file}" --out "${out}" ${extra.join(' ')}`, { stdio: 'pipe', timeout: 400000, env: process.env }); }
+  catch (e) { code = e.status ?? 1; err = String(e.stderr || e.message).slice(0, 200); }
+  let json = null; try { json = JSON.parse(fs.readFileSync(path.join(out, 'resultado.json'), 'utf8')); } catch {}
+  return { code, json, err };
+}
+async function movesWithW(b, file) {
+  const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+  await p.route(/cdn\.jsdelivr\.net|unpkg\.com/, async route => { const m = route.request().url().match(/three@([\d.]+)\/(.*)$/); if (!m) return route.abort();
+    const dir = path.join(CACHE, 'three-' + m[1]); if (!fs.existsSync(path.join(dir, 'node_modules/three'))) execSync(`npm i -s --prefix "${dir}" three@${m[1]}`, { stdio: 'ignore' });
+    const fp = path.join(dir, 'node_modules/three', m[2].split('?')[0]); fs.existsSync(fp) ? route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(fp) }) : route.abort(); });
+  try {
+    await p.goto('file://' + file, { waitUntil: 'load' }); await p.waitForTimeout(2000);
+    const box = await p.evaluate(() => { const re = /jugar|play|start|empezar|comenzar|iniciar|desplegar/i; const el = [...document.querySelectorAll('button,a,[role=button]')].find(x => re.test(x.textContent) && x.offsetParent);
+      if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    await p.mouse.click(box ? box.x : 640, box ? box.y : 360); await p.waitForTimeout(1500);
+    const a = await p.screenshot(); await p.keyboard.down('KeyW'); await p.waitForTimeout(2000); await p.keyboard.up('KeyW'); const c = await p.screenshot();
+    const d = await p.evaluate(async ([x, y]) => { const ld = async b64 => { const i = new Image(); i.src = 'data:image/png;base64,' + b64; await i.decode(); const cv = document.createElement('canvas'); cv.width = 160; cv.height = 90; const g = cv.getContext('2d'); g.drawImage(i, 0, 0, 160, 90); return g.getImageData(0, 0, 160, 90).data; };
+      const A = await ld(x), B = await ld(y); let s = 0; for (let i = 0; i < A.length; i += 4) s += Math.abs(A[i] - B[i]) + Math.abs(A[i + 1] - B[i + 1]) + Math.abs(A[i + 2] - B[i + 2]); return s / (A.length / 4) / 3; }, [a.toString('base64'), c.toString('base64')]);
+    await p.close(); return { pass: d > 3, detail: `diferencia media entre fotogramas ${d.toFixed(1)} (inicio: ${box ? 'botón' : 'clic central'})` };
+  } catch (e) { await p.close(); return { pass: false, detail: e.message.slice(0, 120) }; }
+}
 const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: String(evidence).slice(0, 300) });
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXE, args: ['--use-gl=swiftshader','--enable-unsafe-swiftshader'] });
   for (const evalDir of fs.readdirSync(it).filter(d => fs.existsSync(path.join(it, d, 'eval_metadata.json')))) {
-    for (const cfg of ['with_skill', 'without_skill', 'old_skill']) {
+    for (const cfg of (process.env.CFGS ? process.env.CFGS.split(',') : ['with_skill', 'old_skill', 'without_skill'])) {
       const run = path.join(it, evalDir, cfg); const outs = path.join(run, 'outputs');
       if (!fs.existsSync(outs)) continue;
       const exp = [];
@@ -62,6 +87,8 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('Datos estructurados LocalBusiness/AutoRepair (SEO local)', /"@type"\s*:\s*"(AutoRepair|LocalBusiness)"/.test(h), 'grep JSON-LD'));
         exp.push(E('Meta description y Open Graph', /name="description"/.test(h) && /property="og:/.test(h), 'grep meta'));
         exp.push(E('Sin texto de relleno (lorem/TODO)', !/lorem ipsum/i.test(h) && !/\bTODO\b/.test(h), 'grep lorem/TODO'));
+        if (STRICT && f) { const r = runScript('check-web.mjs', f, path.join(run, 'check-web')); const graves = (r.json?.results || []).filter(x => x.sev === 'grave' && !x.pass);
+          exp.push(E('Pasa scripts/check-web.mjs sin fallos imprescindibles', r.code === 0, graves.map(x => x.name + (x.detail ? ': ' + x.detail : '')).join(' | ') || 'ok')); }
       } else if (evalDir === 'fps-navegador') {
         const f = findFile(outs, /\.html$/i); const h = read(f);
         exp.push(E('Entrega un archivo HTML', f, f || 'no html'));
@@ -77,6 +104,12 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('Colisiones con el mapa (el jugador no atraviesa paredes)', /(collid|colisi|Box3|intersectsBox|AABB)/i.test(h), 'grep collision'));
         exp.push(E('Soporte táctil o aviso para móvil', /touch|ontouchstart|pointer:\s*coarse|móvil|mobile/i.test(h), 'grep touch/mobile'));
         exp.push(E('Sonido (Web Audio) en disparos', /AudioContext/.test(h), 'grep AudioContext'));
+        if (STRICT && f) {
+          const r = runScript('test-juego.mjs', f, path.join(run, 'test-juego'), ['--segundos', '6']); const c = n => (r.json?.checks || []).find(x => x.name === n);
+          exp.push(E('Se juega 6 s sin errores de JavaScript (prueba automática)', c('Sin errores de JavaScript')?.pass, c('Sin errores de JavaScript')?.detail || r.err));
+          exp.push(E('La escena se dibuja durante la partida', c('La escena se dibuja durante la partida')?.pass, c('La escena se dibuja durante la partida')?.detail));
+          const mv = await movesWithW(b, f); exp.push(E('El jugador se mueve al pulsar W tras empezar con un clic real', mv.pass, mv.detail));
+        }
       } else if (evalDir === 'gmail-claude-csv') {
         const py = findFile(outs, /\.py$/); const all = allText(outs); const s = read(py);
         let compiles = false; try { execSync(`python3 -I -m py_compile "${py}"`, { stdio: 'pipe' }); compiles = true; } catch (e) {}
@@ -91,6 +124,8 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('Evita duplicados entre ejecuciones (UIDs guardados o dedupe)', /(uid|UID).*(seen|procesad|processed|state|guard)|processed|procesados/i.test(s), 'grep processed uids'));
         exp.push(E('Limita el tamaño del texto enviado a Claude (ahorro de tokens)', /\[:\s*[\w\[\]'\"]+\]|MAX_(BODY|CHARS)|truncat|body_chars/i.test(s), 'grep truncation'));
         exp.push(E('Instrucciones de contraseña de aplicación de Gmail', /contraseña de aplicación|app password|apppasswords/i.test(all), 'grep app password'));
+        const defModel = (s.match(/(?:getenv|environ\.get)\([^)]*?["']([^"']*claude[^"']*)["']\s*\)/i) || s.match(/MODEL[A-Z_]*\s*=\s*[^\n]*?["'](claude-[^"']+)["']/i) || [])[1] || '';
+        exp.push(E('Modelo pequeño (Haiku) por defecto para clasificar', /haiku/i.test(defModel), defModel || 'no encontrado'));
         exp.push(E('Instrucciones para programarlo cada mañana (cron/Programador de tareas)', /cron|Programador de tareas|Task Scheduler|launchd|schedule/i.test(all), 'grep cron'));
       }
       const passed = exp.filter(x => x.passed).length;
