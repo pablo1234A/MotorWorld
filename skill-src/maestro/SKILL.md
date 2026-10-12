@@ -1,6 +1,6 @@
 ---
 name: maestro
-description: Modo maestro para todo trabajo creativo y técnico de alto nivel con ahorro de tokens. Usar SIEMPRE que el usuario pida una página web, landing, diseño UI/UX, app (web, móvil, escritorio), automatización (n8n, Make, Zapier, scripts, APIs, agentes), vídeo (guion, edición, Remotion, ffmpeg, motion graphics), videojuego (web, Godot, Unity, Phaser, Three.js) o cualquier proyecto que deba quedar de calidad premium. También cuando pida "gastar menos créditos/tokens", "que Claude rinda al máximo" o "hazlo lo mejor posible".
+description: Modo maestro para todo trabajo creativo y técnico de alto nivel con ahorro de tokens. Usar SIEMPRE que el usuario pida una página web, landing, diseño UI/UX, app (web, móvil, escritorio), automatización (n8n, Make, Zapier, scripts, APIs, agentes), vídeo (guion, edición, Remotion, ffmpeg, motion graphics), videojuego (web, Godot, Unity, Phaser, Three.js), copywriting, SEO, branding, e-commerce, 3D web, prompts para IA de imagen/vídeo o cualquier proyecto que deba quedar de calidad premium. También cuando pida "gastar menos créditos/tokens", "que Claude rinda al máximo" o "hazlo lo mejor posible".
 ---
 
 # MAESTRO — calidad de estudio top, coste mínimo
@@ -20,7 +20,23 @@ No leas todas las referencias. Carga solo la que corresponda (ahorro de contexto
 | Automatizaciones, agentes, integraciones | `references/automatizaciones.md` |
 | Vídeo, edición, motion graphics | `references/video.md` |
 | Videojuegos | `references/videojuegos.md` |
+| Textos que venden (titulares, CTA, landing) | `references/copywriting.md` |
+| SEO, analítica, marketing técnico | `references/seo-marketing.md` |
+| Logo, identidad, paletas | `references/branding.md` |
+| Tienda online / checkout | `references/ecommerce.md` |
+| Prompts para Claude, imagen, vídeo, música | `references/prompts-ia.md` |
+| 3D / WebGL / Three.js | `references/web-3d.md` |
 | Control de calidad final de cualquier entrega | `references/checklist-final.md` |
+
+## Ejemplos listos (ábrelos solo si sirven de base; adapta, no copies a ciegas)
+
+| Ejemplo | Archivo |
+|---|---|
+| Landing premium (tokens, modo oscuro, reveal, contador, a11y) | `examples/landing-premium.html` |
+| Motor de scroll cinematográfico (vídeo scrub + capítulos) | `examples/scroll-scrub.html` |
+| Juego con game feel (deltaTime, shake, hit-stop, partículas, récord) | `examples/juego-canvas.html` |
+| Intro de marca en vídeo con Remotion | `examples/remotion-intro.tsx` |
+| Automatización de leads con Claude (idempotente, reintentos, caché) | `examples/automatizacion_leads.py` |
 
 Si hay skills especializadas instaladas (p. ej. `impeccable`, `emil-design-eng`, `scroll-world`, `design-taste-frontend`, `high-end-visual-design`, `apple-design`, `animate`, `mobile-native`, `break-ui`), úsalas para su área concreta: esta skill es el director de orquesta, ellas son los solistas.
 

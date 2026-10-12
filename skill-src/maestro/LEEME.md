@@ -13,3 +13,8 @@ Reinicia Claude Code. Opcional: copia `templates/CLAUDE.md` a la raíz del proye
 
 ## Skills complementarias recomendadas
 Esta skill dirige; para el máximo nivel en cada área instala además (si tu cuenta las ofrece en el catálogo de skills o desde sus repositorios oficiales): Impeccable, Emil Kowalski (emil-design-eng), Scroll World, Design Taste, High-End Visual Design, Apple Design, Animate, Mobile Native, Break UI. No se incluyen copiadas aquí por respeto a sus licencias y autores.
+
+## Contenido
+- 14 guías en `references/` (web, animación, apps, automatizaciones, vídeo, videojuegos, copywriting, SEO, branding, e-commerce, prompts IA, 3D web, eficiencia, checklist).
+- 5 ejemplos funcionales en `examples/` (ábrelos en el navegador o ejecútalos tal cual).
+- Plantilla `templates/CLAUDE.md` para ahorrar tokens en Claude Code.
