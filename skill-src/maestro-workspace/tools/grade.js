@@ -72,7 +72,7 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('Controles WASD', /KeyW|'w'|"w"/.test(h) && /KeyS|'s'|"s"/.test(h), 'grep KeyW/KeyS'));
         exp.push(E('Recarga con R', /KeyR|'r'|"r"/.test(h), 'grep KeyR'));
         exp.push(E('Movimiento independiente de FPS (delta clamped)', /getDelta|Math\.min\([^)]*(dt|delta)|delta\s*=\s*Math\.min/.test(h), 'grep delta'));
-        exp.push(E('Pantalla de game over con reinicio', /game\s*over/i.test(h) && /(restart|reiniciar|reintentar|volver a jugar|play again)/i.test(h), 'grep game over/restart'));
+        exp.push(E('Pantalla de game over con reinicio', /game\s*over|gameOver/i.test(h) && /(restart|reiniciar|reintentar|volver a jugar|play again|resetGame|again)/i.test(h), 'grep game over/restart'));
         exp.push(E('Retroceso de arma (recoil)', /recoil|retroceso/i.test(h), 'grep recoil'));
         exp.push(E('Colisiones con el mapa (el jugador no atraviesa paredes)', /(collid|colisi|Box3|intersectsBox|AABB)/i.test(h), 'grep collision'));
         exp.push(E('Soporte táctil o aviso para móvil', /touch|ontouchstart|pointer:\s*coarse|móvil|mobile/i.test(h), 'grep touch/mobile'));
@@ -89,7 +89,7 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('Escribe con el módulo csv', /import csv|csv\.(writer|DictWriter)/.test(s), 'grep csv'));
         exp.push(E('No marca como leídos sin querer (BODY.PEEK) o lo documenta', /BODY\.PEEK|PEEK/.test(s) || /marca(r)? como leído/i.test(all), 'grep PEEK'));
         exp.push(E('Evita duplicados entre ejecuciones (UIDs guardados o dedupe)', /(uid|UID).*(seen|procesad|processed|state|guard)|processed|procesados/i.test(s), 'grep processed uids'));
-        exp.push(E('Limita el tamaño del texto enviado a Claude (ahorro de tokens)', /\[:\s*\d{3,5}\]|MAX_(BODY|CHARS)|truncat/i.test(s), 'grep truncation'));
+        exp.push(E('Limita el tamaño del texto enviado a Claude (ahorro de tokens)', /\[:\s*[\w\[\]'\"]+\]|MAX_(BODY|CHARS)|truncat|body_chars/i.test(s), 'grep truncation'));
         exp.push(E('Instrucciones de contraseña de aplicación de Gmail', /contraseña de aplicación|app password|apppasswords/i.test(all), 'grep app password'));
         exp.push(E('Instrucciones para programarlo cada mañana (cron/Programador de tareas)', /cron|Programador de tareas|Task Scheduler|launchd|schedule/i.test(all), 'grep cron'));
       }

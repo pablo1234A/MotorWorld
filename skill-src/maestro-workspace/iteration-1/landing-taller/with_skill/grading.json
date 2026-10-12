@@ -1,0 +1,65 @@
+{
+ "expectations": [
+  {
+   "text": "Entrega un único archivo HTML",
+   "passed": true,
+   "evidence": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-1/landing-taller/with_skill/outputs/index.html"
+  },
+  {
+   "text": "Sin errores de JavaScript en consola (360 y 1280 px)",
+   "passed": true,
+   "evidence": "[[],[]]"
+  },
+  {
+   "text": "Sin scroll horizontal en móvil (360 px)",
+   "passed": true,
+   "evidence": "hscroll360=false"
+  },
+  {
+   "text": "Respeta prefers-reduced-motion",
+   "passed": true,
+   "evidence": "grep prefers-reduced-motion"
+  },
+  {
+   "text": "Estilos de foco visibles (:focus-visible)",
+   "passed": true,
+   "evidence": "grep focus-visible"
+  },
+  {
+   "text": "Exactamente un h1",
+   "passed": true,
+   "evidence": "h1 count=1"
+  },
+  {
+   "text": "Colores definidos como tokens CSS en :root",
+   "passed": true,
+   "evidence": "grep :root --"
+  },
+  {
+   "text": "CTA de contacto directo (tel: o WhatsApp)",
+   "passed": true,
+   "evidence": "grep tel:/wa.me"
+  },
+  {
+   "text": "Datos estructurados LocalBusiness/AutoRepair (SEO local)",
+   "passed": true,
+   "evidence": "grep JSON-LD"
+  },
+  {
+   "text": "Meta description y Open Graph",
+   "passed": true,
+   "evidence": "grep meta"
+  },
+  {
+   "text": "Sin texto de relleno (lorem/TODO)",
+   "passed": true,
+   "evidence": "grep lorem/TODO"
+  }
+ ],
+ "summary": {
+  "passed": 11,
+  "failed": 0,
+  "total": 11,
+  "pass_rate": 1
+ }
+}
