@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MotorWorld · Taller mecánico en Sevilla · Alta gama e ITV</title>
+<meta name="description" content="Taller mecánico multimarca en Sevilla: mecánica general, neumáticos, pre-ITV y especialistas en alta gama. Presupuesto cerrado antes de empezar. Pide cita hoy.">
+<!-- EDITAR: dominio real, imagen OG (1200×630) y datos del taller -->
+<link rel="canonical" href="https://www.ejemplo.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MotorWorld · Del utilitario al 911, precisión de box">
+<meta property="og:description" content="Mecánica general, neumáticos, ITV y alta gama en Sevilla. Presupuesto cerrado antes de tocar una tuerca.">
+<meta property="og:image" content="https://www.ejemplo.com/og-motorworld.jpg">
+<meta property="og:locale" content="es_ES">
+<meta name="theme-color" content="#0D0C0B">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230D0C0B'/%3E%3Cpath d='M7.5 24.5A12 12 0 1 1 24.5 24.5' fill='none' stroke='%23F3EFE9' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M16 16l6-7' stroke='%23FF6A1F' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoRepair","name":"MotorWorld","description":"Taller mecánico multimarca en Sevilla: mecánica general, neumáticos, ITV y alta gama.","url":"https://www.ejemplo.com/","image":"https://www.ejemplo.com/og-motorworld.jpg","telephone":"+34954000000","email":"hola@ejemplo.com","priceRange":"€€","address":{"@type":"PostalAddress","streetAddress":"C/ Ejemplo, 12","postalCode":"41007","addressLocality":"Sevilla","addressRegion":"Andalucía","addressCountry":"ES"},"geo":{"@type":"GeoCoordinates","latitude":37.3891,"longitude":-5.9845},"areaServed":"Sevilla","openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:30","closes":"19:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Saturday","opens":"09:00","closes":"13:30"}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..800&family=Inter+Tight:wght@400;500;600&display=optional" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+/* ============ SISTEMA ============ */
+:root{
+  --bg:#0D0C0B; --surface:#161412; --surface-2:#1F1C19; --text:#F3EFE9; --muted:#A39C93;
+  --line:rgb(243 239 233 / .1); --line-2:rgb(243 239 233 / .2);
+  --accent:#FF6A1F; --accent-hover:#FF8443; --accent-ink:#140A04; --accent-deep:#A63A08;
+  --bone:#EFEAE2; --ink:#141210; --ink-muted:#5E584F; --ink-line:rgb(20 18 16 / .14);
+  --ok:#5BD08A; --err:#FF6B5E; --err-text:#FF8A80;
+  --display:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --sans:"Inter Tight",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --r:22px; --hh:64px; --gutter:clamp(16px,4vw,48px);
+  color-scheme:dark;
+}
+@media (min-width:900px){:root{--hh:76px}}
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg)}
+html.lock{overflow:hidden}
+body{background:var(--bg);color:var(--text);font:400 1.0625rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
+/* Grano de película */
+body::after{content:"";position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+svg{display:block;max-width:100%}
+a{color:inherit;text-underline-offset:.2em;text-decoration-thickness:1px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+::selection{background:var(--accent);color:var(--accent-ink)}
+[id]{scroll-margin-top:calc(var(--hh) + 16px)}
+[tabindex="-1"]:focus{outline:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wrap{width:min(1320px,100% - 2*var(--gutter));margin-inline:auto}
+.skip{position:fixed;left:16px;top:12px;z-index:100;display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:600;text-decoration:none;transform:translateY(-200%)}
+.skip:focus{transform:none}
+
+/* Tipografía */
+.disp{font-family:var(--display);font-stretch:125%;font-weight:800;text-transform:uppercase;letter-spacing:-.025em;line-height:.95;overflow-wrap:break-word}
+.h1{font-size:clamp(2.35rem,1rem + 5.6vw,6.4rem)}
+.h2{font-size:clamp(1.9rem,1rem + 3.2vw,4.25rem);line-height:1;max-width:19ch;text-wrap:balance}
+.h3{font-family:var(--display);font-stretch:112%;font-weight:700;font-size:clamp(1.25rem,1rem + .6vw,1.5rem);line-height:1.1;text-transform:uppercase;letter-spacing:-.005em}
+.acc{color:var(--accent)}
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:24px;font:600 .8125rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";width:28px;height:2px;background:var(--accent)}
+.muted{color:var(--muted)}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:999px;border:1px solid transparent;font:600 1rem/1 var(--sans);text-decoration:none;cursor:pointer;white-space:nowrap;touch-action:manipulation;user-select:none;transition:transform .12s var(--ease-out),background-color .2s,color .2s,border-color .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{border-color:var(--line-2);color:var(--text);background:transparent}
+.btn .arr{width:16px;height:16px;flex:none;transition:transform .25s var(--ease-out)}
+.btn[disabled]{opacity:.6;cursor:progress}
+@media (hover:hover){
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-ghost:hover{border-color:var(--text)}
+  .btn:hover .arr{transform:translateX(3px)}
+}
+
+/* ============ CABECERA + LUCES DE CAMBIO ============ */
+.hdr{position:fixed;inset:0 0 auto;z-index:60;height:var(--hh)}
+.hdr::before{content:"";position:absolute;inset:0;background:rgb(13 12 11 / .74);-webkit-backdrop-filter:saturate(140%) blur(16px);backdrop-filter:saturate(140%) blur(16px);opacity:0;transition:opacity .3s}
+.hdr.scrolled::before{opacity:1}
+.hdr-in{position:relative;height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo{position:relative;z-index:57;display:inline-flex;align-items:center;gap:10px;min-height:44px;text-decoration:none}
+.logo svg{width:28px;height:28px}
+.logo-tx{font:800 1.0625rem/1 var(--display);font-stretch:125%;text-transform:uppercase;letter-spacing:.01em}
+.logo-tx b{font-weight:800;color:var(--muted)}
+.nav{display:flex;align-items:center;gap:2px}
+.menu-btn{position:relative;z-index:57;width:48px;height:48px;border-radius:50%;border:1px solid var(--line-2);background:transparent;display:grid;place-content:center;gap:6px;cursor:pointer}
+.menu-btn span{display:block;width:18px;height:1.5px;background:currentColor;transition:transform .3s var(--ease-out)}
+.menu-btn[aria-expanded="true"] span:first-child{transform:translateY(3.75px) rotate(45deg)}
+.menu-btn[aria-expanded="true"] span:last-child{transform:translateY(-3.75px) rotate(-45deg)}
+.sl{position:absolute;left:0;right:0;bottom:-2px;display:grid;grid-template-columns:repeat(12,1fr);gap:3px;height:2px}
+.sl i{background:rgb(243 239 233 / .07);transition:background-color .25s,box-shadow .25s}
+.sl i.on{background:rgb(243 239 233 / .65)}
+.sl i:nth-child(n+9).on{background:var(--accent)}
+.hdr.max .sl i{background:var(--accent);box-shadow:0 0 10px rgb(255 106 31 / .7)}
+@media (max-width:899px){
+  .hdr-cta{display:none}
+  .nav{position:fixed;inset:0;z-index:56;flex-direction:column;align-items:stretch;justify-content:center;gap:0;padding:calc(var(--hh) + 24px) var(--gutter) calc(32px + env(safe-area-inset-bottom));background:var(--bg);opacity:0;visibility:hidden;transition:opacity .2s var(--ease-out),visibility 0s .2s}
+  .nav.open{opacity:1;visibility:visible;transition:opacity .3s var(--ease-out)}
+  .nav a:not(.btn){display:flex;align-items:center;min-height:60px;border-bottom:1px solid var(--line);font:800 clamp(1.75rem,8vw,2.75rem)/1 var(--display);font-stretch:125%;text-transform:uppercase;letter-spacing:-.02em;text-decoration:none;opacity:0;transform:translateY(14px);transition:opacity .4s var(--ease-out),transform .4s var(--ease-out)}
+  .nav.open a{opacity:1;transform:none}
+  .nav.open a:nth-child(2){transition-delay:40ms}.nav.open a:nth-child(3){transition-delay:80ms}.nav.open a:nth-child(4){transition-delay:120ms}.nav.open a:nth-child(5){transition-delay:160ms}.nav.open a:nth-child(6){transition-delay:200ms}
+  .nav-cta{margin-top:32px}
+}
+@media (min-width:900px){
+  .menu-btn,.nav .nav-cta{display:none}
+  .nav{margin-left:auto}
+  .nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;font-size:.9375rem;color:var(--muted);text-decoration:none;transition:color .15s}
+  .nav a:hover{color:var(--text)}
+  .hdr-cta{min-height:46px;padding:0 20px}
+}
+
+/* ============ HERO ============ */
+.hero{position:relative;isolation:isolate;overflow-x:clip;min-height:100svh;display:flex;flex-direction:column;padding-top:calc(var(--hh) + clamp(28px,6vw,64px))}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:88px 88px;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 70% 45%,#000,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 70% 45%,#000,transparent 75%);opacity:.55}
+.hero::after{content:"";position:absolute;z-index:-1;pointer-events:none;width:80vmax;height:80vmax;right:-30vmax;top:5%;background:radial-gradient(closest-side,rgb(255 106 31 / .13),transparent 72%)}
+.hero>.wrap{flex:1;display:flex;flex-direction:column}
+.hero-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-bottom:clamp(24px,4vw,40px)}
+.pill{display:inline-flex;align-items:center;gap:10px;min-height:36px;padding:0 14px;border:1px solid var(--line-2);border-radius:999px;font-size:.875rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.pill.open .dot{background:var(--ok);animation:ping 2.2s var(--ease-out) infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgb(91 208 138 / .55)}80%,100%{box-shadow:0 0 0 9px rgb(91 208 138 / 0)}}
+.coords{font-size:.8125rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.h1 .ln{display:block}
+.w{display:inline-block;overflow:hidden;vertical-align:bottom;padding:.16em .03em .05em;margin:-.16em -.03em -.05em}
+.wi{display:inline-block}
+.js .wi{transform:translate3d(0,112%,0)}
+.ready .wi{transform:none;transition:transform 1.15s var(--ease-out) calc(120ms + var(--d,0) * 70ms)}
+.hero-row{display:grid;gap:40px;align-items:center;margin:clamp(28px,4vw,48px) 0 clamp(48px,6vw,72px)}
+.lead{max-width:46ch;font-size:clamp(1.0625rem,1rem + .45vw,1.3rem);color:var(--muted);text-wrap:pretty}
+.lead strong{color:var(--text);font-weight:500}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.note{margin-top:16px;font-size:.875rem;color:var(--muted)}
+@media (max-width:559px){.ctas .btn{flex:1 1 100%}}
+@media (min-width:900px){.hero-row{grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:48px;align-items:start}}
+
+/* Cuentarrevoluciones */
+.gauge{position:relative;width:min(86vw,340px);aspect-ratio:1;margin-inline:auto}
+@media (min-width:900px){.gauge{width:min(100%,400px);margin-right:0}}
+.gauge svg{width:100%;height:100%;overflow:visible}
+.g-bezel{fill:var(--surface);stroke:var(--line-2);stroke-width:1.5}
+.g-track{fill:none;stroke:rgb(243 239 233 / .09);stroke-width:2}
+.g-red{fill:none;stroke:var(--accent);stroke-width:7;opacity:.85}
+.tk{stroke:rgb(243 239 233 / .22);stroke-width:2;stroke-linecap:round;transition:stroke .12s}
+.tk.mj{stroke-width:3.5}
+.tk.on{stroke:var(--text)}
+.tk.red{stroke:rgb(255 106 31 / .45)}
+.tk.red.on{stroke:var(--accent)}
+.g-labels text{fill:var(--muted);font:700 19px var(--display);text-anchor:middle;dominant-baseline:central}
+.g-brand{fill:var(--muted);font:600 11px var(--sans);letter-spacing:.32em;text-anchor:middle}
+.g-led{fill:rgb(243 239 233 / .1);transition:fill .1s}
+.g-led.on{fill:var(--text)}
+.g-led:nth-child(n+4).on{fill:var(--accent)}
+.g-needle{transform-box:view-box;transform-origin:200px 200px;transform:rotate(-135deg)}
+.g-needle path{fill:var(--accent)}
+.gauge.hot .g-needle path{filter:drop-shadow(0 0 6px var(--accent))}
+.g-hub{fill:var(--bg);stroke:var(--line-2);stroke-width:2}
+.g-hub-in{fill:var(--accent)}
+.g-read{position:absolute;left:50%;top:69%;transform:translate(-50%,-50%);text-align:center;line-height:1}
+.g-rpm{display:block;font:800 clamp(1.6rem,1rem + 2vw,2.4rem)/1 var(--display);font-stretch:112%;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.g-unit{display:block;margin-top:6px;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+/* Cifras */
+.stats{list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;margin-top:auto;border-top:1px solid var(--line)}
+.stats li{padding:22px 0 26px;border-bottom:1px solid var(--line)}
+.stats li:nth-child(odd){padding-right:16px;border-right:1px solid var(--line)}
+.stats li:nth-child(even){padding-left:16px}
+.stats b{display:block;font:800 clamp(2rem,1rem + 3vw,3.5rem)/1 var(--display);font-stretch:125%;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stats span{display:block;margin-top:10px;font-size:.875rem;color:var(--muted)}
+@media (min-width:900px){
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .stats li,.stats li:nth-child(odd),.stats li:nth-child(even){padding:28px 24px 32px;border-bottom:0;border-right:1px solid var(--line)}
+  .stats li:first-child{padding-left:0}
+  .stats li:last-child{border-right:0}
+}
+
+/* ============ SECCIONES ============ */
+.sec{padding-block:clamp(88px,11vw,160px)}
+.sec-head{display:grid;gap:24px;align-items:end}
+.sec-head p{max-width:44ch;color:var(--muted);text-wrap:pretty}
+@media (min-width:900px){.sec-head{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px}}
+
+/* Servicios (bento) */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-top:clamp(40px,6vw,64px)}
+.card{grid-column:1/-1;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;gap:18px;min-height:360px;padding:clamp(24px,3vw,36px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.card::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px circle at var(--mx,70%) var(--my,0%),rgb(255 106 31 / .12),transparent 45%);opacity:0;transition:opacity .35s}
+.card.hl{background:#1D130D;border-color:rgb(255 106 31 / .32)}
+.card.hl::before{opacity:.6}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.num{font:800 1rem/1 var(--display);font-stretch:125%;color:var(--accent);letter-spacing:.04em}
+.illus{width:84px;height:84px;color:var(--muted);flex:none;transition:transform 1.4s var(--ease-out)}
+.illus .s{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.illus .a{stroke:var(--accent)}
+.illus .f{fill:currentColor}
+.illus .fa{fill:var(--accent)}
+.illus .w3{stroke-width:3}.illus .w5{stroke-width:5}.illus .w8{stroke-width:8}.illus .w12{stroke-width:12}
+.card p{max-width:46ch;color:var(--muted)}
+.chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.chips li{padding:6px 12px;border:1px solid var(--line-2);border-radius:999px;font-size:.8125rem}
+.card-foot{margin-top:auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding-top:18px;border-top:1px solid var(--line)}
+.price{font-size:.9375rem;color:var(--muted)}
+.price b{color:var(--text);font-weight:600}
+.lnk{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;text-decoration:none;transition:color .15s}
+.lnk .arr{width:16px;height:16px;transition:transform .25s var(--ease-out)}
+@media (hover:hover){
+  .card:hover::before{opacity:1}
+  .card:hover .illus{transform:rotate(72deg)}
+  .lnk:hover{color:var(--accent)}
+  .lnk:hover .arr{transform:translateX(3px)}
+}
+@media (min-width:900px){
+  .card:nth-child(1){grid-column:span 7}
+  .card:nth-child(2){grid-column:span 5}
+  .card:nth-child(3){grid-column:span 5}
+  .card:nth-child(4){grid-column:span 7}
+}
+
+/* Marquee de marcas */
+.mq{overflow:hidden;border-block:1px solid var(--line);padding:clamp(20px,3vw,32px) 0;margin-bottom:clamp(64px,9vw,120px)}
+.mq-track{display:flex;width:max-content;animation:mq 46s linear infinite}
+.mq-track span{display:inline-flex;align-items:center;white-space:nowrap;font:800 clamp(2.25rem,1rem + 5vw,5.5rem)/1 var(--display);font-stretch:125%;text-transform:uppercase;letter-spacing:-.025em}
+.mq-track .o{color:transparent;-webkit-text-stroke:1px var(--muted)}
+.mq-track i{display:inline-block;width:.18em;height:.18em;margin:0 .45em;border-radius:50%;background:var(--accent)}
+@keyframes mq{to{transform:translateX(-50%)}}
+@media (hover:hover){.mq:hover .mq-track{animation-play-state:paused}}
+
+/* Alta gama: ficha técnica */
+.ag{display:grid;gap:48px}
+.ag-head p{margin-top:24px;max-width:44ch;color:var(--muted)}
+.ag-head .btn{margin-top:32px}
+.spec{border-top:1px solid var(--line)}
+.spec div{display:grid;gap:6px;padding:24px 0;border-bottom:1px solid var(--line)}
+.spec dt{font:700 .9375rem/1.4 var(--display);font-stretch:112%;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.spec dd{color:var(--muted);max-width:56ch}
+.spec dd strong{color:var(--text);font-weight:500}
+@media (min-width:640px){.spec div{grid-template-columns:170px 1fr;gap:24px}}
+@media (min-width:960px){.ag{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:80px}.ag-head{position:sticky;top:calc(var(--hh) + 48px);align-self:start}}
+
+/* Proceso: tarjetas apiladas */
+.proc{display:grid;gap:48px}
+.proc-head p{margin-top:24px;max-width:40ch;color:var(--muted)}
+.steps{list-style:none;padding:0;display:grid;gap:20px}
+.step{position:sticky;top:calc(var(--hh) + 24px + var(--i) * 14px);display:grid;gap:14px 28px;min-height:230px;padding:clamp(24px,3.5vw,40px);background:var(--surface-2);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 -20px 40px -16px rgb(0 0 0 / .7)}
+.step .n{font:800 clamp(2.5rem,1rem + 4vw,4.5rem)/.9 var(--display);font-stretch:125%;font-variant-numeric:tabular-nums;color:var(--accent)}
+.step p{color:var(--muted);max-width:48ch}
+.step .t{justify-self:start;padding:6px 12px;border:1px solid var(--line-2);border-radius:999px;font-size:.8125rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+@media (min-width:560px){.step{grid-template-columns:auto 1fr;align-content:start}.step .n{grid-row:span 3}}
+@media (min-width:960px){.proc{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:80px}.proc-head{position:sticky;top:calc(var(--hh) + 48px);align-self:start}}
+
+/* ITV (sección clara) */
+.itv{background:var(--bone);color:var(--ink);--text:var(--ink);--muted:var(--ink-muted);--line:var(--ink-line);--line-2:rgb(20 18 16 / .24)}
+.itv .eyebrow::before{background:var(--accent-deep)}
+.itv .acc{color:var(--accent-deep)}
+.itv-grid{display:grid;gap:48px}
+.itv-copy>p{margin-top:24px;max-width:50ch;color:var(--muted)}
+.checks{list-style:none;padding:0;display:grid;gap:0 32px;margin-top:32px}
+.checks li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);font-weight:500}
+.checks li::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-5' fill='none' stroke='%23FF6A1F' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+.prices{display:flex;flex-wrap:wrap;gap:28px 56px;margin-top:40px}
+.prices b{display:block;font:800 clamp(2rem,1rem + 2.4vw,3rem)/1 var(--display);font-stretch:125%;letter-spacing:-.02em}
+.prices span{display:block;margin-top:8px;max-width:24ch;font-size:.875rem;color:var(--muted)}
+@media (min-width:560px){.checks{grid-template-columns:1fr 1fr}}
+@media (min-width:960px){.itv-grid{grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:80px;align-items:start}}
+.calc{--text:#F3EFE9;--muted:#A39C93;--line:rgb(243 239 233 / .1);--line-2:rgb(243 239 233 / .2);background:var(--ink);color:var(--text);border-radius:28px;padding:clamp(24px,4vw,40px);box-shadow:0 30px 60px -30px rgb(20 18 16 / .5)}
+.calc .h3{margin-bottom:8px}
+.calc>p{color:var(--muted);font-size:.9375rem}
+.calc .f-row{grid-template-columns:1fr 1fr;margin-top:24px}
+.calc-out{margin-top:24px;padding-top:24px;border-top:1px solid var(--line);min-height:168px}
+.calc-k{font-size:.8125rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.calc-v{margin:10px 0 12px;font:800 clamp(1.75rem,1rem + 2.4vw,2.6rem)/1.05 var(--display);font-stretch:118%;color:var(--accent);animation:fadeUp .5s var(--ease-out)}
+.calc-n{font-size:.9375rem;color:var(--muted)}
+.calc-out .btn{margin-top:20px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}}
+
+/* Opiniones */
+.quotes{display:grid;gap:16px;margin-top:clamp(40px,6vw,64px)}
+.q{display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:clamp(24px,3.5vw,44px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.q blockquote p{font:500 clamp(1.2rem,1rem + .8vw,1.5rem)/1.4 var(--sans);letter-spacing:-.015em;text-wrap:pretty}
+.q-big blockquote p{font-size:clamp(1.45rem,1rem + 1.8vw,2.3rem);line-height:1.22}
+.q figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;font-size:.9375rem;color:var(--muted)}
+.q figcaption b{display:block;color:var(--text);font-weight:600}
+.stars{color:var(--accent);letter-spacing:.14em;font-size:1rem}
+@media (min-width:900px){.quotes{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}.q-big{grid-row:span 2}}
+
+/* FAQ */
+.faq-grid{display:grid;gap:40px}
+.faq{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{display:flex;justify-content:space-between;align-items:center;gap:24px;min-height:76px;padding:18px 0;list-style:none;cursor:pointer;font:600 clamp(1.0625rem,1rem + .35vw,1.25rem)/1.35 var(--sans);transition:color .15s}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);color:var(--text);background:linear-gradient(currentColor,currentColor) center/13px 1.5px no-repeat,linear-gradient(currentColor,currentColor) center/1.5px 13px no-repeat;transition:transform .3s var(--ease-out),background-color .2s,border-color .2s,color .2s}
+.faq details[open] summary::after{transform:rotate(45deg);background-color:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.faq .ans{padding:0 56px 26px 0;color:var(--muted);max-width:68ch}
+.faq details[open] .ans{animation:fadeUp .4s var(--ease-out)}
+@media (hover:hover){.faq summary:hover{color:var(--accent)}}
+@media (min-width:960px){.faq-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:80px}}
+
+/* Cita */
+.cita-grid{display:grid;gap:48px}
+.contact{list-style:none;padding:0;margin-top:40px;border-top:1px solid var(--line)}
+.contact li{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.contact .k{font-size:.8125rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.contact a{display:inline-flex;align-items:center;min-height:44px;font-weight:500;text-decoration:none}
+.contact .v{display:flex;flex-wrap:wrap;align-items:center;gap:0 14px}
+.contact .sub{color:var(--muted);font-weight:400}
+@media (hover:hover){.contact a:hover{color:var(--accent)}}
+.cita-grid .pill{margin-top:28px}
+@media (min-width:960px){.cita-grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:80px;align-items:start}}
+.form{display:grid;gap:20px;padding:clamp(20px,4vw,44px);background:var(--surface);border:1px solid var(--line);border-radius:28px}
+.f-row{display:grid;gap:20px}
+@media (min-width:640px){.form .f-row{grid-template-columns:1fr 1fr}}
+.field{display:grid;gap:8px;align-content:start}
+.field label{font-size:.875rem;font-weight:500;color:var(--muted)}
+.inp{width:100%;min-height:54px;padding:14px 16px;border:1px solid var(--line-2);border-radius:14px;background:var(--bg);font-size:1rem;line-height:1.4;transition:border-color .15s,box-shadow .15s}
+.inp::placeholder{color:#7E776F}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgb(255 106 31 / .2)}
+.inp[aria-invalid="true"]{border-color:var(--err)}
+select.inp{-webkit-appearance:none;appearance:none;padding-right:44px;cursor:pointer;background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%23A39C93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 16px center/14px no-repeat}
+textarea.inp{min-height:112px;resize:vertical}
+.err{font-size:.875rem;color:var(--err-text)}
+.err:empty{display:none}
+.form .btn{width:100%}
+.legal{font-size:.8125rem;color:var(--muted)}
+.ok{padding:16px 18px;border:1px solid rgb(91 208 138 / .4);border-radius:14px;background:rgb(91 208 138 / .08);font-size:.9375rem}
+.ok a{font-weight:600}
+.ok:focus{outline:none}
+
+/* Pie */
+footer{padding:clamp(64px,8vw,96px) 0 calc(32px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px 24px}
+.f-grid>div:first-child,.f-grid>.f-contact{grid-column:1/-1}
+.f-grid>.f-contact{order:3}
+.f-grid>div>p{max-width:36ch;margin-top:16px;color:var(--muted);font-size:.9375rem}
+.f-k{margin-bottom:8px;font-size:.8125rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.f-col a{display:flex;align-items:center;min-height:44px;text-decoration:none}
+@media (hover:hover){.f-col a:hover{color:var(--accent)}}
+@media (min-width:900px){.f-grid{grid-template-columns:2fr 1fr 1fr 1fr}.f-grid>div:first-child,.f-grid>.f-contact{grid-column:auto}.f-grid>.f-contact{order:0}}
+.wordmark{margin-top:clamp(48px,7vw,88px);width:100%;height:auto}
+.wordmark text{font-family:var(--display);font-stretch:125%;font-weight:800;fill:rgb(243 239 233 / .03);stroke:var(--line-2);stroke-width:1.2}
+.f-bottom{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;margin-top:24px;font-size:.875rem;color:var(--muted)}
+
+/* Barra de acción móvil */
+.dock{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:70;display:grid;grid-template-columns:1fr 1.35fr;gap:8px;padding:8px;border:1px solid var(--line-2);border-radius:999px;background:rgb(22 20 18 / .86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:transform .4s var(--ease-out),opacity .25s}
+.dock .btn{min-height:48px;padding:0 16px}
+.dock.off{transform:translateY(150%);opacity:0;pointer-events:none;visibility:hidden;transition:transform .4s var(--ease-out),opacity .25s,visibility 0s .4s}
+@media (min-width:900px){.dock{display:none}}
+
+/* Entradas al hacer scroll */
+.js .rv{opacity:0;transform:translateY(26px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out);transition-delay:calc(var(--d,0) * 90ms)}
+.js .rv.in{opacity:1;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
+  .js .rv,.js .wi{opacity:1;transform:none}
+  .mq-track{animation:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="#inicio" aria-label="MotorWorld, ir al inicio">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7.5 24.5A12 12 0 1 1 24.5 24.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M16 16l6-7" stroke="#FF6A1F" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="16" r="2.6" fill="currentColor"/></svg>
+      <span class="logo-tx">Motor<b>World</b></span>
+    </a>
+    <nav class="nav" id="menu" aria-label="Principal">
+      <a href="#servicios">Servicios</a>
+      <a href="#alta-gama">Alta gama</a>
+      <a href="#itv">ITV</a>
+      <a href="#opiniones">Opiniones</a>
+      <a href="#faq">Preguntas</a>
+      <a class="btn btn-primary nav-cta" href="#cita">Pedir cita</a>
+    </nav>
+    <a class="btn btn-primary hdr-cta" href="#cita">Pedir cita <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú"><span></span><span></span></button>
+  </div>
+  <div class="sl" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</header>
+
+<main id="main">
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="inicio" aria-labelledby="hero-title">
+    <div class="wrap">
+      <div class="hero-meta rv">
+        <span class="pill" data-status-pill><span class="dot" aria-hidden="true"></span><span data-status>Taller multimarca en Sevilla</span></span>
+        <span class="coords">Sevilla · 37°23′N 5°59′O</span>
+      </div>
+      <h1 class="disp h1" id="hero-title">
+        <span class="ln"><span class="w"><span class="wi" style="--d:0">Del</span></span> <span class="w"><span class="wi" style="--d:1">utilitario</span></span> <span class="w"><span class="wi" style="--d:2">al</span></span> <span class="w"><span class="wi" style="--d:3">911,</span></span></span>
+        <span class="ln acc"><span class="w"><span class="wi" style="--d:4">precisión</span></span> <span class="w"><span class="wi" style="--d:5">de</span></span> <span class="w"><span class="wi" style="--d:6">box.</span></span></span>
+      </h1>
+      <div class="hero-row">
+        <div>
+          <p class="lead rv" style="--d:5"><strong>Mecánica general, neumáticos, ITV y especialistas en alta gama.</strong> Diagnóstico con fotos, presupuesto cerrado antes de tocar una tuerca y tu coche listo a la hora que te decimos.</p>
+          <div class="ctas rv" style="--d:6">
+            <a class="btn btn-primary" href="#cita">Pedir cita <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <!-- EDITAR: teléfono -->
+            <a class="btn btn-ghost" href="tel:+34954000000">Llamar · 954 000 000</a>
+          </div>
+          <!-- EDITAR: compromiso real de respuesta -->
+          <p class="note rv" style="--d:7">Te respondemos en menos de 2 horas en horario de taller.</p>
+        </div>
+        <div class="gauge rv" style="--d:4" aria-hidden="true">
+          <svg viewBox="0 0 400 400">
+            <defs><radialGradient id="gface" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#221E1A"/><stop offset="1" stop-color="#0F0E0C"/></radialGradient></defs>
+            <circle cx="200" cy="200" r="196" class="g-bezel"/>
+            <circle cx="200" cy="200" r="184" fill="url(#gface)"/>
+            <path class="g-track"/>
+            <path class="g-red"/>
+            <g class="g-ticks"></g>
+            <g class="g-labels"></g>
+            <text x="200" y="150" class="g-brand">MOTORWORLD</text>
+            <g><circle class="g-led" cx="172" cy="172" r="4"/><circle class="g-led" cx="186" cy="172" r="4"/><circle class="g-led" cx="200" cy="172" r="4"/><circle class="g-led" cx="214" cy="172" r="4"/><circle class="g-led" cx="228" cy="172" r="4"/></g>
+            <g class="g-needle"><path d="M196.5 222L199.3 56h1.4l2.8 166z"/></g>
+            <circle cx="200" cy="200" r="14" class="g-hub"/>
+            <circle cx="200" cy="200" r="4" class="g-hub-in"/>
+          </svg>
+          <div class="g-read"><span class="g-rpm">0000</span><span class="g-unit">r/min</span></div>
+        </div>
+      </div>
+      <!-- EDITAR: cifras reales del taller -->
+      <ul class="stats rv" aria-label="MotorWorld en cifras">
+        <li><b data-count="17">17</b><span>años en Sevilla</span></li>
+        <li><b data-count="4.9" data-dec="1">4,9</b><span>valoración media en Google</span></li>
+        <li><b data-count="12000" data-prefix="+">+12.000</b><span>coches revisados</span></li>
+        <li><b data-count="24" data-suffix=" h">24 h</b><span>para tu presupuesto cerrado</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ SERVICIOS ============ -->
+  <section class="sec" id="servicios" aria-labelledby="t-serv">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="eyebrow rv">01 / Servicios</p>
+          <h2 class="disp h2 rv" id="t-serv">Lo que pide tu coche, bajo un mismo techo.</h2>
+        </div>
+        <p class="rv" style="--d:1">Un único taller para el mantenimiento del día a día, los neumáticos, la ITV y ese coche especial que no dejas en cualquier sitio.</p>
+      </div>
+      <div class="bento">
+        <article class="card rv">
+          <div class="card-top">
+            <span class="num">01</span>
+            <svg class="illus" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="s"/><circle cx="50" cy="50" r="31" class="s w5" stroke-dasharray="1.5 9"/><circle cx="50" cy="50" r="16" class="s"/><circle cx="50" cy="50" r="5" class="f"/><path d="M82.77 27.06A40 40 0 0 1 89.39 56.95" class="s a w8"/></svg>
+          </div>
+          <h3 class="h3">Mecánica general</h3>
+          <p>Mantenimiento según el plan del fabricante, frenos, embrague, distribución, suspensión y diagnosis electrónica de cualquier marca.</p>
+          <ul class="chips"><li>Aceite y filtros</li><li>Frenos y discos</li><li>Distribución</li><li>Diagnosis OBD</li><li>Aire acondicionado</li></ul>
+          <!-- EDITAR: precio -->
+          <div class="card-foot"><span class="price">Revisión desde <b>89 €</b></span><a class="lnk" href="#cita" data-service="Mecánica general">Pedir cita <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+        </article>
+        <article class="card rv" style="--d:1">
+          <div class="card-top">
+            <span class="num">02</span>
+            <svg class="illus" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" class="s w12" stroke-dasharray="2.6 3.6" opacity=".45"/><circle cx="50" cy="50" r="47" class="s"/><circle cx="50" cy="50" r="30" class="s"/><path d="M50 50L50 22M50 50L76.63 41.35M50 50L66.46 72.65M50 50L33.54 72.65M50 50L23.37 41.35" class="s"/><circle cx="50" cy="50" r="6" class="fa"/></svg>
+          </div>
+          <h3 class="h3">Neumáticos</h3>
+          <p>Las primeras marcas en stock o en 24 h. Montaje, equilibrado y alineado 3D con informe impreso.</p>
+          <ul class="chips"><li>Alineado 3D</li><li>Run-flat</li><li>Llantas hasta 23″</li><li>Hotel de neumáticos</li></ul>
+          <!-- EDITAR: precio -->
+          <div class="card-foot"><span class="price">Alineado desde <b>45 €</b></span><a class="lnk" href="#cita" data-service="Neumáticos">Pedir cita <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+        </article>
+        <article class="card rv">
+          <div class="card-top">
+            <span class="num">03</span>
+            <svg class="illus" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" class="s w3" stroke-dasharray=".5 7"/><circle cx="50" cy="50" r="32" class="s"/><path d="M36 51l10 10 19-22" class="s a w5"/></svg>
+          </div>
+          <h3 class="h3">Pre-ITV e ITV</h3>
+          <p>Revisamos lo que más suspende, lo corregimos y, si quieres, llevamos el coche a la estación y te lo devolvemos con la pegatina nueva.</p>
+          <ul class="chips"><li>Pre-ITV</li><li>Paso de ITV</li><li>Segundas inspecciones</li></ul>
+          <!-- EDITAR: precio -->
+          <div class="card-foot"><span class="price">Pre-ITV desde <b>29 €</b></span><a class="lnk" href="#itv">Calcular mi ITV <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+        </article>
+        <article class="card hl rv" style="--d:1">
+          <div class="card-top">
+            <span class="num">04</span>
+            <svg class="illus" viewBox="0 0 100 100" aria-hidden="true"><path d="M18.89 81.11A44 44 0 1 1 81.11 81.11" class="s"/><path d="M93.16 58.58A44 44 0 0 1 81.11 81.11" class="s a w5"/><path d="M50 50L76 31" class="s a w3"/><circle cx="50" cy="50" r="5" class="f"/></svg>
+          </div>
+          <h3 class="h3">Alta gama y deportivos</h3>
+          <p>Porsche, BMW M, Mercedes-AMG, Audi RS o Maserati. Diagnosis de nivel concesionario sin la factura de concesionario, y sin perder la garantía.</p>
+          <ul class="chips"><li>Garantía de fábrica</li><li>Recambio original</li><li>Recogida a domicilio</li></ul>
+          <div class="card-foot"><span class="price">Presupuesto <b>en 24 h</b></span><a class="lnk" href="#alta-gama">Ver cómo trabajamos <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ALTA GAMA ============ -->
+  <section class="sec" id="alta-gama" aria-labelledby="t-ag" style="padding-top:0">
+    <p class="sr-only">Marcas que atendemos cada semana: Porsche, BMW M, Mercedes-AMG, Audi RS, Maserati, Land Rover, Tesla y Lexus.</p>
+    <div class="mq" aria-hidden="true">
+      <div class="mq-track">
+        <span>Porsche<i></i></span><span class="o">BMW M<i></i></span><span>Mercedes-AMG<i></i></span><span class="o">Audi RS<i></i></span><span>Maserati<i></i></span><span class="o">Land Rover<i></i></span><span>Tesla<i></i></span><span class="o">Lexus<i></i></span>
+        <span>Porsche<i></i></span><span class="o">BMW M<i></i></span><span>Mercedes-AMG<i></i></span><span class="o">Audi RS<i></i></span><span>Maserati<i></i></span><span class="o">Land Rover<i></i></span><span>Tesla<i></i></span><span class="o">Lexus<i></i></span>
+      </div>
+    </div>
+    <div class="wrap ag">
+      <div class="ag-head">
+        <p class="eyebrow rv">02 / Alta gama</p>
+        <h2 class="disp h2 rv" id="t-ag">Alta gama, sin pagar el logo del concesionario.</h2>
+        <p class="rv" style="--d:1">Mismo nivel técnico, trato directo con el mecánico que toca tu coche y una factura de taller independiente. Te explicamos cada intervención con fotos y vídeo antes de hacerla.</p>
+        <a class="btn btn-primary rv" style="--d:2" href="#cita" data-service="Alta gama">Consultar mi modelo <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+      <!-- EDITAR: confirmar equipos y servicios reales -->
+      <dl class="spec">
+        <div class="rv"><dt>Diagnosis</dt><dd><strong>Equipos multimarca de nivel concesionario.</strong> Lectura completa de centralitas, codificación y actualización de unidades de control.</dd></div>
+        <div class="rv"><dt>Garantía</dt><dd><strong>Mantienes la garantía de fábrica.</strong> Seguimos el plan del fabricante con recambio de calidad equivalente y sellamos tu libro (Reglamento UE 461/2010).</dd></div>
+        <div class="rv"><dt>Recambio</dt><dd><strong>Original u OEM, tú decides.</strong> Te enseñamos cada pieza que sale de tu coche.</dd></div>
+        <div class="rv"><dt>Neumáticos</dt><dd><strong>Homologaciones de fábrica</strong> (N0 Porsche, ★ BMW, MO Mercedes, AO Audi), run-flat y llantas de hasta 23″ con alineado 3D.</dd></div>
+        <div class="rv"><dt>Cuidado</dt><dd><strong>Fundas, box cubierto y entrega lavado a mano.</strong> Tu coche no duerme en la calle.</dd></div>
+        <div class="rv"><dt>Recogida</dt><dd><strong>Lo recogemos y te lo devolvemos</strong> en Sevilla capital y el Aljarafe.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ PROCESO ============ -->
+  <section class="sec" id="proceso" aria-labelledby="t-proc" style="padding-top:0">
+    <div class="wrap proc">
+      <div class="proc-head">
+        <p class="eyebrow rv">03 / Cómo trabajamos</p>
+        <h2 class="disp h2 rv" id="t-proc">Sin sorpresas en la factura. Nunca.</h2>
+        <p class="rv" style="--d:1">Cuatro pasos y una regla: no tocamos nada que no hayas aprobado por escrito.</p>
+      </div>
+      <ol class="steps">
+        <li class="step" style="--i:0"><span class="n">01</span><h3 class="h3">Reservas en un minuto</h3><p>Por WhatsApp, teléfono o el formulario. Te damos hora y, si lo necesitas, pasamos a recoger el coche.</p><span class="t">≈ 1 minuto</span></li>
+        <li class="step" style="--i:1"><span class="n">02</span><h3 class="h3">Diagnóstico con fotos</h3><p>Te enviamos fotos y vídeo de lo que vemos, separando lo urgente de lo que puede esperar.</p><span class="t">Mismo día</span></li>
+        <li class="step" style="--i:2"><span class="n">03</span><h3 class="h3">Presupuesto cerrado</h3><p>Precio por escrito antes de empezar. Si aparece algo nuevo, te llamamos: nunca sumamos sin tu OK.</p><span class="t">Por escrito</span></li>
+        <li class="step" style="--i:3"><span class="n">04</span><h3 class="h3">Recoges con informe</h3><p>Factura detallada, las piezas cambiadas si las quieres y el próximo mantenimiento ya anotado.</p><span class="t">Con informe</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ ITV ============ -->
+  <section class="sec itv" id="itv" aria-labelledby="t-itv">
+    <div class="wrap itv-grid">
+      <div class="itv-copy">
+        <p class="eyebrow rv">04 / ITV</p>
+        <h2 class="disp h2 rv" id="t-itv">¿Te toca la ITV? <span class="acc">Nos encargamos.</span></h2>
+        <p class="rv" style="--d:1">Revisamos los puntos que más suspenden, los corregimos si hace falta y, si quieres, llevamos el coche a la estación y te lo devolvemos pasado.</p>
+        <ul class="checks rv" style="--d:2">
+          <li>Luces y señalización</li><li>Frenos y ABS</li><li>Neumáticos y holguras</li><li>Emisiones y testigos</li><li>Dirección y suspensión</li><li>Cinturones y airbag</li>
+        </ul>
+        <!-- EDITAR: precios reales -->
+        <div class="prices rv" style="--d:3">
+          <div><b>29 €</b><span>Pre-ITV completa con informe</span></div>
+          <div><b>49 €</b><span>Paso de ITV con recogida, más la tasa de la estación</span></div>
+        </div>
+      </div>
+      <div class="calc rv" id="itv-calc" style="--d:1">
+        <h3 class="h3">¿Cuándo me toca?</h3>
+        <p>Elige la fecha de primera matriculación de tu turismo.</p>
+        <div class="f-row">
+          <div class="field">
+            <label for="itv-mes">Mes</label>
+            <select class="inp" id="itv-mes">
+              <option value="" selected disabled>Mes</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="itv-anio">Año</label>
+            <select class="inp" id="itv-anio"><option value="" selected disabled>Año</option></select>
+          </div>
+        </div>
+        <div class="calc-out" id="itv-out" aria-live="polite">
+          <p class="calc-k">Próxima ITV orientativa</p>
+          <p class="calc-n" style="margin-top:12px">Elige mes y año y te decimos cuándo te toca y con qué frecuencia.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OPINIONES ============ -->
+  <section class="sec" id="opiniones" aria-labelledby="t-op">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="eyebrow rv">05 / Opiniones</p>
+          <h2 class="disp h2 rv" id="t-op">Lo que dicen al recoger las llaves.</h2>
+        </div>
+        <p class="rv" style="--d:1">Reseñas de clientes con coche de diario y con coche de fin de semana.</p>
+      </div>
+      <!-- EDITAR: sustituir por reseñas reales de Google (nombre, coche y resultado) -->
+      <div class="quotes">
+        <figure class="q q-big rv">
+          <blockquote><p>“El concesionario me pedía 3.400 € por la suspensión neumática del Cayenne. Aquí encontraron una fuga en un racor, me mandaron el vídeo y lo dejaron perfecto por una fracción, con pieza original.”</p></blockquote>
+          <figcaption><span><b>Javier R.</b>Porsche Cayenne S · 2019</span><span class="stars" role="img" aria-label="5 de 5 estrellas">★★★★★</span></figcaption>
+        </figure>
+        <figure class="q rv" style="--d:1">
+          <blockquote><p>“Dejé el Ibiza a las 8:30 para la ITV y a mediodía lo tenía en la puerta de casa, pasada y con la pegatina puesta.”</p></blockquote>
+          <figcaption><span><b>Lucía M.</b>Seat Ibiza · 2016</span><span class="stars" role="img" aria-label="5 de 5 estrellas">★★★★★</span></figcaption>
+        </figure>
+        <figure class="q rv" style="--d:2">
+          <blockquote><p>“Neumáticos con homologación ★ para el M3 en 24 horas, alineado y con el informe impreso. Hablan claro y cumplen.”</p></blockquote>
+          <figcaption><span><b>Antonio G.</b>BMW M3 Competition</span><span class="stars" role="img" aria-label="5 de 5 estrellas">★★★★★</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="sec" id="faq" aria-labelledby="t-faq" style="padding-top:0">
+    <div class="wrap faq-grid">
+      <div>
+        <p class="eyebrow rv">06 / Preguntas</p>
+        <h2 class="disp h2 rv" id="t-faq">Antes de que lo preguntes.</h2>
+      </div>
+      <div class="faq rv" style="--d:1">
+        <details>
+          <summary>¿Pierdo la garantía si no voy al concesionario?</summary>
+          <p class="ans">No. La normativa europea (Reglamento UE 461/2010) permite hacer el mantenimiento en un taller independiente sin perder la garantía del fabricante, siempre que se siga su plan y se usen recambios de calidad equivalente. Sellamos tu libro y te damos factura detallada.</p>
+        </details>
+        <details>
+          <summary>¿Me dais el precio antes de empezar?</summary>
+          <p class="ans">Siempre. Primero diagnosticamos, después te enviamos el presupuesto cerrado por escrito y solo empezamos con tu aprobación. Si durante la reparación aparece algo nuevo, te llamamos antes de tocarlo.</p>
+        </details>
+        <details>
+          <summary>¿Cuánto tarda una revisión?</summary>
+          <!-- EDITAR -->
+          <p class="ans">Una revisión, un cambio de neumáticos o una pre-ITV suelen estar el mismo día si traes el coche antes de las 10:00. Para reparaciones mayores te damos una fecha de entrega cerrada.</p>
+        </details>
+        <details>
+          <summary>¿Tenéis recogida o coche de sustitución?</summary>
+          <!-- EDITAR -->
+          <p class="ans">Recogemos y entregamos en Sevilla capital y el Aljarafe. Coche de sustitución bajo reserva, según disponibilidad.</p>
+        </details>
+        <details>
+          <summary>¿Trabajáis con cualquier marca?</summary>
+          <p class="ans">Sí. Somos un taller independiente multimarca: del utilitario al deportivo, incluidos híbridos y eléctricos. No somos servicio oficial de ninguna marca, y por eso podemos ofrecerte recambio original u OEM a elección.</p>
+        </details>
+        <details>
+          <summary>¿Cómo puedo pagar?</summary>
+          <!-- EDITAR -->
+          <p class="ans">Tarjeta, transferencia o Bizum. Para reparaciones grandes podemos estudiar el pago en plazos.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CITA ============ -->
+  <section class="sec" id="cita" aria-labelledby="t-cita" style="padding-top:0">
+    <div class="wrap cita-grid">
+      <div>
+        <p class="eyebrow rv">07 / Cita</p>
+        <h2 class="disp h2 rv" id="t-cita">Tu coche, a punto. <span class="acc">Pide cita hoy.</span></h2>
+        <span class="pill rv" data-status-pill style="--d:1"><span class="dot" aria-hidden="true"></span><span data-status>L–V 8:30–19:00 · S 9:00–13:30</span></span>
+        <!-- EDITAR: datos de contacto reales -->
+        <ul class="contact rv" style="--d:2">
+          <li><span class="k">Teléfono</span><span class="v"><a href="tel:+34954000000">954 000 000</a></span></li>
+          <li><span class="k">WhatsApp</span><span class="v"><a href="https://wa.me/34600000000" target="_blank" rel="noopener">600 000 000</a></span></li>
+          <li><span class="k">Dirección</span><span class="v"><span>C/ Ejemplo, 12 · 41007 Sevilla</span><a class="sub" href="https://www.google.com/maps/search/?api=1&amp;query=MotorWorld+taller+Sevilla" target="_blank" rel="noopener">Cómo llegar</a></span></li>
+          <li><span class="k">Horario</span><span class="v"><span>L–V 8:30–19:00 · S 9:00–13:30</span></span></li>
+        </ul>
+      </div>
+      <form class="form rv" id="cita-form" novalidate style="--d:1">
+        <div class="f-row">
+          <div class="field">
+            <label for="f-nombre">Nombre</label>
+            <input class="inp" id="f-nombre" name="nombre" autocomplete="name" required aria-describedby="nombre-err" placeholder="Tu nombre">
+            <p class="err" id="nombre-err" aria-live="polite"></p>
+          </div>
+          <div class="field">
+            <label for="f-tel">Teléfono</label>
+            <input class="inp" id="f-tel" name="telefono" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="telefono-err" placeholder="600 123 456">
+            <p class="err" id="telefono-err" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="field">
+            <label for="f-coche">Coche (marca y modelo)</label>
+            <input class="inp" id="f-coche" name="coche" required aria-describedby="coche-err" placeholder="BMW Serie 3, 2019">
+            <p class="err" id="coche-err" aria-live="polite"></p>
+          </div>
+          <div class="field">
+            <label for="f-serv">Servicio</label>
+            <select class="inp" id="f-serv" name="servicio">
+              <option>Mecánica general</option><option>Neumáticos</option><option>Pre-ITV o paso de ITV</option><option>Alta gama</option><option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-msg">¿Qué le pasa? <span class="muted">(opcional)</span></label>
+          <textarea class="inp" id="f-msg" name="mensaje" rows="3" placeholder="Ruido al frenar, revisión de los 60.000 km…"></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit"><span class="btn-tx">Enviar por WhatsApp</span> <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <p class="legal">Al enviar se abre WhatsApp con tu mensaje listo; esta web no guarda tus datos.</p>
+        <p class="ok" id="form-ok" tabindex="-1" hidden>Listo: te hemos abierto WhatsApp con la cita. Si no se ha abierto, <a id="form-ok-link" href="https://wa.me/34600000000" target="_blank" rel="noopener">pulsa aquí</a>.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a class="logo" href="#inicio" aria-label="MotorWorld, volver arriba">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7.5 24.5A12 12 0 1 1 24.5 24.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M16 16l6-7" stroke="#FF6A1F" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="16" r="2.6" fill="currentColor"/></svg>
+          <span class="logo-tx">Motor<b>World</b></span>
+        </a>
+        <p>Taller mecánico independiente multimarca en Sevilla. Las marcas citadas pertenecen a sus respectivos propietarios.</p>
+      </div>
+      <nav class="f-col" aria-label="Secciones">
+        <p class="f-k">Taller</p>
+        <a href="#servicios">Servicios</a><a href="#alta-gama">Alta gama</a><a href="#itv">ITV</a><a href="#opiniones">Opiniones</a>
+      </nav>
+      <div class="f-col f-contact">
+        <p class="f-k">Contacto</p>
+        <a href="tel:+34954000000">954 000 000</a><a href="https://wa.me/34600000000" target="_blank" rel="noopener">WhatsApp</a><a href="mailto:hola@ejemplo.com">hola@ejemplo.com</a>
+      </div>
+      <!-- EDITAR: enlaces legales -->
+      <nav class="f-col" aria-label="Legal">
+        <p class="f-k">Legal</p>
+        <a href="#">Aviso legal</a><a href="#">Privacidad</a><a href="#">Cookies</a>
+      </nav>
+    </div>
+    <svg class="wordmark" viewBox="0 0 1200 150" aria-hidden="true"><text x="2" y="138" font-size="168" textLength="1196" lengthAdjust="spacingAndGlyphs">MOTORWORLD</text></svg>
+    <div class="f-bottom"><span>© <span id="y">2026</span> MotorWorld · Sevilla</span><span>Hecho con precisión de box.</span></div>
+  </div>
+</footer>
+
+<div class="dock off" aria-label="Acciones rápidas" role="region">
+  <a class="btn btn-ghost" href="tel:+34954000000">Llamar</a>
+  <a class="btn btn-primary" href="#cita">Pedir cita</a>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ===== DATOS DEL TALLER (EDITAR) ===== */
+const CONFIG = {
+  whatsapp: '34600000000',           // número con prefijo, sin "+"
+  tz: 'Europe/Madrid',
+  // 0 = domingo … 6 = sábado. Tramos [apertura, cierre] en minutos desde las 00:00
+  hours: { 0: [], 1: [[510, 1140]], 2: [[510, 1140]], 3: [[510, 1140]], 4: [[510, 1140]], 5: [[510, 1140]], 6: [[540, 810]] },
+  idleRpm: 850
+};
+
+const $ = (s, c = document) => c.querySelector(s), $$ = (s, c = document) => [...c.querySelectorAll(s)];
+const root = document.documentElement;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+/* 1. Entrada del hero y apariciones al hacer scroll */
+requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('ready')));
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}), { rootMargin: '0px 0px -8% 0px' });
+$$('.rv').forEach(el => io.observe(el));
+
+/* Desplazamiento suave solo para enlaces internos (no afecta a scrollTo de otros scripts) */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'), id = a && a.getAttribute('href');
+  if (!id || id.length < 2) return;
+  const t = document.getElementById(id.slice(1)); if (!t) return;
+  e.preventDefault();
+  t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  history.pushState(null, '', id);
+  if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1');
+  t.focus({ preventScroll: true });
+});
+
+/* 2. Contadores */
+const nf = (v, dec) => v.toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+$$('[data-count]').forEach(el => {
+  if (reduce) return;
+  const end = +el.dataset.count, dec = +(el.dataset.dec || 0), pre = el.dataset.prefix || '', suf = el.dataset.suffix || '';
+  const cio = new IntersectionObserver(([e]) => {
+    if (!e.isIntersecting) return; cio.disconnect();
+    const t0 = performance.now(), d = 1500;
+    const tick = t => {
+      const p = Math.min((t - t0) / d, 1), v = end * (1 - Math.pow(1 - p, 4));
+      el.textContent = pre + nf(dec ? v : Math.round(v), dec) + suf;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, { threshold: .6 });
+  cio.observe(el);
+});
+
+/* 3. Cabecera, luces de cambio (progreso de lectura) y barra móvil */
+const hdr = $('.hdr'), leds = $$('.sl i'), dock = $('.dock');
+let nearEnd = false, queued = false;
+function frameScroll() {
+  queued = false;
+  const y = scrollY, h = root.scrollHeight - innerHeight, p = h > 0 ? Math.min(1, y / h) : 0, n = Math.round(p * leds.length);
+  leds.forEach((l, i) => l.classList.toggle('on', i < n));
+  hdr.classList.toggle('max', n === leds.length);
+  hdr.classList.toggle('scrolled', y > 8);
+  dock.classList.toggle('off', y < innerHeight * .6 || nearEnd);
+}
+addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(frameScroll); } }, { passive: true });
+addEventListener('resize', frameScroll, { passive: true });
+frameScroll();
+const seen = new Set();
+const dio = new IntersectionObserver(es => {
+  es.forEach(e => e.isIntersecting ? seen.add(e.target) : seen.delete(e.target));
+  nearEnd = seen.size > 0; frameScroll();
+});
+[$('#cita'), $('footer')].forEach(t => t && dio.observe(t));
+
+/* 4. Menú móvil */
+const menuBtn = $('.menu-btn'), menu = $('#menu');
+const setMenu = open => {
+  menuBtn.setAttribute('aria-expanded', String(open));
+  menuBtn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  menu.classList.toggle('open', open);
+  root.classList.toggle('lock', open);
+  $('main').inert = open; $('footer').inert = open;
+};
+menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
+menu.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && menu.classList.contains('open')) { setMenu(false); menuBtn.focus(); } });
+matchMedia('(min-width: 900px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
+
+/* 5. Abierto / cerrado ahora (hora de Madrid) */
+const DAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const hm = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+function status() {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: CONFIG.tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t).value;
+  const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday')), min = +get('hour') * 60 + +get('minute');
+  const now = (CONFIG.hours[day] || []).find(([a, b]) => min >= a && min < b);
+  if (now) return { open: true, text: `Abierto ahora · cierra a las ${hm(now[1])}` };
+  for (let i = 0; i < 8; i++) {
+    const d = (day + i) % 7, next = (CONFIG.hours[d] || []).find(([a]) => i > 0 || a > min);
+    if (next) return { open: false, text: `Cerrado · abre ${i === 0 ? 'hoy' : i === 1 ? 'mañana' : 'el ' + DAYS[d]} a las ${hm(next[0])}` };
+  }
+  return { open: false, text: 'Cerrado' };
+}
+function paintStatus() {
+  try {
+    const s = status();
+    $$('[data-status]').forEach(el => { el.textContent = s.text; });
+    $$('[data-status-pill]').forEach(el => el.classList.toggle('open', s.open));
+  } catch (_) { /* Intl sin zona horaria: se queda el texto por defecto */ }
+}
+paintStatus(); setInterval(paintStatus, 60000);
+
+/* 6. Cuentarrevoluciones: arranque al entrar y revoluciones según la velocidad de scroll */
+const gauge = $('.gauge');
+if (gauge) {
+  const svg = $('svg', gauge), NS = 'http://www.w3.org/2000/svg', MAX = 8000, IDLE = CONFIG.idleRpm;
+  const ang = r => -135 + (r / MAX) * 270;
+  const pt = (rad, r) => { const a = ang(r) * Math.PI / 180; return [200 + rad * Math.sin(a), 200 - rad * Math.cos(a)]; };
+  const f = n => n.toFixed(2);
+  const arc = (rad, r0, r1) => { const [x0, y0] = pt(rad, r0), [x1, y1] = pt(rad, r1); return `M${f(x0)} ${f(y0)}A${rad} ${rad} 0 ${(r1 - r0) / MAX * 270 > 180 ? 1 : 0} 1 ${f(x1)} ${f(y1)}`; };
+  $('.g-track', svg).setAttribute('d', arc(160, 0, MAX));
+  $('.g-red', svg).setAttribute('d', arc(160, 7000, MAX));
+  const tg = $('.g-ticks', svg), lg = $('.g-labels', svg), ticks = [];
+  for (let r = 0; r <= MAX; r += 250) {
+    const major = r % 1000 === 0, [x0, y0] = pt(150, r), [x1, y1] = pt(major ? 126 : 139, r), l = document.createElementNS(NS, 'line');
+    l.setAttribute('x1', f(x0)); l.setAttribute('y1', f(y0)); l.setAttribute('x2', f(x1)); l.setAttribute('y2', f(y1));
+    l.setAttribute('class', 'tk' + (major ? ' mj' : '') + (r >= 7000 ? ' red' : ''));
+    tg.append(l); ticks.push(l);
+    if (major) { const [tx, ty] = pt(104, r), t = document.createElementNS(NS, 'text'); t.setAttribute('x', f(tx)); t.setAttribute('y', f(ty)); t.textContent = r / 1000; lg.append(t); }
+  }
+  const needle = $('.g-needle', svg), read = $('.g-rpm', gauge), gl = $$('.g-led', svg);
+  let rpm = 0, lit = -1, vel = 0, lastY = scrollY, lastT = performance.now(), t0 = 0, ignited = false, running = false, onScreen = false;
+  const draw = () => {
+    needle.style.transform = `rotate(${ang(rpm).toFixed(2)}deg)`;
+    read.textContent = String(Math.round(rpm / 10) * 10).padStart(4, '0');
+    const n = Math.floor(rpm / 250 + .001);
+    if (n !== lit) { ticks.forEach((t, i) => t.classList.toggle('on', i <= n)); lit = n; }
+    gl.forEach((l, i) => l.classList.toggle('on', rpm >= 6000 + i * 400));
+    gauge.classList.toggle('hot', rpm >= 7000);
+  };
+  const easeOut = t => 1 - Math.pow(1 - t, 3), easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, PEAK = MAX * .985;
+  const frame = now => {
+    if (!running) return;
+    const t = now - t0;
+    if (t < 0) rpm = 0;
+    else if (t < 950) rpm = PEAK * easeOut(t / 950);
+    else if (t < 1900) rpm = PEAK + (IDLE - PEAK) * easeInOut((t - 950) / 950);
+    else {
+      vel *= .9;
+      const target = Math.min(7700, IDLE + Math.sin(now / 95) * 10 + Math.sin(now / 41) * 6 + Math.min(6600, vel * 2600));
+      rpm += (target - rpm) * .12;
+    }
+    draw(); requestAnimationFrame(frame);
+  };
+  const start = () => { if (running || reduce || document.hidden || !onScreen) return; running = true; requestAnimationFrame(frame); };
+  if (reduce) { rpm = IDLE; draw(); }
+  else {
+    addEventListener('scroll', () => {
+      const now = performance.now(), dt = Math.max(16, now - lastT);
+      vel = Math.max(vel, Math.abs(scrollY - lastY) / dt); lastY = scrollY; lastT = now;
+    }, { passive: true });
+    new IntersectionObserver(([e]) => {
+      onScreen = e.isIntersecting;
+      if (onScreen) { if (!ignited) { ignited = true; t0 = performance.now() + 450; } start(); } else running = false;
+    }, { threshold: .3 }).observe(gauge);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) running = false; else start(); });
+  }
+}
+
+/* 7. Calculadora de ITV (turismos de uso particular: a los 4 años, cada 2 hasta los 10 y luego anual) */
+const selM = $('#itv-mes'), selY = $('#itv-anio'), out = $('#itv-out');
+if (selM && selY && out) {
+  const today = new Date(), Y = today.getFullYear();
+  for (let y = Y; y >= Y - 45; y--) selY.add(new Option(y, y));
+  const fmt = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+  const run = () => {
+    const m = +selM.value, y = +selY.value;
+    if (!m || !y) return;
+    const cur = new Date(Y, today.getMonth(), 1), at = n => new Date(y + n, m - 1, 1);
+    let n = 4; while (at(n) < cur) n += n < 10 ? 2 : 1;
+    const d = at(n), label = fmt.format(d), thisMonth = d.getTime() === cur.getTime();
+    const rule = n === 4 ? 'Será su primera inspección.' : n < 10 ? 'Después, cada 2 años hasta que cumpla 10.' : 'Con más de 10 años, toca cada año.';
+    out.innerHTML = `<p class="calc-k">Próxima ITV orientativa</p>
+      <p class="calc-v">${thisMonth ? 'Este mes' : label.charAt(0).toUpperCase() + label.slice(1)}</p>
+      <p class="calc-n">${rule} Cálculo orientativo; la fecha exacta figura en tu última tarjeta ITV.</p>
+      <a class="btn btn-primary" href="#cita" data-service="Pre-ITV o paso de ITV">Reservar pre-ITV <svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>`;
+  };
+  selM.addEventListener('change', run); selY.addEventListener('change', run);
+}
+
+/* 8. Formulario de cita → WhatsApp con el mensaje listo */
+const form = $('#cita-form');
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-service]');
+  if (a && form) form.elements.servicio.value = a.dataset.service;
+});
+if (form) {
+  const rules = {
+    nombre: v => v.trim().length >= 2 || 'Dinos tu nombre.',
+    telefono: v => (/^\+?[\d\s]{9,16}$/.test(v.trim()) && v.replace(/\D/g, '').length >= 9) || 'Revisa el teléfono: 9 cifras, por ejemplo 600 123 456.',
+    coche: v => v.trim().length >= 2 || 'Indica marca y modelo.'
+  };
+  const check = el => {
+    const res = rules[el.name](el.value), ok = res === true;
+    el.setAttribute('aria-invalid', String(!ok));
+    $('#' + el.name + '-err').textContent = ok ? '' : res;
+    return ok;
+  };
+  let tried = false;
+  form.addEventListener('input', e => { if (tried && rules[e.target.name]) check(e.target); });
+  form.addEventListener('focusout', e => { if (rules[e.target.name] && e.target.value) check(e.target); });
+  form.addEventListener('submit', e => {
+    e.preventDefault(); tried = true;
+    const bad = Object.keys(rules).map(n => form.elements[n]).filter(el => !check(el));
+    if (bad.length) { bad[0].focus(); return; }
+    const d = new FormData(form), msg = (d.get('mensaje') || '').trim();
+    const lines = ['Hola MotorWorld, quiero pedir cita.', `Nombre: ${d.get('nombre').trim()}`, `Teléfono: ${d.get('telefono').trim()}`, `Coche: ${d.get('coche').trim()}`, `Servicio: ${d.get('servicio')}`];
+    if (msg) lines.push(`Detalle: ${msg}`);
+    const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(lines.join('\n'))}`;
+    const btn = form.querySelector('[type=submit]'), tx = $('.btn-tx', btn);
+    btn.disabled = true; tx.textContent = 'Abriendo WhatsApp…';
+    window.open(url, '_blank', 'noopener');
+    $('#form-ok-link').href = url;
+    const ok = $('#form-ok'); ok.hidden = false; ok.focus();
+    setTimeout(() => { btn.disabled = false; tx.textContent = 'Enviar por WhatsApp'; }, 1500);
+  });
+}
+
+/* 9. Brillo que sigue al ratón en las tarjetas (solo ratón) */
+if (fine) $$('.card').forEach(c => c.addEventListener('pointermove', e => {
+  const r = c.getBoundingClientRect();
+  c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+}));
+
+$('#y').textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>

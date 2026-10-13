@@ -1,0 +1,93 @@
+{
+ "target": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-3/fps-navegador/with_skill/outputs/index.html",
+ "checks": [
+  {
+   "name": "La pantalla inicial no está vacía",
+   "pass": true,
+   "detail": "contraste 31.5"
+  },
+  {
+   "name": "Se puede empezar a jugar",
+   "pass": true,
+   "detail": "window.__game.start()"
+  },
+  {
+   "name": "Fotogramas por segundo",
+   "pass": true,
+   "detail": "12 FPS · render por software (sin GPU): mide en un equipo real"
+  },
+  {
+   "name": "La escena se dibuja durante la partida",
+   "pass": true,
+   "detail": "contraste 40.5"
+  },
+  {
+   "name": "[juego] Arranca la partida",
+   "pass": true,
+   "detail": "playing"
+  },
+  {
+   "name": "[juego] El jugador se mueve con W",
+   "pass": true,
+   "detail": "1.28 m"
+  },
+  {
+   "name": "[juego] No atraviesa las paredes",
+   "pass": true,
+   "detail": "z = -29.20 (pared en -29.5)"
+  },
+  {
+   "name": "[juego] Sube escalones (palés) hasta el contenedor",
+   "pass": true,
+   "detail": "altura 2.60 m"
+  },
+  {
+   "name": "[juego] Aparecen enemigos por oleadas",
+   "pass": true,
+   "detail": "vivos: 1"
+  },
+  {
+   "name": "[juego] Los disparos impactan y matan",
+   "pass": true,
+   "detail": "impactos 5, bajas 1"
+  },
+  {
+   "name": "[juego] Recarga con R",
+   "pass": true,
+   "detail": "cargador 30/30"
+  },
+  {
+   "name": "[juego] Cambia de arma",
+   "pass": true,
+   "detail": "PISTOLA P9"
+  },
+  {
+   "name": "[juego] Los enemigos disparan y hacen daño",
+   "pass": true,
+   "detail": "daño recibido 7"
+  },
+  {
+   "name": "[juego] Muerte → pantalla de game over",
+   "pass": true,
+   "detail": "over"
+  },
+  {
+   "name": "[juego] Reinicio instantáneo",
+   "pass": true,
+   "detail": "playing"
+  },
+  {
+   "name": "[juego] Rendimiento medido",
+   "pass": true,
+   "detail": "11 FPS en este equipo"
+  },
+  {
+   "name": "Sin errores de JavaScript",
+   "pass": true,
+   "detail": ""
+  }
+ ],
+ "errors": [],
+ "warnings": [],
+ "fps": 5
+}

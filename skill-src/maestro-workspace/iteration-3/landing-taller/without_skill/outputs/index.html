@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MotorWorld · Taller mecánico en Sevilla</title>
+<meta name="description" content="MotorWorld, taller mecánico en Sevilla: mecánica general, neumáticos, pre-ITV y especialistas en coches de alta gama. Pide cita online o por WhatsApp.">
+<meta name="theme-color" content="#0b0b0c">
+<meta property="og:title" content="MotorWorld · Taller mecánico en Sevilla">
+<meta property="og:description" content="Mecánica general, neumáticos, ITV y alta gama. Precisión de concesionario, trato de barrio.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AutoRepair",
+  "name": "MotorWorld",
+  "address": {"@type": "PostalAddress", "addressLocality": "Sevilla", "addressRegion": "Andalucía", "addressCountry": "ES"},
+  "telephone": "+34 954 000 000",
+  "openingHours": ["Mo-Fr 08:30-19:30", "Sa 09:00-13:30"],
+  "priceRange": "€€"
+}
+</script>
+<style>
+:root{
+  --bg:#0b0b0c;
+  --bg-2:#121214;
+  --bg-3:#18181b;
+  --line:rgba(242,239,233,.10);
+  --line-2:rgba(242,239,233,.18);
+  --ink:#f2efe9;
+  --ink-2:#c9c5bd;
+  --muted:#8b877f;
+  --accent:#e0a84e;
+  --accent-2:#f3c77a;
+  --accent-ink:#1a1206;
+  --red:#e2452c;
+  --radius:18px;
+  --gutter:clamp(16px,4vw,48px);
+  --max:1320px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --display:"Archivo",system-ui,sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--display);font-variation-settings:"wdth" 100;font-weight:400;
+  font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+@supports (overflow:clip){body{overflow-x:clip}}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+.wrap{width:100%;max-width:var(--max);margin-inline:auto;padding-inline:var(--gutter)}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--ink-2)}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(224,168,78,.15)}
+.serif{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:0}
+.h-xl,.h-l{font-variation-settings:"wdth" 118;font-weight:800;letter-spacing:-.035em;line-height:.92;margin:0;text-transform:uppercase}
+.h-xl{font-size:clamp(46px,10.4vw,168px)}
+.h-l{font-size:clamp(34px,6.6vw,104px)}
+.h-xl,.h-l{overflow-wrap:break-word;hyphens:auto}
+.h-l .serif,.h-xl .serif{text-transform:none;font-size:1.08em;letter-spacing:-.01em;color:var(--accent)}
+.lead{font-size:clamp(17px,1.5vw,20px);color:var(--ink-2);max-width:56ch}
+
+/* ---------- grain + progress ---------- */
+.grain{position:fixed;inset:-50%;z-index:100;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-4%)}60%{transform:translate(-4%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
+.progress{position:fixed;top:0;left:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--accent),var(--red));z-index:90}
+
+/* ---------- intro curtain ---------- */
+.intro{position:fixed;inset:0;z-index:200;background:var(--bg);display:grid;place-items:center;
+  transition:clip-path 1s var(--ease-in-out) .15s;clip-path:inset(0 0 0 0)}
+.intro.done{clip-path:inset(0 0 100% 0)}
+.intro-inner{display:flex;flex-direction:column;align-items:center;gap:18px}
+.intro-logo{font-variation-settings:"wdth" 125;font-weight:900;font-size:clamp(28px,6vw,56px);letter-spacing:-.03em;overflow:hidden}
+.intro-logo span{display:inline-block;transform:translateY(110%);animation:up .8s var(--ease) forwards}
+.intro-bar{width:160px;height:2px;background:var(--line);overflow:hidden}
+.intro-bar i{display:block;height:100%;width:100%;background:var(--accent);transform:translateX(-100%);animation:load 1s var(--ease) .1s forwards}
+@keyframes up{to{transform:none}}
+@keyframes load{to{transform:none}}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;inset:0 0 auto 0;z-index:80;padding-top:env(safe-area-inset-top);transition:background .4s,border-color .4s,transform .5s var(--ease)}
+.nav.scrolled{background:rgba(11,11,12,.72);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid var(--line)}
+.nav.hide{transform:translateY(-100%)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
+.logo{display:flex;align-items:center;gap:10px;font-variation-settings:"wdth" 125;font-weight:900;letter-spacing:-.02em;font-size:20px}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.logo b{color:var(--accent);font-weight:900}
+.nav-links{display:flex;gap:6px;align-items:center}
+.nav-links a{padding:10px 14px;border-radius:999px;color:var(--ink-2);font-size:15px;transition:color .25s,background .25s}
+.nav-links a:hover{color:var(--ink);background:rgba(242,239,233,.06)}
+.nav-cta{display:flex;align-items:center;gap:10px}
+.burger{display:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line-2);position:relative}
+.burger span{position:absolute;left:14px;right:14px;height:1.5px;background:var(--ink);transition:transform .45s var(--ease),top .45s var(--ease)}
+.burger span:nth-child(1){top:19px}.burger span:nth-child(2){top:26px}
+.menu-open .burger span:nth-child(1){top:22.5px;transform:rotate(45deg)}
+.menu-open .burger span:nth-child(2){top:22.5px;transform:rotate(-45deg)}
+
+.mobile-menu{position:fixed;inset:0;z-index:70;background:var(--bg);padding:calc(96px + env(safe-area-inset-top)) var(--gutter) calc(32px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;justify-content:space-between;clip-path:circle(0% at calc(100% - 40px) 36px);transition:clip-path .8s var(--ease-in-out);visibility:hidden}
+.menu-open .mobile-menu{clip-path:circle(150% at calc(100% - 40px) 36px);visibility:visible}
+.mobile-menu nav a{display:block;font-variation-settings:"wdth" 118;font-weight:800;text-transform:uppercase;font-size:clamp(36px,11vw,64px);letter-spacing:-.03em;line-height:1.05;padding:6px 0;border-bottom:1px solid var(--line);
+  transform:translateY(30px);opacity:0;transition:transform .7s var(--ease),opacity .7s var(--ease)}
+.menu-open .mobile-menu nav a{transform:none;opacity:1}
+.menu-open .mobile-menu nav a:nth-child(1){transition-delay:.18s}
+.menu-open .mobile-menu nav a:nth-child(2){transition-delay:.23s}
+.menu-open .mobile-menu nav a:nth-child(3){transition-delay:.28s}
+.menu-open .mobile-menu nav a:nth-child(4){transition-delay:.33s}
+.menu-open .mobile-menu nav a:nth-child(5){transition-delay:.38s}
+.mobile-menu .meta{display:grid;gap:6px;color:var(--ink-2)}
+
+/* ---------- buttons ---------- */
+.btn{--h:52px;position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:var(--h);padding:0 26px;border-radius:999px;font-weight:600;font-size:15px;letter-spacing:.01em;white-space:nowrap;overflow:hidden;isolation:isolate;transition:transform .5s var(--ease),color .4s}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary::before{content:"";position:absolute;inset:0;background:var(--ink);transform:translateY(101%);border-radius:inherit;transition:transform .55s var(--ease);z-index:-1}
+.btn-primary:hover::before{transform:none}
+.btn-ghost{border:1px solid var(--line-2);color:var(--ink)}
+.btn-ghost::before{content:"";position:absolute;inset:0;background:var(--ink);transform:scale(0);border-radius:inherit;transition:transform .55s var(--ease);z-index:-1}
+.btn-ghost:hover{color:var(--bg)}
+.btn-ghost:hover::before{transform:scale(1)}
+.btn-sm{--h:44px;padding:0 18px;font-size:14px}
+.btn svg{width:18px;height:18px;transition:transform .5s var(--ease)}
+.btn:hover svg.arrow{transform:translateX(4px)}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding-top:calc(110px + env(safe-area-inset-top));padding-bottom:clamp(28px,5vw,56px);isolation:isolate;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.hero-bg::before{content:"";position:absolute;width:90vmax;height:90vmax;left:50%;top:38%;transform:translate(-50%,-50%);
+  background:radial-gradient(closest-side,rgba(224,168,78,.18),rgba(226,69,44,.06) 45%,transparent 70%);filter:blur(10px);animation:breathe 9s ease-in-out infinite}
+.hero-bg::after{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:72px 72px;mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 20%,transparent 75%);opacity:.5}
+@keyframes breathe{50%{transform:translate(-50%,-52%) scale(1.08);opacity:.8}}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:clamp(20px,3vw,36px)}
+.hero h1 .line{display:block;overflow:hidden;padding-bottom:.04em}
+.hero h1 .line > span{display:inline-block;transform:translateY(105%);transition:transform 1.2s var(--ease)}
+.ready .hero h1 .line > span{transform:none}
+.ready .hero h1 .line:nth-child(2) > span{transition-delay:.08s}
+.ready .hero h1 .line:nth-child(3) > span{transition-delay:.16s}
+.hero-car{position:relative;margin:clamp(8px,2vw,24px) auto 0;width:min(100%,1040px)}
+.hero-car svg{width:100%;height:auto;overflow:visible}
+.car-stroke{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:var(--len,3000);stroke-dashoffset:var(--len,3000)}
+.ready .car-stroke{animation:draw 2.6s var(--ease-in-out) .5s forwards}
+.car-accent{stroke:var(--accent)}
+.car-wheel{transform-box:fill-box;transform-origin:center}
+.ready .car-wheel{animation:spin 2.4s var(--ease) .6s both}
+@keyframes spin{from{transform:rotate(-540deg)}to{transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.car-sweep{opacity:0}
+.ready .car-sweep{animation:sweep 4.5s ease-in-out 3s infinite}
+@keyframes sweep{0%{opacity:0;transform:translateX(-260px)}15%{opacity:1}55%{opacity:0;transform:translateX(800px)}100%{opacity:0;transform:translateX(800px)}}
+.hero-bottom{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(24px,4vw,64px);align-items:end;margin-top:clamp(20px,3vw,36px)}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.stat{padding:18px 0 0;border-right:1px solid var(--line);padding-right:12px}
+.stat + .stat{padding-left:clamp(12px,2vw,24px)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-variation-settings:"wdth" 112;font-weight:700;font-size:clamp(26px,3.2vw,44px);letter-spacing:-.03em;line-height:1}
+.stat span{display:block;color:var(--muted);font-size:13px;margin-top:8px;line-height:1.35}
+.fade-up{opacity:0;transform:translateY(24px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.ready .fade-up{opacity:1;transform:none}
+.ready .fade-up.d1{transition-delay:.35s}.ready .fade-up.d2{transition-delay:.5s}.ready .fade-up.d3{transition-delay:.65s}
+.scroll-hint{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.scroll-hint i{width:1px;height:34px;background:var(--line-2);position:relative;overflow:hidden}
+.scroll-hint i::after{content:"";position:absolute;inset:0;background:var(--accent);animation:drip 2s var(--ease-in-out) infinite}
+@keyframes drip{0%{transform:translateY(-100%)}100%{transform:translateY(100%)}}
+
+/* ---------- marquee ---------- */
+.marquee{border-block:1px solid var(--line);overflow:hidden;padding:22px 0;background:var(--bg-2)}
+.marquee-track{display:flex;width:max-content;animation:marquee 38s linear infinite}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-group{display:flex;align-items:center;gap:clamp(28px,5vw,64px);padding-right:clamp(28px,5vw,64px)}
+.marquee-group span{font-variation-settings:"wdth" 125;font-weight:700;font-size:clamp(20px,2.6vw,32px);letter-spacing:.02em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.marquee-group em{font-style:normal;color:var(--accent);font-size:20px}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* ---------- sections ---------- */
+section{position:relative}
+.sec{padding-block:clamp(84px,12vw,170px)}
+.sec-head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:clamp(40px,6vw,80px)}
+.sec-head .lead{margin:0}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 1.1s var(--ease),transform 1.1s var(--ease);transition-delay:var(--d,0s)}
+.reveal.in{opacity:1;transform:none}
+.split .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.06em;margin-bottom:-.06em}
+.split .w > span{display:inline-block;transform:translateY(110%);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i,0) * 40ms)}
+.split.in .w > span{transform:none}
+
+/* services */
+.services{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{--mx:50%;--my:50%;position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-2);padding:clamp(24px,3vw,36px);overflow:hidden;isolation:isolate;
+  display:flex;flex-direction:column;min-height:380px;transition:border-color .5s,transform .8s var(--ease)}
+.card::before{content:"";position:absolute;inset:0;z-index:-1;opacity:0;transition:opacity .5s;
+  background:radial-gradient(420px circle at var(--mx) var(--my),rgba(224,168,78,.14),transparent 45%)}
+.card:hover{border-color:var(--line-2)}
+.card:hover::before{opacity:1}
+.card.c-1{grid-column:span 7}.card.c-2{grid-column:span 5}.card.c-3{grid-column:span 5}.card.c-4{grid-column:span 7}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.card-num{color:var(--muted)}
+.card-ico{width:58px;height:58px;border-radius:16px;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--accent);transition:transform .8s var(--ease),background .5s,color .5s}
+.card:hover .card-ico{transform:rotate(-12deg) scale(1.06);background:var(--accent);color:var(--accent-ink)}
+.card-ico svg{width:28px;height:28px}
+.card h3{font-variation-settings:"wdth" 115;font-weight:800;font-size:clamp(28px,3vw,42px);letter-spacing:-.03em;line-height:1;text-transform:uppercase;margin:auto 0 14px;padding-top:48px}
+.card p{color:var(--ink-2);margin:0 0 20px;max-width:46ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tags span{font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2)}
+.card.featured{background:linear-gradient(160deg,#1d1710,var(--bg-2) 60%);border-color:rgba(224,168,78,.3)}
+.card .badge{position:absolute;right:clamp(24px,3vw,36px);bottom:clamp(24px,3vw,36px);font-family:var(--serif);font-style:italic;font-size:clamp(70px,9vw,130px);line-height:.8;color:rgba(224,168,78,.12);pointer-events:none;z-index:-1}
+
+/* premium */
+.premium{background:var(--bg-2);border-block:1px solid var(--line);overflow:hidden}
+.premium-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,96px);align-items:center}
+.gauge-wrap{position:relative;aspect-ratio:1;max-width:520px;width:100%;margin-inline:auto}
+.gauge-wrap svg{width:100%;height:100%}
+.gauge-ticks line{stroke:var(--line-2);stroke-width:2}
+.gauge-ticks line.major{stroke:var(--ink-2);stroke-width:3}
+.gauge-ticks line.red{stroke:var(--red)}
+.gauge-arc{fill:none;stroke:url(#gaugeGrad);stroke-width:10;stroke-linecap:round;stroke-dasharray:var(--arc,800);stroke-dashoffset:var(--arc,800);transition:stroke-dashoffset 2.4s var(--ease)}
+.gauge-needle{transform-origin:260px 260px;transform:rotate(-135deg);transition:transform 2.4s cubic-bezier(.34,1.3,.5,1)}
+.in .gauge-arc{stroke-dashoffset:calc(var(--arc,800) * .18)}
+.in .gauge-needle{transform:rotate(86deg)}
+.gauge-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.gauge-center b{display:block;font-variation-settings:"wdth" 125;font-weight:800;font-size:clamp(48px,8vw,96px);letter-spacing:-.04em;line-height:1;margin-top:38%}
+.gauge-center span{color:var(--muted)}
+.feature-list{list-style:none;padding:0;margin:32px 0 36px;display:grid;gap:0}
+.feature-list li{display:grid;grid-template-columns:44px 1fr;gap:12px;padding:18px 0;border-top:1px solid var(--line)}
+.feature-list li:last-child{border-bottom:1px solid var(--line)}
+.feature-list b{display:block;font-weight:600;font-size:17px;margin-bottom:2px}
+.feature-list span{color:var(--muted);font-size:15px}
+.feature-list .mono{color:var(--accent);padding-top:3px}
+.brands{display:flex;flex-wrap:wrap;gap:8px}
+.brands span{font-variation-settings:"wdth" 112;font-weight:600;font-size:14px;padding:9px 14px;border-radius:10px;background:var(--bg-3);border:1px solid var(--line);color:var(--ink-2)}
+
+/* process */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:s}
+.step{position:relative;padding:28px 0 0;border-top:1px solid var(--line-2)}
+.step::before{content:"";position:absolute;top:-1px;left:0;height:1px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform 1.4s var(--ease);transition-delay:var(--d,0s)}
+.step.in::before{transform:none}
+.step .mono{color:var(--accent)}
+.step h4{font-variation-settings:"wdth" 112;font-weight:700;font-size:24px;letter-spacing:-.02em;margin:16px 0 10px}
+.step p{color:var(--ink-2);margin:0;font-size:15.5px}
+
+/* big statement */
+.statement{padding-block:clamp(84px,12vw,170px);text-align:center}
+.statement p{font-variation-settings:"wdth" 105;font-weight:500;font-size:clamp(28px,4.6vw,68px);letter-spacing:-.03em;line-height:1.08;margin:0 auto;max-width:20ch}
+.statement .word{color:rgba(242,239,233,.16);transition:color .4s}
+.statement .word.on{color:var(--ink)}
+.statement .serif{color:var(--accent)}
+.statement .word.serif{color:rgba(224,168,78,.2)}
+.statement .word.serif.on{color:var(--accent)}
+
+/* numbers */
+.numbers{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--line)}
+.num{padding:clamp(28px,4vw,48px) clamp(16px,2vw,28px);border-right:1px solid var(--line)}
+.num:last-child{border-right:0}
+.num b{display:block;font-variation-settings:"wdth" 120;font-weight:800;font-size:clamp(40px,5.4vw,80px);letter-spacing:-.04em;line-height:1}
+.num b sup{font-size:.45em;color:var(--accent);vertical-align:top;margin-left:2px}
+.num span{color:var(--muted);font-size:14px;display:block;margin-top:10px}
+
+/* testimonials */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.quote{border:1px solid var(--line);border-radius:var(--radius);padding:clamp(24px,3vw,34px);background:var(--bg-2);display:flex;flex-direction:column;gap:24px}
+.stars{display:flex;gap:3px;color:var(--accent)}
+.stars svg{width:16px;height:16px}
+.quote blockquote{margin:0;font-family:var(--serif);font-size:clamp(22px,2vw,27px);line-height:1.25}
+.quote footer{margin-top:auto;display:flex;align-items:center;gap:12px;color:var(--ink-2);font-size:14px}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--bg-3);border:1px solid var(--line-2);color:var(--accent);font-size:14px}
+.quote footer small{display:block;color:var(--muted);font-size:13px}
+
+/* faq */
+.faq-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:clamp(32px,6vw,96px)}
+.faq details{border-top:1px solid var(--line)}
+.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;display:flex;justify-content:space-between;gap:20px;align-items:center;padding:24px 0;cursor:pointer;font-weight:600;font-size:clamp(17px,1.6vw,20px)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary i{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--line-2);position:relative;transition:transform .5s var(--ease),background .4s}
+.faq summary i::before,.faq summary i::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:1.5px;background:var(--ink);transform:translate(-50%,-50%)}
+.faq summary i::after{transform:translate(-50%,-50%) rotate(90deg);transition:transform .5s var(--ease)}
+.faq details[open] summary i{background:var(--accent);border-color:var(--accent)}
+.faq details[open] summary i::before,.faq details[open] summary i::after{background:var(--accent-ink)}
+.faq details[open] summary i::after{transform:translate(-50%,-50%) rotate(0)}
+.faq .answer{display:grid;grid-template-rows:0fr;transition:grid-template-rows .6s var(--ease)}
+.faq details[open] .answer{grid-template-rows:1fr}
+.faq .answer > div{overflow:hidden}
+.faq .answer p{margin:0 0 24px;color:var(--ink-2);max-width:60ch}
+
+/* contact */
+.contact{background:var(--ink);color:var(--bg);border-radius:clamp(22px,3vw,36px);margin-inline:clamp(8px,1.4vw,20px);overflow:hidden;position:relative;isolation:isolate}
+.contact::before{content:"";position:absolute;right:-20%;top:-40%;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(224,168,78,.45),transparent);z-index:-1;filter:blur(20px)}
+.contact .h-l .serif{color:#a36a12}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,96px)}
+.contact .lead{color:#3d3a35}
+.info{display:grid;gap:0;margin-top:36px}
+.info a,.info div{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:16px 0;border-top:1px solid rgba(11,11,12,.12);font-size:16px}
+.info .mono{color:#6b665d;padding-top:3px}
+.info a:hover strong{text-decoration:underline;text-underline-offset:4px}
+form{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+.field{position:relative;display:flex;flex-direction:column;gap:8px}
+.field.full{grid-column:1/-1}
+.field label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b665d}
+.field input,.field select,.field textarea{font:inherit;font-size:16px;color:var(--bg);background:rgba(11,11,12,.04);border:1px solid rgba(11,11,12,.14);border-radius:12px;padding:14px 16px;min-height:52px;width:100%;transition:border-color .3s,background .3s;-webkit-appearance:none;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230b0b0c' stroke-width='1.6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+.field textarea{min-height:110px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--bg);background:#fff}
+.contact .btn-primary{background:var(--bg);color:var(--ink)}
+.contact .btn-primary::before{background:var(--accent)}
+.contact .btn-primary:hover{color:var(--accent-ink)}
+.form-note{grid-column:1/-1;font-size:13px;color:#6b665d;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(11,11,12,.16);font-size:14px;cursor:pointer;transition:background .3s,color .3s,border-color .3s;user-select:none}
+.chip input:checked + span{background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.chip input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+
+/* footer */
+footer.site{padding:clamp(64px,8vw,110px) 0 calc(32px + env(safe-area-inset-bottom))}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;margin-bottom:clamp(48px,8vw,100px)}
+.foot-grid h5{margin:0 0 16px;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:400;letter-spacing:.12em;text-transform:uppercase}
+.foot-grid ul{list-style:none;margin:0;padding:0;display:grid;gap:10px;color:var(--ink-2);font-size:15px}
+.foot-grid a:hover{color:var(--accent)}
+.giant{font-variation-settings:"wdth" 125;font-weight:900;font-size:clamp(56px,17.5vw,280px);letter-spacing:-.06em;line-height:.8;text-transform:uppercase;white-space:nowrap;
+  background:linear-gradient(180deg,var(--ink) 30%,rgba(242,239,233,.05));-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;margin-left:-.04em}
+.foot-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:28px;color:var(--muted);font-size:13px}
+
+/* mobile action bar */
+.actionbar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;display:none;gap:8px;padding:8px;border-radius:999px;background:rgba(24,24,27,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line-2);
+  transform:translateY(140%);transition:transform .6s var(--ease)}
+.actionbar.show{transform:none}
+.actionbar a{flex:1;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px}
+.actionbar a:first-child{background:var(--bg-3);border:1px solid var(--line)}
+.actionbar a:last-child{background:var(--accent);color:var(--accent-ink)}
+.actionbar svg{width:18px;height:18px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;z-index:120;background:var(--ink);color:var(--bg);padding:14px 20px;border-radius:14px;font-size:15px;font-weight:500;transition:opacity .4s,transform .5s var(--ease);pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- responsive ---------- */
+@media (max-width:1024px){
+  .nav-links{display:none}
+  .burger{display:block}
+  .nav-cta .btn{display:none}
+  .card.c-1,.card.c-2,.card.c-3,.card.c-4{grid-column:span 6}
+  .steps{grid-template-columns:repeat(2,1fr);row-gap:40px}
+  .quotes{grid-template-columns:1fr 1fr}
+  .quotes .quote:last-child{grid-column:1/-1}
+  .foot-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  body{font-size:16px}
+  .hero{justify-content:center}
+  .hero-bottom{grid-template-columns:1fr}
+  .hero-actions .btn{flex:1}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .stat span{font-size:12px}
+  .scroll-hint{display:none}
+  .sec-head{grid-template-columns:1fr}
+  .services{grid-template-columns:1fr}
+  .card.c-1,.card.c-2,.card.c-3,.card.c-4{grid-column:1/-1;min-height:0}
+  .card h3{padding-top:56px}
+  .premium-grid{grid-template-columns:1fr}
+  .gauge-wrap{max-width:360px}
+  .steps{grid-template-columns:1fr;row-gap:32px}
+  .numbers{grid-template-columns:1fr 1fr}
+  .num:nth-child(2){border-right:0}
+  .num:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .quotes{grid-template-columns:1fr}
+  .faq-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr}
+  form{grid-template-columns:1fr}
+  .info a,.info div{grid-template-columns:96px 1fr}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .foot-grid > div:first-child{grid-column:1/-1}
+  .actionbar{display:flex}
+  footer.site{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+}
+@media (hover:none){
+  .card::before{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important}
+  html{scroll-behavior:auto}
+  .marquee-track{animation:none}
+  .grain{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-inner">
+    <div class="intro-logo"><span>MOTOR</span><span style="color:var(--accent);animation-delay:.08s">WORLD</span></div>
+    <div class="intro-bar"><i></i></div>
+  </div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a href="#top" class="logo" aria-label="MotorWorld, inicio">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18V6l6 7 3-4 3 4 6-7v12"/></svg>
+      </span>
+      <span>MOTOR<b>WORLD</b></span>
+    </a>
+    <nav class="nav-links" aria-label="Principal">
+      <a href="#servicios">Servicios</a>
+      <a href="#alta-gama">Alta gama</a>
+      <a href="#proceso">Proceso</a>
+      <a href="#opiniones">Opiniones</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="tel:+34954000000" class="btn btn-ghost btn-sm">954 000 000</a>
+      <a href="#cita" class="btn btn-primary btn-sm">Pedir cita</a>
+      <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu"><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+  <nav aria-label="Menú móvil">
+    <a href="#servicios">Servicios</a>
+    <a href="#alta-gama">Alta gama</a>
+    <a href="#proceso">Proceso</a>
+    <a href="#opiniones">Opiniones</a>
+    <a href="#cita">Pedir cita</a>
+  </nav>
+  <div class="meta">
+    <span class="mono" style="color:var(--muted)">Sevilla · L–V 8:30–19:30 · S 9:00–13:30</span>
+    <a href="tel:+34954000000" style="font-size:22px;font-weight:600">954 000 000</a>
+  </div>
+</div>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hero-top fade-up">
+      <span class="eyebrow mono">Taller mecánico · Sevilla</span>
+      <span class="mono" style="color:var(--muted)">37.3891° N — 5.9845° W</span>
+    </div>
+    <h1 class="h-xl">
+      <span class="line"><span>Tu coche,</span></span>
+      <span class="line"><span>en manos <span class="serif">expertas</span></span></span>
+    </h1>
+
+    <div class="hero-car" aria-hidden="true">
+      <svg viewBox="0 0 800 250" id="car">
+        <defs>
+          <linearGradient id="sweepGrad" x1="0" x2="1">
+            <stop offset="0" stop-color="#e0a84e" stop-opacity="0"/>
+            <stop offset=".5" stop-color="#f3c77a" stop-opacity=".9"/>
+            <stop offset="1" stop-color="#e0a84e" stop-opacity="0"/>
+          </linearGradient>
+          <clipPath id="bodyClip"><path d="M48 200 L48 178 C50 164 66 158 92 154 L200 144 C252 108 318 84 400 80 C472 77 530 94 588 128 L688 142 C728 148 756 162 760 184 L760 200 Z"/></clipPath>
+        </defs>
+        <ellipse cx="400" cy="236" rx="360" ry="8" fill="#e0a84e" opacity=".08"/>
+        <line class="car-stroke" x1="10" y1="244" x2="790" y2="244" stroke-opacity=".25"/>
+        <path class="car-stroke" d="M48 200 L48 178 C50 164 66 158 92 154 L200 144 C252 108 318 84 400 80 C472 77 530 94 588 128 L688 142 C728 148 756 162 760 184 L760 200 L668 200 A48 48 0 0 0 572 200 L228 200 A48 48 0 0 0 132 200 Z"/>
+        <path class="car-stroke" d="M236 140 C280 112 330 98 394 96 C448 95 496 106 538 128 L524 136 L252 146 Z" stroke-opacity=".7"/>
+        <path class="car-stroke" d="M392 97 L388 142" stroke-opacity=".7"/>
+        <path class="car-stroke" d="M240 172 L560 166" stroke-opacity=".35"/>
+        <path class="car-stroke car-accent" d="M712 152 L748 166"/>
+        <path class="car-stroke car-accent" d="M52 168 L84 164"/>
+        <g class="car-wheel">
+          <circle class="car-stroke" cx="620" cy="200" r="38"/>
+          <circle class="car-stroke car-accent" cx="620" cy="200" r="22"/>
+          <path class="car-stroke" d="M620 178 L620 222 M598 200 L642 200 M604 184 L636 216 M636 184 L604 216" stroke-opacity=".5"/>
+        </g>
+        <g class="car-wheel">
+          <circle class="car-stroke" cx="180" cy="200" r="38"/>
+          <circle class="car-stroke car-accent" cx="180" cy="200" r="22"/>
+          <path class="car-stroke" d="M180 178 L180 222 M158 200 L202 200 M164 184 L196 216 M196 184 L164 216" stroke-opacity=".5"/>
+        </g>
+        <g clip-path="url(#bodyClip)">
+          <rect class="car-sweep" x="0" y="60" width="260" height="160" fill="url(#sweepGrad)" style="mix-blend-mode:screen"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero-bottom">
+      <div class="fade-up d1">
+        <p class="lead">Mecánica general, neumáticos, pre‑ITV y especialistas en vehículos de alta gama. Diagnosis con equipos oficiales, presupuesto cerrado antes de tocar una sola tuerca.</p>
+        <div class="hero-actions">
+          <a href="#cita" class="btn btn-primary magnetic">Pedir cita
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a href="https://wa.me/34600000000" target="_blank" rel="noopener" class="btn btn-ghost magnetic">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg>
+            WhatsApp</a>
+        </div>
+      </div>
+      <div class="fade-up d2">
+        <div class="stats">
+          <div class="stat"><b>4,9★</b><span>Valoración media en Google</span></div>
+          <div class="stat"><b>24 h</b><span>Diagnosis y presupuesto</span></div>
+          <div class="stat"><b>12 m</b><span>Garantía en cada reparación</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee" aria-label="Marcas con las que trabajamos">
+  <div class="marquee-track">
+    <div class="marquee-group">
+      <span>Porsche</span><em>✦</em><span>Mercedes‑Benz</span><em>✦</em><span>BMW M</span><em>✦</em><span>Audi RS</span><em>✦</em><span>Land Rover</span><em>✦</em><span>Maserati</span><em>✦</em><span>Tesla</span><em>✦</em><span>Volvo</span><em>✦</em>
+    </div>
+    <div class="marquee-group" aria-hidden="true">
+      <span>Porsche</span><em>✦</em><span>Mercedes‑Benz</span><em>✦</em><span>BMW M</span><em>✦</em><span>Audi RS</span><em>✦</em><span>Land Rover</span><em>✦</em><span>Maserati</span><em>✦</em><span>Tesla</span><em>✦</em><span>Volvo</span><em>✦</em>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section class="sec" id="servicios">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow mono reveal">01 — Servicios</span>
+        <h2 class="h-l split" style="margin-top:20px">Todo lo que tu coche <span class="serif">necesita</span></h2>
+      </div>
+      <p class="lead reveal" style="--d:.15s;max-width:38ch">Un único taller para el mantenimiento del día a día y para los coches que exigen algo más.</p>
+    </div>
+
+    <div class="services">
+      <article class="card c-1 reveal">
+        <div class="card-top">
+          <span class="card-num mono">S/01</span>
+          <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6Z"/></svg></span>
+        </div>
+        <h3>Mecánica general</h3>
+        <p>Revisiones oficiales sin perder la garantía del fabricante, distribución, embrague, frenos, suspensión, electricidad y diagnosis electrónica multimarca.</p>
+        <div class="tags"><span>Revisión oficial</span><span>Distribución</span><span>Frenos</span><span>Diagnosis</span><span>Aire acondicionado</span></div>
+      </article>
+
+      <article class="card c-2 reveal" style="--d:.1s">
+        <div class="card-top">
+          <span class="card-num mono">S/02</span>
+          <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21" stroke-linecap="round"/></svg></span>
+        </div>
+        <h3>Neumáticos</h3>
+        <p>Primeras marcas al mejor precio, montaje, equilibrado y alineado 3D. Hotel de neumáticos para tu juego de invierno o de circuito.</p>
+        <div class="tags"><span>Alineado 3D</span><span>Run‑flat</span><span>Hasta 23″</span></div>
+      </article>
+
+      <article class="card c-3 reveal">
+        <div class="card-top">
+          <span class="card-num mono">S/03</span>
+          <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6l8-3Z"/></svg></span>
+        </div>
+        <h3>Pre‑ITV &amp; ITV</h3>
+        <p>Revisamos los mismos puntos que la estación y, si quieres, llevamos nosotros el coche a pasar la ITV y te lo devolvemos con la pegatina puesta.</p>
+        <div class="tags"><span>Gases</span><span>Luces</span><span>Recogida y entrega</span></div>
+      </article>
+
+      <article class="card c-4 featured reveal" style="--d:.1s">
+        <div class="card-top">
+          <span class="card-num mono" style="color:var(--accent)">S/04 · Especialidad</span>
+          <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2.5l2.8 5.8 6.2.9-4.5 4.4 1.1 6.3L12 17l-5.6 2.9 1.1-6.3L3 9.2l6.2-.9L12 2.5Z"/></svg></span>
+        </div>
+        <h3>Alta gama</h3>
+        <p>Técnicos formados en Porsche, Mercedes‑AMG y BMW M. Equipos de diagnosis de concesionario, recambio original y un trato a la altura de tu coche.</p>
+        <div class="tags"><span>Recambio original</span><span>Diagnosis oficial</span><span>Coche de cortesía</span></div>
+        <span class="badge" aria-hidden="true">Premium</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- PREMIUM -->
+<section class="sec premium" id="alta-gama">
+  <div class="wrap premium-grid">
+    <div class="gauge-wrap reveal" id="gauge">
+      <svg viewBox="0 0 520 520" aria-hidden="true">
+        <defs>
+          <linearGradient id="gaugeGrad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#e0a84e"/>
+            <stop offset=".75" stop-color="#f3c77a"/>
+            <stop offset="1" stop-color="#e2452c"/>
+          </linearGradient>
+        </defs>
+        <circle cx="260" cy="260" r="236" fill="none" stroke="rgba(242,239,233,.08)"/>
+        <circle cx="260" cy="260" r="200" fill="#0e0e10" stroke="rgba(242,239,233,.06)"/>
+        <g class="gauge-ticks" id="ticks"></g>
+        <path class="gauge-arc" id="gaugeArc" d=""/>
+        <g class="gauge-needle">
+          <line x1="260" y1="260" x2="260" y2="92" stroke="#e2452c" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="260" cy="260" r="16" fill="#18181b" stroke="#e2452c" stroke-width="3"/>
+        </g>
+        <g fill="#8b877f" font-family="JetBrains Mono, monospace" font-size="15" text-anchor="middle" id="tickLabels"></g>
+      </svg>
+      <div class="gauge-center"><div><b><span data-count="9" data-dur="2400">0</span>k</b><span class="mono">rpm · precisión</span></div></div>
+    </div>
+
+    <div>
+      <span class="eyebrow mono reveal">02 — Alta gama</span>
+      <h2 class="h-l split" style="margin-top:20px">Trato de <span class="serif">concesionario</span>, sin su factura</h2>
+      <p class="lead reveal" style="--d:.1s;margin-top:24px">Tu deportivo o tu SUV premium merece algo más que un elevador libre. Lo tratamos como si fuera nuestro.</p>
+      <ul class="feature-list">
+        <li class="reveal" style="--d:.05s"><span class="mono">01</span><div><b>Diagnosis oficial</b><span>PIWIS, XENTRY, ISTA y ODIS: los mismos equipos que la marca.</span></div></li>
+        <li class="reveal" style="--d:.1s"><span class="mono">02</span><div><b>Recambio original u OEM</b><span>Tú eliges, con trazabilidad y factura de cada pieza.</span></div></li>
+        <li class="reveal" style="--d:.15s"><span class="mono">03</span><div><b>Vídeo del proceso</b><span>Te enviamos fotos y vídeo de lo que encontramos antes de reparar.</span></div></li>
+        <li class="reveal" style="--d:.2s"><span class="mono">04</span><div><b>Recogida a domicilio</b><span>Vamos a por el coche en Sevilla y área metropolitana.</span></div></li>
+      </ul>
+      <div class="brands reveal" style="--d:.25s"><span>Porsche</span><span>Mercedes‑AMG</span><span>BMW M</span><span>Audi RS</span><span>Range Rover</span><span>Maserati</span><span>Lexus</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATEMENT -->
+<section class="statement">
+  <div class="wrap">
+    <p id="statement">Sin sorpresas en la factura. Te llamamos, te explicamos y <span class="serif">solo entonces</span> reparamos.</p>
+  </div>
+</section>
+
+<!-- NUMBERS -->
+<div class="wrap">
+  <div class="numbers">
+    <div class="num reveal"><b><span data-count="15">0</span><sup>+</sup></b><span>Años en Sevilla</span></div>
+    <div class="num reveal" style="--d:.08s"><b><span data-count="12000" data-format="1">0</span><sup>+</sup></b><span>Vehículos atendidos</span></div>
+    <div class="num reveal" style="--d:.16s"><b><span data-count="8">0</span></b><span>Técnicos certificados</span></div>
+    <div class="num reveal" style="--d:.24s"><b><span data-count="98">0</span><sup>%</sup></b><span>Clientes que repiten</span></div>
+  </div>
+</div>
+
+<!-- PROCESS -->
+<section class="sec" id="proceso">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow mono reveal">03 — Cómo trabajamos</span>
+        <h2 class="h-l split" style="margin-top:20px">Cuatro pasos. <span class="serif">Cero</span> dudas.</h2>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><span class="mono">Paso 01</span><h4>Reserva</h4><p>Pide cita online, por WhatsApp o por teléfono. Te confirmamos en menos de 2 horas.</p></div>
+      <div class="step reveal" style="--d:.12s"><span class="mono">Paso 02</span><h4>Diagnosis</h4><p>Revisamos el coche con equipos oficiales y te mandamos fotos de lo que vemos.</p></div>
+      <div class="step reveal" style="--d:.24s"><span class="mono">Paso 03</span><h4>Presupuesto cerrado</h4><p>Precio final por escrito. No hacemos nada que no hayas aprobado.</p></div>
+      <div class="step reveal" style="--d:.36s"><span class="mono">Paso 04</span><h4>Entrega</h4><p>Coche limpio, informe de la reparación y 12 meses de garantía.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="sec" id="opiniones" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow mono reveal">04 — Opiniones</span>
+        <h2 class="h-l split" style="margin-top:20px">Lo que dicen <span class="serif">nuestros</span> clientes</h2>
+      </div>
+    </div>
+    <!-- Textos de ejemplo: sustituir por reseñas reales de Google -->
+    <div class="quotes">
+      <figure class="quote reveal" style="margin:0">
+        <div class="stars" aria-label="5 de 5 estrellas"></div>
+        <blockquote>“Llevé el Cayenne por un fallo que en el concesionario no daban encontrado. Aquí lo diagnosticaron en una mañana.”</blockquote>
+        <footer><span class="avatar">JM</span><div>Javier M.<small>Porsche Cayenne · Nervión</small></div></footer>
+      </figure>
+      <figure class="quote reveal" style="margin:0;--d:.1s">
+        <div class="stars" aria-label="5 de 5 estrellas"></div>
+        <blockquote>“Me recogieron el coche en casa, le pasaron la ITV y me lo devolvieron lavado. Así da gusto.”</blockquote>
+        <footer><span class="avatar">LR</span><div>Lucía R.<small>Seat León · Triana</small></div></footer>
+      </figure>
+      <figure class="quote reveal" style="margin:0;--d:.2s">
+        <div class="stars" aria-label="5 de 5 estrellas"></div>
+        <blockquote>“Presupuesto claro, fotos de cada pieza y el precio final fue exactamente el acordado.”</blockquote>
+        <footer><span class="avatar">AG</span><div>Antonio G.<small>BMW M3 · Los Remedios</small></div></footer>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec faq" id="faq" style="padding-top:0">
+  <div class="wrap faq-grid">
+    <div>
+      <span class="eyebrow mono reveal">05 — Preguntas</span>
+      <h2 class="h-l split" style="margin-top:20px">Dudas <span class="serif">frecuentes</span></h2>
+    </div>
+    <div class="reveal" style="--d:.1s">
+      <details>
+        <summary>¿Pierdo la garantía del fabricante si no voy al concesionario?<i></i></summary>
+        <div class="answer"><div><p>No. La normativa europea te permite hacer el mantenimiento en cualquier taller siempre que se sigan las especificaciones del fabricante. Sellamos tu libro de mantenimiento y usamos recambio de calidad original.</p></div></div>
+      </details>
+      <details>
+        <summary>¿Cuánto tarda una revisión?<i></i></summary>
+        <div class="answer"><div><p>Una revisión estándar suele estar lista en el día. Si dejas el coche a primera hora, por la tarde lo tienes. Para reparaciones mayores te damos fecha cerrada con el presupuesto.</p></div></div>
+      </details>
+      <details>
+        <summary>¿Me lleváis el coche a pasar la ITV?<i></i></summary>
+        <div class="answer"><div><p>Sí. Hacemos la pre‑ITV, corregimos lo necesario y lo llevamos a la estación. Tú solo tienes que recogerlo con la inspección pasada.</p></div></div>
+      </details>
+      <details>
+        <summary>¿Tenéis coche de sustitución?<i></i></summary>
+        <div class="answer"><div><p>Para reparaciones de más de un día ofrecemos coche de cortesía (según disponibilidad) y servicio de recogida y entrega en Sevilla capital y área metropolitana.</p></div></div>
+      </details>
+      <details>
+        <summary>¿Qué formas de pago aceptáis?<i></i></summary>
+        <div class="answer"><div><p>Efectivo, tarjeta, Bizum y transferencia. Para importes altos, financiación en cómodos plazos.</p></div></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="sec contact" id="cita">
+  <div class="wrap contact-grid">
+    <div>
+      <span class="mono reveal" style="color:#6b665d">06 — Cita previa</span>
+      <h2 class="h-l split" style="margin-top:20px">Reserva tu <span class="serif">hueco</span></h2>
+      <p class="lead reveal" style="--d:.1s;margin-top:24px">Cuéntanos qué le pasa a tu coche y te respondemos por WhatsApp en menos de 2 horas en horario de taller.</p>
+      <div class="info reveal" style="--d:.15s">
+        <a href="https://maps.google.com/?q=MotorWorld+Sevilla" target="_blank" rel="noopener"><span class="mono">Dirección</span><strong>Calle de ejemplo, 00 · Sevilla<br><span style="font-weight:400;color:#6b665d">Ver en Google Maps →</span></strong></a>
+        <a href="tel:+34954000000"><span class="mono">Teléfono</span><strong>954 000 000</strong></a>
+        <a href="mailto:hola@motorworld.es"><span class="mono">Email</span><strong>hola@motorworld.es</strong></a>
+        <div><span class="mono">Horario</span><span>Lunes a viernes 8:30–19:30<br>Sábados 9:00–13:30</span></div>
+      </div>
+    </div>
+
+    <form id="form" class="reveal" style="--d:.15s" novalidate>
+      <div class="field full">
+        <label>Servicio</label>
+        <div class="chips" role="group" aria-label="Servicio">
+          <label class="chip"><input type="radio" name="servicio" value="Mecánica general" checked><span>Mecánica</span></label>
+          <label class="chip"><input type="radio" name="servicio" value="Neumáticos"><span>Neumáticos</span></label>
+          <label class="chip"><input type="radio" name="servicio" value="Pre-ITV / ITV"><span>ITV</span></label>
+          <label class="chip"><input type="radio" name="servicio" value="Alta gama"><span>Alta gama</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-name">Nombre</label>
+        <input id="f-name" name="nombre" autocomplete="name" required placeholder="Tu nombre">
+      </div>
+      <div class="field">
+        <label for="f-tel">Teléfono</label>
+        <input id="f-tel" name="telefono" type="tel" inputmode="tel" autocomplete="tel" required placeholder="600 000 000">
+      </div>
+      <div class="field">
+        <label for="f-car">Vehículo</label>
+        <input id="f-car" name="vehiculo" placeholder="Marca y modelo">
+      </div>
+      <div class="field">
+        <label for="f-date">Fecha preferida</label>
+        <input id="f-date" name="fecha" type="date">
+      </div>
+      <div class="field full">
+        <label for="f-msg">¿Qué le pasa?</label>
+        <textarea id="f-msg" name="mensaje" placeholder="Ruido al frenar, toca revisión, testigo encendido…"></textarea>
+      </div>
+      <div class="field full">
+        <button type="submit" class="btn btn-primary" style="width:100%;--h:58px">Enviar por WhatsApp
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+      <p class="form-note">Al enviar se abrirá WhatsApp con tu solicitud ya escrita. No guardamos ningún dato en esta web.</p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a href="#top" class="logo" style="margin-bottom:16px">
+          <span class="logo-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18V6l6 7 3-4 3 4 6-7v12"/></svg></span>
+          <span>MOTOR<b>WORLD</b></span>
+        </a>
+        <p style="color:var(--muted);max-width:34ch;margin:0;font-size:15px">Taller mecánico multimarca y especialista en alta gama en Sevilla.</p>
+      </div>
+      <div><h5>Servicios</h5><ul><li><a href="#servicios">Mecánica general</a></li><li><a href="#servicios">Neumáticos</a></li><li><a href="#servicios">Pre‑ITV</a></li><li><a href="#alta-gama">Alta gama</a></li></ul></div>
+      <div><h5>Taller</h5><ul><li><a href="#proceso">Cómo trabajamos</a></li><li><a href="#opiniones">Opiniones</a></li><li><a href="#faq">Preguntas</a></li><li><a href="#cita">Pedir cita</a></li></ul></div>
+      <div><h5>Contacto</h5><ul><li><a href="tel:+34954000000">954 000 000</a></li><li><a href="https://wa.me/34600000000" target="_blank" rel="noopener">WhatsApp</a></li><li><a href="mailto:hola@motorworld.es">hola@motorworld.es</a></li><li>Sevilla</li></ul></div>
+    </div>
+    <div class="giant" aria-hidden="true">MotorWorld</div>
+    <div class="foot-bottom">
+      <span>© <span id="year">2026</span> MotorWorld Sevilla. Todos los derechos reservados.</span>
+      <span><a href="#">Aviso legal</a> · <a href="#">Privacidad</a> · <a href="#">Cookies</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- MOBILE ACTION BAR -->
+<div class="actionbar" id="actionbar">
+  <a href="tel:+34954000000"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg>Llamar</a>
+  <a href="#cita">Pedir cita</a>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  $('#year').textContent = new Date().getFullYear();
+
+  /* Intro */
+  const start = () => {
+    $('#intro').classList.add('done');
+    document.documentElement.classList.add('ready');
+    document.body.classList.add('ready');
+    setTimeout(() => $('#intro').remove(), 1400);
+  };
+  if (reduce) start(); else window.addEventListener('load', () => setTimeout(start, 900));
+  setTimeout(() => { if (!document.body.classList.contains('ready')) start(); }, 3000);
+
+  /* Car stroke lengths */
+  $$('.car-stroke').forEach(p => {
+    try { const l = Math.ceil(p.getTotalLength()); p.style.setProperty('--len', l); } catch (e) {}
+  });
+
+  /* Stars */
+  const star = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.8 5.8 6.2.9-4.5 4.4 1.1 6.3L12 17l-5.6 2.9 1.1-6.3L3 9.2l6.2-.9L12 2.5Z"/></svg>';
+  $$('.stars').forEach(s => s.innerHTML = star.repeat(5));
+
+  /* Split headings into words */
+  $$('.split').forEach(el => {
+    let i = 0;
+    const walk = node => {
+      [...node.childNodes].forEach(n => {
+        if (n.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+            const w = document.createElement('span'); w.className = 'w';
+            const inner = document.createElement('span'); inner.textContent = part; inner.style.setProperty('--i', i++);
+            w.appendChild(inner); frag.appendChild(w);
+          });
+          n.replaceWith(frag);
+        } else if (n.nodeType === 1) walk(n);
+      });
+    };
+    walk(el);
+  });
+
+  /* Statement words */
+  const st = $('#statement');
+  (function wrapWords(node, serif) {
+    [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+          const s = document.createElement('span'); s.className = 'word' + (serif ? ' serif' : ''); s.textContent = part; frag.appendChild(s);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1) { const isSerif = n.classList.contains('serif'); if (isSerif) n.classList.remove('serif'); wrapWords(n, isSerif); }
+    });
+  })(st, false);
+  const words = $$('.word', st);
+
+  /* Gauge build */
+  const cx = 260, cy = 260, R = 176, startA = -225, endA = 45;
+  const pt = (a, r) => { const rad = a * Math.PI / 180; return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)]; };
+  const ticks = $('#ticks'), labels = $('#tickLabels'); let t = '', lb = '';
+  for (let i = 0; i <= 45; i++) {
+    const a = startA + (endA - startA) * i / 45, major = i % 5 === 0, red = i >= 36;
+    const [x1, y1] = pt(a, major ? 182 : 188), [x2, y2] = pt(a, 196);
+    t += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="${major ? 'major' : ''} ${red ? 'red' : ''}"/>`;
+    if (major) { const [lx, ly] = pt(a, 160); lb += `<text x="${lx.toFixed(1)}" y="${(ly + 5).toFixed(1)}">${i / 5}</text>`; }
+  }
+  ticks.innerHTML = t; labels.innerHTML = lb;
+  const [ax, ay] = pt(startA, 214), [bx, by] = pt(endA, 214);
+  const arc = $('#gaugeArc');
+  arc.setAttribute('d', `M${ax} ${ay} A214 214 0 1 1 ${bx} ${by}`);
+  try { arc.style.setProperty('--arc', Math.ceil(arc.getTotalLength())); } catch (e) {}
+
+  /* Counters */
+  const fmt = new Intl.NumberFormat('es-ES');
+  const runCount = el => {
+    if (el.dataset.done) return; el.dataset.done = 1;
+    const to = +el.dataset.count, dur = +(el.dataset.dur || 1800), t0 = performance.now();
+    const step = now => {
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 4), v = Math.round(to * e);
+      el.textContent = el.dataset.format ? fmt.format(v) : v;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    reduce ? (el.textContent = el.dataset.format ? fmt.format(to) : to) : requestAnimationFrame(step);
+  };
+
+  /* Reveal observer */
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      en.target.classList.add('in');
+      $$('[data-count]', en.target).forEach(runCount);
+      io.unobserve(en.target);
+    });
+  }, { threshold: .15, rootMargin: '0px 0px -8% 0px' });
+  $$('.reveal, .split, .step').forEach(el => io.observe(el));
+
+  /* Scroll-driven: progress, nav, statement, actionbar */
+  const nav = $('#nav'), prog = $('#progress'), bar = $('#actionbar'), hero = $('.hero');
+  let lastY = 0, ticking = false;
+  const onScroll = () => {
+    const y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
+    prog.style.transform = `scaleX(${h > 0 ? y / h : 0})`;
+    nav.classList.toggle('scrolled', y > 20);
+    const menuOpen = document.body.classList.contains('menu-open');
+    nav.classList.toggle('hide', !menuOpen && y > lastY && y > 400);
+    bar.classList.toggle('show', y > hero.offsetHeight * .6);
+    if (words.length) {
+      const r = st.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight * .85 - r.top) / (r.height + innerHeight * .4)));
+      const n = Math.round(p * words.length);
+      words.forEach((w, i) => w.classList.toggle('on', reduce || i < n));
+    }
+    lastY = y; ticking = false;
+  };
+  addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(onScroll); ticking = true; } }, { passive: true });
+  addEventListener('resize', onScroll); onScroll();
+
+  /* Mobile menu */
+  const burger = $('#burger'), menu = $('#mobile-menu');
+  const setMenu = open => {
+    document.body.classList.toggle('menu-open', open);
+    burger.setAttribute('aria-expanded', open);
+    burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    menu.setAttribute('aria-hidden', !open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  };
+  burger.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+  $$('a', menu).forEach(a => a.addEventListener('click', () => setMenu(false)));
+  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+  addEventListener('resize', () => { if (innerWidth > 1024) setMenu(false); });
+
+  /* Card spotlight + magnetic buttons (desktop only) */
+  if (finePointer && !reduce) {
+    $$('.card').forEach(c => c.addEventListener('pointermove', e => {
+      const r = c.getBoundingClientRect();
+      c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    }));
+    $$('.magnetic').forEach(b => {
+      b.addEventListener('pointermove', e => {
+        const r = b.getBoundingClientRect();
+        b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .22}px, ${(e.clientY - r.top - r.height / 2) * .3}px)`;
+      });
+      b.addEventListener('pointerleave', () => b.style.transform = '');
+    });
+    /* subtle parallax on the hero car */
+    const car = $('.hero-car');
+    addEventListener('pointermove', e => {
+      const x = (e.clientX / innerWidth - .5) * 14, y = (e.clientY / innerHeight - .5) * 8;
+      car.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }, { passive: true });
+    car.style.transition = 'transform 1.2s cubic-bezier(.22,1,.36,1)';
+  }
+
+  /* Min date = today */
+  const d = $('#f-date'); if (d) d.min = new Date().toISOString().slice(0, 10);
+
+  /* Form → WhatsApp */
+  const toast = msg => { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 3200); };
+  $('#form').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target, data = Object.fromEntries(new FormData(f));
+    if (!data.nombre.trim() || !data.telefono.trim()) {
+      toast('Indícanos tu nombre y teléfono, por favor.');
+      (!data.nombre.trim() ? f.nombre : f.telefono).focus();
+      return;
+    }
+    const lines = [
+      'Hola MotorWorld, quiero pedir cita.',
+      `• Servicio: ${data.servicio}`,
+      `• Nombre: ${data.nombre}`,
+      `• Teléfono: ${data.telefono}`,
+      data.vehiculo && `• Vehículo: ${data.vehiculo}`,
+      data.fecha && `• Fecha preferida: ${new Date(data.fecha + 'T12:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      data.mensaje && `• Detalle: ${data.mensaje}`
+    ].filter(Boolean).join('\n');
+    toast('Abriendo WhatsApp…');
+    setTimeout(() => window.open('https://wa.me/34600000000?text=' + encodeURIComponent(lines), '_blank', 'noopener'), 400);
+  });
+})();
+</script>
+</body>
+</html>

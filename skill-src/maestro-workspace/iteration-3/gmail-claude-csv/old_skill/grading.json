@@ -1,0 +1,75 @@
+{
+ "expectations": [
+  {
+   "text": "El script Python compila",
+   "passed": true,
+   "evidence": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-2/gmail-claude-csv/with_skill/outputs/gmail_clasificador.py"
+  },
+  {
+   "text": "IMAP sobre SSL",
+   "passed": true,
+   "evidence": "grep IMAP4_SSL"
+  },
+  {
+   "text": "Credenciales desde variables de entorno (nada hardcodeado)",
+   "passed": true,
+   "evidence": "grep environ"
+  },
+  {
+   "text": "Usa el SDK oficial de Anthropic",
+   "passed": true,
+   "evidence": "grep anthropic"
+  },
+  {
+   "text": "Restringe la salida a las 5 categorías válidas",
+   "passed": true,
+   "evidence": "grep categories validation"
+  },
+  {
+   "text": "Fallback si la respuesta del modelo no es JSON válido",
+   "passed": true,
+   "evidence": "grep JSONDecodeError"
+  },
+  {
+   "text": "Escribe con el módulo csv",
+   "passed": true,
+   "evidence": "grep csv"
+  },
+  {
+   "text": "No marca como leídos sin querer (BODY.PEEK) o lo documenta",
+   "passed": true,
+   "evidence": "grep PEEK"
+  },
+  {
+   "text": "Evita duplicados entre ejecuciones (UIDs guardados o dedupe)",
+   "passed": true,
+   "evidence": "grep processed uids"
+  },
+  {
+   "text": "Limita el tamaño del texto enviado a Claude (ahorro de tokens)",
+   "passed": true,
+   "evidence": "grep truncation"
+  },
+  {
+   "text": "Instrucciones de contraseña de aplicación de Gmail",
+   "passed": true,
+   "evidence": "grep app password"
+  },
+  {
+   "text": "Modelo pequeño (Haiku) por defecto para clasificar",
+   "passed": true,
+   "evidence": "claude-haiku-5-5"
+  },
+  {
+   "text": "Instrucciones para programarlo cada mañana (cron/Programador de tareas)",
+   "passed": true,
+   "evidence": "grep cron"
+  }
+ ],
+ "summary": {
+  "passed": 13,
+  "failed": 0,
+  "total": 13,
+  "pass_rate": 1
+ }
+}

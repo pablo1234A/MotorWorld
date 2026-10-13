@@ -1,0 +1,6 @@
+{
+ "eval_id": 3,
+ "eval_name": "gmail-claude-csv",
+ "prompt": "Necesito un script en Python que lea los correos no leídos de mi Gmail por IMAP, use Claude para clasificarlos (urgente, cliente, factura, spam, otro) y me guarde un resumen en un CSV cada mañana. Déjalo listo para usar.",
+ "assertions": []
+}

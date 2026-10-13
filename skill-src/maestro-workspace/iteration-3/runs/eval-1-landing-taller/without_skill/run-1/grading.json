@@ -1,0 +1,70 @@
+{
+ "expectations": [
+  {
+   "text": "Entrega un único archivo HTML",
+   "passed": true,
+   "evidence": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-2/landing-taller/without_skill/outputs/index.html"
+  },
+  {
+   "text": "Sin errores de JavaScript en consola (360 y 1280 px)",
+   "passed": true,
+   "evidence": "[[],[]]"
+  },
+  {
+   "text": "Sin scroll horizontal en móvil (360 px)",
+   "passed": false,
+   "evidence": "hscroll360=true"
+  },
+  {
+   "text": "Respeta prefers-reduced-motion",
+   "passed": true,
+   "evidence": "grep prefers-reduced-motion"
+  },
+  {
+   "text": "Estilos de foco visibles (:focus-visible)",
+   "passed": true,
+   "evidence": "grep focus-visible"
+  },
+  {
+   "text": "Exactamente un h1",
+   "passed": true,
+   "evidence": "h1 count=1"
+  },
+  {
+   "text": "Colores definidos como tokens CSS en :root",
+   "passed": true,
+   "evidence": "grep :root --"
+  },
+  {
+   "text": "CTA de contacto directo (tel: o WhatsApp)",
+   "passed": true,
+   "evidence": "grep tel:/wa.me"
+  },
+  {
+   "text": "Datos estructurados LocalBusiness/AutoRepair (SEO local)",
+   "passed": true,
+   "evidence": "grep JSON-LD"
+  },
+  {
+   "text": "Meta description y Open Graph",
+   "passed": true,
+   "evidence": "grep meta"
+  },
+  {
+   "text": "Sin texto de relleno (lorem/TODO)",
+   "passed": true,
+   "evidence": "grep lorem/TODO"
+  },
+  {
+   "text": "Pasa scripts/check-web.mjs sin fallos imprescindibles",
+   "passed": false,
+   "evidence": "Sin scroll horizontal a 360px: div.grain (fixed, sale 537px), header.nav (fixed, sale 234px), div.wrap (static, sale 234px), div.nav-cta (static, sale 218px) | Sin scroll horizontal a 768px: div.grain (fixed, sale 364px), div.marquee-track (static, sale 2646px), div.marquee-group (static, sale 845px"
+  }
+ ],
+ "summary": {
+  "passed": 10,
+  "failed": 2,
+  "total": 12,
+  "pass_rate": 0.833
+ }
+}
