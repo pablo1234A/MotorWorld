@@ -40,7 +40,7 @@ async function pageChecks(file, b, extra) {
 }
 
 const STRICT = process.env.STRICT === '1';
-const SK = path.join(__dirname, '..', 'skill-v2', 'scripts');
+const SK = path.join(__dirname, '..', 'skill-v21', 'scripts');
 function runScript(name, file, out, extra = []) {
   let code = 0, err = '';
   try { execSync(`node "${path.join(SK, name)}" "${file}" --out "${out}" ${extra.join(' ')}`, { stdio: 'pipe', timeout: 400000, env: process.env }); }
