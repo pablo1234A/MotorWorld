@@ -1,0 +1,38 @@
+{
+ "target": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-2/fps-navegador/old_skill/outputs/index.html",
+ "checks": [
+  {
+   "name": "La pantalla inicial no está vacía",
+   "pass": true,
+   "detail": "contraste 25.1"
+  },
+  {
+   "name": "Se puede empezar a jugar",
+   "pass": true,
+   "detail": "botón \"Jugar\""
+  },
+  {
+   "name": "Fotogramas por segundo",
+   "pass": true,
+   "detail": "7 FPS · render por software (sin GPU): mide en un equipo real"
+  },
+  {
+   "name": "La escena se dibuja durante la partida",
+   "pass": true,
+   "detail": "contraste 33.5"
+  },
+  {
+   "name": "El juego expone window.__game.selfTest()",
+   "pass": false,
+   "detail": "recomendado para verificar mecánicas (mover, disparar, morir, reiniciar)"
+  },
+  {
+   "name": "Sin errores de JavaScript",
+   "pass": true,
+   "detail": ""
+  }
+ ],
+ "errors": [],
+ "warnings": [],
+ "fps": 7
+}

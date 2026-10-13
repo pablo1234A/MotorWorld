@@ -1,0 +1,2 @@
+# Python 3.10 o superior. El resto (IMAP, SMTP, CSV, SQLite) viene con Python.
+anthropic>=1.13,<2

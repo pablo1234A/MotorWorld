@@ -49,9 +49,17 @@ scripts/video.sh info video.mp4               # vídeo: resolución, fps, códec
 ```
 Requisitos: `npm i -D playwright && npx playwright install chromium` (los scripts sirven las CDN desde npm si la red las bloquea) y ffmpeg. En los juegos, expón `window.__game` con `selfTest()` como en `examples/fps-pro.html`: es la forma barata de demostrar que mover, disparar, morir y reiniciar funcionan. Si no puedes ejecutar algo, dilo.
 
-Corrige **todos** los fallos de una pasada, vuelve a ejecutar una vez y mira las capturas con ojo crítico (jerarquía, aire, alineación, legibilidad).
+Corrige **todos** los fallos de una pasada, vuelve a ejecutar **una** vez y mira las capturas con ojo crítico (jerarquía, aire, alineación, legibilidad). Ver §6.
 
-## 6. Entregar
+## 6. Presupuesto de esfuerzo (medido: sin esto, la skill triplicaba el gasto)
+- **Alcance**: lo pedido + lo imprescindible profesional (accesibilidad, responsive, errores, seguridad). Las funciones extra (alertas por email, archivos de reglas, modos adicionales, más armas o secciones de las pedidas) no se construyen: se proponen en una línea al final.
+- **Verificación**: como máximo 2 ejecuciones del script por entrega (comprobar → corregir todo → comprobar). Mira 2 capturas (móvil y escritorio). Si solo quedan avisos "recomendado", entrega y menciónalos.
+- **Pruebas de scripts**: una prueba de humo con datos simulados, no una batería completa, salvo que se pida.
+- **Partir de un ejemplo** = adaptarlo (tema, textos, mapa, números), no reescribirlo ni duplicar su tamaño.
+- **Nada incrustado en base64** (fuentes, imágenes): infla el archivo y el gasto. Fuentes enlazadas con `display=optional`. Si en tu entorno no carga una CDN o una fuente, es normal: no lo "arregles".
+- Tamaños orientativos: landing 500–1.200 líneas; juego en un archivo ≈ el tamaño del ejemplo; script 150–400 líneas.
+
+## 7. Entregar
 Respuesta breve: qué hiciste, dónde está, cómo usarlo, qué se verificó y qué no, qué datos del cliente faltan (marcados `EDITAR`). Sin repetir el código en el chat.
 
 ## Reglas de oro

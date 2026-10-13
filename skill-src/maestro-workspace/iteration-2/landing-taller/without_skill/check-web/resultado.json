@@ -1,0 +1,172 @@
+{
+ "target": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-2/landing-taller/without_skill/outputs/index.html",
+ "results": [
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 360px",
+   "pass": false,
+   "detail": "div.grain (fixed, sale 537px), header.nav (fixed, sale 234px), div.wrap (static, sale 234px), div.nav-cta (static, sale 218px)"
+  },
+  {
+   "sev": "mejora",
+   "name": "Zonas táctiles de al menos 40×40 px en móvil",
+   "pass": false,
+   "detail": "3 elementos pequeños"
+  },
+  {
+   "sev": "grave",
+   "name": "Campos de formulario ≥16px (evita el zoom de iOS)",
+   "pass": true,
+   "detail": "0 campos con letra pequeña"
+  },
+  {
+   "sev": "mejora",
+   "name": "Texto legible en móvil (≥13px)",
+   "pass": false,
+   "detail": "6 bloques con letra muy pequeña"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 768px",
+   "pass": false,
+   "detail": "div.grain (fixed, sale 364px), div.marquee-track (static, sale 2646px), div.marquee-group (static, sale 845px), span (static, sale 160px)"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 1280px",
+   "pass": false,
+   "detail": "div.grain (fixed, sale 589px), div.marquee-track (static, sale 4120px), div.marquee-group (static, sale 1278px), span (static, sale 202px)"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 1920px",
+   "pass": false,
+   "detail": "div.grain (fixed, sale 973px), div.marquee-track (static, sale 3461px), div.marquee-group (static, sale 620px), span (static, sale 188px)"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin errores de JavaScript",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Atributo lang en <html>",
+   "pass": true,
+   "detail": "es"
+  },
+  {
+   "sev": "grave",
+   "name": "Título de la página",
+   "pass": true,
+   "detail": "\"MotorWorld · Taller mecánico en Sevilla\" (39 caracteres; ideal 30–60)"
+  },
+  {
+   "sev": "mejora",
+   "name": "Meta description (110–160 caracteres)",
+   "pass": true,
+   "detail": "150 caracteres"
+  },
+  {
+   "sev": "grave",
+   "name": "Meta viewport",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Open Graph (og:title + og:image) para compartir",
+   "pass": false,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Datos estructurados JSON-LD",
+   "pass": true,
+   "detail": "1 bloques"
+  },
+  {
+   "sev": "grave",
+   "name": "Exactamente un h1",
+   "pass": true,
+   "detail": "1 h1"
+  },
+  {
+   "sev": "grave",
+   "name": "Todas las imágenes con alt",
+   "pass": true,
+   "detail": "0 sin alt"
+  },
+  {
+   "sev": "mejora",
+   "name": "Imágenes con dimensiones (evita saltos de diseño)",
+   "pass": true,
+   "detail": "0 sin width/height"
+  },
+  {
+   "sev": "grave",
+   "name": "Botones y enlaces con nombre accesible",
+   "pass": true,
+   "detail": "0 sin texto ni aria-label"
+  },
+  {
+   "sev": "grave",
+   "name": "Campos de formulario con etiqueta",
+   "pass": true,
+   "detail": "0 sin label"
+  },
+  {
+   "sev": "grave",
+   "name": "Respeta prefers-reduced-motion",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Estilos de foco visibles",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Contraste de texto AA",
+   "pass": true,
+   "detail": "219 textos revisados"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin texto de relleno (lorem, TODO)",
+   "pass": false,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "El foco de teclado se ve",
+   "pass": true,
+   "detail": "ok"
+  },
+  {
+   "sev": "mejora",
+   "name": "LCP < 2,5 s (en local, sin limitar red)",
+   "pass": true,
+   "detail": "708 ms"
+  },
+  {
+   "sev": "grave",
+   "name": "CLS < 0,1 (sin saltos de diseño)",
+   "pass": true,
+   "detail": "0.005"
+  },
+  {
+   "sev": "grave",
+   "name": "Con movimiento reducido el contenido es visible (sin depender de animaciones)",
+   "pass": true,
+   "detail": "0 textos invisibles en pantalla"
+  }
+ ],
+ "perf": {
+  "lcp": 708,
+  "cls": 0.005379604848225911,
+  "bytes": 1173
+ }
+}

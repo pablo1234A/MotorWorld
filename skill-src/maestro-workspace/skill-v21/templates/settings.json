@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm install*)",
+      "Bash(npx tsc*)",
+      "Bash(npx vitest*)",
+      "Bash(npx eslint*)",
+      "Bash(npx prettier*)",
+      "Bash(pnpm *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(ls*)",
+      "Bash(cat*)",
+      "Bash(grep*)",
+      "Bash(find*)",
+      "Bash(ffmpeg*)",
+      "Bash(python3 -m py_compile*)",
+      "Bash(pytest*)",
+      "Bash(node scripts/check-web.mjs*)",
+      "Bash(node scripts/test-juego.mjs*)",
+      "Bash(scripts/video.sh*)",
+      "Bash(ffprobe*)",
+      "Bash(npx remotion*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(git push --force*)"
+    ]
+  }
+}

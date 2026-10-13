@@ -50,7 +50,12 @@ for (const w of [360, 768, 1280, 1920]) {
     return { over: true, bad };
   });
   R('grave', `Sin scroll horizontal a ${w}px`, !ov.over, ov.bad.join(', '));
-  await page.screenshot({ path: path.join(out, `${w}.png`), fullPage: w === 1280 || w === 360 });
+  // Capturas de pantalla (no de página completa: Chromium repite contenido por encima de ~8.000 px)
+  if (w === 360 || w === 1280) {
+    const total = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (const [k, f] of [['arriba', 0], ['medio', 0.45], ['abajo', 1]]) { await page.evaluate(y => scrollTo(0, y), Math.round((total - 900) * f)); await page.waitForTimeout(500); await page.screenshot({ path: path.join(out, `${w}-${k}.png`) }); }
+    await page.evaluate(() => scrollTo(0, 0));
+  } else await page.screenshot({ path: path.join(out, `${w}.png`) });
   if (w === 360) {
     const m = await page.evaluate(() => {
       const small = [...document.querySelectorAll('a, button, [role=button], input, select, textarea')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (r.height < 40 || r.width < 40) && getComputedStyle(e).display !== 'inline'; });

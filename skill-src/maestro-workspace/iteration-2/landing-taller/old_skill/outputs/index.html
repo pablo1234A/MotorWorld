@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MotorWorld — Taller mecánico en Sevilla · Mecánica, neumáticos, ITV y alta gama</title>
+<meta name="description" content="Taller mecánico en Sevilla: mecánica general, neumáticos, pre-ITV y especialistas en coches de alta gama. Presupuesto cerrado antes de empezar. Pide cita hoy.">
+<meta name="theme-color" content="#0E0D0B">
+<meta property="og:title" content="MotorWorld — Precisión de boxes en Sevilla">
+<meta property="og:description" content="Mecánica general, neumáticos, ITV y alta gama con presupuesto cerrado.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- EDITAR: dirección, teléfono, WhatsApp, horario y cifras son de ejemplo. Sustituir por los datos reales. -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"AutoRepair","name":"MotorWorld","telephone":"+34954000000","address":{"@type":"PostalAddress","streetAddress":"Calle de Ejemplo 12","addressLocality":"Sevilla","postalCode":"41007","addressCountry":"ES"},"openingHours":["Mo-Fr 08:00-19:30","Sa 09:00-13:30"],"priceRange":"€€"}
+</script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0E0D0B; --bg-2:#141310; --surface:#1A1814; --surface-2:#221F1A;
+  --text:#F2EDE3; --muted:#A8A092; --faint:#6E685D;
+  --line:rgb(242 237 227 / .10); --line-2:rgb(242 237 227 / .18);
+  --accent:#E3A93B;           /* albero sevillano */
+  --accent-ink:#1A1206;
+  --danger:#FF7A59; --ok:#7BD389;
+  --display:"Archivo",system-ui,sans-serif;
+  --sans:"Archivo",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-io:cubic-bezier(.65,0,.35,1);
+  --gutter:clamp(16px,4vw,40px);
+  --r:22px;
+  --header-h:72px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 16px)}
+body{background:var(--bg);color:var(--text);font:400 1.0625rem/1.6 var(--sans);font-stretch:100%;-webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+body.locked{overflow:hidden}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+::selection{background:var(--accent);color:var(--accent-ink)}
+.wrap{width:min(1280px,100% - 2*var(--gutter));margin-inline:auto}
+.mono{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:10px 16px;border-radius:10px;font-weight:600}
+.skip:focus{top:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+/* grain */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- Header ---------- */
+.header{position:fixed;inset:0 0 auto;z-index:50;height:var(--header-h);transition:background .3s,border-color .3s,transform .4s var(--ease-out);border-bottom:1px solid transparent}
+.header.scrolled{background:rgb(14 13 11 / .72);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-color:var(--line)}
+.header.hide{transform:translateY(-100%)}
+.header .wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo{display:flex;align-items:center;gap:0;font:800 1.125rem/1 var(--display);font-stretch:125%;letter-spacing:-.01em}
+.logo-mark{width:30px;height:30px;margin-right:10px}
+.logo span{color:var(--accent)}
+.nav{display:flex;align-items:center;gap:32px;font-size:.9375rem}
+.nav a:not(.btn){color:var(--muted);transition:color .15s;position:relative;padding:8px 0}
+.nav a:not(.btn)::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:right;transition:transform .3s var(--ease-out)}
+@media (hover:hover){.nav a:not(.btn):hover{color:var(--text)}.nav a:not(.btn):hover::after{transform:scaleX(1);transform-origin:left}}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line-2);border-radius:999px;background:transparent;cursor:pointer;position:relative}
+.burger i{position:absolute;left:13px;right:13px;height:1.5px;background:var(--text);transition:transform .3s var(--ease-out),opacity .2s}
+.burger i:nth-child(1){top:17px}.burger i:nth-child(2){top:25px}
+.burger[aria-expanded="true"] i:nth-child(1){transform:translateY(4px) rotate(45deg)}
+.burger[aria-expanded="true"] i:nth-child(2){transform:translateY(-4px) rotate(-45deg)}
+
+.menu{position:fixed;inset:0;z-index:45;background:var(--bg);padding:calc(var(--header-h) + 24px) var(--gutter) 32px;display:flex;flex-direction:column;gap:6px;opacity:0;visibility:hidden;transition:opacity .25s var(--ease-out),visibility 0s .25s}
+.menu.open{opacity:1;visibility:visible;transition:opacity .3s var(--ease-out)}
+.menu a.m{font:800 clamp(2.25rem,11vw,3.5rem)/1.05 var(--display);font-stretch:112%;letter-spacing:-.03em;padding:6px 0;opacity:0;transform:translateY(16px);transition:opacity .4s var(--ease-out),transform .4s var(--ease-out)}
+.menu.open a.m{opacity:1;transform:none}
+.menu.open a.m:nth-child(2){transition-delay:.04s}.menu.open a.m:nth-child(3){transition-delay:.08s}.menu.open a.m:nth-child(4){transition-delay:.12s}.menu.open a.m:nth-child(5){transition-delay:.16s}
+.menu .menu-foot{margin-top:auto;display:grid;gap:12px}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border-radius:999px;font:600 .9375rem/1 var(--sans);border:1px solid var(--line-2);background:transparent;cursor:pointer;white-space:nowrap;transition:transform .12s var(--ease-out),background .2s,color .2s,border-color .2s;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary .arrow{transition:transform .3s var(--ease-out)}
+@media (hover:hover){
+  .btn-primary:hover{background:#F0BB55;border-color:#F0BB55}
+  .btn-primary:hover .arrow{transform:translateX(4px)}
+  .btn-ghost:hover{border-color:var(--text);background:rgb(242 237 227 / .06)}
+}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn-sm{min-height:40px;padding:0 18px;font-size:.875rem}
+.btn svg{width:18px;height:18px;flex:none}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;padding:calc(var(--header-h) + 40px) 0 72px;overflow:hidden;isolation:isolate}
+.hero::after{content:"";position:absolute;inset:auto -10% -30% -10%;height:70%;z-index:-1;background:radial-gradient(60% 60% at 70% 40%,rgb(227 169 59 / .16),transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.25fr .9fr;gap:clamp(24px,5vw,72px);align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--muted)}
+.eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgb(123 211 137 / .6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgb(123 211 137 / .5)}70%{box-shadow:0 0 0 10px rgb(123 211 137 / 0)}100%{box-shadow:0 0 0 0 rgb(123 211 137 / 0)}}
+h1{font:850 clamp(2.75rem,8.4vw,7.75rem)/.9 var(--display);font-stretch:118%;letter-spacing:-.045em;margin:24px 0 28px;text-transform:uppercase}
+h1 .line{display:block;overflow:hidden;padding:.1em 0 .04em;margin-top:-.1em}
+h1 .line>span{display:block;transform:translateY(105%);transition:transform 1.1s var(--ease-out)}
+.ready h1 .line>span{transform:none}
+h1 .line:nth-child(2)>span{transition-delay:.08s}
+h1 .line:nth-child(3)>span{transition-delay:.16s}
+h1 em{font-style:normal;color:var(--accent)}
+h1 .outline{color:transparent;-webkit-text-stroke:1.5px var(--text)}
+.lead{max-width:44ch;font-size:clamp(1.0625rem,1.4vw,1.25rem);color:var(--muted);text-wrap:pretty}
+.lead b{color:var(--text);font-weight:500}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
+.hero-note{margin-top:18px;color:var(--faint)}
+.fade{opacity:0;transform:translateY(14px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.ready .fade{opacity:1;transform:none}
+.ready .fade.d1{transition-delay:.35s}.ready .fade.d2{transition-delay:.45s}.ready .fade.d3{transition-delay:.55s}.ready .fade.d4{transition-delay:.65s}
+
+/* gauge */
+.gauge-wrap{position:relative;aspect-ratio:1;width:100%;max-width:520px;justify-self:end}
+.gauge{width:100%;height:100%;overflow:visible}
+.gauge .tick{stroke:var(--line-2);stroke-width:2}
+.gauge .tick.major{stroke:var(--text);stroke-width:3}
+.gauge .tick.red{stroke:var(--danger)}
+.gauge .num{fill:var(--muted);font:500 15px var(--mono)}
+.gauge .needle{transform-origin:200px 200px;transform:rotate(-120deg);will-change:transform}
+.gauge-read{position:absolute;left:50%;top:64%;transform:translateX(-50%);text-align:center}
+.gauge-read b{display:block;font:800 clamp(2rem,4.6vw,3.25rem)/1 var(--display);font-stretch:110%;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.gauge-read span{color:var(--faint)}
+.gauge-hint{position:absolute;bottom:2%;left:50%;transform:translateX(-50%);color:var(--faint);white-space:nowrap}
+
+/* ---------- Marquee ---------- */
+.marquee{border-block:1px solid var(--line);overflow:hidden;padding:22px 0;background:var(--bg-2)}
+.marquee-track{display:flex;width:max-content;gap:56px;animation:marq 38s linear infinite}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-track span{font:700 clamp(1.25rem,2.4vw,1.75rem)/1 var(--display);font-stretch:125%;letter-spacing:-.01em;color:var(--faint);white-space:nowrap;display:flex;align-items:center;gap:56px}
+.marquee-track span::after{content:"";width:8px;height:8px;background:var(--accent);transform:rotate(45deg)}
+@keyframes marq{to{transform:translateX(-50%)}}
+
+/* ---------- Stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:40px 24px 40px 0;border-right:1px solid var(--line)}
+.stat:not(:first-child){padding-left:24px}
+.stat:last-child{border-right:0}
+.stat b{display:block;font:800 clamp(2.25rem,4.6vw,3.75rem)/1 var(--display);font-stretch:115%;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat b small{font-size:.5em;color:var(--accent);margin-left:2px}
+.stat p{color:var(--muted);font-size:.9375rem;margin-top:10px;max-width:22ch}
+
+/* ---------- Sections ---------- */
+section{padding:clamp(88px,11vw,160px) 0}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:end;margin-bottom:clamp(40px,6vw,72px)}
+.kicker{color:var(--accent);display:block;margin-bottom:18px}
+h2{font:800 clamp(2.25rem,5.4vw,4.75rem)/.95 var(--display);font-stretch:112%;letter-spacing:-.04em;text-wrap:balance}
+h2 .muted{color:var(--faint)}
+.sec-head p{color:var(--muted);max-width:46ch;justify-self:end;text-wrap:pretty}
+h3{font:700 1.375rem/1.15 var(--display);font-stretch:108%;letter-spacing:-.02em}
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(24px,3vw,36px);overflow:hidden;display:flex;flex-direction:column;min-height:320px;transition:border-color .3s,transform .5s var(--ease-out)}
+@media (hover:hover){.card:hover{border-color:var(--line-2)}}
+.card .idx{color:var(--faint);margin-bottom:auto}
+.card h3{margin-top:28px}
+.card p{color:var(--muted);margin-top:10px;max-width:40ch;font-size:1rem}
+.card ul{list-style:none;margin-top:20px;display:flex;flex-wrap:wrap;gap:8px}
+.card li{font:500 .8125rem/1 var(--sans);padding:9px 12px;border:1px solid var(--line-2);border-radius:999px;color:var(--muted)}
+.c1{grid-column:span 7;min-height:440px}
+.c2{grid-column:span 5}
+.c3{grid-column:span 5}
+.c4{grid-column:span 7;background:linear-gradient(140deg,#2A2112,#17140E 60%);border-color:rgb(227 169 59 / .3)}
+.c4 .idx{color:var(--accent)}
+.card-art{position:absolute;pointer-events:none}
+.c1 .card-art{right:-40px;top:-30px;width:min(360px,60%);opacity:.9}
+.c2 .card-art{right:-70px;top:-70px;width:240px}
+.c3 .card-art{right:24px;top:24px;width:96px}
+.c4 .card-art{right:-20px;top:20px;width:min(380px,55%);opacity:.95}
+.rim{will-change:transform;transform-origin:center}
+.c4 .big{font:800 clamp(3.5rem,7vw,6rem)/.9 var(--display);font-stretch:125%;letter-spacing:-.05em;color:var(--accent);margin-top:auto}
+
+/* alta gama */
+.premium{background:var(--bg-2);border-block:1px solid var(--line)}
+.prem-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,96px);align-items:start}
+.prem-sticky{position:sticky;top:calc(var(--header-h) + 32px)}
+.prem-sticky p{color:var(--muted);margin-top:24px;max-width:42ch}
+.spec{list-style:none;border-top:1px solid var(--line)}
+.spec li{display:grid;grid-template-columns:56px 1fr;gap:16px;padding:28px 0;border-bottom:1px solid var(--line)}
+.spec .n{color:var(--accent);padding-top:4px}
+.spec h3{font-size:1.25rem}
+.spec p{color:var(--muted);margin-top:6px;font-size:1rem}
+
+/* ITV */
+.itv-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(32px,6vw,96px);align-items:center}
+.itv-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(20px,3vw,36px)}
+.itv-top{display:flex;align-items:center;gap:20px;margin-bottom:20px}
+.ring{width:84px;height:84px;flex:none}
+.ring circle{fill:none;stroke-width:7}
+.ring .bgc{stroke:var(--line-2)}
+.ring .fg{stroke:var(--accent);stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .5s var(--ease-out),stroke .3s}
+.ring.done .fg{stroke:var(--ok)}
+.ring text{fill:var(--text);font:700 20px var(--display);text-anchor:middle;dominant-baseline:central}
+.itv-status b{display:block;font:700 1.125rem/1.2 var(--display)}
+.itv-status span{color:var(--muted);font-size:.9375rem}
+.checks{display:grid;gap:8px}
+.check{position:relative;display:flex;align-items:center;gap:14px;min-height:56px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:border-color .2s,background .2s;user-select:none;-webkit-user-select:none}
+.check:active{transform:scale(.99)}
+.check input{position:absolute;opacity:0;pointer-events:none}
+.check .box{width:24px;height:24px;flex:none;border:1.5px solid var(--line-2);border-radius:7px;display:grid;place-items:center;transition:background .2s,border-color .2s}
+.check .box svg{width:14px;height:14px;stroke:var(--accent-ink);stroke-width:3;fill:none;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .3s var(--ease-out)}
+.check input:checked+.box{background:var(--accent);border-color:var(--accent)}
+.check input:checked+.box svg{stroke-dashoffset:0}
+.check input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:3px}
+.check:has(input:checked){border-color:rgb(227 169 59 / .35);background:rgb(227 169 59 / .05)}
+.check small{display:block;color:var(--faint);font-size:.8125rem}
+@media (hover:hover){.check:hover{border-color:var(--line-2)}}
+.itv-copy p{color:var(--muted);margin-top:22px;max-width:44ch}
+.itv-copy .ctas{margin-top:32px}
+
+/* proceso */
+.steps{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.steps::before,.steps .progress{content:"";position:absolute;left:0;right:0;top:27px;height:1px;background:var(--line-2)}
+.steps .progress{background:var(--accent);transform-origin:left;transform:scaleX(0)}
+.step{position:relative;padding-top:0}
+.step .pin{width:56px;height:56px;border-radius:50%;background:var(--bg);border:1px solid var(--line-2);display:grid;place-items:center;font:500 .875rem var(--mono);color:var(--muted);transition:border-color .4s,color .4s,background .4s;position:relative;z-index:1}
+.step.on .pin{border-color:var(--accent);color:var(--accent-ink);background:var(--accent)}
+.step h3{margin-top:28px;font-size:1.25rem}
+.step p{color:var(--muted);margin-top:8px;font-size:1rem;max-width:30ch}
+
+/* testimonios */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.quote{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:32px;display:flex;flex-direction:column;gap:28px}
+.quote .stars{color:var(--accent);letter-spacing:3px;font-size:.9375rem}
+.quote blockquote{font:500 1.1875rem/1.45 var(--sans);letter-spacing:-.01em;text-wrap:pretty}
+.quote figcaption{margin-top:auto;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.9375rem}
+.quote figcaption b{color:var(--text);display:block;font-weight:600}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line-2);font:700 .875rem var(--display);color:var(--accent)}
+
+/* FAQ */
+.faq-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,6vw,96px)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq details:first-child{border-top:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:24px 0;font:600 1.125rem/1.3 var(--sans);min-height:56px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .plus{width:32px;height:32px;flex:none;border:1px solid var(--line-2);border-radius:50%;position:relative;transition:transform .3s var(--ease-out),background .2s}
+.faq summary .plus::before,.faq summary .plus::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:1.5px;background:var(--text);transform:translate(-50%,-50%)}
+.faq summary .plus::after{transform:translate(-50%,-50%) rotate(90deg)}
+.faq details[open] .plus{transform:rotate(45deg);background:var(--accent);border-color:var(--accent)}
+.faq details[open] .plus::before,.faq details[open] .plus::after{background:var(--accent-ink)}
+.faq .ans{color:var(--muted);padding:0 48px 26px 0;max-width:62ch}
+
+/* contacto */
+.contact{background:var(--bg-2);border-top:1px solid var(--line)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,96px)}
+.info{display:grid;gap:28px;margin-top:40px}
+.info div{display:grid;gap:4px}
+.info .mono{color:var(--faint)}
+.info a,.info p{font-size:1.125rem}
+.info a{text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;transition:text-decoration-color .2s}
+@media (hover:hover){.info a:hover{text-decoration-color:var(--accent)}}
+.open-now{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:.9375rem}
+.open-now i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.open-now.is-open i{background:var(--ok)}
+form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(20px,3vw,36px);display:grid;gap:18px;grid-template-columns:1fr 1fr;align-items:start;align-content:start}
+.field{display:grid;gap:8px;align-content:start}
+.field.full{grid-column:1/-1}
+.field label{font-size:.875rem;font-weight:500;color:var(--muted)}
+.field label .opt{color:var(--faint);font-weight:400}
+.field input,.field select,.field textarea{width:100%;min-height:52px;background:var(--bg);border:1px solid var(--line-2);border-radius:12px;padding:14px 16px;font-size:16px;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
+.field textarea{min-height:110px;resize:vertical}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23A8A092' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+.field input::placeholder,.field textarea::placeholder{color:var(--faint)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgb(227 169 59 / .18)}
+.field [aria-invalid="true"]{border-color:var(--danger)}
+.err{color:var(--danger);font-size:.8125rem;min-height:0}
+.err:empty{display:none}
+.form-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:4px}
+.form-foot small{color:var(--faint);max-width:36ch}
+.form-msg{grid-column:1/-1;border-radius:12px;padding:14px 16px;font-size:.9375rem;display:none}
+.form-msg.ok{display:block;background:rgb(123 211 137 / .1);border:1px solid rgb(123 211 137 / .35);color:var(--ok)}
+.form-msg.bad{display:block;background:rgb(255 122 89 / .08);border:1px solid rgb(255 122 89 / .35);color:var(--danger)}
+.spinner{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite;display:none}
+.loading .spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CTA final */
+.final{text-align:center;overflow:hidden;position:relative}
+.final h2{font-size:clamp(3rem,11vw,10rem);font-stretch:125%;line-height:.85;text-transform:uppercase;letter-spacing:-.05em}
+.final h2 span{display:block}
+.final h2 .outline{color:transparent;-webkit-text-stroke:1.5px var(--line-2)}
+.final .ctas{justify-content:center;margin-top:48px}
+
+footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--faint);font-size:.875rem}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
+footer nav{display:flex;gap:20px;flex-wrap:wrap}
+@media (hover:hover){footer a:hover{color:var(--text)}}
+
+/* barra móvil */
+.dock{display:none}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- Responsive ---------- */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr}
+  .gauge-wrap{justify-self:center;max-width:380px;margin-top:8px}
+  .sec-head,.prem-grid,.itv-grid,.faq-grid,.contact-grid{grid-template-columns:1fr}
+  .sec-head p{justify-self:start}
+  .prem-sticky{position:static}
+  .c1,.c2,.c3,.c4{grid-column:1/-1}
+  .c1{min-height:380px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat{padding:28px 16px 28px 0}
+  .stat:nth-child(2){border-right:0}
+  .stat:nth-child(3){padding-left:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .steps{grid-template-columns:1fr 1fr;row-gap:40px}
+  .steps::before,.steps .progress{display:none}
+  .quotes{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .nav a:not(.btn),.nav .btn-ghost{display:none}
+  .burger{display:block}
+  .nav{gap:10px}
+  .dock{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:40;padding:8px;background:rgb(26 24 20 / .82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-2);border-radius:999px;transform:translateY(140%);transition:transform .45s var(--ease-out)}
+  .dock.show{transform:none}
+  .dock .btn{min-height:46px;padding:0 12px;font-size:.875rem}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+@media (max-width:600px){
+  :root{--header-h:64px}
+  .nav .btn-primary{display:none}
+  .hero{min-height:auto;padding-top:calc(var(--header-h) + 32px)}
+  h1{font-stretch:105%}
+  h1 .outline{-webkit-text-stroke-width:1px}
+  .ctas .btn{flex:1 1 100%}
+  .steps{grid-template-columns:1fr}
+  form{grid-template-columns:1fr}
+  .form-foot .btn{width:100%}
+  .faq .ans{padding-right:0}
+  .c2 .card-art{width:190px;right:-60px;top:-60px}
+  .c4 .card-art{width:220px;right:-50px;top:10px;opacity:.5}
+  .c1 .card-art{opacity:.45}
+  .final h2{font-stretch:105%}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
+  .reveal,.fade,h1 .line>span{opacity:1!important;transform:none!important;transition:none!important}
+  .marquee-track{animation:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="header" id="header">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="MotorWorld, inicio">
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5" fill="none" stroke="#E3A93B" stroke-width="2"/><path d="M8 21l4-10 4 7 4-7 4 10" fill="none" stroke="#F2EDE3" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span style="color:inherit">MOTOR</span><span>WORLD</span>
+    </a>
+    <nav class="nav" aria-label="Principal">
+      <a href="#servicios">Servicios</a>
+      <a href="#alta-gama">Alta gama</a>
+      <a href="#itv">ITV</a>
+      <a href="#faq">Dudas</a>
+      <a class="btn btn-ghost btn-sm" href="tel:+34954000000">954 00 00 00</a>
+      <a class="btn btn-primary btn-sm" href="#cita">Pedir cita</a>
+      <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+    </nav>
+  </div>
+</header>
+
+<div class="menu" id="menu" aria-hidden="true">
+  <a class="m" href="#servicios">Servicios</a>
+  <a class="m" href="#alta-gama">Alta gama</a>
+  <a class="m" href="#itv">ITV</a>
+  <a class="m" href="#faq">Dudas</a>
+  <a class="m" href="#cita">Pedir cita</a>
+  <div class="menu-foot">
+    <a class="btn btn-primary" href="#cita">Pedir cita online</a>
+    <a class="btn btn-ghost" href="tel:+34954000000">Llamar · 954 00 00 00</a>
+  </div>
+</div>
+
+<main id="main">
+  <!-- HERO -->
+  <section class="hero" id="top" aria-labelledby="h1">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow mono fade d1"><i class="dot" aria-hidden="true"></i><span id="hero-open">Taller en Sevilla · Desde 2009</span></p>
+        <h1 id="h1">
+          <span class="line"><span>Precisión</span></span>
+          <span class="line"><span>de <em>boxes.</em></span></span>
+          <span class="line"><span class="outline">Trato de barrio.</span></span>
+        </h1>
+        <p class="lead fade d2">Mecánica general, neumáticos, pre-ITV y especialistas en <b>coches de alta gama</b>. Te damos el presupuesto cerrado por escrito <b>antes de tocar un tornillo</b>.</p>
+        <div class="ctas fade d3">
+          <a class="btn btn-primary" href="#cita">Pedir cita <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-ghost" href="https://wa.me/34600000000" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+        </div>
+        <p class="hero-note mono fade d4">Respuesta en menos de 1 h · Coche de cortesía bajo reserva</p>
+      </div>
+
+      <div class="gauge-wrap fade d2" aria-hidden="true">
+        <svg class="gauge" viewBox="0 0 400 400">
+          <defs>
+            <linearGradient id="arcG" x1="0" x2="1">
+              <stop offset="0" stop-color="#E3A93B" stop-opacity="0"/>
+              <stop offset=".7" stop-color="#E3A93B"/>
+              <stop offset="1" stop-color="#FF7A59"/>
+            </linearGradient>
+          </defs>
+          <circle cx="200" cy="200" r="190" fill="none" stroke="rgb(242 237 227 / .08)"/>
+          <circle cx="200" cy="200" r="150" fill="none" stroke="rgb(242 237 227 / .05)"/>
+          <path id="arc" d="" fill="none" stroke="url(#arcG)" stroke-width="4" stroke-linecap="round"/>
+          <g id="ticks"></g>
+          <g class="needle" id="needle">
+            <path d="M197 205 L200 52 L203 205 Z" fill="#E3A93B"/>
+            <circle cx="200" cy="200" r="16" fill="#0E0D0B" stroke="#E3A93B" stroke-width="2"/>
+            <circle cx="200" cy="200" r="4" fill="#E3A93B"/>
+          </g>
+        </svg>
+        <div class="gauge-read"><b id="rpm">0</b><span class="mono">rpm</span></div>
+        <p class="gauge-hint mono">Haz scroll y acelera</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee" aria-label="Marcas con las que trabajamos a diario">
+    <div class="marquee-track" id="marq">
+      <span>Porsche</span><span>BMW M</span><span>Mercedes-AMG</span><span>Audi RS</span><span>Maserati</span><span>Land Rover</span><span>Tesla</span><span>Volvo</span><span>Seat · Cupra</span><span>Toyota</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="wrap">
+    <div class="stats" role="list">
+      <div class="stat reveal" role="listitem"><b><span data-count="17">17</span></b><p>años reparando coches en Sevilla</p></div>
+      <div class="stat reveal" role="listitem"><b><span data-count="12400" data-sep="1">12.400</span></b><p>vehículos revisados en el taller</p></div>
+      <div class="stat reveal" role="listitem"><b><span data-count="97">97</span><small>%</small></b><p>de nuestros clientes pasan la ITV a la primera</p></div>
+      <div class="stat reveal" role="listitem"><b>0 €</b><p>de sorpresas: si cambia el presupuesto, te llamamos antes</p></div>
+    </div>
+  </div>
+
+  <!-- SERVICIOS -->
+  <section id="servicios" aria-labelledby="s-t">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="kicker mono reveal">Servicios</span>
+          <h2 id="s-t" class="reveal">Todo lo que tu coche necesita. <span class="muted">Bajo un mismo techo.</span></h2>
+        </div>
+        <p class="reveal">Del cambio de aceite del utilitario al diagnóstico de un V8 biturbo: mismo cuidado, mismo informe con fotos, mismo precio cerrado.</p>
+      </div>
+
+      <div class="bento">
+        <article class="card c1 reveal">
+          <svg class="card-art" viewBox="0 0 300 300" aria-hidden="true">
+            <g class="rim" data-spin="0.12">
+              <circle cx="150" cy="150" r="120" fill="none" stroke="rgb(242 237 227 / .12)" stroke-width="1"/>
+              <circle cx="150" cy="150" r="70" fill="none" stroke="rgb(242 237 227 / .2)" stroke-dasharray="4 8"/>
+              <g fill="none" stroke="#E3A93B" stroke-width="1.5" opacity=".7">
+                <path d="M150 30 L150 80"/><path d="M150 220 L150 270"/><path d="M30 150 L80 150"/><path d="M220 150 L270 150"/>
+                <path d="M65 65 L100 100"/><path d="M200 200 L235 235"/><path d="M235 65 L200 100"/><path d="M100 200 L65 235"/>
+              </g>
+              <circle cx="150" cy="150" r="22" fill="none" stroke="#E3A93B" stroke-width="2"/>
+            </g>
+          </svg>
+          <span class="idx mono">01 / Mecánica general</span>
+          <h3>Diagnosis, mantenimiento y reparación</h3>
+          <p>Revisiones según el libro del fabricante, distribución, embrague, frenos, suspensión y electrónica. Diagnosis multimarca con equipo de última generación.</p>
+          <ul><li>Cambio de aceite</li><li>Frenos</li><li>Distribución</li><li>Aire acondicionado</li><li>Electrónica</li></ul>
+        </article>
+
+        <article class="card c2 reveal">
+          <svg class="card-art" viewBox="0 0 200 200" aria-hidden="true">
+            <g class="rim" data-spin="0.5">
+              <circle cx="100" cy="100" r="92" fill="none" stroke="rgb(242 237 227 / .2)" stroke-width="14"/>
+              <circle cx="100" cy="100" r="92" fill="none" stroke="#0E0D0B" stroke-width="14" stroke-dasharray="3 9" opacity=".7"/>
+              <circle cx="100" cy="100" r="74" fill="none" stroke="rgb(242 237 227 / .35)" stroke-width="2"/>
+              <g stroke="#E3A93B" stroke-width="5" stroke-linecap="round">
+                <path d="M100 30 L100 82"/><path d="M100 30 L100 82" transform="rotate(72 100 100)"/><path d="M100 30 L100 82" transform="rotate(144 100 100)"/><path d="M100 30 L100 82" transform="rotate(216 100 100)"/><path d="M100 30 L100 82" transform="rotate(288 100 100)"/>
+              </g>
+              <circle cx="100" cy="100" r="14" fill="#1A1814" stroke="#E3A93B" stroke-width="2"/>
+            </g>
+          </svg>
+          <span class="idx mono">02 / Neumáticos</span>
+          <h3>Neumáticos al mejor precio, montados hoy</h3>
+          <p>Primeras marcas y run-flat, equilibrado, alineado 3D y almacenaje de tus ruedas de temporada.</p>
+          <ul><li>Alineado 3D</li><li>Run-flat</li><li>Hasta 23"</li></ul>
+        </article>
+
+        <article class="card c3 reveal">
+          <svg class="card-art" viewBox="0 0 96 96" aria-hidden="true"><rect x="8" y="14" width="80" height="72" rx="12" fill="none" stroke="rgb(242 237 227 / .25)" stroke-width="2"/><path d="M8 34h80" stroke="rgb(242 237 227 / .25)" stroke-width="2"/><path d="M28 6v16M68 6v16" stroke="#E3A93B" stroke-width="3" stroke-linecap="round"/><path d="M30 60l12 11 24-24" fill="none" stroke="#E3A93B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="idx mono">03 / ITV</span>
+          <h3>Pre-ITV y te la pasamos nosotros</h3>
+          <p>Revisamos los puntos que más fallan, lo corregimos y llevamos tu coche a la estación. Tú solo lo recoges con la pegatina.</p>
+          <ul><li>Pre-ITV</li><li>Gestión de cita</li><li>Recogida</li></ul>
+        </article>
+
+        <article class="card c4 reveal">
+          <svg class="card-art" viewBox="0 0 380 160" aria-hidden="true">
+            <path d="M10 118 C40 116 60 92 110 80 C150 70 180 44 236 44 C290 44 320 72 352 86 C366 92 372 104 370 118 Z" fill="none" stroke="#E3A93B" stroke-width="1.5" opacity=".8"/>
+            <path d="M120 80 C160 74 186 56 236 56 C270 56 290 68 304 80 Z" fill="none" stroke="rgb(242 237 227 / .3)" stroke-width="1"/>
+            <circle cx="96" cy="120" r="24" fill="#17140E" stroke="rgb(242 237 227 / .5)" stroke-width="1.5"/>
+            <circle cx="300" cy="120" r="24" fill="#17140E" stroke="rgb(242 237 227 / .5)" stroke-width="1.5"/>
+            <path d="M0 146 H380" stroke="rgb(242 237 227 / .12)"/>
+          </svg>
+          <span class="idx mono">04 / Alta gama</span>
+          <p class="big">PRO</p>
+          <h3 style="margin-top:12px">Tu deportivo, sin pasar por el concesionario</h3>
+          <p>Mantenimiento oficial con recambio original u homologado, sin perder la garantía del fabricante. <a href="#alta-gama" style="color:var(--accent);text-decoration:underline;text-underline-offset:4px">Cómo lo hacemos</a></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALTA GAMA -->
+  <section class="premium" id="alta-gama" aria-labelledby="p-t">
+    <div class="wrap prem-grid">
+      <div class="prem-sticky">
+        <span class="kicker mono reveal">Alta gama</span>
+        <h2 id="p-t" class="reveal">El mismo nivel que el oficial. <span class="muted">Sin la factura del oficial.</span></h2>
+        <p class="reveal">La normativa europea te permite mantener tu coche fuera del concesionario sin perder la garantía, siempre que se sigan las especificaciones del fabricante. Eso es exactamente lo que hacemos, y lo documentamos.</p>
+        <div class="ctas reveal"><a class="btn btn-primary" href="#cita">Pedir presupuesto</a></div>
+      </div>
+      <ol class="spec">
+        <li class="reveal"><span class="n mono">01</span><div><h3>Diagnosis de nivel fabricante</h3><p>Equipos específicos por marca para leer, codificar y adaptar centralitas. Sin "parece que es esto".</p></div></li>
+        <li class="reveal"><span class="n mono">02</span><div><h3>Recambio original u homologado</h3><p>Aceites con la homologación exacta de tu motor y piezas con certificado. Todo queda reflejado en la factura.</p></div></li>
+        <li class="reveal"><span class="n mono">03</span><div><h3>Libro de mantenimiento al día</h3><p>Sellamos y registramos cada revisión: tu coche conserva garantía e historial, y su valor de reventa.</p></div></li>
+        <li class="reveal"><span class="n mono">04</span><div><h3>Informe con fotos y vídeo</h3><p>Ves lo que vemos nosotros antes de aprobar nada. Recibes el informe por WhatsApp en el mismo día.</p></div></li>
+        <li class="reveal"><span class="n mono">05</span><div><h3>Recogida y entrega a domicilio</h3><p>Pasamos a por tu coche en Sevilla y área metropolitana y te lo devolvemos lavado.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ITV -->
+  <section id="itv" aria-labelledby="i-t">
+    <div class="wrap itv-grid">
+      <div class="itv-copy">
+        <span class="kicker mono reveal">ITV a la primera</span>
+        <h2 id="i-t" class="reveal">¿Llega tu coche listo a la ITV?</h2>
+        <p class="reveal">Marca lo que ya tienes revisado. Lo que quede sin marcar es justo lo que comprobamos en nuestra pre-ITV, en 30 minutos y sin cita previa.</p>
+        <div class="ctas reveal">
+          <a class="btn btn-primary" href="#cita" data-service="Pre-ITV">Reservar pre-ITV</a>
+        </div>
+      </div>
+
+      <div class="itv-panel reveal">
+        <div class="itv-top">
+          <svg class="ring" id="ring" viewBox="0 0 84 84" aria-hidden="true">
+            <circle class="bgc" cx="42" cy="42" r="36"/>
+            <circle class="fg" id="ringFg" cx="42" cy="42" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
+            <text x="42" y="42" id="ringTxt">0/6</text>
+          </svg>
+          <div class="itv-status" aria-live="polite"><b id="itvTitle">Empecemos</b><span id="itvSub">Marca lo que ya hayas revisado.</span></div>
+        </div>
+        <div class="checks" id="checks">
+          <label class="check"><input type="checkbox"><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span><span>Luces y pilotos<small>Cruce, largas, freno, intermitentes, matrícula</small></span></label>
+          <label class="check"><input type="checkbox"><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span><span>Neumáticos<small>Dibujo mínimo 1,6 mm y sin cortes</small></span></label>
+          <label class="check"><input type="checkbox"><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span><span>Frenos<small>Eficacia y desequilibrio entre ruedas</small></span></label>
+          <label class="check"><input type="checkbox"><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span><span>Emisiones<small>Filtros, sondas y testigo de motor apagado</small></span></label>
+          <label class="check"><input type="checkbox"><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span><span>Holguras y suspensión<small>Rótulas, silentblocks y amortiguadores</small></span></label>
+          <label class="check"><input type="checkbox"><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span><span>Parabrisas y limpias<small>Sin impactos en zona de visión</small></span></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESO -->
+  <section id="proceso" aria-labelledby="pr-t" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="kicker mono reveal">Cómo trabajamos</span>
+          <h2 id="pr-t" class="reveal">Cuatro pasos. <span class="muted">Cero sorpresas.</span></h2>
+        </div>
+        <p class="reveal">Nunca hacemos un trabajo que no hayas aprobado. Si al desmontar aparece algo nuevo, te llamamos y te lo enseñamos.</p>
+      </div>
+      <ol class="steps" id="steps" style="list-style:none">
+        <li class="progress" aria-hidden="true" id="stepsBar"></li>
+        <li class="step reveal"><span class="pin">01</span><h3>Pides cita</h3><p>Por web, WhatsApp o teléfono. Te damos hueco esta misma semana.</p></li>
+        <li class="step reveal"><span class="pin">02</span><h3>Diagnóstico</h3><p>Revisamos el coche y te mandamos fotos y presupuesto cerrado.</p></li>
+        <li class="step reveal"><span class="pin">03</span><h3>Apruebas</h3><p>Solo hacemos lo que confirmas. Plazo de entrega por escrito.</p></li>
+        <li class="step reveal"><span class="pin">04</span><h3>Recoges</h3><p>Coche listo, informe completo y 12 meses de garantía en la reparación.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- TESTIMONIOS -->
+  <!-- EDITAR: sustituir por reseñas reales de clientes (con su permiso). -->
+  <section id="opiniones" aria-labelledby="t-t" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="kicker mono reveal">Opiniones</span>
+          <h2 id="t-t" class="reveal">Lo que dicen al recoger las llaves.</h2>
+        </div>
+      </div>
+      <div class="quotes">
+        <figure class="quote reveal"><span class="stars" aria-label="5 de 5 estrellas">★★★★★</span><blockquote>“El concesionario me pedía 1.400 € por la revisión de los 60.000 del Cayenne. Aquí, mismo trabajo, mismas piezas y libro sellado por bastante menos.”</blockquote><figcaption><span class="avatar" aria-hidden="true">JM</span><span><b>Javier M.</b>Porsche Cayenne · Nervión</span></figcaption></figure>
+        <figure class="quote reveal"><span class="stars" aria-label="5 de 5 estrellas">★★★★★</span><blockquote>“Me mandaron un vídeo del disco de freno antes de cambiarlo. Es la primera vez que entiendo lo que pago en un taller.”</blockquote><figcaption><span class="avatar" aria-hidden="true">LR</span><span><b>Lucía R.</b>Seat León · Triana</span></figcaption></figure>
+        <figure class="quote reveal"><span class="stars" aria-label="5 de 5 estrellas">★★★★★</span><blockquote>“Dejé el coche a las 8, lo llevaron a la ITV y a las 13:00 estaba en mi puerta con la pegatina. Así de fácil.”</blockquote><figcaption><span class="avatar" aria-hidden="true">AG</span><span><b>Antonio G.</b>BMW Serie 3 · Los Remedios</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" aria-labelledby="f-t" style="padding-top:0">
+    <div class="wrap faq-grid">
+      <div>
+        <span class="kicker mono reveal">Dudas frecuentes</span>
+        <h2 id="f-t" class="reveal">Preguntas antes de venir.</h2>
+      </div>
+      <div class="faq reveal">
+        <details><summary>¿Pierdo la garantía si no voy al concesionario?<span class="plus" aria-hidden="true"></span></summary><p class="ans">No. La normativa europea permite hacer el mantenimiento en un taller independiente siempre que se sigan las pautas del fabricante y se usen recambios de calidad equivalente. Sellamos tu libro y te damos factura detallada como prueba.</p></details>
+        <details><summary>¿Cuánto tarda una revisión normal?<span class="plus" aria-hidden="true"></span></summary><p class="ans">Una revisión de mantenimiento está lista en el día. Reparaciones mayores, según pieza: te damos el plazo por escrito con el presupuesto.</p></details>
+        <details><summary>¿Tenéis coche de sustitución?<span class="plus" aria-hidden="true"></span></summary><p class="ans">Sí, bajo reserva y para reparaciones de más de un día. También podemos recoger y entregar tu coche en Sevilla y área metropolitana.</p></details>
+        <details><summary>¿Cómo funciona el servicio de ITV?<span class="plus" aria-hidden="true"></span></summary><p class="ans">Hacemos una pre-ITV, corregimos lo necesario con tu aprobación, pedimos cita en la estación y llevamos el coche. Si saliera desfavorable por algo que revisamos, la segunda visita corre de nuestra cuenta.</p></details>
+        <details><summary>¿Qué formas de pago aceptáis?<span class="plus" aria-hidden="true"></span></summary><p class="ans">Tarjeta, Bizum, transferencia y efectivo. Para reparaciones grandes ofrecemos pago aplazado sin intereses.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section class="contact" id="cita" aria-labelledby="c-t">
+    <div class="wrap contact-grid">
+      <div>
+        <span class="kicker mono reveal">Pedir cita</span>
+        <h2 id="c-t" class="reveal">Cuéntanos qué le pasa. <span class="muted">Respuesta en 1 hora.</span></h2>
+        <div class="info reveal">
+          <div><span class="mono">Dónde</span><p>Calle de Ejemplo 12, 41007 Sevilla</p></div>
+          <div><span class="mono">Teléfono</span><a href="tel:+34954000000">954 00 00 00</a></div>
+          <div><span class="mono">WhatsApp</span><a href="https://wa.me/34600000000" target="_blank" rel="noopener">600 00 00 00</a></div>
+          <div><span class="mono">Horario</span><p>L–V 8:00–19:30 · S 9:00–13:30</p><span class="open-now" id="openNow"><i></i><span>Consultando horario…</span></span></div>
+        </div>
+      </div>
+
+      <form id="form" class="reveal" novalidate aria-describedby="formMsg">
+        <div class="field"><label for="f-name">Nombre</label><input id="f-name" name="name" autocomplete="name" required placeholder="Tu nombre" aria-describedby="e-name"><span class="err" id="e-name"></span></div>
+        <div class="field"><label for="f-tel">Teléfono</label><input id="f-tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" required placeholder="600 000 000" aria-describedby="e-tel"><span class="err" id="e-tel"></span></div>
+        <div class="field"><label for="f-car">Coche <span class="opt">(opcional)</span></label><input id="f-car" name="car" placeholder="Marca, modelo y año"></div>
+        <div class="field"><label for="f-svc">Servicio</label>
+          <select id="f-svc" name="svc" required aria-describedby="e-svc">
+            <option value="">Elige uno</option>
+            <option>Mecánica general</option>
+            <option>Neumáticos</option>
+            <option>Pre-ITV</option>
+            <option>Alta gama</option>
+            <option>No lo sé, quiero diagnóstico</option>
+          </select><span class="err" id="e-svc"></span></div>
+        <div class="field full"><label for="f-msg">¿Qué le pasa? <span class="opt">(opcional)</span></label><textarea id="f-msg" name="msg" maxlength="600" placeholder="Ruido al frenar, testigo encendido, revisión de los 30.000…"></textarea></div>
+        <p class="form-msg" id="formMsg" role="status" aria-live="polite"></p>
+        <div class="form-foot">
+          <small>Te contestamos por WhatsApp. Solo usamos tus datos para darte cita.</small>
+          <button class="btn btn-primary" type="submit" id="submit"><span class="spinner" aria-hidden="true"></span><span class="lbl">Enviar solicitud</span></button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="final" aria-labelledby="fin-t">
+    <div class="wrap">
+      <h2 id="fin-t" class="reveal"><span>Tu coche</span><span class="outline">merece</span><span>un pit stop.</span></h2>
+      <div class="ctas reveal">
+        <a class="btn btn-primary" href="#cita">Pedir cita</a>
+        <a class="btn btn-ghost" href="tel:+34954000000">Llamar ahora</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year">2026</span> MotorWorld · Taller mecánico en Sevilla</span>
+    <nav aria-label="Pie"><a href="#servicios">Servicios</a><a href="#itv">ITV</a><a href="#cita">Contacto</a><a href="#">Aviso legal</a><a href="#">Privacidad</a></nav>
+  </div>
+</footer>
+
+<div class="dock" id="dock" aria-label="Acciones rápidas">
+  <a class="btn btn-ghost" href="tel:+34954000000">Llamar</a>
+  <a class="btn btn-ghost" href="https://wa.me/34600000000" target="_blank" rel="noopener">WhatsApp</a>
+  <a class="btn btn-primary" href="#cita">Pedir cita</a>
+</div>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+  $('#year').textContent = new Date().getFullYear();
+
+  // Entrada del hero
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('ready')));
+
+  // ---------- Header: fondo al hacer scroll, se oculta al bajar ----------
+  const header = $('#header'), dock = $('#dock');
+  let lastY = scrollY;
+  const onScrollHeader = () => {
+    const y = scrollY;
+    header.classList.toggle('scrolled', y > 20);
+    const menuOpen = document.body.classList.contains('locked');
+    header.classList.toggle('hide', !menuOpen && y > 400 && y > lastY + 4);
+    if (y < lastY - 4) header.classList.remove('hide');
+    dock.classList.toggle('show', y > innerHeight * .6);
+    lastY = y;
+  };
+
+  // ---------- Menú móvil ----------
+  const burger = $('#burger'), menu = $('#menu');
+  const setMenu = open => {
+    burger.setAttribute('aria-expanded', open);
+    burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    menu.classList.toggle('open', open);
+    menu.setAttribute('aria-hidden', !open);
+    document.body.classList.toggle('locked', open);
+    if (open) { header.classList.remove('hide'); $('a', menu).focus({ preventScroll: true }); }
+  };
+  burger.addEventListener('click', () => setMenu(burger.getAttribute('aria-expanded') !== 'true'));
+  $$('a', menu).forEach(a => a.addEventListener('click', () => setMenu(false)));
+  addEventListener('keydown', e => { if (e.key === 'Escape' && menu.classList.contains('open')) { setMenu(false); burger.focus(); } });
+  matchMedia('(min-width: 861px)').addEventListener('change', e => e.matches && setMenu(false));
+
+  // ---------- Cuentarrevoluciones ----------
+  const ticks = $('#ticks'), needle = $('#needle'), rpmEl = $('#rpm'), NS = 'http://www.w3.org/2000/svg';
+  const A0 = -120, A1 = 120, MAX = 8;              // grados, x1000 rpm
+  const pt = (r, deg) => { const a = (deg - 90) * Math.PI / 180; return [200 + r * Math.cos(a), 200 + r * Math.sin(a)]; };
+  for (let i = 0; i <= MAX * 4; i++) {
+    const deg = A0 + (A1 - A0) * i / (MAX * 4), major = i % 4 === 0;
+    const [x1, y1] = pt(major ? 150 : 158, deg), [x2, y2] = pt(170, deg);
+    const l = document.createElementNS(NS, 'line');
+    Object.entries({ x1, y1, x2, y2 }).forEach(([k, v]) => l.setAttribute(k, v.toFixed(1)));
+    l.setAttribute('class', 'tick' + (major ? ' major' : '') + (i >= 26 ? ' red' : ''));
+    ticks.appendChild(l);
+    if (major) {
+      const [tx, ty] = pt(126, deg), t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', tx.toFixed(1)); t.setAttribute('y', ty.toFixed(1));
+      t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
+      t.setAttribute('class', 'num'); t.textContent = i / 4;
+      ticks.appendChild(t);
+    }
+  }
+  const [ax, ay] = pt(182, A0), [bx, by] = pt(182, A1);
+  $('#arc').setAttribute('d', `M${ax} ${ay} A182 182 0 1 1 ${bx} ${by}`);
+
+  const IDLE = 0.9;                                  // 900 rpm al ralentí
+  let rpm = 0, target = IDLE, vel = 0, intro = !reduce, introT0 = performance.now();
+  const draw = r => {
+    const deg = A0 + (A1 - A0) * Math.min(r, MAX) / MAX;
+    needle.style.transform = `rotate(${deg}deg)`;
+    rpmEl.textContent = (Math.round(r * 20) * 50).toLocaleString('es-ES');
+  };
+
+  // ---------- Ruedas que giran con el scroll + barra del proceso ----------
+  const rims = $$('.rim');
+  const steps = $('#steps'), bar = $('#stepsBar'), stepEls = $$('.step', steps);
+
+  let prevY = scrollY, prevT = performance.now(), gaugeVisible = true;
+  const gaugeIO = new IntersectionObserver(([e]) => gaugeVisible = e.isIntersecting);
+  gaugeIO.observe($('.gauge-wrap'));
+
+  const loop = now => {
+    const dt = Math.min(now - prevT, 64); prevT = now;
+    const y = scrollY, dy = Math.abs(y - prevY); prevY = y;
+    // velocidad de scroll suavizada -> revoluciones
+    vel += ((dy / Math.max(dt, 1)) - vel) * 0.15;
+    if (intro) {
+      const p = (now - introT0) / 1400;
+      // golpe de gas: sube a 7.2k y cae al ralentí
+      rpm = p < .45 ? 7.2 * (1 - Math.pow(1 - p / .45, 3)) : IDLE + (7.2 - IDLE) * Math.pow(1 - Math.min((p - .45) / .55, 1), 3);
+      if (p >= 1) intro = false;
+    } else {
+      target = IDLE + Math.min(vel * 2.2, MAX - IDLE - .2) + Math.sin(now / 180) * .03;
+      rpm += (target - rpm) * (target > rpm ? .18 : .06);
+    }
+    if (gaugeVisible) draw(rpm);
+
+    if (!reduce) rims.forEach(r => r.style.transform = `rotate(${y * +r.dataset.spin}deg)`);
+
+    // progreso de la línea de pasos
+    const rect = steps.getBoundingClientRect();
+    const p = Math.min(Math.max((innerHeight * .75 - rect.top) / (rect.height + innerHeight * .2), 0), 1);
+    bar.style.transform = `scaleX(${p})`;
+    stepEls.forEach((s, i) => s.classList.toggle('on', p >= i / stepEls.length + .02 || (reduce && rect.top < innerHeight)));
+    requestAnimationFrame(loop);
+  };
+  if (reduce) { rpm = IDLE; draw(rpm); }
+  requestAnimationFrame(loop);
+
+  let ticking = false;
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { onScrollHeader(); ticking = false; }); } }, { passive: true });
+  onScrollHeader();
+
+  // ---------- Reveal ----------
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in'); io.unobserve(e.target);
+  }), { rootMargin: '0px 0px -8% 0px' });
+  $$('.reveal').forEach(el => {
+    const sibs = [...el.parentElement.children].filter(c => c.classList.contains('reveal'));
+    el.style.transitionDelay = Math.min(sibs.indexOf(el), 5) * 70 + 'ms';
+    io.observe(el);
+  });
+
+  // ---------- Contadores ----------
+  $$('[data-count]').forEach(el => {
+    const end = +el.dataset.count, fmt = n => el.dataset.sep ? n.toLocaleString('es-ES') : n;
+    if (reduce) return;
+    el.textContent = fmt(0);
+    new IntersectionObserver(([e], o) => {
+      if (!e.isIntersecting) return; o.disconnect();
+      const t0 = performance.now(), d = 1600;
+      const tick = t => { const p = Math.min((t - t0) / d, 1);
+        el.textContent = fmt(Math.round(end * (1 - Math.pow(1 - p, 4))));
+        if (p < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }, { threshold: .6 }).observe(el);
+  });
+
+  // ---------- Marquee: duplicar contenido para bucle continuo ----------
+  const marq = $('#marq');
+  marq.insertAdjacentHTML('beforeend', marq.innerHTML.replace(/<span>/g, '<span aria-hidden="true">'));
+
+  // ---------- Checklist ITV ----------
+  const boxes = $$('#checks input'), fg = $('#ringFg'), ring = $('#ring'), C = 226.2;
+  const msgs = [
+    ['Empecemos', 'Marca lo que ya hayas revisado.'],
+    ['Hay trabajo por hacer', 'Te conviene una pre-ITV completa.'],
+    ['Hay trabajo por hacer', 'Te conviene una pre-ITV completa.'],
+    ['Vas por buen camino', 'Revisamos el resto en 30 minutos.'],
+    ['Casi listo', 'Un par de puntos y a por la pegatina.'],
+    ['Casi listo', 'Solo falta un punto. Lo vemos sin cita.'],
+    ['¡Listo para la ITV!', 'Si quieres, nosotros te la pasamos.']
+  ];
+  const updateITV = () => {
+    const n = boxes.filter(b => b.checked).length;
+    fg.style.strokeDashoffset = C - C * n / boxes.length;
+    $('#ringTxt').textContent = `${n}/${boxes.length}`;
+    ring.classList.toggle('done', n === boxes.length);
+    $('#itvTitle').textContent = msgs[n][0]; $('#itvSub').textContent = msgs[n][1];
+  };
+  boxes.forEach(b => b.addEventListener('change', updateITV));
+
+  // Botones que preseleccionan servicio
+  $$('[data-service]').forEach(a => a.addEventListener('click', () => { $('#f-svc').value = a.dataset.service; }));
+
+  // ---------- Abierto ahora (hora de Madrid) ----------
+  try {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+      .formatToParts(new Date()).map(p => [p.type, p.value]));
+    const m = (+parts.hour % 24) * 60 + +parts.minute, d = parts.weekday;
+    const open = (['Mon','Tue','Wed','Thu','Fri'].includes(d) && m >= 480 && m < 1170) || (d === 'Sat' && m >= 540 && m < 810);
+    const el = $('#openNow'); el.classList.toggle('is-open', open);
+    $('span', el).textContent = open ? 'Abierto ahora' : 'Cerrado ahora · deja tu mensaje y te llamamos';
+    $('#hero-open').textContent = (open ? 'Abierto ahora' : 'Taller en Sevilla') + ' · Desde 2009';
+  } catch { $('#openNow').hidden = true; }
+
+  // ---------- Formulario ----------
+  const form = $('#form'), msg = $('#formMsg'), btn = $('#submit');
+  const rules = {
+    name: v => v.trim().length >= 2 || 'Dinos tu nombre para saber a quién llamar.',
+    tel: v => /^(\+?34)?[6789]\d{8}$/.test(v.replace(/[\s.-]/g, '')) || 'Escribe un teléfono español válido (9 cifras).',
+    svc: v => !!v || 'Elige un servicio (o "No lo sé").'
+  };
+  const check = el => {
+    const rule = rules[el.name]; if (!rule) return true;
+    const r = rule(el.value), ok = r === true;
+    el.setAttribute('aria-invalid', !ok);
+    $('#e-' + el.name).textContent = ok ? '' : r;
+    return ok;
+  };
+  $$('input, select', form).forEach(el => {
+    el.addEventListener('blur', () => el.value && check(el));
+    el.addEventListener('input', () => el.getAttribute('aria-invalid') === 'true' && check(el));
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    msg.className = 'form-msg'; msg.textContent = '';
+    const fields = $$('[name]', form).filter(el => rules[el.name]);
+    const bad = fields.filter(el => !check(el));
+    if (bad.length) {
+      msg.className = 'form-msg bad'; msg.textContent = 'Revisa los campos marcados.';
+      bad[0].focus(); return;
+    }
+    const d = Object.fromEntries(new FormData(form));
+    btn.disabled = true; btn.classList.add('loading'); $('.lbl', btn).textContent = 'Preparando…';
+    const text = `Hola MotorWorld, soy ${d.name.trim()}. Quiero cita para: ${d.svc}.` +
+      (d.car ? `\nCoche: ${d.car.trim()}` : '') + (d.msg ? `\nDetalle: ${d.msg.trim()}` : '') + `\nTeléfono: ${d.tel.trim()}`;
+    // Sin backend: se abre WhatsApp con el mensaje listo. Sustituir por un endpoint real si se desea.
+    setTimeout(() => {
+      const w = window.open('https://wa.me/34600000000?text=' + encodeURIComponent(text), '_blank');
+      if (w) w.opener = null;
+      btn.disabled = false; btn.classList.remove('loading'); $('.lbl', btn).textContent = 'Enviar solicitud';
+      msg.className = 'form-msg ok';
+      msg.textContent = w === null
+        ? 'Tu navegador ha bloqueado la ventana. Escríbenos al 600 00 00 00 o llámanos al 954 00 00 00.'
+        : `¡Gracias, ${d.name.trim().split(' ')[0]}! Envía el mensaje en WhatsApp y te confirmamos la cita en menos de una hora.`;
+      if (w !== null) form.reset();
+    }, 500);
+  });
+})();
+</script>
+</body>
+</html>

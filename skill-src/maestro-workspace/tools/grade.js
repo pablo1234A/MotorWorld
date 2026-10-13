@@ -122,7 +122,7 @@ const E = (text, passed, evidence) => ({ text, passed: !!passed, evidence: Strin
         exp.push(E('Fallback si la respuesta del modelo no es JSON válido', /(JSONDecodeError|except[^\n]*json|ValueError)/.test(s), 'grep JSONDecodeError'));
         exp.push(E('Escribe con el módulo csv', /import csv|csv\.(writer|DictWriter)/.test(s), 'grep csv'));
         exp.push(E('No marca como leídos sin querer (BODY.PEEK) o lo documenta', /BODY\.PEEK|PEEK/.test(s) || /marca(r)? como leído/i.test(all), 'grep PEEK'));
-        exp.push(E('Evita duplicados entre ejecuciones (UIDs guardados o dedupe)', /(uid|UID).*(seen|procesad|processed|state|guard)|processed|procesados/i.test(s), 'grep processed uids'));
+        exp.push(E('Evita duplicados entre ejecuciones (UIDs guardados o dedupe)', /(uid|UID).*(seen|procesad|processed|state|guard)|processed|procesados|sqlite3|clasificados|\bcache\b/i.test(s), 'grep processed uids'));
         exp.push(E('Limita el tamaño del texto enviado a Claude (ahorro de tokens)', /\[:\s*[\w\[\]'\"]+\]|MAX_(BODY|CHARS)|truncat|body_chars/i.test(s), 'grep truncation'));
         exp.push(E('Instrucciones de contraseña de aplicación de Gmail', /contraseña de aplicación|app password|apppasswords/i.test(all), 'grep app password'));
         const defModel = (s.match(/(?:getenv|environ\.get)\([^)]*?["']([^"']*claude[^"']*)["']\s*\)/i) || s.match(/MODEL[A-Z_]*\s*=\s*[^\n]*?["'](claude-[^"']+)["']/i) || [])[1] || '';

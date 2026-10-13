@@ -32,6 +32,9 @@ El tiempo se pierde en cuatro sitios: **esperar** (pasos en serie que podrían i
 - Pide todo el paquete en un mensaje ("landing + copy + SEO + favicon") en vez de por partes.
 - Para cambios, señala exactamente qué ("el botón del hero, más contraste") en vez de "mejóralo".
 
+## Medido en pruebas reales
+Con instrucciones de "verifica y pule todo" sin límite, una landing pasó de 5 a 34 minutos y de 83.000 a 314.000 tokens con una mejora de calidad pequeña. El límite de §6 de `SKILL.md` (2 verificaciones, sin extras no pedidos) existe por eso.
+
 ## Lo que NUNCA se recorta para ir más rápido
 Accesibilidad, responsive, estados de error/vacío/carga, seguridad y la verificación final. Saltarse esto no es velocidad: es retrabajo después.
 

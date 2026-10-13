@@ -1,5 +1,9 @@
 # Cambios
 
+## 2.1.0 — 2026-10-13
+- **Presupuesto de esfuerzo** en `SKILL.md` §6: la 2.0 sacaba 100 % de calidad pero gastaba ~3× tokens y ~5× tiempo; alcance limitado a lo pedido, 2 verificaciones como máximo, sin base64.
+- `check-web.mjs`: capturas arriba/medio/abajo en vez de página completa (evita el límite de 8.000 px de Chromium).
+
 ## 2.0.0 — 2026-10-12
 Basada en pruebas reales (3 tareas, con y sin la skill; resultados en `maestro-workspace/` del repositorio).
 - **Videojuegos**: 8 guías nuevas (`references/juegos/`: FPS, game feel, IA de enemigos, arquitectura, gráficos, géneros, multijugador, motores y publicación).

@@ -1,0 +1,85 @@
+{
+ "expectations": [
+  {
+   "text": "Entrega un archivo HTML",
+   "passed": true,
+   "evidence": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-2/fps-navegador/without_skill/outputs/index.html"
+  },
+  {
+   "text": "Three.js cargado con versión fijada",
+   "passed": true,
+   "evidence": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  },
+  {
+   "text": "Carga y arranca sin errores de JavaScript",
+   "passed": true,
+   "evidence": "[]"
+  },
+  {
+   "text": "Usa Pointer Lock para apuntar con el ratón",
+   "passed": true,
+   "evidence": "grep requestPointerLock"
+  },
+  {
+   "text": "Controles WASD",
+   "passed": true,
+   "evidence": "grep KeyW/KeyS"
+  },
+  {
+   "text": "Recarga con R",
+   "passed": true,
+   "evidence": "grep KeyR"
+  },
+  {
+   "text": "Movimiento independiente de FPS (delta clamped)",
+   "passed": true,
+   "evidence": "grep delta"
+  },
+  {
+   "text": "Pantalla de game over con reinicio",
+   "passed": true,
+   "evidence": "grep game over/restart"
+  },
+  {
+   "text": "Retroceso de arma (recoil)",
+   "passed": true,
+   "evidence": "grep recoil"
+  },
+  {
+   "text": "Colisiones con el mapa (el jugador no atraviesa paredes)",
+   "passed": true,
+   "evidence": "grep collision"
+  },
+  {
+   "text": "Soporte táctil o aviso para móvil",
+   "passed": false,
+   "evidence": "grep touch/mobile"
+  },
+  {
+   "text": "Sonido (Web Audio) en disparos",
+   "passed": true,
+   "evidence": "grep AudioContext"
+  },
+  {
+   "text": "Se juega 6 s sin errores de JavaScript (prueba automática)",
+   "passed": true,
+   "evidence": ""
+  },
+  {
+   "text": "La escena se dibuja durante la partida",
+   "passed": true,
+   "evidence": "contraste 39.0"
+  },
+  {
+   "text": "El jugador se mueve al pulsar W tras empezar con un clic real",
+   "passed": true,
+   "evidence": "diferencia media entre fotogramas 20.7 (inicio: botón)"
+  }
+ ],
+ "summary": {
+  "passed": 14,
+  "failed": 1,
+  "total": 15,
+  "pass_rate": 0.933
+ }
+}

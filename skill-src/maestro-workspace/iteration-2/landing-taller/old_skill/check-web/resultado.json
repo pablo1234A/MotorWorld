@@ -1,0 +1,172 @@
+{
+ "target": "/home/user/MotorWorld/skill-src/maestro-workspace/iteration-2/landing-taller/old_skill/outputs/index.html",
+ "results": [
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 360px",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Zonas táctiles de al menos 40×40 px en móvil",
+   "pass": false,
+   "detail": "14 elementos pequeños"
+  },
+  {
+   "sev": "grave",
+   "name": "Campos de formulario ≥16px (evita el zoom de iOS)",
+   "pass": true,
+   "detail": "0 campos con letra pequeña"
+  },
+  {
+   "sev": "mejora",
+   "name": "Texto legible en móvil (≥13px)",
+   "pass": false,
+   "detail": "4 bloques con letra muy pequeña"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 768px",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 1280px",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Sin scroll horizontal a 1920px",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Sin errores de JavaScript",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Atributo lang en <html>",
+   "pass": true,
+   "detail": "es"
+  },
+  {
+   "sev": "grave",
+   "name": "Título de la página",
+   "pass": false,
+   "detail": "\"MotorWorld — Taller mecánico en Sevilla · Mecánica, neumáticos, ITV y alta gama\" (79 caracteres; ideal 30–60)"
+  },
+  {
+   "sev": "mejora",
+   "name": "Meta description (110–160 caracteres)",
+   "pass": true,
+   "detail": "158 caracteres"
+  },
+  {
+   "sev": "grave",
+   "name": "Meta viewport",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Open Graph (og:title + og:image) para compartir",
+   "pass": false,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Datos estructurados JSON-LD",
+   "pass": true,
+   "detail": "1 bloques"
+  },
+  {
+   "sev": "grave",
+   "name": "Exactamente un h1",
+   "pass": true,
+   "detail": "1 h1"
+  },
+  {
+   "sev": "grave",
+   "name": "Todas las imágenes con alt",
+   "pass": true,
+   "detail": "0 sin alt"
+  },
+  {
+   "sev": "mejora",
+   "name": "Imágenes con dimensiones (evita saltos de diseño)",
+   "pass": true,
+   "detail": "0 sin width/height"
+  },
+  {
+   "sev": "grave",
+   "name": "Botones y enlaces con nombre accesible",
+   "pass": true,
+   "detail": "0 sin texto ni aria-label"
+  },
+  {
+   "sev": "grave",
+   "name": "Campos de formulario con etiqueta",
+   "pass": true,
+   "detail": "0 sin label"
+  },
+  {
+   "sev": "grave",
+   "name": "Respeta prefers-reduced-motion",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "Estilos de foco visibles",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "mejora",
+   "name": "Contraste de texto AA",
+   "pass": false,
+   "detail": "19 de 156: \"Respuesta en menos de 1 \" 3.5:1, \"rpm\" 3.5:1, \"Haz scroll y acelera\" 3.5:1, \"01 / Mecánica general\" 3.2:1, \"02 / Neumáticos\" 3.2:1"
+  },
+  {
+   "sev": "grave",
+   "name": "Sin texto de relleno (lorem, TODO)",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "sev": "grave",
+   "name": "El foco de teclado se ve",
+   "pass": true,
+   "detail": "ok"
+  },
+  {
+   "sev": "mejora",
+   "name": "LCP < 2,5 s (en local, sin limitar red)",
+   "pass": true,
+   "detail": "2024 ms"
+  },
+  {
+   "sev": "grave",
+   "name": "CLS < 0,1 (sin saltos de diseño)",
+   "pass": true,
+   "detail": "0.008"
+  },
+  {
+   "sev": "grave",
+   "name": "Con movimiento reducido el contenido es visible (sin depender de animaciones)",
+   "pass": true,
+   "detail": "0 textos invisibles en pantalla"
+  }
+ ],
+ "perf": {
+  "lcp": 2024,
+  "cls": 0.007869669511583115,
+  "bytes": 1061
+ }
+}

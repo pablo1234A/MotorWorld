@@ -1,0 +1,17 @@
+{
+  "_ayuda": "Opcional. Copia este archivo como reglas.json y edítalo. Si no existe reglas.json, el script funciona igual.",
+
+  "negocio": "EDITAR: Taller de reparación de motos en Sevilla. Urgente = averías de clientes, citas de hoy o mañana, avisos de Hacienda, Seguridad Social o banco con plazo.",
+
+  "_ayuda_clientes": "Direcciones o dominios de tus clientes. Claude recibe la pista 'CLIENTE CONOCIDO'. '@empresa.com' o 'empresa.com' = todo el dominio.",
+  "clientes": [
+    "@cliente-ejemplo.com",
+    "maria.ejemplo@gmail.com"
+  ],
+
+  "_ayuda_fijas": "Remitentes que se clasifican SIN llamar a Claude (ahorra tokens). Categorías: urgente, cliente, factura, spam, otro. El resumen será el asunto.",
+  "fijas": {
+    "facturas@proveedor-ejemplo.com": "factura",
+    "@boletin-ejemplo.com": "otro"
+  }
+}
