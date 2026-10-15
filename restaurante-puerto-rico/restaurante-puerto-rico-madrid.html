@@ -370,6 +370,18 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .lightbox .icono-btn { color: var(--papel); }
 @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
 
+/* Respaldo de llamada */
+.llamar { width: min(440px, calc(100vw - 32px)); padding: clamp(28px, 6vw, 44px); border: 0; border-radius: 6px; background: var(--papel); color: var(--carbon); text-align: center; box-shadow: 0 30px 80px -20px rgba(16, 12, 9, .5); }
+.llamar::backdrop { background: rgba(16, 12, 9, .6); }
+.llamar[open] { animation: aparecer .25s var(--ease); }
+.llamar .antetitulo { justify-content: center; margin-bottom: 10px; }
+.llamar .antetitulo::before { display: none; }
+.llamar__cerrar { position: absolute; top: 8px; right: 8px; }
+.llamar__titulo { font-family: var(--serif); font-size: 2rem; line-height: 1.1; }
+.llamar__numero { display: block; margin: 14px 0 10px; font-family: var(--serif); font-size: clamp(2.2rem, 1.6rem + 3vw, 2.8rem); text-decoration: none; color: var(--pimenton); letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.llamar__texto { color: var(--suave); font-size: .95rem; }
+.llamar__acciones { display: grid; gap: 10px; margin-top: 24px; }
+
 /* ---------- Reseñas ---------- */
 .resenas { display: grid; gap: 20px; }
 .fuente { background: var(--noche-2); border: 1px solid rgba(245, 239, 228, .1); border-radius: var(--radio); padding: clamp(26px, 4vw, 38px); display: flex; flex-direction: column; gap: 14px; }
@@ -1295,6 +1307,19 @@ img.carga-suave.cargada { opacity: 1; }
   </div>
 </footer>
 
+<!-- Respaldo de llamada: aparece si el dispositivo no abre la app de teléfono (p. ej. en ordenador) -->
+<dialog class="llamar" id="dialogo-llamar" aria-labelledby="llamar-titulo">
+  <button class="icono-btn llamar__cerrar" type="button" data-cerrar-llamar aria-label="Cerrar"><svg aria-hidden="true"><use href="#i-cerrar"/></svg></button>
+  <p class="antetitulo">Restaurante Puerto Rico</p>
+  <p class="llamar__titulo" id="llamar-titulo">Llámanos</p>
+  <a class="llamar__numero" href="tel:+34915219834" data-sin-respaldo>915 21 98 34</a>
+  <p class="llamar__texto">Todos los días de 13:00 a 00:00. Si estás en el ordenador, marca este número desde tu móvil.</p>
+  <div class="llamar__acciones">
+    <a class="btn" href="tel:+34915219834" data-sin-respaldo><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar ahora</a>
+    <button class="btn btn--contorno" type="button" id="copiar-telefono">Copiar número</button>
+  </div>
+</dialog>
+
 <!-- Barra fija inferior (móvil) -->
 <nav class="barra-movil" id="barra-movil" aria-label="Acciones rápidas">
   <a class="btn" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar</a>
@@ -1516,6 +1541,44 @@ img.carga-suave.cargada { opacity: 1; }
   }
   if (btnMapa) btnMapa.addEventListener('click', cargarMapa);
   try { if (localStorage.getItem('mapaAceptado') === '1') cargarMapa(); } catch (e) { /* sin almacenamiento */ }
+
+  /* ---------- Botones de llamada ----------
+     Los enlaces tel: abren la app de teléfono en el móvil. Si en unos instantes
+     no se ha abierto nada (ordenador sin app de llamadas, vista previa que bloquea
+     el enlace…), se muestra el número grande para marcarlo o copiarlo. */
+  var dlgLlamar = $('#dialogo-llamar');
+  if (dlgLlamar && typeof dlgLlamar.showModal === 'function') {
+    var telefono = '+34915219834';
+    var temporizador = null;
+    var cancelar = function () { clearTimeout(temporizador); temporizador = null; };
+    window.addEventListener('blur', cancelar);
+    window.addEventListener('pagehide', cancelar);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) cancelar(); });
+
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[href^="tel:"]');
+      if (!a || a.hasAttribute('data-sin-respaldo')) return;
+      var sinTelefono = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+      if (sinTelefono) { e.preventDefault(); dlgLlamar.showModal(); return; }
+      cancelar();
+      temporizador = setTimeout(function () {
+        if (!document.hidden && !dlgLlamar.open) dlgLlamar.showModal();
+      }, 1500);
+    });
+    $('[data-cerrar-llamar]', dlgLlamar).addEventListener('click', function () { dlgLlamar.close(); });
+    dlgLlamar.addEventListener('click', function (e) { if (e.target === dlgLlamar) dlgLlamar.close(); });
+    var copiar = $('#copiar-telefono');
+    copiar.addEventListener('click', function () {
+      var hecho = function () { copiar.textContent = 'Número copiado ✓'; setTimeout(function () { copiar.textContent = 'Copiar número'; }, 2200); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(telefono).then(hecho, function () { copiar.textContent = '915 21 98 34'; });
+      } else {
+        var t = document.createElement('textarea'); t.value = telefono; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); hecho(); } catch (err) { copiar.textContent = '915 21 98 34'; }
+        t.remove();
+      }
+    });
+  }
 
   /* ---------- Año del pie ---------- */
   $$('[data-anio]').forEach(function (el) { el.textContent = new Date().getFullYear(); });

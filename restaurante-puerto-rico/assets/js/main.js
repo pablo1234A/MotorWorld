@@ -213,6 +213,44 @@
   if (btnMapa) btnMapa.addEventListener('click', cargarMapa);
   try { if (localStorage.getItem('mapaAceptado') === '1') cargarMapa(); } catch (e) { /* sin almacenamiento */ }
 
+  /* ---------- Botones de llamada ----------
+     Los enlaces tel: abren la app de teléfono en el móvil. Si en unos instantes
+     no se ha abierto nada (ordenador sin app de llamadas, vista previa que bloquea
+     el enlace…), se muestra el número grande para marcarlo o copiarlo. */
+  var dlgLlamar = $('#dialogo-llamar');
+  if (dlgLlamar && typeof dlgLlamar.showModal === 'function') {
+    var telefono = '+34915219834';
+    var temporizador = null;
+    var cancelar = function () { clearTimeout(temporizador); temporizador = null; };
+    window.addEventListener('blur', cancelar);
+    window.addEventListener('pagehide', cancelar);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) cancelar(); });
+
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[href^="tel:"]');
+      if (!a || a.hasAttribute('data-sin-respaldo')) return;
+      var sinTelefono = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+      if (sinTelefono) { e.preventDefault(); dlgLlamar.showModal(); return; }
+      cancelar();
+      temporizador = setTimeout(function () {
+        if (!document.hidden && !dlgLlamar.open) dlgLlamar.showModal();
+      }, 1500);
+    });
+    $('[data-cerrar-llamar]', dlgLlamar).addEventListener('click', function () { dlgLlamar.close(); });
+    dlgLlamar.addEventListener('click', function (e) { if (e.target === dlgLlamar) dlgLlamar.close(); });
+    var copiar = $('#copiar-telefono');
+    copiar.addEventListener('click', function () {
+      var hecho = function () { copiar.textContent = 'Número copiado ✓'; setTimeout(function () { copiar.textContent = 'Copiar número'; }, 2200); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(telefono).then(hecho, function () { copiar.textContent = '915 21 98 34'; });
+      } else {
+        var t = document.createElement('textarea'); t.value = telefono; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); hecho(); } catch (err) { copiar.textContent = '915 21 98 34'; }
+        t.remove();
+      }
+    });
+  }
+
   /* ---------- Año del pie ---------- */
   $$('[data-anio]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();

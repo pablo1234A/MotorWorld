@@ -48,7 +48,7 @@
 <!-- Rendimiento: fuentes propias precargadas -->
 <link rel="preload" href="/assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/styles.css?v=1">
+<link rel="stylesheet" href="/assets/css/styles.css?v=2">
 
 <script>
   document.documentElement.classList.replace('no-js', 'js');
@@ -798,12 +798,25 @@
   </div>
 </footer>
 
+<!-- Respaldo de llamada: aparece si el dispositivo no abre la app de teléfono (p. ej. en ordenador) -->
+<dialog class="llamar" id="dialogo-llamar" aria-labelledby="llamar-titulo">
+  <button class="icono-btn llamar__cerrar" type="button" data-cerrar-llamar aria-label="Cerrar"><svg aria-hidden="true"><use href="#i-cerrar"/></svg></button>
+  <p class="antetitulo">Restaurante Puerto Rico</p>
+  <p class="llamar__titulo" id="llamar-titulo">Llámanos</p>
+  <a class="llamar__numero" href="tel:+34915219834" data-sin-respaldo>915 21 98 34</a>
+  <p class="llamar__texto">Todos los días de 13:00 a 00:00. Si estás en el ordenador, marca este número desde tu móvil.</p>
+  <div class="llamar__acciones">
+    <a class="btn" href="tel:+34915219834" data-sin-respaldo><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar ahora</a>
+    <button class="btn btn--contorno" type="button" id="copiar-telefono">Copiar número</button>
+  </div>
+</dialog>
+
 <!-- Barra fija inferior (móvil) -->
 <nav class="barra-movil" id="barra-movil" aria-label="Acciones rápidas">
   <a class="btn" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar</a>
   <a class="btn btn--contorno" href="https://www.google.com/maps/dir/?api=1&amp;destination=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-pin"/></svg>Cómo llegar</a>
 </nav>
 
-<script src="/assets/js/main.js?v=1" defer></script>
+<script src="/assets/js/main.js?v=2" defer></script>
 </body>
 </html>

@@ -323,6 +323,18 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .lightbox .icono-btn { color: var(--papel); }
 @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
 
+/* Respaldo de llamada */
+.llamar { width: min(440px, calc(100vw - 32px)); padding: clamp(28px, 6vw, 44px); border: 0; border-radius: 6px; background: var(--papel); color: var(--carbon); text-align: center; box-shadow: 0 30px 80px -20px rgba(16, 12, 9, .5); }
+.llamar::backdrop { background: rgba(16, 12, 9, .6); }
+.llamar[open] { animation: aparecer .25s var(--ease); }
+.llamar .antetitulo { justify-content: center; margin-bottom: 10px; }
+.llamar .antetitulo::before { display: none; }
+.llamar__cerrar { position: absolute; top: 8px; right: 8px; }
+.llamar__titulo { font-family: var(--serif); font-size: 2rem; line-height: 1.1; }
+.llamar__numero { display: block; margin: 14px 0 10px; font-family: var(--serif); font-size: clamp(2.2rem, 1.6rem + 3vw, 2.8rem); text-decoration: none; color: var(--pimenton); letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.llamar__texto { color: var(--suave); font-size: .95rem; }
+.llamar__acciones { display: grid; gap: 10px; margin-top: 24px; }
+
 /* ---------- Reseñas ---------- */
 .resenas { display: grid; gap: 20px; }
 .fuente { background: var(--noche-2); border: 1px solid rgba(245, 239, 228, .1); border-radius: var(--radio); padding: clamp(26px, 4vw, 38px); display: flex; flex-direction: column; gap: 14px; }
