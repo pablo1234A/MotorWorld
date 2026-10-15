@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="es" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Restaurante Puerto Rico Madrid | Cocina Española en el Centro</title>
+<meta name="description" content="Restaurante Puerto Rico en el centro de Madrid: cocina española y casera, tapas, arroces, carnes y pescados en Calle de Chinchilla, 2, junto a Callao.">
+<link rel="canonical" href="https://www.tudominio.es/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#191410">
+<meta name="format-detection" content="telephone=no">
+<!-- Google Search Console: pega aquí tu etiqueta de verificación cuando la tengas -->
+<!-- <meta name="google-site-verification" content="CODIGO_DE_VERIFICACION"> -->
+
+<!-- Geo (dirección pública del restaurante) -->
+<meta name="geo.region" content="ES-MD">
+<meta name="geo.placename" content="Madrid">
+
+<!-- Open Graph -->
+<meta property="og:type" content="restaurant.restaurant">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Restaurante Puerto Rico">
+<meta property="og:title" content="Restaurante Puerto Rico Madrid | Cocina española en el centro">
+<meta property="og:description" content="Cocina española y casera en Calle de Chinchilla, 2, a pocos pasos de Callao y Gran Vía. Abierto todos los días de 13:00 a 00:00.">
+<meta property="og:url" content="https://www.tudominio.es/">
+<meta property="og:image" content="https://www.tudominio.es/assets/img/og-restaurante-puerto-rico-madrid.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Restaurante Puerto Rico · Cocina española tradicional en el centro de Madrid">
+<meta property="restaurant:contact_info:street_address" content="Calle de Chinchilla, 2">
+<meta property="restaurant:contact_info:locality" content="Madrid">
+<meta property="restaurant:contact_info:postal_code" content="28013">
+<meta property="restaurant:contact_info:country_name" content="España">
+<meta property="restaurant:contact_info:phone_number" content="+34 915 21 98 34">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Restaurante Puerto Rico Madrid | Cocina española en el centro">
+<meta name="twitter:description" content="Cocina española y casera en Calle de Chinchilla, 2, junto a Callao y Gran Vía.">
+<meta name="twitter:image" content="https://www.tudominio.es/assets/img/og-restaurante-puerto-rico-madrid.jpg">
+
+<!-- Iconos -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Rendimiento: fuentes propias precargadas -->
+<link rel="preload" href="/assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/styles.css?v=1">
+
+<script>
+  document.documentElement.classList.replace('no-js', 'js');
+  /* Si una fotografía real todavía no se ha subido, se oculta con elegancia
+     en lugar de mostrar una imagen rota. Ver assets/img/LEEME.md */
+  window.fotoNoDisponible = function (img) {
+    /* Si falla un formato moderno (AVIF/WebP), se prueba el siguiente antes de rendirse */
+    var fuente = img.parentNode && img.parentNode.querySelector && img.parentNode.querySelector('source');
+    if (fuente) { fuente.remove(); return; }
+    var cont = img.closest('[data-foto]');
+    if (!cont) { img.remove(); return; }
+    var modo = cont.getAttribute('data-foto');
+    if (modo === 'ocultar') {
+      var galeria = cont.parentElement; cont.remove();
+      if (galeria && !galeria.querySelector('.galeria__item')) {
+        var sec = galeria.closest('section'); if (sec) sec.classList.add('galeria-sin-fotos');
+      }
+    } else if (modo === 'marco') {
+      cont.classList.add('sin-foto'); var p = img.closest('picture'); if (p) p.remove();
+    } else {
+      var pic = img.closest('picture'); (pic || img).remove();
+    }
+  };
+</script>
+
+<!-- Datos estructurados: solo información verificada/proporcionada -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Restaurant",
+      "@id": "https://www.tudominio.es/#restaurante",
+      "name": "Restaurante Puerto Rico",
+      "description": "Restaurante de cocina española y casera en el centro de Madrid, junto a Callao y Gran Vía: tapas, paellas y arroces, carnes, pescados y postres.",
+      "url": "https://www.tudominio.es/",
+      "telephone": "+34915219834",
+      "image": "https://www.tudominio.es/assets/img/og-restaurante-puerto-rico-madrid.jpg",
+      "logo": "https://www.tudominio.es/icon-512.png",
+      "priceRange": "10–20 €",
+      "currenciesAccepted": "EUR",
+      "servesCuisine": ["Española", "Cocina casera", "Tapas", "Arroces"],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Calle de Chinchilla, 2",
+        "addressLocality": "Madrid",
+        "addressRegion": "Comunidad de Madrid",
+        "postalCode": "28013",
+        "addressCountry": "ES"
+      },
+      "hasMap": "https://www.google.com/maps/search/?api=1&query=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid",
+      "openingHours": "Mo-Su 13:00-00:00",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "13:00",
+          "closes": "00:00"
+        }
+      ],
+      "amenityFeature": [
+        { "@type": "LocationFeatureSpecification", "name": "Entrada accesible para silla de ruedas", "value": true },
+        { "@type": "LocationFeatureSpecification", "name": "Comida para llevar", "value": true }
+      ],
+      "hasMenu": {
+        "@type": "Menu",
+        "name": "Carta del Restaurante Puerto Rico",
+        "url": "https://www.tudominio.es/#carta",
+        "inLanguage": "es",
+        "hasMenuSection": [
+          { "@type": "MenuSection", "name": "Entrantes y tapas", "hasMenuItem": [
+            { "@type": "MenuItem", "name": "Tortilla española" },
+            { "@type": "MenuItem", "name": "Gambas al ajillo" },
+            { "@type": "MenuItem", "name": "Croquetas" },
+            { "@type": "MenuItem", "name": "Ensaladilla rusa" },
+            { "@type": "MenuItem", "name": "Pulpo a la gallega" },
+            { "@type": "MenuItem", "name": "Gazpacho" } ] },
+          { "@type": "MenuSection", "name": "Arroces", "hasMenuItem": [
+            { "@type": "MenuItem", "name": "Paella de marisco" },
+            { "@type": "MenuItem", "name": "Paella mixta" },
+            { "@type": "MenuItem", "name": "Paella valenciana" },
+            { "@type": "MenuItem", "name": "Arroz con bogavante" } ] },
+          { "@type": "MenuSection", "name": "Carnes", "hasMenuItem": [
+            { "@type": "MenuItem", "name": "Entrecot" },
+            { "@type": "MenuItem", "name": "Ternera asada" },
+            { "@type": "MenuItem", "name": "Rabo guisado" },
+            { "@type": "MenuItem", "name": "Callos a la madrileña" },
+            { "@type": "MenuItem", "name": "Pollo al ajillo" },
+            { "@type": "MenuItem", "name": "Conejo al ajillo" } ] },
+          { "@type": "MenuSection", "name": "Pescados", "hasMenuItem": [
+            { "@type": "MenuItem", "name": "Bacalao con tomate" },
+            { "@type": "MenuItem", "name": "Sopa de pescado" } ] },
+          { "@type": "MenuSection", "name": "Postres", "hasMenuItem": [
+            { "@type": "MenuItem", "name": "Flan" },
+            { "@type": "MenuItem", "name": "Tarta de limón" },
+            { "@type": "MenuItem", "name": "Tarta de queso" },
+            { "@type": "MenuItem", "name": "Tarta de frutas" },
+            { "@type": "MenuItem", "name": "Arroz con leche" } ] },
+          { "@type": "MenuSection", "name": "Bebidas", "hasMenuItem": [
+            { "@type": "MenuItem", "name": "Sangría" },
+            { "@type": "MenuItem", "name": "Vino" },
+            { "@type": "MenuItem", "name": "Cerveza" },
+            { "@type": "MenuItem", "name": "Tinto de verano" },
+            { "@type": "MenuItem", "name": "Café" },
+            { "@type": "MenuItem", "name": "Licores" } ] }
+        ]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.tudominio.es/#web",
+      "url": "https://www.tudominio.es/",
+      "name": "Restaurante Puerto Rico Madrid",
+      "inLanguage": "es-ES",
+      "publisher": { "@id": "https://www.tudominio.es/#restaurante" }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.tudominio.es/#inicio",
+      "url": "https://www.tudominio.es/",
+      "name": "Restaurante Puerto Rico Madrid | Cocina Española en el Centro",
+      "isPartOf": { "@id": "https://www.tudominio.es/#web" },
+      "about": { "@id": "https://www.tudominio.es/#restaurante" },
+      "inLanguage": "es-ES"
+    }
+  ]
+}
+</script>
+</head>
+
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<!-- Iconos SVG (sprite) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-tel" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 3.5h3.2l1.6 4.2-2.1 1.4a11.5 11.5 0 0 0 7.2 7.2l1.4-2.1 4.2 1.6V19a1.8 1.8 0 0 1-1.9 1.8C10.3 20.3 3.7 13.7 3.2 5.4A1.8 1.8 0 0 1 5 3.5Z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-pin-lleno" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22s-7.5-6.5-7.5-12.2a7.5 7.5 0 0 1 15 0C19.5 15.5 12 22 12 22Z"/><circle cx="12" cy="9.8" r="2.8" fill="#fbf8f2"/></symbol>
+  <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 8h16M4 16h16"/></symbol>
+  <symbol id="i-cerrar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-flecha" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+  <symbol id="i-izq" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="m14.5 6-6 6 6 6"/></symbol>
+  <symbol id="i-der" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="m9.5 6 6 6-6 6"/></symbol>
+  <symbol id="i-estrella" viewBox="0 0 24 24"><path fill="currentColor" d="m12 2.8 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8L12 2.8Z"/></symbol>
+  <symbol id="i-carta" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M6 3.5h12v17H6zM9 8h6M9 11.5h6M9 15h4"/></symbol>
+  <symbol id="i-euro" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M17.5 6.5a6.5 6.5 0 1 0 0 11M5 10.5h8M5 13.5h8"/></symbol>
+  <symbol id="i-llevar" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M5 8h14l-1 12.5H6L5 8Zm4 0V6.5a3 3 0 0 1 6 0V8"/></symbol>
+  <symbol id="i-silla" viewBox="0 0 24 24"><circle cx="11" cy="4.5" r="1.8" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M11 8v5h5l2.5 5.5M8.2 10.6a5.5 5.5 0 1 0 7.6 6.9"/></symbol>
+  <symbol id="i-cubiertos" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M7 3v7a2 2 0 0 0 2 2v9M11 3v7a2 2 0 0 1-2 2M9 3v6M17 21V3c-2.2 1.2-3 4-3 7.5V13h3"/></symbol>
+  <symbol id="i-rombo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 22 12 12 22 2 12z"/></symbol>
+  <symbol id="i-metro" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M5 11.5h14M8.5 21l2-3.5M15.5 21l-2-3.5"/><circle cx="9" cy="14.5" r=".9" fill="currentColor"/><circle cx="15" cy="14.5" r=".9" fill="currentColor"/></symbol>
+  <symbol id="i-paseo" viewBox="0 0 24 24"><circle cx="13" cy="4" r="1.8" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="m9 21 2.5-6 2.5 2.5V21M8 12l2-4.5h3.5l2 4 2.5 1M11.5 15l1-7.5"/></symbol>
+  <symbol id="i-externo" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M14 4h6v6m0-6-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+</svg>
+
+<!-- ============================ CABECERA ============================ -->
+<header class="cabecera" id="cabecera">
+  <div class="contenedor cabecera__fila">
+    <a class="marca" href="#inicio" aria-label="Restaurante Puerto Rico, ir al inicio">
+      <span class="marca__nombre">Puerto Rico</span>
+      <span class="marca__sub">Restaurante · Madrid</span>
+    </a>
+    <nav class="nav" aria-label="Navegación principal">
+      <ul class="nav__lista">
+        <li><a href="#carta">Carta</a></li>
+        <li><a href="#galeria">Galería</a></li>
+        <li><a href="#resenas">Reseñas</a></li>
+        <li><a href="#contacto">Horario</a></li>
+        <li><a href="#ubicacion">Ubicación</a></li>
+      </ul>
+    </nav>
+    <div class="cabecera__acciones">
+      <a class="cabecera__tel" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>915 21 98 34</a>
+      <a class="icono-btn cabecera__menu" href="tel:+34915219834" aria-label="Llamar al restaurante"><svg aria-hidden="true"><use href="#i-tel"/></svg></a>
+      <button class="icono-btn cabecera__menu" type="button" id="abrir-menu" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil"><svg aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div class="menu-movil" id="menu-movil" role="dialog" aria-modal="true" aria-label="Menú" hidden>
+  <div class="menu-movil__cabecera">
+    <span class="marca"><span class="marca__nombre">Puerto Rico</span><span class="marca__sub">Restaurante · Madrid</span></span>
+    <button class="icono-btn" type="button" id="cerrar-menu" aria-label="Cerrar menú"><svg aria-hidden="true"><use href="#i-cerrar"/></svg></button>
+  </div>
+  <nav aria-label="Navegación móvil">
+    <ul class="menu-movil__lista">
+      <li><a href="#inicio">Inicio <span>01</span></a></li>
+      <li><a href="#carta">Carta <span>02</span></a></li>
+      <li><a href="#galeria">Galería <span>03</span></a></li>
+      <li><a href="#resenas">Reseñas <span>04</span></a></li>
+      <li><a href="#contacto">Horario y contacto <span>05</span></a></li>
+      <li><a href="#ubicacion">Ubicación <span>06</span></a></li>
+    </ul>
+  </nav>
+  <div class="menu-movil__pie">
+    <p>Calle de Chinchilla, 2 · 28013 Madrid<br>Todos los días · 13:00–00:00</p>
+    <a class="btn btn--bloque" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar · 915 21 98 34</a>
+  </div>
+</div>
+
+<main id="contenido">
+
+<!-- ============================ HERO ============================ -->
+<section class="hero" id="inicio" aria-labelledby="titulo-principal">
+  <div class="hero__media" data-foto="quitar">
+    <!-- Fotografía REAL del restaurante o de un plato. Ver assets/img/LEEME.md -->
+    <picture>
+      <source type="image/avif" srcset="/assets/img/restaurante-puerto-rico-madrid-portada-800.avif 800w, /assets/img/restaurante-puerto-rico-madrid-portada-1600.avif 1600w" sizes="100vw">
+      <source type="image/webp" srcset="/assets/img/restaurante-puerto-rico-madrid-portada-800.webp 800w, /assets/img/restaurante-puerto-rico-madrid-portada-1600.webp 1600w" sizes="100vw">
+      <img src="/assets/img/restaurante-puerto-rico-madrid-portada-1600.jpg" width="1600" height="1000" alt="Restaurante Puerto Rico en Calle de Chinchilla, Madrid" fetchpriority="high" decoding="async" onerror="fotoNoDisponible(this)">
+    </picture>
+  </div>
+  <div class="contenedor hero__contenido">
+    <p class="hero__lugar"><svg aria-hidden="true"><use href="#i-pin"/></svg>Calle de Chinchilla, 2 · Madrid</p>
+    <h1 class="hero__titulo" id="titulo-principal">
+      <span class="hero__titulo-pre">Restaurante</span>
+      <span class="hero__titulo-nombre">Puerto Rico</span>
+      <span class="hero__titulo-ciudad">Madrid</span>
+    </h1>
+    <p class="hero__lema">Cocina española tradicional en el corazón de Madrid</p>
+    <div class="hero__botones">
+      <a class="btn" href="#carta"><svg aria-hidden="true"><use href="#i-carta"/></svg>Ver carta</a>
+      <a class="btn btn--claro" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar al restaurante</a>
+    </div>
+  </div>
+</section>
+
+<!-- Franja de confianza -->
+<div class="franja">
+  <div class="contenedor franja__fila">
+    <div class="valoracion">
+      <span class="estrellas" aria-hidden="true">
+        <svg><use href="#i-estrella"/></svg><svg><use href="#i-estrella"/></svg><svg><use href="#i-estrella"/></svg><svg><use href="#i-estrella"/></svg><svg><use href="#i-estrella"/></svg>
+      </span>
+      <p><strong>Restaurante muy valorado por sus clientes</strong>Miles de opiniones en Google y Tripadvisor</p>
+    </div>
+    <ul class="franja__datos">
+      <li><span class="estado" data-estado aria-live="polite">Todos los días · 13:00–00:00</span></li>
+      <li><svg aria-hidden="true"><use href="#i-euro"/></svg>10–20 € por persona</li>
+      <li><svg aria-hidden="true"><use href="#i-paseo"/></svg>Junto a Callao y Gran Vía</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================ DESCUBRE ============================ -->
+<section class="seccion" id="descubre" aria-labelledby="titulo-descubre">
+  <div class="contenedor descubre">
+    <div class="descubre__texto revelar">
+      <p class="antetitulo">Descubre Puerto Rico</p>
+      <h2 class="titulo-seccion" id="titulo-descubre">Cocina española en el <em>centro de Madrid</em></h2>
+      <p class="entradilla">Restaurante Puerto Rico ofrece cocina española y casera en pleno centro de Madrid, a pocos pasos de Callao y Gran Vía.</p>
+      <p class="descubre__cuerpo">Una propuesta centrada en platos tradicionales: tapas, paellas y arroces, carnes, pescados y postres. Abrimos todos los días de 13:00 a 00:00, con un precio aproximado de 10 a 20 € por persona, y también puedes llevarte tu comida a casa.</p>
+      <ul class="rasgos">
+        <li><svg aria-hidden="true"><use href="#i-cubiertos"/></svg>Cocina casera</li>
+        <li><svg aria-hidden="true"><use href="#i-cubiertos"/></svg>Tapas</li>
+        <li><svg aria-hidden="true"><use href="#i-cubiertos"/></svg>Paellas y arroces</li>
+        <li><svg aria-hidden="true"><use href="#i-cubiertos"/></svg>Carnes y pescados</li>
+        <li><svg aria-hidden="true"><use href="#i-llevar"/></svg>Comida para llevar</li>
+        <li><svg aria-hidden="true"><use href="#i-silla"/></svg>Entrada accesible</li>
+      </ul>
+    </div>
+    <div class="descubre__media revelar" data-foto="marco">
+      <div class="marco">
+        <picture>
+          <source type="image/avif" srcset="/assets/img/interior-restaurante-puerto-rico-madrid-800.avif 800w, /assets/img/interior-restaurante-puerto-rico-madrid-1600.avif 1600w" sizes="(min-width: 900px) 45vw, 100vw">
+          <source type="image/webp" srcset="/assets/img/interior-restaurante-puerto-rico-madrid-800.webp 800w, /assets/img/interior-restaurante-puerto-rico-madrid-1600.webp 1600w" sizes="(min-width: 900px) 45vw, 100vw">
+          <img class="carga-suave" src="/assets/img/interior-restaurante-puerto-rico-madrid-1600.jpg" width="1200" height="1500" alt="Interior del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+        </picture>
+        <div class="marco__respaldo" aria-hidden="true">
+          <p>Tapas, arroces y cocina de siempre</p>
+          <p>Calle de Chinchilla, 2</p>
+        </div>
+      </div>
+      <p class="descubre__sello"><strong>Todos los días</strong><span>De 13:00 a 00:00</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PLATOS DESTACADOS ============================ -->
+<section class="seccion seccion--papel" id="destacados" aria-labelledby="titulo-destacados">
+  <div class="contenedor">
+    <div class="cabecera-seccion cabecera-seccion--centro revelar">
+      <p class="antetitulo">De nuestra cocina</p>
+      <h2 class="titulo-seccion" id="titulo-destacados">Platos destacados</h2>
+      <p class="entradilla">Clásicos de la cocina española que forman parte de nuestra carta.</p>
+    </div>
+    <ul class="destacados">
+      <li class="plato revelar">
+        <div class="plato__media" data-foto="quitar">
+          <svg class="plato__icono" viewBox="0 0 96 96" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><ellipse cx="48" cy="52" rx="34" ry="20"/><ellipse cx="48" cy="50" rx="27" ry="14"/><path d="M14 52H4M82 52h10"/><circle cx="40" cy="47" r="3"/><circle cx="54" cy="52" r="3"/><path d="M44 56c3-2 6-2 9 0M58 44l5 3M33 52l4 2"/></g></svg>
+          <picture>
+            <source type="image/avif" srcset="/assets/img/paella-restaurante-puerto-rico-madrid-800.avif" >
+            <source type="image/webp" srcset="/assets/img/paella-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/paella-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Paella del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </div>
+        <div class="plato__cuerpo">
+          <span class="plato__cat">Arroces</span>
+          <h3>Paellas y arroces</h3>
+          <p>Paella de marisco, mixta y valenciana, y arroz con bogavante.</p>
+        </div>
+      </li>
+      <li class="plato revelar">
+        <div class="plato__media" data-foto="quitar">
+          <svg class="plato__icono" viewBox="0 0 96 96" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M18 44h60l-4 26a8 8 0 0 1-8 7H30a8 8 0 0 1-8-7l-4-26Z"/><path d="M12 44h72M18 50H10M78 50h8"/><path d="M38 34c0-5 4-5 4-10M50 34c0-5 4-5 4-10"/></g></svg>
+          <picture>
+            <source type="image/avif" srcset="/assets/img/callos-a-la-madrilena-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/callos-a-la-madrilena-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/callos-a-la-madrilena-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Callos a la madrileña del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </div>
+        <div class="plato__cuerpo">
+          <span class="plato__cat">Carnes</span>
+          <h3>Callos a la madrileña</h3>
+          <p>Uno de los guisos más emblemáticos de la cocina de Madrid.</p>
+        </div>
+      </li>
+      <li class="plato revelar">
+        <div class="plato__media" data-foto="quitar">
+          <svg class="plato__icono" viewBox="0 0 96 96" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M48 18c-4 6-16 14-16 30a16 16 0 0 0 32 0c0-16-12-24-16-30Z"/><path d="M48 18v46M40 30c-2 8-2 22 2 32M56 30c2 8 2 22-2 32"/><path d="M46 18c0-4 2-6 4-8"/></g></svg>
+          <picture>
+            <source type="image/avif" srcset="/assets/img/pollo-al-ajillo-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/pollo-al-ajillo-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/pollo-al-ajillo-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Pollo al ajillo del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </div>
+        <div class="plato__cuerpo">
+          <span class="plato__cat">Carnes</span>
+          <h3>Pollo al ajillo</h3>
+          <p>Un clásico de la cocina casera española, también en versión de conejo.</p>
+        </div>
+      </li>
+      <li class="plato revelar">
+        <div class="plato__media" data-foto="quitar">
+          <svg class="plato__icono" viewBox="0 0 96 96" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="48" cy="50" r="30"/><path d="M48 50 72 32M48 50l30 4"/><path d="M34 40h.01M40 62h.01M58 66h.01M30 54h.01"/></g></svg>
+          <picture>
+            <source type="image/avif" srcset="/assets/img/tortilla-espanola-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/tortilla-espanola-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/tortilla-espanola-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Tortilla española del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </div>
+        <div class="plato__cuerpo">
+          <span class="plato__cat">Tapas</span>
+          <h3>Tortilla española</h3>
+          <p>La tapa española por excelencia, junto a croquetas, gambas al ajillo o pulpo a la gallega.</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ CARTA ============================ -->
+<section class="seccion" id="carta" aria-labelledby="titulo-carta">
+  <div class="contenedor">
+    <div class="cabecera-seccion cabecera-seccion--centro revelar">
+      <p class="antetitulo">La carta</p>
+      <h2 class="titulo-seccion" id="titulo-carta">Nuestra carta</h2>
+      <p class="entradilla">Cocina española y casera para compartir o para comer de principio a fin.</p>
+    </div>
+
+    <nav class="carta-nav" aria-label="Categorías de la carta">
+      <ul>
+        <li><a href="#carta-tapas">Entrantes y tapas</a></li>
+        <li><a href="#carta-arroces">Arroces</a></li>
+        <li><a href="#carta-carnes">Carnes</a></li>
+        <li><a href="#carta-pescados">Pescados</a></li>
+        <li><a href="#carta-postres">Postres</a></li>
+        <li><a href="#carta-bebidas">Bebidas</a></li>
+      </ul>
+    </nav>
+
+    <div class="carta">
+      <section class="carta__categoria revelar" id="carta-tapas" aria-labelledby="c-tapas">
+        <div class="carta__cabecera"><span class="carta__num" aria-hidden="true">i.</span><h3 id="c-tapas">Entrantes y tapas</h3></div>
+        <ul class="carta__lista">
+          <li>Tortilla española</li>
+          <li>Gambas al ajillo</li>
+          <li>Croquetas</li>
+          <li>Ensaladilla rusa</li>
+          <li>Pulpo a la gallega</li>
+          <li>Gazpacho</li>
+        </ul>
+      </section>
+      <section class="carta__categoria revelar" id="carta-arroces" aria-labelledby="c-arroces">
+        <div class="carta__cabecera"><span class="carta__num" aria-hidden="true">ii.</span><h3 id="c-arroces">Arroces</h3></div>
+        <ul class="carta__lista">
+          <li>Paella de marisco</li>
+          <li>Paella mixta</li>
+          <li>Paella valenciana</li>
+          <li>Arroz con bogavante</li>
+        </ul>
+      </section>
+      <section class="carta__categoria revelar" id="carta-carnes" aria-labelledby="c-carnes">
+        <div class="carta__cabecera"><span class="carta__num" aria-hidden="true">iii.</span><h3 id="c-carnes">Carnes</h3></div>
+        <ul class="carta__lista">
+          <li>Entrecot</li>
+          <li>Ternera asada</li>
+          <li>Rabo guisado</li>
+          <li>Callos a la madrileña</li>
+          <li>Pollo al ajillo</li>
+          <li>Conejo al ajillo</li>
+        </ul>
+      </section>
+      <section class="carta__categoria revelar" id="carta-pescados" aria-labelledby="c-pescados">
+        <div class="carta__cabecera"><span class="carta__num" aria-hidden="true">iv.</span><h3 id="c-pescados">Pescados</h3></div>
+        <ul class="carta__lista">
+          <li>Bacalao con tomate</li>
+          <li>Sopa de pescado</li>
+        </ul>
+      </section>
+      <section class="carta__categoria revelar" id="carta-postres" aria-labelledby="c-postres">
+        <div class="carta__cabecera"><span class="carta__num" aria-hidden="true">v.</span><h3 id="c-postres">Postres</h3></div>
+        <ul class="carta__lista">
+          <li>Flan</li>
+          <li>Tarta de limón</li>
+          <li>Tarta de queso</li>
+          <li>Tarta de frutas</li>
+          <li>Arroz con leche</li>
+        </ul>
+      </section>
+      <section class="carta__categoria revelar" id="carta-bebidas" aria-labelledby="c-bebidas">
+        <div class="carta__cabecera"><span class="carta__num" aria-hidden="true">vi.</span><h3 id="c-bebidas">Bebidas</h3></div>
+        <ul class="carta__lista">
+          <li>Sangría</li>
+          <li>Vino</li>
+          <li>Cerveza</li>
+          <li>Tinto de verano</li>
+          <li>Café</li>
+          <li>Licores</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="carta__aviso revelar">
+      <p>Consulta disponibilidad y precios actualizados en el restaurante.<small>La carta puede variar según temporada y mercado. Precio medio aproximado: 10–20 € por persona.</small></p>
+      <a class="btn" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar y consultar</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ GALERÍA ============================ -->
+<!-- Solo fotografías REALES del restaurante. Si un archivo no existe, su hueco
+     se oculta solo. Lista de archivos esperados en assets/img/LEEME.md -->
+<section class="seccion seccion--papel" id="galeria" aria-labelledby="titulo-galeria">
+  <div class="contenedor">
+    <div class="cabecera-seccion revelar">
+      <p class="antetitulo">Galería</p>
+      <h2 class="titulo-seccion" id="titulo-galeria">El restaurante y su <em>cocina</em></h2>
+    </div>
+
+    <div class="galeria" id="galeria-rejilla">
+      <figure class="galeria__item galeria__item--alto" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/restaurante-puerto-rico-madrid-fachada-calle-chinchilla-1600.webp" aria-label="Ampliar: exterior del restaurante">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/restaurante-puerto-rico-madrid-fachada-calle-chinchilla-800.avif">
+            <source type="image/webp" srcset="/assets/img/restaurante-puerto-rico-madrid-fachada-calle-chinchilla-800.webp">
+            <img class="carga-suave" src="/assets/img/restaurante-puerto-rico-madrid-fachada-calle-chinchilla-800.jpg" width="800" height="1000" alt="Fachada del Restaurante Puerto Rico en Calle de Chinchilla, Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Exterior</figcaption>
+      </figure>
+      <figure class="galeria__item galeria__item--ancho" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/interior-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: interior del restaurante">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/interior-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/interior-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/interior-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Interior del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Interior</figcaption>
+      </figure>
+      <figure class="galeria__item" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/paella-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: paella">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/paella-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/paella-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/paella-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Paella del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Paellas</figcaption>
+      </figure>
+      <figure class="galeria__item" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/tapas-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: tapas">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/tapas-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/tapas-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/tapas-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Tapas del Restaurante Puerto Rico en el centro de Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Tapas</figcaption>
+      </figure>
+      <figure class="galeria__item galeria__item--alto" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/comedor-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: comedor">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/comedor-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/comedor-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/comedor-restaurante-puerto-rico-madrid-800.jpg" width="800" height="1000" alt="Comedor del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Ambiente</figcaption>
+      </figure>
+      <figure class="galeria__item" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/carnes-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: carnes">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/carnes-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/carnes-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/carnes-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Plato de carne del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Carnes</figcaption>
+      </figure>
+      <figure class="galeria__item" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/postres-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: postres">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/postres-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/postres-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/postres-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Postres del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Postres</figcaption>
+      </figure>
+      <figure class="galeria__item galeria__item--ancho" data-foto="ocultar">
+        <button type="button" data-grande="/assets/img/cocina-casera-restaurante-puerto-rico-madrid-1600.webp" aria-label="Ampliar: platos de cocina casera">
+          <picture>
+            <source type="image/avif" srcset="/assets/img/cocina-casera-restaurante-puerto-rico-madrid-800.avif">
+            <source type="image/webp" srcset="/assets/img/cocina-casera-restaurante-puerto-rico-madrid-800.webp">
+            <img class="carga-suave" src="/assets/img/cocina-casera-restaurante-puerto-rico-madrid-800.jpg" width="800" height="600" alt="Platos de cocina casera del Restaurante Puerto Rico Madrid" loading="lazy" decoding="async" onerror="fotoNoDisponible(this)">
+          </picture>
+        </button>
+        <figcaption>Cocina casera</figcaption>
+      </figure>
+    </div>
+
+    <div class="galeria-vacia">
+      <p>Nuestra galería se está preparando</p>
+      <p>Pronto encontrarás aquí fotografías propias del restaurante y de nuestros platos. Mientras tanto, puedes ver las fotos que comparten nuestros clientes en Google Maps.</p>
+      <a class="btn btn--contorno" href="https://www.google.com/maps/search/?api=1&amp;query=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener">Ver fotos en Google Maps<svg aria-hidden="true"><use href="#i-externo"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<dialog class="lightbox" id="lightbox" aria-label="Galería ampliada">
+  <div class="lightbox__barra">
+    <span id="lightbox-contador" aria-live="polite"></span>
+    <button class="icono-btn" type="button" data-cerrar aria-label="Cerrar galería"><svg aria-hidden="true"><use href="#i-cerrar"/></svg></button>
+  </div>
+  <div class="lightbox__escena">
+    <img id="lightbox-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">
+    <button class="lightbox__nav lightbox__nav--prev" type="button" data-prev aria-label="Foto anterior"><svg aria-hidden="true"><use href="#i-izq"/></svg></button>
+    <button class="lightbox__nav lightbox__nav--next" type="button" data-next aria-label="Foto siguiente"><svg aria-hidden="true"><use href="#i-der"/></svg></button>
+  </div>
+  <p class="lightbox__pie" id="lightbox-pie"></p>
+</dialog>
+
+<!-- ============================ RESEÑAS ============================ -->
+<section class="seccion seccion--noche" id="resenas" aria-labelledby="titulo-resenas">
+  <div class="contenedor">
+    <div class="cabecera-seccion revelar">
+      <p class="antetitulo">Opiniones</p>
+      <h2 class="titulo-seccion" id="titulo-resenas">Lo que dicen nuestros <em>clientes</em></h2>
+      <p class="entradilla">Miles de comensales han compartido su experiencia en Google y Tripadvisor. Te invitamos a leerlas directamente en la fuente original, donde la valoración y el número de reseñas están siempre actualizados.</p>
+    </div>
+
+    <div class="resenas">
+      <article class="fuente revelar">
+        <h3 class="fuente__nombre">Google</h3>
+        <p>Valoración, opiniones y fotografías de clientes en la ficha del restaurante en Google Maps.</p>
+        <a class="enlace-flecha" href="https://www.google.com/maps/search/?api=1&amp;query=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener">Leer reseñas en Google<svg aria-hidden="true"><use href="#i-flecha"/></svg></a>
+      </article>
+      <article class="fuente revelar">
+        <h3 class="fuente__nombre">Tripadvisor</h3>
+        <p>Opiniones de visitantes y viajeros que han comido con nosotros en el centro de Madrid.</p>
+        <a class="enlace-flecha" href="https://www.tripadvisor.es/Search?q=Restaurante%20Puerto%20Rico%20Calle%20Chinchilla%20Madrid" target="_blank" rel="noopener">Leer reseñas en Tripadvisor<svg aria-hidden="true"><use href="#i-flecha"/></svg></a>
+      </article>
+      <article class="fuente revelar">
+        <h3 class="fuente__nombre">¿Ya nos conoces?</h3>
+        <p>Tu opinión ayuda a otras personas a descubrir Puerto Rico. Puedes dejarla en nuestra ficha de Google Maps.</p>
+        <a class="enlace-flecha" href="https://www.google.com/maps/search/?api=1&amp;query=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener">Escribir una reseña<svg aria-hidden="true"><use href="#i-flecha"/></svg></a>
+      </article>
+
+      <!--
+        RESEÑAS DESTACADAS (opcional)
+        Añade aquí fragmentos breves de reseñas REALES, copiados literalmente de su
+        fuente, con permiso del autor o dentro de los términos de la plataforma.
+        Duplica este bloque por cada reseña:
+
+      <figure class="cita revelar">
+        <blockquote><p>«Texto literal y breve de la reseña.»</p></blockquote>
+        <figcaption>Nombre del autor · Google · mes y año</figcaption>
+      </figure>
+      -->
+    </div>
+
+    <div class="prensa revelar">
+      <p class="prensa__etiqueta">En los medios</p>
+      <p>
+        <a href="https://www.moncloa.com/2025/04/10/madrid-joyas-comer-20-euros-3220736/" target="_blank" rel="noopener">«Madrid esconde tres joyas para comer de lujo por menos de 20 euros»</a>
+        <small>Moncloa.com · 10 de abril de 2025</small>
+      </p>
+    </div>
+
+    <div class="resenas__cta">
+      <a class="btn" href="https://www.google.com/maps/search/?api=1&amp;query=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener">Ver todas las reseñas<svg aria-hidden="true"><use href="#i-externo"/></svg></a>
+    </div>
+    <p class="nota">Las valoraciones y reseñas pertenecen a sus autores y a las plataformas donde se publicaron. No mostramos puntuaciones copiadas para evitar datos desactualizados.</p>
+  </div>
+</section>
+
+<!-- ============================ HORARIOS Y CONTACTO ============================ -->
+<section class="seccion" id="contacto" aria-labelledby="titulo-contacto">
+  <div class="contenedor">
+    <div class="cabecera-seccion revelar">
+      <p class="antetitulo">Información práctica</p>
+      <h2 class="titulo-seccion" id="titulo-contacto">Horarios y contacto</h2>
+    </div>
+
+    <div class="info">
+      <article class="tarjeta revelar">
+        <span class="tarjeta__icono" aria-hidden="true"><svg><use href="#i-pin"/></svg></span>
+        <h3>Dirección</h3>
+        <address>Calle de Chinchilla, 2<br>28013 Madrid</address>
+        <div class="tarjeta__acciones">
+          <a class="btn btn--contorno" href="https://www.google.com/maps/dir/?api=1&amp;destination=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-pin"/></svg>Cómo llegar</a>
+        </div>
+      </article>
+
+      <article class="tarjeta revelar">
+        <span class="tarjeta__icono" aria-hidden="true"><svg><use href="#i-tel"/></svg></span>
+        <h3>Teléfono</h3>
+        <a class="tarjeta__dato" href="tel:+34915219834">915 21 98 34</a>
+        <div class="tarjeta__acciones">
+          <a class="btn" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar ahora</a>
+        </div>
+      </article>
+
+      <article class="tarjeta tarjeta--horario revelar">
+        <span class="tarjeta__icono" aria-hidden="true"><svg><use href="#i-reloj"/></svg></span>
+        <h3>Horario</h3>
+        <p class="estado" data-estado aria-live="polite">Abierto todos los días</p>
+        <!--
+          HORARIO EDITABLE: cambia aquí las horas de cada día (data-abre / data-cierra
+          en formato 24 h y el texto visible). Si un día cierra, usa data-cerrado
+          y escribe «Cerrado». Recuerda actualizar también el JSON-LD del <head>.
+        -->
+        <table class="horario" id="horario">
+          <caption class="sr-only">Horario de apertura semanal</caption>
+          <tbody>
+            <tr data-dia="1" data-abre="13:00" data-cierra="00:00"><th scope="row">Lunes</th><td>13:00–00:00</td></tr>
+            <tr data-dia="2" data-abre="13:00" data-cierra="00:00"><th scope="row">Martes</th><td>13:00–00:00</td></tr>
+            <tr data-dia="3" data-abre="13:00" data-cierra="00:00"><th scope="row">Miércoles</th><td>13:00–00:00</td></tr>
+            <tr data-dia="4" data-abre="13:00" data-cierra="00:00"><th scope="row">Jueves</th><td>13:00–00:00</td></tr>
+            <tr data-dia="5" data-abre="13:00" data-cierra="00:00"><th scope="row">Viernes</th><td>13:00–00:00</td></tr>
+            <tr data-dia="6" data-abre="13:00" data-cierra="00:00"><th scope="row">Sábado</th><td>13:00–00:00</td></tr>
+            <tr data-dia="7" data-abre="13:00" data-cierra="00:00"><th scope="row">Domingo</th><td>13:00–00:00</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+
+    <ul class="servicios revelar" aria-label="Servicios">
+      <li><svg aria-hidden="true"><use href="#i-llevar"/></svg>Comida para llevar</li>
+      <li><svg aria-hidden="true"><use href="#i-silla"/></svg>Entrada accesible en silla de ruedas</li>
+      <li><svg aria-hidden="true"><use href="#i-euro"/></svg>10–20 € por persona</li>
+      <li><svg aria-hidden="true"><use href="#i-cubiertos"/></svg>Cocina española y casera</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ UBICACIÓN ============================ -->
+<section class="seccion seccion--papel" id="ubicacion" aria-labelledby="titulo-ubicacion">
+  <div class="contenedor">
+    <div class="cabecera-seccion revelar">
+      <p class="antetitulo">Ubicación</p>
+      <h2 class="titulo-seccion" id="titulo-ubicacion">Encuéntranos en <em>Madrid</em></h2>
+      <p class="entradilla">En la Calle de Chinchilla, 2, en pleno centro: un restaurante cerca de Callao, de Gran Vía y de Sol.</p>
+    </div>
+
+    <div class="ubicacion">
+      <div class="mapa revelar" id="mapa">
+        <!-- El mapa de Google se carga al pulsar (más rápido y sin cookies de terceros hasta entonces) -->
+        <div class="mapa__fachada">
+          <div>
+            <svg class="mapa__pin" aria-hidden="true"><use href="#i-pin-lleno"/></svg>
+            <p>Restaurante Puerto Rico</p>
+            <small>Calle de Chinchilla, 2 · 28013 Madrid</small>
+            <button class="btn" type="button" id="cargar-mapa">Ver mapa interactivo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="revelar">
+        <h3 class="sr-only">Cómo llegar</h3>
+        <p class="antetitulo">Cómo llegar</p>
+        <ul class="llegar">
+          <li><span class="llegar__icono" aria-hidden="true"><svg><use href="#i-metro"/></svg></span><div><strong>Callao</strong><span>Metro Callao (líneas 3 y 5), muy cerca del restaurante.</span></div></li>
+          <li><span class="llegar__icono" aria-hidden="true"><svg><use href="#i-metro"/></svg></span><div><strong>Gran Vía</strong><span>Metro Gran Vía (líneas 1 y 5) y la zona comercial de Gran Vía.</span></div></li>
+          <li><span class="llegar__icono" aria-hidden="true"><svg><use href="#i-metro"/></svg></span><div><strong>Sol</strong><span>Metro y Cercanías Sol, en la Puerta del Sol.</span></div></li>
+          <li><span class="llegar__icono" aria-hidden="true"><svg><use href="#i-paseo"/></svg></span><div><strong>Centro de Madrid</strong><span>En el distrito Centro (28013), ideal para comer o cenar mientras recorres la ciudad.</span></div></li>
+        </ul>
+        <div class="ubicacion__botones">
+          <a class="btn" href="https://www.google.com/maps/search/?api=1&amp;query=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-pin"/></svg>Abrir en Google Maps</a>
+          <a class="btn btn--contorno" href="https://www.google.com/maps/dir/?api=1&amp;destination=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-paseo"/></svg>Cómo llegar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================ PIE ============================ -->
+<footer class="pie">
+  <div class="contenedor">
+    <div class="pie__rejilla">
+      <div>
+        <a class="marca" href="#inicio"><span class="marca__nombre">Puerto Rico</span><span class="marca__sub">Restaurante · Madrid</span></a>
+        <p class="pie__lema">Cocina española y casera en el centro de Madrid.</p>
+      </div>
+      <div>
+        <p class="pie__titulo">Visítanos</p>
+        <address>Restaurante Puerto Rico<br>Calle de Chinchilla, 2<br>28013 Madrid</address>
+      </div>
+      <div>
+        <p class="pie__titulo">Contacto</p>
+        <p><a href="tel:+34915219834">915 21 98 34</a></p>
+        <p>Todos los días<br>13:00–00:00</p>
+      </div>
+      <nav class="pie__nav" aria-label="Navegación del pie">
+        <p class="pie__titulo">Navegación</p>
+        <ul>
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#carta">Carta</a></li>
+          <li><a href="#galeria">Galería</a></li>
+          <li><a href="#resenas">Reseñas</a></li>
+          <li><a href="#ubicacion">Ubicación</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="pie__legal">
+      <p>© <span data-anio>2026</span> Restaurante Puerto Rico — Madrid</p>
+      <ul>
+        <li><a href="/legal/">Aviso legal y privacidad</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<!-- Barra fija inferior (móvil) -->
+<nav class="barra-movil" id="barra-movil" aria-label="Acciones rápidas">
+  <a class="btn" href="tel:+34915219834"><svg aria-hidden="true"><use href="#i-tel"/></svg>Llamar</a>
+  <a class="btn btn--contorno" href="https://www.google.com/maps/dir/?api=1&amp;destination=Restaurante+Puerto+Rico%2C+Calle+de+Chinchilla+2%2C+28013+Madrid" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-pin"/></svg>Cómo llegar</a>
+</nav>
+
+<script src="/assets/js/main.js?v=1" defer></script>
+</body>
+</html>
