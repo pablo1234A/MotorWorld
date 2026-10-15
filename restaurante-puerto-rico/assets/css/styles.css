@@ -333,6 +333,10 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .llamar__titulo { font-family: var(--serif); font-size: 2rem; line-height: 1.1; }
 .llamar__numero { display: block; margin: 14px 0 10px; font-family: var(--serif); font-size: clamp(2.2rem, 1.6rem + 3vw, 2.8rem); text-decoration: none; color: var(--pimenton); letter-spacing: .01em; font-variant-numeric: tabular-nums; }
 .llamar__texto { color: var(--suave); font-size: .95rem; }
+.llamar__escritorio { display: none; margin: 18px 0 14px; padding: 18px; border: 1px solid var(--linea); border-radius: var(--radio); background: var(--crema); }
+.llamar__qr { width: 168px; height: 168px; margin: 0 auto 14px; border-radius: 4px; }
+.llamar__escritorio .llamar__texto strong { color: var(--carbon); display: block; }
+@media (hover: hover) and (pointer: fine) { .llamar__escritorio { display: block; } }
 .llamar__acciones { display: grid; gap: 10px; margin-top: 24px; }
 
 /* ---------- Reseñas ---------- */
