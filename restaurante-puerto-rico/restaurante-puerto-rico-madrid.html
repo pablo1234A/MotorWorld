@@ -8,7 +8,6 @@
 <link rel="canonical" href="https://www.tudominio.es/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#191410">
-<meta name="format-detection" content="telephone=no">
 <!-- Google Search Console: pega aquí tu etiqueta de verificación cuando la tengas -->
 <!-- <meta name="google-site-verification" content="CODIGO_DE_VERIFICACION"> -->
 
@@ -1549,6 +1548,11 @@ img.carga-suave.cargada { opacity: 1; }
   var dlgLlamar = $('#dialogo-llamar');
   if (dlgLlamar && typeof dlgLlamar.showModal === 'function') {
     var telefono = '+34915219834';
+    // Dentro de un visor/iframe, el enlace se abre en la ventana principal para que el
+    // sistema pueda lanzar la app de teléfono (los iframes suelen bloquearlo).
+    var enIframe = false;
+    try { enIframe = window.self !== window.top; } catch (err) { enIframe = true; }
+    if (enIframe) $$('a[href^="tel:"]').forEach(function (a) { a.target = '_top'; });
     var temporizador = null;
     var cancelar = function () { clearTimeout(temporizador); temporizador = null; };
     window.addEventListener('blur', cancelar);

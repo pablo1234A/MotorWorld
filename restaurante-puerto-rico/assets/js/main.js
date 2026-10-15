@@ -220,6 +220,11 @@
   var dlgLlamar = $('#dialogo-llamar');
   if (dlgLlamar && typeof dlgLlamar.showModal === 'function') {
     var telefono = '+34915219834';
+    // Dentro de un visor/iframe, el enlace se abre en la ventana principal para que el
+    // sistema pueda lanzar la app de teléfono (los iframes suelen bloquearlo).
+    var enIframe = false;
+    try { enIframe = window.self !== window.top; } catch (err) { enIframe = true; }
+    if (enIframe) $$('a[href^="tel:"]').forEach(function (a) { a.target = '_top'; });
     var temporizador = null;
     var cancelar = function () { clearTimeout(temporizador); temporizador = null; };
     window.addEventListener('blur', cancelar);
