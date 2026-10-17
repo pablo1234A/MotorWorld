@@ -247,20 +247,22 @@
   /* ---------------------------------------------------------------------- */
   var PART_INFO = {
     'crystal': ['Cristal de zafiro', 0], 'bezel': ['Bisel · Carbon TPT®', .06], 'dial': ['Esfera esqueletizada', .12],
-    'movement': ['Calibre', .2], 'tourbillon': ['Platina y tourbillon', .27], 'case': ['Carrura tonel', .32],
-    'strap-top': ['Correa · caucho técnico', .36], 'strap-bottom': ['Correa · caucho técnico', .39],
+    'movement': ['Calibre', .18], 'tourbillon': ['Platina y tourbillon', .26], 'case': ['Carrura tonel', .32],
+    'strap-top': ['Correa · caucho técnico', .36], 'strap-bottom': ['Correa · caucho técnico', .4],
     'l-bridge-a': ['Puente de barrilete'], 'l-arc': ['Puente lateral'], 'l-screw-a': ['Tornillo spline'], 'l-screw-b': ['Tornillo de titanio'],
     'l-train': ['Tren de rodaje'], 'l-wheel': ['Rueda de transmisión'], 'l-lever': ['Palanca de remontuar'],
     'r-stem': ['Tija y piñón'], 'r-bridges': ['Puentes de titanio'], 'r-nut': ['Casquillo'], 'r-bridge-b': ['Puente de rueda'],
     'r-bridge-c': ['Puente de áncora'], 'r-bridge-d': ['Brida'], 'r-bridge-e': ['Puente de volante'], 'r-jewel': ['Rubí'], 'r-screw': ['Tornillo de titanio']
   };
-  // Posición de cada capa principal cuando el reloj está "ensamblado" (lienzo 1920×1280).
+  // Reloj montado a partir de sus propias piezas: [x, y, escala] sobre el lienzo 1920×1280.
+  // Las capas se apilan en la misma perspectiva 3/4 que el despiece, así que no hay cambio de imagen.
   var STACK = {
-    'crystal': [960, 612], 'bezel': [960, 618], 'dial': [960, 626], 'movement': [960, 640], 'tourbillon': [960, 652],
-    'case': [960, 660], 'strap-top': [960, 520], 'strap-bottom': [960, 790]
+    'crystal': [960, 578, .98], 'bezel': [960, 606, .9], 'dial': [960, 640, 1], 'movement': [960, 668, .88],
+    'tourbillon': [960, 690, .9], 'case': [960, 668, .86], 'strap-top': [960, 676, .56], 'strap-bottom': [960, 690, .56]
   };
-  var Z_ORDER = ['strap-bottom', 'strap-top', 'case', 'tourbillon', 'movement'];
-  var Z_TOP = ['dial', 'bezel', 'crystal'];
+  // Orden de apilado (de abajo arriba): las piezas pequeñas quedan ocultas dentro del reloj y salen de él.
+  var Z_ORDER = ['strap-bottom', 'strap-top', 'case'];
+  var Z_TOP = ['tourbillon', 'movement', 'dial', 'bezel', 'crystal'];
   var LABELS = [
     { at: 'crystal', x: 1127, y: 89, dir: 'r', len: 90, n: '01', name: 'Cristal de zafiro', sub: 'Abombado · antirreflejo' },
     { at: 'bezel', x: 1186, y: 300, dir: 'r', len: 70, n: '02', name: 'Bisel', sub: 'Carbon TPT®' },
@@ -297,17 +299,18 @@
       var img = document.createElement('img');
       img.src = asset('assets/img/parts/' + id + '.webp');
       img.alt = ''; img.decoding = 'async'; img.draggable = false;
+      if (id === 'crystal') img.className = 'is-glass';
       img.style.left = d[1] + 'px'; img.style.top = d[2] + 'px'; img.style.width = d[3] + 'px'; img.style.height = d[4] + 'px';
       partsEl.appendChild(img);
       var side = sideIds.indexOf(id);
       var info = PART_INFO[id] || [id];
-      var target = STACK[id] || [960 + (rand() - .5) * 120, 650 + (rand() - .5) * 80];
+      var target = STACK[id] || [960 + (rand() - .5) * 90, 672 + (rand() - .5) * 40, .62];
       return {
         id: id, el: img, name: info[0], side: side >= 0,
-        start: side >= 0 ? .2 + side / sideIds.length * .34 : info[1],
+        start: side >= 0 ? .2 + side / sideIds.length * .26 : info[1],
         dx: target[0] - cx, dy: target[1] - cy,
-        rot: side >= 0 ? (rand() - .5) * 70 : (rand() - .5) * 10,
-        s0: side >= 0 ? .3 : .9, t: -1
+        rot: side >= 0 ? (rand() - .5) * 50 : 0,
+        s0: target[2], t: -1
       };
     });
     $('#hudTotal').textContent = parts.length;
@@ -320,7 +323,7 @@
       el.innerHTML = '<span class="plabel__dot"></span><span class="plabel__line" style="--len:' + l.len + 'px"></span>' +
         '<span class="plabel__text"><b><em>' + l.n + '</em>' + l.name + '</b><span>' + l.sub + '</span></span>';
       labelsEl.appendChild(el);
-      return { cfg: l, el: el, start: .7 + i * .022 };
+      return { cfg: l, el: el, start: .8 + i * .02 };
     });
 
     function measure() {
@@ -341,27 +344,36 @@
 
     var lastPhase = -1, lastCount = -1, lastTicker = '';
 
+    // Curva suave (smoothstep): arranca y frena sin tirones, como un plano de cámara
+    var soft = function (t) { return t * t * (3 - 2 * t); };
+
     function render(prog, force) {
-      // Cámara: zoom suave durante el despiece + paralaje con el ratón
-      var explodeQ = range(prog, .2, .74);
-      var cam = 1 + .05 * easeIO(explodeQ);
+      // Cámara: se acerca mientras el reloj se inclina (mantiene su tamaño en pantalla) y se aleja
+      // poco a poco durante el despiece para revelar todas las piezas. Paralaje suave con el ratón.
+      var explodeQ = range(prog, .18, .84);
+      var a = soft(range(prog, .01, .24));
+      var pull = soft(range(prog, .18, .74));
+      var cam = lerp(1 + .78 * a, 1, pull) * (1 + .04 * soft(range(prog, .8, 1)));
+      var zf = clamp((cam - 1) / .78, 0, 1);
+      var fx = lerp(CONTENT.x + CONTENT.w / 2, 960, zf), fy = lerp(CONTENT.y + CONTENT.h / 2, 640, zf);
       var S = fit.s * cam;
-      var tx = fit.cx - (CONTENT.x + CONTENT.w / 2) * S + pointer.sx * 14;
-      var ty = fit.cy - (CONTENT.y + CONTENT.h / 2) * S + pointer.sy * 10;
+      var tx = fit.cx - fx * S + pointer.sx * 14;
+      var ty = fit.cy - fy * S + pointer.sy * 10;
       stage.style.transform = 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0) scale(' + S.toFixed(5) + ')';
 
-      // Reloj ensamblado → se abre
-      var a = easeIO(range(prog, 0, .22));
+      // Plano 1: el reloj de frente se centra y se inclina hacia atrás hasta la vista 3/4 del despiece,
+      // fundiéndose con el mismo reloj montado a partir de sus piezas (ambos siguen moviéndose: sin corte).
       var heroShift = fit.mobile ? 0 : Math.min(420, vw * .24);
       var heroScale = fit.mobile ? 1.3 : 1;
-      var wx = heroShift * (1 - a), wy = fit.mobile ? 120 * (1 - a) : 0;
-      var ws = lerp(heroScale, .52, a);
-      var wo = 1 - range(prog, .1, .22);
-      var wb = range(prog, .08, .22) * 8;
-      whole.style.transform = 'translate3d(' + wx + 'px,' + wy + 'px,0) scale(' + ws.toFixed(4) + ')';
-      whole.style.opacity = wo.toFixed(3);
-      whole.style.filter = wb > .05 ? 'blur(' + wb.toFixed(2) + 'px)' : 'none';
-      partsEl.style.opacity = range(prog, .12, .2).toFixed(3);
+      var wx = heroShift * (1 - a), wy = (fit.mobile ? 120 : 0) * (1 - a) + 10 * a;
+      var ws = lerp(heroScale, .53, a);
+      whole.style.transform = 'translate3d(' + wx.toFixed(2) + 'px,' + wy.toFixed(2) + 'px,0) perspective(2200px) rotateX(' + (62 * a).toFixed(2) + 'deg) scale(' + ws.toFixed(4) + ')';
+      var mix = soft(range(prog, .13, .23));
+      whole.style.opacity = (1 - mix).toFixed(3);
+      whole.style.visibility = mix >= 1 ? 'hidden' : '';
+      partsEl.style.opacity = mix.toFixed(3);
+      var pt0 = soft(range(prog, .08, .26));
+      partsEl.style.transform = 'perspective(2200px) rotateX(' + (22 * (1 - pt0)).toFixed(2) + 'deg) scale(' + lerp(1.12, 1, pt0).toFixed(4) + ')';
 
       // Piezas
       var count = 0, ticker = null;
@@ -372,20 +384,19 @@
         if (lt > 0 && lt < 1 && (!ticker || pt.start > ticker.start)) ticker = pt;
         if (!force && Math.abs(lt - pt.t) < .0005) continue;
         pt.t = lt;
-        var e = easeIO(lt), inv = 1 - e;
-        var sc = lerp(pt.s0, 1, e) * (1 + .05 * Math.sin(Math.PI * e));
+        var e = soft(lt), inv = 1 - e;
+        var sc = lerp(pt.s0, 1, e) * (1 + .03 * Math.sin(Math.PI * e));
         pt.el.style.transform = 'translate3d(' + (pt.dx * inv).toFixed(2) + 'px,' + (pt.dy * inv).toFixed(2) + 'px,0) rotate(' + (pt.rot * inv).toFixed(2) + 'deg) scale(' + sc.toFixed(4) + ')';
-        if (pt.side) pt.el.style.opacity = clamp(lt * 3.2, 0, 1).toFixed(3);
       }
 
       // HUD
       if (count !== lastCount) { hudCount.textContent = pad2(count); lastCount = count; }
-      var tickTxt = ticker ? ticker.name : (prog < .14 ? 'Ensamblado' : count === parts.length ? 'Despiece completo' : 'Apertura de la caja');
+      var tickTxt = ticker ? ticker.name : (prog < .18 ? 'Ensamblado' : count === parts.length ? 'Despiece completo' : 'Apertura de la caja');
       if (tickTxt !== lastTicker) {
         hudTicker.innerHTML = (ticker ? '<em>' + pad2(parts.indexOf(ticker) + 1) + '</em>' : '') + escapeHTML(tickTxt);
         lastTicker = tickTxt;
       }
-      var phase = prog < .12 ? 0 : prog < .22 ? 1 : prog < .76 ? 2 : 3;
+      var phase = prog < .08 ? 0 : prog < .22 ? 1 : prog < .84 ? 2 : 3;
       if (phase !== lastPhase) {
         phaseItems.forEach(function (li, k) { li.classList.toggle('is-active', k === phase); });
         lastPhase = phase;
@@ -410,7 +421,7 @@
       if (!reduced) intro.style.transform = (fit.mobile ? '' : 'translateY(-46%) ') + 'translateY(' + (-60 * easeIO(io)).toFixed(1) + 'px)';
       intro.style.visibility = io >= 1 && !reduced ? 'hidden' : '';
       hint.style.opacity = 1 - range(prog, 0, .03);
-      var oo = easeOut(range(prog, .8, .9));
+      var oo = easeOut(range(prog, .86, .95));
       outro.style.opacity = oo.toFixed(3);
       outro.style.transform = 'translateY(' + (30 * (1 - oo)).toFixed(1) + 'px)';
     }
@@ -423,7 +434,8 @@
         var target = reduced ? 1 : sectionProgress(cache, y);
         pointer.sx = damp(pointer.sx, pointer.x, 4, dt);
         pointer.sy = damp(pointer.sy, pointer.y, 4, dt);
-        p = Math.abs(target - p) < .0002 ? target : damp(p, target, 7, dt);
+        // Inercia suave: el despiece "fluye" tras el scroll en lugar de saltar con cada rueda del ratón
+        p = Math.abs(target - p) < .0002 ? target : damp(p, target, 4.2, dt);
         render(p, false);
       }
     };
