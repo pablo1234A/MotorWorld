@@ -17,12 +17,12 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
-const RM = require('../assets/js/core.js');
 const SEO = require('./seo.js');
+const R = require('./render.js');
+const { createApi, createRateLimiter, MAX_BODY } = require('./api.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const PUBLIC = new Set(['index.html', 'assets']); // solo esto se sirve
-const MAX_BODY = 8 * 1024;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -75,26 +75,10 @@ function securityHeaders() {
 /** Hash CSP del script en línea de index.html. */
 function inlineScriptHash() {
   try {
-    const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-    const m = html.match(/<script>([\s\S]*?)<\/script>/);
-    return m ? crypto.createHash('sha256').update(m[1]).digest('base64') : '';
+    return crypto.createHash('sha256').update(R.inlineScript(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'))).digest('base64');
   } catch (e) {
     return '';
   }
-}
-
-/* ------------------------------------------------------------------------ */
-/* Limitador de peticiones (ventana fija, en memoria)                        */
-/* ------------------------------------------------------------------------ */
-function createRateLimiter(limit, windowMs) {
-  const hits = new Map();
-  return function allow(key, now = Date.now()) {
-    const e = hits.get(key);
-    if (!e || now - e.start > windowMs) { hits.set(key, { start: now, n: 1 }); return true; }
-    e.n++;
-    if (hits.size > 5000) hits.clear(); // evita crecer sin límite
-    return e.n <= limit;
-  };
 }
 
 /* ------------------------------------------------------------------------ */
@@ -138,76 +122,26 @@ function readBody(req) {
   });
 }
 
-function publicBoutique(b) {
-  return {
-    id: b.id, city: b.city, country: b.country, region: b.region, address: b.address,
-    lat: b.lat, lng: b.lng, timezone: b.tz, flagship: !!b.flagship, hours: b.hours
-  };
-}
-
 /* ------------------------------------------------------------------------ */
 /* API                                                                       */
 /* ------------------------------------------------------------------------ */
 function createApp(options = {}) {
-  const now = options.now || (() => new Date());
-  const allowPost = createRateLimiter(options.postLimit || 20, 60 * 1000);
   const log = options.quiet ? () => {} : (...a) => console.log(new Date().toISOString(), ...a);
+  const handleApi = createApi({
+    now: options.now, postLimit: options.postLimit, log,
+    random: () => crypto.randomInt(0, 1e9) / 1e9
+  });
 
   async function api(req, res, url) {
-    const route = url.pathname.replace(/\/+$/, '');
-
-    if (route === '/api/health' && req.method === 'GET') {
-      return json(req, res, 200, { ok: true, service: 'rm-web', time: now().toISOString() });
-    }
-
-    if (route === '/api/boutiques' && req.method === 'GET') {
-      const region = url.searchParams.get('region');
-      const list = RM.BOUTIQUES.filter((b) => !region || b.region === region).map(publicBoutique);
-      return json(req, res, 200, { regions: RM.REGIONS, boutiques: list }, { 'Cache-Control': 'public, max-age=300' });
-    }
-
-    const one = route.match(/^\/api\/boutiques\/([a-z-]+)$/);
-    if (one && req.method === 'GET') {
-      const b = RM.getBoutique(one[1]);
-      return b ? json(req, res, 200, publicBoutique(b)) : json(req, res, 404, { error: 'Boutique no encontrada.' });
-    }
-
-    if (route === '/api/availability' && req.method === 'GET') {
-      const av = RM.getAvailability(url.searchParams.get('boutique'), url.searchParams.get('date'), now());
-      return json(req, res, av.error ? 400 : 200, av);
-    }
-
-    if (route === '/api/appointments') {
-      if (req.method !== 'POST') return json(req, res, 405, { error: 'Método no permitido.' }, { Allow: 'POST' });
-      if (!/^application\/json\b/i.test(String(req.headers['content-type'] || ''))) {
-        return json(req, res, 415, { error: 'Se esperaba application/json.' });
-      }
-      if (!allowPost(req.socket.remoteAddress || 'unknown')) {
-        return json(req, res, 429, { error: 'Demasiadas solicitudes. Inténtelo en un minuto.' }, { 'Retry-After': '60' });
-      }
-      let input;
-      try { input = JSON.parse(await readBody(req)); } catch (e) {
-        if (e.status === 413) return json(req, res, 413, { error: 'Solicitud demasiado grande.' }, { Connection: 'close' });
-        return json(req, res, 400, { error: 'JSON no válido.' });
-      }
-      const result = RM.validateAppointment(input, now());
-      if (!result.ok) {
-        const status = result.errors.time === 'Esa hora ya no está disponible.' ? 409 : 422;
-        return json(req, res, status, { errors: result.errors });
-      }
-      const v = result.value;
-      const reference = RM.makeReference(v.boutique, v.date, () => crypto.randomInt(0, 1e9) / 1e9);
-      // MOCK: no se persiste ni se envía nada. Solo se registra la referencia, sin datos personales.
-      log('cita simulada', reference);
-      return json(req, res, 201, {
-        reference,
-        status: 'simulated',
-        appointment: { boutique: v.boutique, date: v.date, time: v.time, reason: v.reason, interest: v.interest },
-        note: 'Entorno de demostración: la solicitud se ha validado pero no se ha almacenado ni enviado.'
-      });
-    }
-
-    return json(req, res, 404, { error: 'Ruta no encontrada.' });
+    const r = await handleApi({
+      method: req.method,
+      pathname: url.pathname,
+      searchParams: url.searchParams,
+      contentType: req.headers['content-type'],
+      ip: req.socket.remoteAddress,
+      readBody: () => readBody(req)
+    });
+    json(req, res, r.status, r.body, r.headers);
   }
 
   /* ---------------------------------------------------------------------- */

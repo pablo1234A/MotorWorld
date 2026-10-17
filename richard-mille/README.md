@@ -53,28 +53,34 @@ SITE_URL=https://www.tudominio.com npm start
 
 ## Publicada en Wix
 
-La web está alojada como sitio **Wix Headless** (estático) en la cuenta del propietario:
+La web está en la cuenta de Wix del propietario:
 
-- En vivo: https://headless-saobftrkqwx-pablogrcab1023-140e.wix-site-host.com
+- En vivo (versión estática): https://headless-saobftrkqwx-pablogrcab1023-140e.wix-site-host.com
 - Panel: https://manage.wix.com/dashboard/0bac41b8-4481-4530-bf84-040f8872f7f2
-  (desde ahí se conecta un dominio propio).
 
-Diferencias con la versión con servidor Node:
+### Versión completa con backend (Wix-managed headless + worker)
 
-- Las imágenes se sirven desde la biblioteca de medios del sitio (`scripts/wix-media.json`).
-- Los idiomas se enlazan con `?lang=en|fr|de|it` en lugar de `/en/`…; la detección automática funciona igual.
-- La reserva usa la lógica del navegador (el formulario sigue siendo una demostración que no envía nada).
-- `robots.txt`, `sitemap.xml`, `hreflang`, Open Graph y JSON-LD se generan con la URL pública.
-
-Para regenerar los archivos (por ejemplo, tras conectar un dominio):
+Wix ejecuta código de servidor si está hecho para el runtime de Cloudflare Workers. `wix/worker.js` es el
+mismo servidor que `server/server.js` (comparten `server/render.js` y `server/api.js`): páginas traducidas
+en `/`, `/en/`, `/fr/`, `/de/`, `/it/`, `robots.txt`, `sitemap.xml`, la API REST y las cabeceras de seguridad.
+Probado en local con workerd: respuestas idénticas byte a byte a las del servidor Node.
 
 ```bash
-SITE_URL=https://www.tudominio.com npm run build:wix   # genera dist-wix/
-# opcional, archivos más ligeros:
-npx esbuild dist-wix/assets/js/main.js --minify --charset=utf8 --outfile=dist-wix/assets/js/main.js --allow-overwrite
+npm install
+npm run build:wix-worker                         # → wix/dist/client (estáticos) + wix/dist/server (worker)
+npx wrangler dev -c wix/wrangler.toml            # probar en local
+WORKER_URL=http://127.0.0.1:8787 node --test wix/worker.test.js
+
+# Publicar (necesita acceso de red a Wix y sesión en la CLI):
+cd wix && npm create @wix/new@latest init        # crea wix.config.json
+#   en wix.config.json:  "site": { "outputDirectory": { "client": "./dist/client", "server": "./dist/server" } }
+npx wix release
 ```
 
-y se vuelven a subir todos los archivos de `dist-wix/` al mismo sitio.
+### Versión estática (sin servidor)
+
+`npm run build:wix` genera `dist-wix/`: imágenes desde la biblioteca de medios (`scripts/wix-media.json`),
+idiomas con `?lang=`, SEO estático y la reserva con la lógica del navegador. Es la que está publicada ahora.
 
 ## Secciones
 
@@ -130,6 +136,10 @@ richard-mille/
 ├── scripts/build-wix.js       genera dist-wix/ para el alojamiento en Wix
 ├── scripts/wix-media.json     imágenes → URLs de la biblioteca de medios de Wix
 ├── server/server.js           backend Node sin dependencias
+├── server/render.js           páginas por idioma y SEO (puro, compartido con el worker)
+├── server/api.js              API REST (pura, compartida con el worker)
+├── wix/worker.js              el mismo backend para Wix (Cloudflare Workers runtime)
+├── scripts/build-wix-worker.js empaqueta wix/dist/client y wix/dist/server
 ├── server/api.test.js         tests (node --test)
 └── package.json
 ```

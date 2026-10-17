@@ -1,1 +1,4 @@
 dist-wix/
+node_modules/
+wix/dist/
+wix/.wrangler/

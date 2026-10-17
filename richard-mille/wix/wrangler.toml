@@ -1,0 +1,9 @@
+# Solo para probar en local el mismo worker que se despliega en Wix:
+#   npm run build:wix-worker && npx wrangler dev -c wix/wrangler.toml
+name = "richard-mille-local"
+main = "dist/server/index.js"
+compatibility_date = "2024-12-01"
+
+[assets]
+directory = "dist/client"
+binding = "ASSETS"

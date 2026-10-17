@@ -9,10 +9,14 @@
     "dev": "node --watch server/server.js",
     "test": "node --test server/api.test.js",
     "build": "node scripts/build-single.js",
-    "build:wix": "node scripts/build-wix.js"
+    "build:wix": "node scripts/build-wix.js",
+    "build:wix-worker": "node scripts/build-wix-worker.js"
   },
   "engines": {
     "node": ">=18"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "esbuild": "^0.23.1"
+  }
 }
