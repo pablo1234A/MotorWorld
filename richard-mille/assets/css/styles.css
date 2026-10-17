@@ -219,6 +219,38 @@ ul, ol { list-style: none; }
 .menu__links small { font-family: var(--f-mono); font-size: 11px; color: var(--muted); font-weight: 400; letter-spacing: .1em; }
 .menu__foot { margin-top: 36px; color: var(--muted); }
 
+/* Selector de idioma */
+.i18n-pending body > * { visibility: hidden; } /* evita ver un instante el español antes de traducir */
+.lang { position: relative; margin-right: -14px; }
+.lang__btn { height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 8px; color: var(--muted); transition: color .3s; }
+.lang__btn:hover, .lang.is-open .lang__btn { color: var(--text); }
+.lang__btn .mono { font-size: 11px; }
+.lang__btn i { width: 6px; height: 6px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .4s var(--ease); }
+.lang.is-open .lang__btn i { transform: translateY(1px) rotate(-135deg); }
+.lang__menu {
+  position: absolute; right: 0; top: calc(100% + 10px); min-width: 170px; padding: 6px;
+  background: rgba(10, 10, 11, .96); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border: 1px solid var(--line-2); border-radius: var(--radius); animation: stepIn .45s var(--ease) both;
+}
+.lang__menu a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; font-size: 14px; color: var(--muted); border-radius: 2px; transition: background-color .3s, color .3s; }
+.lang__menu a:hover { background: var(--surface-2); color: var(--text); }
+.lang__menu a[aria-current='true'] { color: var(--text); }
+.lang__menu a[aria-current='true']::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+.menu__langs { display: flex; gap: 8px; margin-top: 30px; }
+.menu__langs a { min-width: 46px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line-2); border-radius: 999px; color: var(--muted); }
+.menu__langs a[aria-current='true'] { background: var(--text); color: var(--bg); border-color: var(--text); }
+@media (max-width: 980px) { .nav .lang { display: none; } }
+/* Barra compacta: si los enlaces no caben (portátiles estrechos o idiomas largos) pasan al menú */
+.nav__logo, .nav .lang, .nav__cta { flex: none; }
+.nav__links { min-width: 0; }
+.nav.is-compact .nav__links { display: none; }
+.nav.is-compact .nav__burger { display: block; margin-left: 0; }
+.nav.is-compact .lang { margin-left: auto; }
+
+/* Alemán: palabras compuestas largas */
+html[lang='de'] .explode__intro .display { font-size: clamp(2.1rem, 5.6vw, 6.4rem); }
+@media (max-width: 980px) { html[lang='de'] .explode__intro .display { font-size: 11vw; } }
+
 /* --------------------------------------------------------------------------
    01 · Despiece
    -------------------------------------------------------------------------- */
@@ -926,6 +958,14 @@ body.legal-open { overflow: hidden; }
 .is-mobile .summary { margin-top: 28px; }
 .is-mobile .slots__grid { grid-template-columns: repeat(3, 1fr); }
 .is-mobile .day { max-height: none; min-height: 40px; }
+
+/* Palabras largas (alemán, francés…) en pantallas estrechas: guion silábico y, si no, corte limpio */
+.is-mobile h1, .is-mobile h2, .is-mobile h3, .is-mobile .manifesto__text, .is-mobile .family strong {
+  -webkit-hyphens: auto; hyphens: auto; overflow-wrap: break-word;
+}
+.is-mobile .family strong { font-size: clamp(1.2rem, 6.4vw, 1.65rem); min-width: 0; }
+.is-mobile [data-split] .w, .is-mobile [data-split] .w > span { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 359px) { .is-mobile .family a { grid-template-columns: 22px minmax(0, 1fr) 72px; } .family__thumb { width: 72px; } }
 
 /* Footer */
 .is-mobile .footer__cols a, .is-mobile .footer__legalnav a { padding-block: 4px; }

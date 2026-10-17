@@ -31,9 +31,10 @@ assets['assets/img/rm-assembled.webp'] = dataURI('assets/img/rm-assembled.webp')
 html = html.replace('<link rel="stylesheet" href="assets/css/styles.css">', () => '<style>\n' + read('assets/css/styles.css') + '\n</style>');
 html = html.replace(/<link rel="preload" as="image"[^>]*>\n?/, '');
 html = html.replace(
-  /<script src="assets\/js\/core\.js"><\/script>\s*<script src="assets\/js\/scene-data\.js"><\/script>\s*<script src="assets\/js\/main\.js"><\/script>/,
+  /<script src="assets\/js\/i18n\.js"><\/script>\s*<script src="assets\/js\/core\.js"><\/script>\s*<script src="assets\/js\/scene-data\.js"><\/script>\s*<script src="assets\/js\/main\.js"><\/script>/,
   () => [
     '<script>window.RM_ASSETS = ' + JSON.stringify(assets) + ';</script>',
+    '<script>\n' + safeScript(read('assets/js/i18n.js')) + '\n</script>',
     '<script>\n' + safeScript(read('assets/js/core.js')) + '\n</script>',
     '<script>\n' + safeScript(read('assets/js/scene-data.js')) + '\n</script>',
     '<script>\n' + safeScript(read('assets/js/main.js')) + '\n</script>'

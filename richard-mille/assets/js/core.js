@@ -66,6 +66,7 @@
     { id: 'es', label: 'Español' },
     { id: 'en', label: 'English' },
     { id: 'fr', label: 'Français' },
+    { id: 'de', label: 'Deutsch' },
     { id: 'it', label: 'Italiano' }
   ];
 

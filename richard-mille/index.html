@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Richard Mille — Una máquina de carreras en la muñeca</title>
   <meta name="description" content="Descubra el universo Richard Mille: ingeniería, materiales y historia. Encuentre su boutique y reserve una cita privada.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="theme-color" content="#050505">
   <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
@@ -19,15 +20,36 @@
   <link rel="preload" as="image" href="assets/img/rm-assembled.webp" fetchpriority="high">
   <link rel="stylesheet" href="assets/css/styles.css">
   <script>
-    /* Sensor de dispositivo: marca la página como móvil solo en teléfonos (táctil + pantalla pequeña o navegador móvil).
-       En ordenador no se añade ninguna clase y la web se ve exactamente igual. */
+    /* Antes de pintar:
+       1) Sensor de dispositivo: marca la página como móvil solo en teléfonos (táctil + pantalla pequeña o navegador móvil).
+       2) Idioma: elige español, inglés, francés, alemán o italiano según la preferencia guardada o el navegador
+          (inglés para el resto). Con el servidor, la portada lleva a /en/, /fr/…; sin él, se traduce en el sitio. */
     (function (d, n) {
-      var c = d.documentElement.classList, ua = n.userAgent || '';
+      var r = d.documentElement, c = r.classList, ua = n.userAgent || '';
       c.replace('no-js', 'js');
       var handheld = (n.userAgentData && n.userAgentData.mobile) || /iPhone|iPod|Android.+Mobile|Windows Phone|Mobi/i.test(ua) ||
         (window.matchMedia && matchMedia('(pointer: coarse)').matches);
       var phone = handheld && !/iPad|Tablet/i.test(ua) && Math.min(screen.width, screen.height) < 600;
       if (phone) c.add('is-mobile');
+
+      var L = ['es', 'en', 'fr', 'de', 'it'], page = r.lang || 'es', want = null;
+      try { want = localStorage.getItem('rm-lang'); } catch (e) { /* almacenamiento no disponible */ }
+      if (L.indexOf(want) < 0) {
+        want = null;
+        var list = n.languages && n.languages.length ? n.languages : [n.language || ''];
+        for (var i = 0; i < list.length && !want; i++) { var p = String(list[i]).toLowerCase().split('-')[0]; if (L.indexOf(p) >= 0) want = p; }
+        want = want || 'en';
+      }
+      if (r.hasAttribute('data-server')) {
+        var bot = /bot|crawl|spider|slurp|lighthouse|inspectiontool|preview|facebookexternalhit/i.test(ua);
+        if (!bot && want !== page && want !== 'es' && /^\/(index\.html)?$/.test(location.pathname)) {
+          location.replace('/' + want + '/' + location.search + location.hash);
+        }
+        r.setAttribute('data-lang', page);
+      } else {
+        r.setAttribute('data-lang', want);
+        if (want !== 'es') c.add('i18n-pending');
+      }
     })(document, navigator);
   </script>
 </head>
@@ -64,6 +86,16 @@
       <a href="#coleccion" data-nav>Colección</a>
       <a href="#boutiques" data-nav>Boutiques</a>
     </nav>
+    <div class="lang" id="lang">
+      <button type="button" class="lang__btn" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-controls="langMenu" aria-label="Elegir idioma"><span class="mono" id="langCurrent">ES</span><i aria-hidden="true"></i></button>
+      <ul class="lang__menu" id="langMenu" hidden>
+        <li><a href="/" hreflang="es" lang="es" data-lang-link="es">Español</a></li>
+        <li><a href="/en/" hreflang="en" lang="en" data-lang-link="en">English</a></li>
+        <li><a href="/fr/" hreflang="fr" lang="fr" data-lang-link="fr">Français</a></li>
+        <li><a href="/de/" hreflang="de" lang="de" data-lang-link="de">Deutsch</a></li>
+        <li><a href="/it/" hreflang="it" lang="it" data-lang-link="it">Italiano</a></li>
+      </ul>
+    </div>
     <a href="#cita" class="btn btn--ghost nav__cta" data-magnetic><span>Reservar cita</span></a>
     <button class="nav__burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú"><i></i><i></i></button>
   </header>
@@ -78,6 +110,7 @@
       <a href="#boutiques"><small>06</small>Boutiques</a>
       <a href="#cita"><small>07</small>Reservar cita</a>
     </nav>
+    <nav class="menu__langs mono" aria-label="Idioma"><a href="/" hreflang="es" lang="es" data-lang-link="es">ES</a><a href="/en/" hreflang="en" lang="en" data-lang-link="en">EN</a><a href="/fr/" hreflang="fr" lang="fr" data-lang-link="fr">FR</a><a href="/de/" hreflang="de" lang="de" data-lang-link="de">DE</a><a href="/it/" hreflang="it" lang="it" data-lang-link="it">IT</a></nav>
     <p class="menu__foot mono">Les Breuleux · Suiza · Desde 1999</p>
   </div>
 
@@ -722,12 +755,12 @@
           <p>Las cookies son pequeños archivos que un sitio web guarda en su navegador para recordar información sobre su visita. Esta política se ajusta al artículo 22.2 de la LSSI-CE y a la Guía sobre el uso de las cookies de la AEPD.</p>
 
           <h3>2. Cookies que utiliza este sitio</h3>
-          <p><strong>Este sitio no instala cookies propias ni de terceros</strong>, ni técnicas, ni de análisis, ni publicitarias. Tampoco utiliza almacenamiento local del navegador para rastrearle. Por ese motivo no se muestra un banner de consentimiento.</p>
+          <p><strong>Este sitio no instala cookies propias ni de terceros</strong>, ni técnicas, ni de análisis, ni publicitarias. Solo guarda en el almacenamiento local de su navegador el idioma que usted elija, una preferencia técnica que no sirve para identificarle ni rastrearle. Por ese motivo no se muestra un banner de consentimiento.</p>
           <table class="doc__table">
             <thead><tr><th>Tipo</th><th>¿Se usa?</th></tr></thead>
             <tbody>
               <tr><td>Técnicas o necesarias</td><td>No</td></tr>
-              <tr><td>Preferencias o personalización</td><td>No</td></tr>
+              <tr><td>Preferencias o personalización</td><td>Solo el idioma elegido, en el almacenamiento local</td></tr>
               <tr><td>Análisis o medición</td><td>No</td></tr>
               <tr><td>Publicidad comportamental</td><td>No</td></tr>
             </tbody>
@@ -771,6 +804,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="assets/js/i18n.js"></script>
   <script src="assets/js/core.js"></script>
   <script src="assets/js/scene-data.js"></script>
   <script src="assets/js/main.js"></script>

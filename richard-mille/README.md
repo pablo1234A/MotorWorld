@@ -24,6 +24,33 @@ npm test           # 7 tests de la API y del núcleo
 Servida así, la web detecta la API y consulta en el servidor la disponibilidad de horas y la
 validación de la cita.
 
+## Idiomas (traducción automática)
+
+La web se muestra en el idioma del visitante: **español, inglés, francés, alemán o italiano**; cualquier
+otro idioma recibe la versión en inglés. Hay un selector en la barra (y en el menú móvil) y la elección
+se recuerda en el navegador.
+
+- **Con el servidor:** cada idioma tiene su propia URL (`/`, `/en/`, `/fr/`, `/de/`, `/it/`), servida ya
+  traducida. La portada redirige a cada visitante a su idioma (nunca a los buscadores).
+- **Sin servidor** (archivo `index.html` o `dist/richard-mille.html`): se traduce en el propio navegador.
+- Las traducciones están en `assets/js/i18n.js` (tabla `[es, en, fr, de, it]`): 399 textos por idioma,
+  incluidos formulario, mensajes de error y páginas legales.
+
+## SEO
+
+- Una página por idioma, indexable, con `<html lang>`, título y descripción traducidos.
+- URL canónica, `hreflang` para los 5 idiomas + `x-default`, Open Graph y Twitter Card con URLs absolutas.
+- Datos estructurados schema.org (`WebSite` + `WebPage`) en JSON-LD.
+- `robots.txt` y `sitemap.xml` (con alternativas de idioma) generados por el servidor.
+- Listado de boutiques escrito en el HTML para los buscadores.
+- Pantalla de carga que solo espera al reloj de portada y las tipografías (mejor LCP).
+
+**En producción define la URL pública** para que canónicas y sitemap sean correctas:
+
+```bash
+SITE_URL=https://www.tudominio.com npm start
+```
+
 ## Secciones
 
 | # | Sección | Animación |

@@ -117,6 +117,59 @@ test('CSP: autoriza exactamente el script en línea actual de index.html', async
   assert.ok(csp.includes("'sha256-" + hash + "'"), 'la CSP no coincide con el script de index.html');
 });
 
+test('SEO: una página traducida por idioma con canónica, hreflang y datos estructurados', async (t) => {
+  const s = await start(); t.after(() => s.close());
+  const es = await (await fetch(url(s, '/'))).text();
+  assert.match(es, /<html lang="es"[^>]*data-server="1"/);
+  assert.match(es, /Una máquina de carreras/);
+  const r = await fetch(url(s, '/en/'));
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('content-language'), 'en');
+  const en = await r.text();
+  assert.match(en, /<html lang="en"/);
+  assert.match(en, /<title>Richard Mille — A racing machine on the wrist<\/title>/);
+  assert.match(en, /Where to find us\./);
+  assert.ok(!/Dónde encontrarnos/.test(en), 'quedan textos en español en /en/');
+  assert.match(en, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:\d+\/en\/">/);
+  for (const l of ['es', 'en', 'fr', 'de', 'it', 'x-default']) assert.match(en, new RegExp('hreflang="' + l + '"'));
+  assert.match(en, /<meta property="og:image" content="http:\/\/[^"]+\/assets\/img\/og\.jpg">/);
+  const ld = JSON.parse(en.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
+  assert.equal(ld['@graph'][1].inLanguage, 'en');
+  assert.match(en, /<h3>Geneva<\/h3>/); // boutiques escritas en el HTML
+  for (const [lang, txt] of [['fr', 'Où nous trouver.'], ['de', 'Wo Sie uns finden.'], ['it', 'Dove trovarci.']]) {
+    assert.match(await (await fetch(url(s, '/' + lang + '/'))).text(), new RegExp(txt.replace('.', '\\.')));
+  }
+});
+
+test('SEO: rutas bajo idioma, robots.txt y sitemap.xml', async (t) => {
+  const s = await start(); t.after(() => s.close());
+  const redir = await fetch(url(s, '/fr'), { redirect: 'manual' });
+  assert.equal(redir.status, 301);
+  assert.equal(redir.headers.get('location'), '/fr/');
+  assert.equal((await fetch(url(s, '/de/assets/js/core.js'))).status, 200);
+  assert.equal((await (await fetch(url(s, '/it/api/health'))).json()).ok, true);
+  const robots = await (await fetch(url(s, '/robots.txt'))).text();
+  assert.match(robots, /Disallow: \/api\//);
+  assert.match(robots, /Sitemap: http:\/\/[^\s]+\/sitemap\.xml/);
+  const sm = await (await fetch(url(s, '/sitemap.xml'))).text();
+  assert.equal((sm.match(/<loc>/g) || []).length, 5);
+  assert.match(sm, /hreflang="x-default"/);
+  // la CSP sigue autorizando el script en línea en las páginas traducidas
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  const hash = require('crypto').createHash('sha256').update(html.match(/<script>([\s\S]*?)<\/script>/)[1]).digest('base64');
+  assert.ok((await fetch(url(s, '/de/'))).headers.get('content-security-policy').includes(hash));
+});
+
+test('i18n: todas las cadenas del núcleo tienen traducción', () => {
+  const I18N = require('../assets/js/i18n.js');
+  const src = [].concat(
+    RM.REGIONS.map((r) => r.label), RM.REASONS.map((r) => r.label), RM.REASONS.map((r) => r.hint),
+    RM.INTERESTS.filter((i) => i.id !== 'rm002').map((i) => i.label), RM.BOUTIQUES.map((b) => b.country),
+    Object.values(RM.validateAppointment({}, NOW).errors)
+  );
+  for (const s of src) assert.ok(I18N.known(s), 'sin traducción: ' + s);
+});
+
 test('limitador de peticiones', () => {
   const allow = createRateLimiter(2, 1000);
   assert.equal(allow('a', 0), true);

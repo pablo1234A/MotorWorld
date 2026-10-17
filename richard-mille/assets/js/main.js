@@ -22,7 +22,15 @@
   var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
   var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
   // En la versión de un solo archivo las imágenes van incrustadas en window.RM_ASSETS
-  var asset = function (path) { return (window.RM_ASSETS && window.RM_ASSETS[path]) || path; };
+  // Idioma activo: lo decide el sensor de <head> (o el servidor en /en/, /fr/, /de/, /it/)
+  var I18N = window.RM_I18N;
+  var LANG = document.documentElement.getAttribute('data-lang') || document.documentElement.lang || 'es';
+  if (!I18N.has(LANG)) LANG = 'es';
+  var LOCALE = I18N.info(LANG).locale;
+  var t = function (s, vars) { return I18N.t(s, LANG, vars); };
+  var city = function (b) { return t(b.city); };
+  var SERVER = document.documentElement.hasAttribute('data-server');
+  var asset = function (path) { return (window.RM_ASSETS && window.RM_ASSETS[path]) || (SERVER ? '/' + path : path); };
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -69,11 +77,14 @@
   /* ====================================================================== */
   function preload() {
     $$('.preloader__mark span').forEach(function (s, i) { s.style.setProperty('--i', i); });
-    var srcs = [asset('assets/img/rm-assembled.webp')].concat(SCENE.parts.map(function (p) { return asset('assets/img/parts/' + p[0] + '.webp'); }));
+    // Solo bloquea lo que se ve primero (reloj de portada + tipografías): mejora el LCP.
+    // Las 24 piezas del despiece se descargan en segundo plano; no hacen falta hasta empezar el scroll.
+    var srcs = [asset('assets/img/rm-assembled.webp')];
     var total = srcs.length + 1, loaded = 0, shown = 0, done = false;
     var bar = $('#preloaderBar'), count = $('#preloaderCount');
     var tick = function () { loaded++; };
     srcs.forEach(function (src) { var im = new Image(); im.onload = im.onerror = tick; im.src = src; });
+    SCENE.parts.forEach(function (p) { new Image().src = asset('assets/img/parts/' + p[0] + '.webp'); });
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(tick);
     var started = performance.now();
 
@@ -157,14 +168,24 @@
 
   function setMenu(open) {
     burger.setAttribute('aria-expanded', open);
-    burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    burger.setAttribute('aria-label', t(open ? 'Cerrar menú' : 'Abrir menú'));
     document.body.classList.toggle('menu-open', open);
     if (open) { menu.hidden = false; requestAnimationFrame(function () { menu.classList.add('is-open'); }); }
     else { menu.classList.remove('is-open'); setTimeout(function () { if (!menu.classList.contains('is-open')) menu.hidden = true; }, 800); }
     nav.classList.remove('is-hidden');
   }
 
+  // Si los enlaces de la barra no caben junto al idioma y el botón, pasan al menú (según idioma y ancho)
+  function fitNav() {
+    var links = $('.nav__links', nav);
+    nav.classList.remove('is-compact');
+    if (getComputedStyle(links).display !== 'none' && links.scrollWidth > links.clientWidth + 1) nav.classList.add('is-compact');
+  }
+
   function initNav() {
+    fitNav();
+    onResize(fitNav);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNav);
     burger.addEventListener('click', function () { setMenu(burger.getAttribute('aria-expanded') !== 'true'); });
     $$('a', menu).forEach(function (a) { a.addEventListener('click', function () { setMenu(false); }); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.body.classList.contains('menu-open')) setMenu(false); });
@@ -313,7 +334,7 @@
       var info = PART_INFO[id] || [id];
       var target = STACK[id] || [960 + (rand() - .5) * 90, 672 + (rand() - .5) * 40, .62];
       return {
-        id: id, el: img, name: info[0], side: side >= 0,
+        id: id, el: img, name: t(info[0]), side: side >= 0,
         start: side >= 0 ? .2 + side / sideIds.length * .26 : info[1],
         dx: target[0] - cx, dy: target[1] - cy,
         rot: side >= 0 ? (rand() - .5) * 50 : 0,
@@ -328,7 +349,7 @@
       var el = document.createElement('div');
       el.className = 'plabel plabel--' + (l.dir === 'l' ? 'left' : 'right');
       el.innerHTML = '<span class="plabel__dot"></span><span class="plabel__line" style="--len:' + l.len + 'px"></span>' +
-        '<span class="plabel__text"><b><em>' + l.n + '</em>' + l.name + '</b><span>' + l.sub + '</span></span>';
+        '<span class="plabel__text"><b><em>' + l.n + '</em>' + escapeHTML(t(l.name)) + '</b><span>' + escapeHTML(t(l.sub)) + '</span></span>';
       labelsEl.appendChild(el);
       return { cfg: l, el: el, start: .8 + i * .02 };
     });
@@ -408,7 +429,7 @@
 
       // HUD
       if (count !== lastCount) { hudCount.textContent = pad2(count); lastCount = count; }
-      var tickTxt = ticker ? ticker.name : (prog < .18 ? 'Ensamblado' : count === parts.length ? 'Despiece completo' : 'Apertura de la caja');
+      var tickTxt = ticker ? ticker.name : t(prog < .18 ? 'Ensamblado' : count === parts.length ? 'Despiece completo' : 'Apertura de la caja');
       if (tickTxt !== lastTicker) {
         hudTicker.innerHTML = (ticker ? '<em>' + pad2(parts.indexOf(ticker) + 1) + '</em>' : '') + escapeHTML(tickTxt);
         lastTicker = tickTxt;
@@ -725,7 +746,7 @@
   function initTilt() {
     if (isMobile) {
       var grid = $('.materials__grid');
-      grid.tabIndex = 0; grid.setAttribute('role', 'region'); grid.setAttribute('aria-label', 'Materiales, deslice para ver más');
+      grid.tabIndex = 0; grid.setAttribute('role', 'region'); grid.setAttribute('aria-label', t('Materiales, deslice para ver más'));
       carousel(grid, function () { return $$('.material', grid); });
       return;
     }
@@ -783,7 +804,7 @@
     var list = $('#families'), float = $('#familiesFloat'), img = $('img', float);
     var x = 0, y = 0, fx = 0, fy = 0, rot = 0, on = false, running = false;
     $$('.family', list).forEach(function (li) {
-      $('a', li).setAttribute('data-cursor', 'Reservar');
+      $('a', li).setAttribute('data-cursor', t('Reservar'));
       li.addEventListener('pointerenter', function () {
         if (img.getAttribute('src') !== li.dataset.img) img.src = li.dataset.img;
         img.style.objectPosition = li.dataset.pos;
@@ -874,7 +895,9 @@
 
     // Estado de apertura en la zona horaria de cada boutique
     var WD = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    var DAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    // Nombre del día en el idioma activo (7-1-2024 fue domingo)
+    var dayFmt = new Intl.DateTimeFormat(LOCALE, { weekday: 'long', timeZone: 'UTC' });
+    var dayName = function (wd) { return dayFmt.format(new Date(Date.UTC(2024, 0, 7 + wd))); };
     function localNow(tz) {
       var parts = {};
       new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
@@ -884,19 +907,19 @@
     function status(b) {
       var n = localNow(b.tz), mins = n.h * 60 + n.m, today = b.hours[n.wd];
       var time = pad2(n.h) + ':' + pad2(n.m);
-      if (today && mins >= today[0] * 60 && mins < today[1] * 60) return { open: true, text: 'Abierta · cierra a las ' + today[1] + ':00', time: time };
-      if (today && mins < today[0] * 60) return { open: false, text: 'Cerrada · abre a las ' + today[0] + ':00', time: time };
+      if (today && mins >= today[0] * 60 && mins < today[1] * 60) return { open: true, text: t('Abierta · cierra a las {h}:00', { h: today[1] }), time: time };
+      if (today && mins < today[0] * 60) return { open: false, text: t('Cerrada · abre a las {h}:00', { h: today[0] }), time: time };
       for (var k = 1; k <= 7; k++) {
         var wd = (n.wd + k) % 7;
-        if (b.hours[wd]) return { open: false, text: 'Cerrada · abre ' + (k === 1 ? 'mañana' : 'el ' + DAYS[wd]) + ' a las ' + b.hours[wd][0] + ':00', time: time };
+        if (b.hours[wd]) return { open: false, text: k === 1 ? t('Cerrada · abre mañana a las {h}:00', { h: b.hours[wd][0] }) : t('Cerrada · abre el {day} a las {h}:00', { day: dayName(wd), h: b.hours[wd][0] }), time: time };
       }
-      return { open: false, text: 'Cerrada', time: time };
+      return { open: false, text: t('Cerrada'), time: time };
     }
     function refreshStatus() {
       RM.BOUTIQUES.forEach(function (b) {
         var s = status(b), el = $('.bcard__status', cards[b.id]);
         el.classList.toggle('is-open', s.open);
-        el.innerHTML = '<i></i>' + s.text + '<small>' + s.time + ' local</small>';
+        el.innerHTML = '<i></i>' + escapeHTML(s.text) + '<small>' + escapeHTML(t('{time} local', { time: s.time })) + '</small>';
       });
     }
 
@@ -956,6 +979,7 @@
     }
 
     function build() {
+      listEl.innerHTML = ''; // sustituye el listado estático que el servidor deja para buscadores
       // Filtros
       var counts = { all: RM.BOUTIQUES.length };
       RM.BOUTIQUES.forEach(function (b) { counts[b.region] = (counts[b.region] || 0) + 1; });
@@ -963,7 +987,7 @@
         var c = document.createElement('button');
         c.type = 'button'; c.className = 'chip'; c.dataset.region = r.id;
         c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', r.id === 'all');
-        c.innerHTML = escapeHTML(r.label) + '<sup>' + counts[r.id] + '</sup>';
+        c.innerHTML = escapeHTML(t(r.label)) + '<sup>' + counts[r.id] + '</sup>';
         c.addEventListener('click', function () { filter(r.id); });
         filtersEl.appendChild(c);
       });
@@ -975,8 +999,8 @@
         pin.className = 'pin' + (b.flagship ? ' is-flagship' : '');
         pin.style.left = (pr.x * 100).toFixed(3) + '%';
         pin.style.top = (pr.y * 100).toFixed(3) + '%';
-        pin.setAttribute('aria-label', 'Boutique de ' + b.city);
-        pin.innerHTML = '<span class="pin__label">' + escapeHTML(b.city) + '</span>';
+        pin.setAttribute('aria-label', t('Boutique de {city}', { city: city(b) }));
+        pin.innerHTML = '<span class="pin__label">' + escapeHTML(city(b)) + '</span>';
         pin.addEventListener('click', function () { select(b.id, { scrollList: true }); });
         pinsEl.appendChild(pin);
         pins[b.id] = pin;
@@ -986,11 +1010,11 @@
         card.setAttribute('role', 'listitem');
         card.tabIndex = 0;
         card.innerHTML =
-          '<div class="bcard__top"><h3>' + escapeHTML(b.city) + (b.flagship ? '<span class="bcard__flag">FLAGSHIP</span>' : '') + '</h3>' +
-          '<span class="bcard__country mono">' + escapeHTML(b.country) + '</span></div>' +
+          '<div class="bcard__top"><h3>' + escapeHTML(city(b)) + (b.flagship ? '<span class="bcard__flag">FLAGSHIP</span>' : '') + '</h3>' +
+          '<span class="bcard__country mono">' + escapeHTML(t(b.country)) + '</span></div>' +
           '<p class="bcard__addr">' + escapeHTML(b.address) + '</p>' +
           '<p class="bcard__status"></p>' +
-          '<button type="button" class="bcard__cta">Reservar en esta boutique <span aria-hidden="true">→</span></button>';
+          '<button type="button" class="bcard__cta">' + escapeHTML(t('Reservar en esta boutique')) + ' <span aria-hidden="true">→</span></button>';
         card.addEventListener('click', function (e) {
           if (e.target.closest('.bcard__cta')) return;
           select(b.id);
@@ -1001,7 +1025,7 @@
         $('.bcard__cta', card).addEventListener('click', function () {
           booking.setBoutique(b.id, true);
           $('#cita').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
-          toast('Boutique seleccionada: ' + b.city);
+          toast(t('Boutique seleccionada: {city}', { city: city(b) }));
         });
         listEl.appendChild(card);
         cards[b.id] = card;
@@ -1050,24 +1074,25 @@
 
     var state = { step: 0, boutique: '', reason: '', interest: 'any', date: '', time: '', view: null, slotsReq: 0, ref: '' };
     var rangeD = RM.bookingRange();
-    var monthFmt = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-    var longFmt = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-    var shortFmt = new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+    var monthFmt = new Intl.DateTimeFormat(LOCALE, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    var longFmt = new Intl.DateTimeFormat(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    var shortFmt = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
-    function labelOf(list, id) { var x = list.filter(function (i) { return i.id === id; })[0]; return x ? x.label : ''; }
+    function labelOf(list, id) { var x = list.filter(function (i) { return i.id === id; })[0]; return x ? t(x.label) : ''; }
 
     function build() {
       // Boutiques agrupadas por región
-      selBoutique.innerHTML = '<option value="">Seleccione una boutique</option>' + RM.REGIONS.map(function (r) {
-        return '<optgroup label="' + escapeHTML(r.label) + '">' + RM.BOUTIQUES.filter(function (b) { return b.region === r.id; }).map(function (b) {
-          return '<option value="' + b.id + '">' + escapeHTML(b.city + ' — ' + b.address) + '</option>';
+      selBoutique.innerHTML = '<option value="">' + escapeHTML(t('Seleccione una boutique')) + '</option>' + RM.REGIONS.map(function (r) {
+        return '<optgroup label="' + escapeHTML(t(r.label)) + '">' + RM.BOUTIQUES.filter(function (b) { return b.region === r.id; }).map(function (b) {
+          return '<option value="' + b.id + '">' + escapeHTML(city(b) + ' — ' + b.address) + '</option>';
         }).join('') + '</optgroup>';
       }).join('');
-      selInterest.innerHTML = RM.INTERESTS.map(function (i) { return '<option value="' + i.id + '">' + escapeHTML(i.label) + '</option>'; }).join('');
+      selInterest.innerHTML = RM.INTERESTS.map(function (i) { return '<option value="' + i.id + '">' + escapeHTML(t(i.label)) + '</option>'; }).join('');
       selLang.innerHTML = RM.LANGUAGES.map(function (l) { return '<option value="' + l.id + '">' + escapeHTML(l.label) + '</option>'; }).join('');
+      if (RM.LANGUAGES.some(function (l) { return l.id === LANG; })) selLang.value = LANG;
 
       reasonWrap.innerHTML = RM.REASONS.map(function (r, i) {
-        return '<button type="button" class="choice" role="radio" aria-checked="false" tabindex="' + (i === 0 ? 0 : -1) + '" data-value="' + r.id + '"><b>' + escapeHTML(r.label) + '</b><small>' + escapeHTML(r.hint) + '</small></button>';
+        return '<button type="button" class="choice" role="radio" aria-checked="false" tabindex="' + (i === 0 ? 0 : -1) + '" data-value="' + r.id + '"><b>' + escapeHTML(t(r.label)) + '</b><small>' + escapeHTML(t(r.hint)) + '</small></button>';
       }).join('');
       var choices = $$('.choice', reasonWrap);
       choices.forEach(function (c, i) {
@@ -1123,7 +1148,7 @@
       if (!state.date) renderSlotsEmpty();
       renderCalendar();
       var b = RM.getBoutique(id);
-      $('#slotsTz').textContent = b ? '· hora local de ' + b.city : '';
+      $('#slotsTz').textContent = b ? t('· hora local de {city}', { city: city(b) }) : '';
       updateSummary('boutique');
       if (fromOutside && state.step > 2) go(0);
       if (fromOutside && id) boutiques.select(id, { scrollList: true });
@@ -1152,11 +1177,11 @@
     function updateSummary(changed) {
       var b = RM.getBoutique(state.boutique);
       var vals = {
-        boutique: b ? b.city : '—',
+        boutique: b ? city(b) : '—',
         reason: labelOf(RM.REASONS, state.reason) || '—',
         interest: labelOf(RM.INTERESTS, state.interest) || '—',
         date: state.date ? cap(shortFmt.format(RM.parseISODate(state.date))) : '—',
-        time: state.time ? state.time + (b ? ' · ' + b.city : '') : '—'
+        time: state.time ? state.time + (b ? ' · ' + city(b) : '') : '—'
       };
       Object.keys(vals).forEach(function (k) {
         if (sum[k].textContent === vals[k]) return;
@@ -1215,7 +1240,8 @@
         var open = b ? RM.isOpenOn(b, iso) : true;
         var ok = inRange && open && !!b;
         var cls = 'day' + (iso === state.date ? ' is-selected' : '') + (iso === today ? ' is-today' : '') + (inRange && !open ? ' is-closed' : '');
-        var label = cap(longFmt.format(RM.parseISODate(iso))) + (inRange && !open ? ', cerrado' : '');
+        var label = cap(longFmt.format(RM.parseISODate(iso)));
+        if (inRange && !open) label = t('{label}, cerrado', { label: label });
         html += '<button type="button" role="gridcell" class="' + cls + '" style="--n:' + (d + offset) + '" data-date="' + iso + '"' +
           (ok ? '' : ' disabled') + ' aria-label="' + label + '"' + (iso === state.date ? ' aria-selected="true"' : '') + '>' + d + '</button>';
       }
@@ -1240,7 +1266,7 @@
 
     /* ---------- Horas ---------- */
     function renderSlotsEmpty(msg) {
-      slotsEl.innerHTML = '<p class="slots__empty">' + (msg || 'Seleccione primero un día.') + '</p>';
+      slotsEl.innerHTML = '<p class="slots__empty">' + escapeHTML(t(msg || 'Seleccione primero un día.')) + '</p>';
     }
 
     function fetchAvailability(boutique, date) {
@@ -1262,7 +1288,7 @@
         if (av.closed || !av.slots.length) { renderSlotsEmpty('La boutique está cerrada ese día.'); return; }
         slotsEl.innerHTML = av.slots.map(function (s, i) {
           return '<button type="button" role="radio" class="slot" style="--n:' + i + '" data-time="' + s.time + '" aria-checked="' + (s.time === state.time) + '"' +
-            (s.available ? '' : ' disabled aria-label="' + s.time + ', no disponible"') + '>' + s.time + '</button>';
+            (s.available ? '' : ' disabled aria-label="' + escapeHTML(t('{time}, no disponible', { time: s.time })) + '"') + '>' + s.time + '</button>';
         }).join('');
         $$('.slot:not([disabled])', slotsEl).forEach(function (btn) {
           btn.addEventListener('click', function () {
@@ -1281,7 +1307,7 @@
       fields.forEach(function (f) {
         var msg = errors[f] || '';
         var holder = $('[data-error="' + f + '"]', form);
-        if (holder) holder.textContent = msg;
+        if (holder) holder.textContent = msg ? t(msg) : '';
         var input = form.elements[f];
         if (input && input.nodeType === 1) {
           input.setAttribute('aria-invalid', msg ? 'true' : 'false');
@@ -1319,7 +1345,7 @@
       });
       stepperBar.style.transform = 'scaleX(' + (n + 1) / 4 + ')';
       prevBtn.hidden = n === 0;
-      $('span', nextBtn).textContent = n === 3 ? 'Confirmar cita' : 'Continuar';
+      $('span', nextBtn).textContent = t(n === 3 ? 'Confirmar cita' : 'Continuar');
       if (n === 1) renderCalendar(true);
       if (n === 3) renderReview();
       var r = panel.getBoundingClientRect();
@@ -1351,18 +1377,18 @@
     function renderReview() {
       var v = collect(), b = RM.getBoutique(v.boutique);
       var rows = [
-        ['Boutique', b ? b.city + ' — ' + b.address : '', 0],
+        ['Boutique', b ? city(b) + ' — ' + b.address : '', 0],
         ['Motivo', labelOf(RM.REASONS, v.reason), 0],
         ['Colección', labelOf(RM.INTERESTS, v.interest), 0],
         ['Fecha y hora', v.date ? cap(longFmt.format(RM.parseISODate(v.date))) + ' · ' + v.time + ' h' : '', 1],
-        ['Nombre', v.firstName + ' ' + v.lastName, 2],
+        ['Nombre y apellidos', v.firstName + ' ' + v.lastName, 2],
         ['Correo', v.email, 2],
         ['Teléfono', v.phone || '—', 2],
         ['Idioma', labelOf(RM.LANGUAGES, v.language), 2]
       ];
       if (v.message) rows.push(['Mensaje', v.message, 2]);
       $('#review').innerHTML = rows.map(function (r) {
-        return '<div><dt>' + r[0] + '</dt><dd>' + escapeHTML(r[1]) + '</dd><button type="button" data-goto="' + r[2] + '">Editar</button></div>';
+        return '<div><dt>' + escapeHTML(t(r[0])) + '</dt><dd>' + escapeHTML(r[1]) + '</dd><button type="button" data-goto="' + r[2] + '">' + escapeHTML(t('Editar')) + '</button></div>';
       }).join('');
       $$('#review [data-goto]').forEach(function (b) { b.addEventListener('click', function () { go(+b.dataset.goto); }); });
     }
@@ -1388,10 +1414,10 @@
       }
       p.then(function (r) {
         if (r.status === 201 && r.body.reference) { success(value, r.body.reference); return; }
-        if (r.body && r.body.errors) { jumpToErrors(r.body.errors); toast('Revise los datos marcados.'); return; }
-        toast('No se ha podido completar la solicitud. Inténtelo de nuevo.');
+        if (r.body && r.body.errors) { jumpToErrors(r.body.errors); toast(t('Revise los datos marcados.')); return; }
+        toast(t('No se ha podido completar la solicitud. Inténtelo de nuevo.'));
       }).catch(function () {
-        toast('Sin conexión con el servidor. Inténtelo de nuevo.');
+        toast(t('Sin conexión con el servidor. Inténtelo de nuevo.'));
       }).then(function () {
         nextBtn.classList.remove('is-loading'); nextBtn.disabled = false; prevBtn.disabled = false;
       });
@@ -1402,8 +1428,9 @@
       var b = RM.getBoutique(v.boutique);
       lastBooking = { v: v, ref: ref, b: b };
       $('#doneRef').textContent = ref;
-      $('#doneText').textContent = v.firstName + ', su visita a la boutique de ' + b.city + ' el ' + longFmt.format(RM.parseISODate(v.date)) +
-        ' a las ' + v.time + ' h ha quedado registrada. En un entorno real recibiría la confirmación en ' + v.email + '. En esta demostración no se ha enviado ningún dato.';
+      $('#doneText').textContent = t('{name}, su visita a la boutique de {city} el {date} a las {time} h ha quedado registrada. En un entorno real recibiría la confirmación en {email}. En esta demostración no se ha enviado ningún dato.', {
+        name: v.firstName, city: city(b), date: longFmt.format(RM.parseISODate(v.date)), time: v.time, email: v.email
+      });
       form.hidden = true; stepper.hidden = true; done.hidden = false;
       done.focus({ preventScroll: true });
       var r = panel.getBoundingClientRect();
@@ -1434,9 +1461,9 @@
         'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//RM Concept//Cita//ES', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
         'UID:' + lastBooking.ref + '@rm-concept', 'DTSTAMP:' + stamp,
         'DTSTART;TZID=' + b.tz + ':' + start, 'DTEND;TZID=' + b.tz + ':' + end,
-        'SUMMARY:Cita privada · Richard Mille ' + b.city,
-        'LOCATION:' + (b.address + ', ' + b.city + ', ' + b.country).replace(/,/g, '\\,'),
-        'DESCRIPTION:Referencia ' + lastBooking.ref + ' (demostración)',
+        'SUMMARY:' + t('Cita privada · Richard Mille {city}', { city: city(b) }),
+        'LOCATION:' + (b.address + ', ' + city(b) + ', ' + t(b.country)).replace(/,/g, '\\,'),
+        'DESCRIPTION:' + t('Referencia {ref} (demostración)', { ref: lastBooking.ref }),
         'END:VEVENT', 'END:VCALENDAR'
       ].join('\r\n');
       var url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
@@ -1510,7 +1537,7 @@
       if (panel.hidden) return;
       panel.classList.remove('is-open');
       document.body.classList.remove('legal-open');
-      document.title = 'Richard Mille — Una máquina de carreras en la muñeca';
+      document.title = t('Richard Mille — Una máquina de carreras en la muñeca');
       if (/^#legal/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
       closeT = setTimeout(function () { panel.hidden = true; }, reduced ? 0 : 800);
       if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
@@ -1548,7 +1575,41 @@
   /* ====================================================================== */
   /* Arranque                                                                */
   /* ====================================================================== */
+  /* ====================================================================== */
+  /* Idioma: traducción en el sitio (sin servidor) y selector                */
+  /* ====================================================================== */
+  function initI18n() {
+    var root = document.documentElement;
+    if (root.lang !== LANG) I18N.applyToDocument(document, LANG);
+    // Iniciales de los días del calendario en el idioma activo (8-1-2024 fue lunes)
+    var dow = new Intl.DateTimeFormat(LOCALE, { weekday: 'narrow', timeZone: 'UTC' });
+    $$('.calendar__dow span').forEach(function (el, i) { el.textContent = dow.format(new Date(Date.UTC(2024, 0, 8 + i))); });
+    root.classList.remove('i18n-pending');
+
+    var wrap = $('#lang'), btn = $('#langBtn'), menuEl = $('#langMenu');
+    $('#langCurrent').textContent = LANG.toUpperCase();
+    $$('[data-lang-link]').forEach(function (a) {
+      var l = a.getAttribute('data-lang-link');
+      if (l === LANG) a.setAttribute('aria-current', 'true');
+      a.addEventListener('click', function (e) {
+        try { localStorage.setItem('rm-lang', l); } catch (err) { /* sin almacenamiento */ }
+        if (!SERVER) { e.preventDefault(); if (l !== LANG) location.reload(); else setOpen(false); return; }
+        if (l === LANG) { e.preventDefault(); setOpen(false); return; }
+        if (location.hash && !/^#legal/.test(location.hash)) { e.preventDefault(); location.href = a.getAttribute('href') + location.hash; }
+      });
+    });
+    function setOpen(open) {
+      btn.setAttribute('aria-expanded', open);
+      menuEl.hidden = !open;
+      wrap.classList.toggle('is-open', open);
+    }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); setOpen(menuEl.hidden); });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) setOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menuEl.hidden) { setOpen(false); btn.focus(); } });
+  }
+
   function init() {
+    initI18n();
     reveals();
     initNav();
     initCursor();

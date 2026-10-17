@@ -6,8 +6,9 @@
  *  - Expone una API REST para boutiques, disponibilidad y citas.
  *  - El endpoint de citas es un MOCK: valida la solicitud y devuelve una
  *    referencia, pero no guarda ni envía ningún dato a ninguna parte.
+ *  - SEO: páginas traducidas en /, /en/, /fr/, /de/, /it/, robots.txt y sitemap.xml (ver seo.js).
  *
- *  Uso:  node server/server.js      (PORT=3000 por defecto)
+ *  Uso:  node server/server.js      (PORT=3000 por defecto; SITE_URL=https://dominio para URLs canónicas)
  */
 'use strict';
 
@@ -17,6 +18,7 @@ const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
 const RM = require('../assets/js/core.js');
+const SEO = require('./seo.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const PUBLIC = new Set(['index.html', 'assets']); // solo esto se sirve
@@ -241,12 +243,38 @@ function createApp(options = {}) {
     });
   }
 
+  /* ---------------------------------------------------------------------- */
+  /* Páginas por idioma, robots.txt y sitemap.xml                            */
+  /* ---------------------------------------------------------------------- */
+  function page(req, res, lang) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      return send(req, res, 405, 'Method Not Allowed', { Allow: 'GET, HEAD', 'Content-Type': 'text/plain' });
+    }
+    send(req, res, 200, SEO.renderPage(lang, SEO.originFrom(req)), {
+      'Content-Type': MIME['.html'], 'Content-Language': lang, 'Cache-Control': 'no-cache', 'X-Compress': true
+    });
+  }
+
+  const LANG_PATH = /^\/(en|fr|de|it)(\/.*)?$/;
+
   return http.createServer(async (req, res) => {
     const started = Date.now();
     let url;
     try { url = new URL(req.url, 'http://localhost'); } catch (e) { return send(req, res, 400, 'Bad Request'); }
     try {
-      if (url.pathname.startsWith('/api/')) await api(req, res, url);
+      // /en, /fr… → /en/; el resto de rutas bajo un idioma comparten recursos y API con la raíz
+      let lang = 'es';
+      const m = url.pathname.match(LANG_PATH);
+      if (m) {
+        if (m[2] === undefined) { res.writeHead(301, Object.assign({}, securityHeaders(), { Location: '/' + m[1] + '/' + url.search })); return res.end(); }
+        lang = m[1];
+        url = new URL(m[2] + url.search, 'http://localhost');
+      }
+      const p = url.pathname;
+      if (p.startsWith('/api/')) await api(req, res, url);
+      else if (p === '/' || p === '/index.html') page(req, res, lang);
+      else if (!m && p === '/robots.txt') send(req, res, 200, SEO.robots(SEO.originFrom(req)), { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+      else if (!m && p === '/sitemap.xml') send(req, res, 200, SEO.sitemap(SEO.originFrom(req)), { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600', 'X-Compress': true });
       else serveStatic(req, res, url);
     } catch (e) {
       log('error', e && e.message);
