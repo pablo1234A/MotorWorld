@@ -876,7 +876,7 @@
       });
 
       selBoutique.addEventListener('change', function () { setBoutique(selBoutique.value); clearError('boutique'); });
-      selInterest.addEventListener('change', function () { state.interest = selInterest.value; });
+      selInterest.addEventListener('change', function () { state.interest = selInterest.value; updateSummary('interest'); });
       $$('[data-cal]').forEach(function (b) {
         b.addEventListener('click', function () { shiftMonth(+b.dataset.cal); });
       });
@@ -927,6 +927,7 @@
       if (!RM.INTERESTS.some(function (i) { return i.id === id; })) return;
       state.interest = id; selInterest.value = id;
       if (!state.reason) setReason(id === 'any' ? 'discover' : 'model');
+      updateSummary('interest');
     }
 
     function collect() {
@@ -947,6 +948,7 @@
       var vals = {
         boutique: b ? b.city : '—',
         reason: labelOf(RM.REASONS, state.reason) || '—',
+        interest: labelOf(RM.INTERESTS, state.interest) || '—',
         date: state.date ? cap(shortFmt.format(RM.parseISODate(state.date))) : '—',
         time: state.time ? state.time + (b ? ' · ' + b.city : '') : '—'
       };
@@ -955,6 +957,30 @@
         sum[k].textContent = vals[k];
         if (changed) { sum[k].classList.remove('is-flash'); void sum[k].offsetWidth; sum[k].classList.add('is-flash'); }
       });
+      updateWatch();
+    }
+
+    /* ---------- Reloj del resumen: el de la colección elegida ---------- */
+    var watchImg = $('#summaryWatch'), defaultWatch = watchImg.getAttribute('src'), swapT;
+    function watchFor(interest) {
+      // La imagen se toma de la propia fila de la Colección, así nunca se desincronizan
+      var link = $('.family [data-preset-interest="' + interest + '"]');
+      if (link && interest !== 'any') return link.closest('.family').getAttribute('data-img');
+      if (interest === 'rm002') return $('.piece__frame img').getAttribute('src');
+      return defaultWatch;
+    }
+    function updateWatch() {
+      var src = watchFor(state.interest);
+      if (watchImg.getAttribute('src') === src) return;
+      clearTimeout(swapT);
+      watchImg.classList.add('is-swapping');
+      swapT = setTimeout(function () {
+        watchImg.onload = function () { watchImg.classList.remove('is-swapping'); };
+        watchImg.loading = 'eager';
+        watchImg.src = src;
+        watchImg.classList.toggle('is-product', src !== defaultWatch);
+        if (watchImg.complete) watchImg.classList.remove('is-swapping');
+      }, reduced ? 0 : 260);
     }
     function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
