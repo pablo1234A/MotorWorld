@@ -448,6 +448,33 @@ ul, ol { list-style: none; }
 .specs > div:nth-child(1) { --d: 1; } .specs > div:nth-child(2) { --d: 2; } .specs > div:nth-child(3) { --d: 3; } .specs > div:nth-child(4) { --d: 4; } .specs > div:nth-child(5) { --d: 5; } .specs > div:nth-child(6) { --d: 6; }
 
 /* --------------------------------------------------------------------------
+   Puente · referencias en movimiento
+   -------------------------------------------------------------------------- */
+.piece { padding-bottom: clamp(70px, 8vw, 120px); }
+.families { padding-top: clamp(70px, 8vw, 120px); }
+.refs { position: relative; overflow: hidden; }
+.refs__head { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; flex-wrap: wrap; }
+.refs__head .eyebrow { margin-bottom: 22px; color: var(--text); }
+.refs__head .eyebrow::before { background: var(--red); }
+.refs__hint { color: var(--dim); margin-bottom: 22px; }
+.refs__row { border-top: 1px solid var(--line); padding-block: clamp(14px, 1.8vw, 24px); overflow: hidden; }
+.refs__row:last-child { border-bottom: 1px solid var(--line); }
+.refs__track { display: flex; width: max-content; will-change: transform; }
+.refs__set { display: flex; align-items: center; flex: none; }
+.ref { display: flex; align-items: flex-start; gap: 14px; padding-inline: clamp(18px, 2.4vw, 40px); }
+.ref__name {
+  font-size: clamp(3rem, 8.4vw, 8.8rem); font-weight: 800; line-height: .95; letter-spacing: -.045em; font-variation-settings: 'wdth' 112;
+  white-space: nowrap; color: transparent; -webkit-text-stroke: 1px rgba(236, 232, 225, .32);
+  transition: color .5s var(--ease), -webkit-text-stroke-color .5s var(--ease);
+}
+.refs__row--alt .ref__name { color: #252527; -webkit-text-stroke-color: transparent; }
+.ref:hover .ref__name, .ref:focus-visible .ref__name { color: var(--text); -webkit-text-stroke-color: transparent; }
+.ref__tag { margin-top: .9em; color: var(--muted); white-space: nowrap; transition: color .4s; }
+.ref:hover .ref__tag, .ref:focus-visible .ref__tag { color: var(--red); }
+.ref__sep { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--red); opacity: .8; }
+@media (max-width: 640px) { .ref__tag { display: none; } .refs__hint { display: none; } }
+
+/* --------------------------------------------------------------------------
    07 · Colección
    -------------------------------------------------------------------------- */
 .families__list { border-top: 1px solid var(--line); }
@@ -1049,6 +1076,28 @@ ul, ol { list-style: none; }
             <div class="reveal"><dt>Disponibilidad</dt><dd>Exclusivamente en boutique</dd></div>
           </dl>
           <a href="#cita" class="btn btn--light reveal" data-magnetic data-preset-interest="rm002"><span>Verlo en persona</span><i aria-hidden="true">→</i></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PUENTE · REFERENCIAS ============ -->
+    <section class="refs" aria-labelledby="refs-title">
+      <div class="container refs__head">
+        <p class="eyebrow reveal" id="refs-title">De una pieza a toda una colección</p>
+        <p class="refs__hint mono reveal">Elija una referencia para verla en boutique</p>
+      </div>
+      <div class="refs__row" data-dir="-1">
+        <div class="refs__track">
+          <div class="refs__set" role="list" aria-label="Referencias, primera fila"><a class="ref" role="listitem" href="#cita" data-preset-interest="tourbillon" data-cursor="Reservar"><span class="ref__name">RM 001</span><span class="ref__tag mono">Tourbillon · 2001</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="rm002" data-cursor="Reservar"><span class="ref__name">RM 002-V2</span><span class="ref__tag mono">Tourbillon esqueletizado</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="chrono" data-cursor="Reservar"><span class="ref__name">RM 011</span><span class="ref__tag mono">Cronógrafo flyback</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ultraflat" data-cursor="Reservar"><span class="ref__name">RM 016</span><span class="ref__tag mono">Automático extraplano</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ladies" data-cursor="Reservar"><span class="ref__name">RM 07-01</span><span class="ref__tag mono">Colección femenina</span></a><i class="ref__sep" aria-hidden="true"></i></div>
+          <div class="refs__set" aria-hidden="true"><a class="ref" role="listitem" href="#cita" data-preset-interest="tourbillon" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 001</span><span class="ref__tag mono">Tourbillon · 2001</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="rm002" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 002-V2</span><span class="ref__tag mono">Tourbillon esqueletizado</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="chrono" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 011</span><span class="ref__tag mono">Cronógrafo flyback</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ultraflat" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 016</span><span class="ref__tag mono">Automático extraplano</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ladies" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 07-01</span><span class="ref__tag mono">Colección femenina</span></a><i class="ref__sep" aria-hidden="true"></i></div>
+          <div class="refs__set" aria-hidden="true"><a class="ref" role="listitem" href="#cita" data-preset-interest="tourbillon" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 001</span><span class="ref__tag mono">Tourbillon · 2001</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="rm002" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 002-V2</span><span class="ref__tag mono">Tourbillon esqueletizado</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="chrono" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 011</span><span class="ref__tag mono">Cronógrafo flyback</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ultraflat" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 016</span><span class="ref__tag mono">Automático extraplano</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ladies" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 07-01</span><span class="ref__tag mono">Colección femenina</span></a><i class="ref__sep" aria-hidden="true"></i></div>
+        </div>
+      </div>
+      <div class="refs__row refs__row--alt" data-dir="1">
+        <div class="refs__track">
+          <div class="refs__set" role="list" aria-label="Referencias, segunda fila"><a class="ref" role="listitem" href="#cita" data-preset-interest="tourbillon" data-cursor="Reservar"><span class="ref__name">RM 027</span><span class="ref__tag mono">Tourbillon · menos de 20 g</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="automatic" data-cursor="Reservar"><span class="ref__name">RM 30-01</span><span class="ref__tag mono">Automático · rotor desembragable</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="chrono" data-cursor="Reservar"><span class="ref__name">RM 50-03</span><span class="ref__tag mono">Cronógrafo ratrapante</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ultraflat" data-cursor="Reservar"><span class="ref__name">RM UP-01</span><span class="ref__tag mono">Ultraplano · 1,75 mm</span></a><i class="ref__sep" aria-hidden="true"></i></div>
+          <div class="refs__set" aria-hidden="true"><a class="ref" role="listitem" href="#cita" data-preset-interest="tourbillon" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 027</span><span class="ref__tag mono">Tourbillon · menos de 20 g</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="automatic" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 30-01</span><span class="ref__tag mono">Automático · rotor desembragable</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="chrono" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 50-03</span><span class="ref__tag mono">Cronógrafo ratrapante</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ultraflat" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM UP-01</span><span class="ref__tag mono">Ultraplano · 1,75 mm</span></a><i class="ref__sep" aria-hidden="true"></i></div>
+          <div class="refs__set" aria-hidden="true"><a class="ref" role="listitem" href="#cita" data-preset-interest="tourbillon" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 027</span><span class="ref__tag mono">Tourbillon · menos de 20 g</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="automatic" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 30-01</span><span class="ref__tag mono">Automático · rotor desembragable</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="chrono" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM 50-03</span><span class="ref__tag mono">Cronógrafo ratrapante</span></a><i class="ref__sep" aria-hidden="true"></i><a class="ref" role="listitem" href="#cita" data-preset-interest="ultraflat" data-cursor="Reservar" tabindex="-1"><span class="ref__name">RM UP-01</span><span class="ref__tag mono">Ultraplano · 1,75 mm</span></a><i class="ref__sep" aria-hidden="true"></i></div>
         </div>
       </div>
     </section>
@@ -2095,6 +2144,41 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
   }
 
   /* ---------------------------------------------------------------------- */
+  /* Puente: referencias en bucle que se aceleran con el scroll             */
+  /* ---------------------------------------------------------------------- */
+  function refsScene() {
+    var section = $('.refs'), cache, lastY = window.scrollY, boost = 0;
+    var rows = $$('.refs__row', section).map(function (row) {
+      var r = { el: row, track: $('.refs__track', row), dir: +row.dataset.dir, x: 0, w: 0, hover: false, hf: 1 };
+      row.addEventListener('pointerenter', function () { r.hover = true; });
+      row.addEventListener('pointerleave', function () { r.hover = false; });
+      row.addEventListener('focusin', function () { r.hover = true; });
+      row.addEventListener('focusout', function () { r.hover = false; });
+      return r;
+    });
+    return {
+      measure: function () {
+        cache = cacheOf(section);
+        rows.forEach(function (r) { r.w = $('.refs__set', r.track).offsetWidth; if (r.dir > 0) r.x = -r.w; });
+      },
+      update: function (dt, y) {
+        var vel = dt > 0 ? Math.abs(y - lastY) / dt : 0;
+        lastY = y;
+        if (reduced || !cache || y + vh < cache.top || y > cache.top + cache.height) return;
+        // Velocidad base + impulso proporcional a la velocidad del scroll; se frena al pasar el ratón
+        boost = damp(boost, Math.min(vel * .35, 900), 6, dt);
+        rows.forEach(function (r) {
+          r.hf = damp(r.hf, r.hover ? 0 : 1, 5, dt);
+          r.x += r.dir * (36 + boost) * r.hf * dt;
+          if (r.x <= -r.w) r.x += r.w;
+          if (r.x > 0) r.x -= r.w;
+          r.track.style.transform = 'translate3d(' + r.x.toFixed(2) + 'px,0,0)';
+        });
+      }
+    };
+  }
+
+  /* ---------------------------------------------------------------------- */
   /* Footer: la firma emerge al final                                       */
   /* ---------------------------------------------------------------------- */
   function footerScene() {
@@ -2804,7 +2888,7 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
     booking.build();
     initClock();
 
-    scenes.push(explodeScene(), manifestoScene(), historyScene(), engineScene(), footerScene());
+    scenes.push(explodeScene(), manifestoScene(), historyScene(), engineScene(), refsScene(), footerScene());
     measureAll();
     onResize(measureAll);
     if (window.ResizeObserver) {

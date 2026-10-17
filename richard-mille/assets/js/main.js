@@ -558,6 +558,41 @@
   }
 
   /* ---------------------------------------------------------------------- */
+  /* Puente: referencias en bucle que se aceleran con el scroll             */
+  /* ---------------------------------------------------------------------- */
+  function refsScene() {
+    var section = $('.refs'), cache, lastY = window.scrollY, boost = 0;
+    var rows = $$('.refs__row', section).map(function (row) {
+      var r = { el: row, track: $('.refs__track', row), dir: +row.dataset.dir, x: 0, w: 0, hover: false, hf: 1 };
+      row.addEventListener('pointerenter', function () { r.hover = true; });
+      row.addEventListener('pointerleave', function () { r.hover = false; });
+      row.addEventListener('focusin', function () { r.hover = true; });
+      row.addEventListener('focusout', function () { r.hover = false; });
+      return r;
+    });
+    return {
+      measure: function () {
+        cache = cacheOf(section);
+        rows.forEach(function (r) { r.w = $('.refs__set', r.track).offsetWidth; if (r.dir > 0) r.x = -r.w; });
+      },
+      update: function (dt, y) {
+        var vel = dt > 0 ? Math.abs(y - lastY) / dt : 0;
+        lastY = y;
+        if (reduced || !cache || y + vh < cache.top || y > cache.top + cache.height) return;
+        // Velocidad base + impulso proporcional a la velocidad del scroll; se frena al pasar el ratón
+        boost = damp(boost, Math.min(vel * .35, 900), 6, dt);
+        rows.forEach(function (r) {
+          r.hf = damp(r.hf, r.hover ? 0 : 1, 5, dt);
+          r.x += r.dir * (36 + boost) * r.hf * dt;
+          if (r.x <= -r.w) r.x += r.w;
+          if (r.x > 0) r.x -= r.w;
+          r.track.style.transform = 'translate3d(' + r.x.toFixed(2) + 'px,0,0)';
+        });
+      }
+    };
+  }
+
+  /* ---------------------------------------------------------------------- */
   /* Footer: la firma emerge al final                                       */
   /* ---------------------------------------------------------------------- */
   function footerScene() {
@@ -1267,7 +1302,7 @@
     booking.build();
     initClock();
 
-    scenes.push(explodeScene(), manifestoScene(), historyScene(), engineScene(), footerScene());
+    scenes.push(explodeScene(), manifestoScene(), historyScene(), engineScene(), refsScene(), footerScene());
     measureAll();
     onResize(measureAll);
     if (window.ResizeObserver) {
