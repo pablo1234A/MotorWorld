@@ -62,7 +62,8 @@
   /* ====================================================================== */
   var api = { enabled: false };
   api.ready = (function () {
-    if (!/^https?:$/.test(location.protocol) || !window.fetch) return Promise.resolve(false);
+    // Solo existe API con el servidor propio (marca data-server); en alojamiento estático ni se consulta
+    if (!SERVER || !/^https?:$/.test(location.protocol) || !window.fetch) return Promise.resolve(false);
     var ctrl = window.AbortController ? new AbortController() : null;
     var t = setTimeout(function () { ctrl && ctrl.abort(); }, 1500);
     return fetch('api/health', { cache: 'no-store', signal: ctrl && ctrl.signal })
@@ -1593,7 +1594,14 @@
       if (l === LANG) a.setAttribute('aria-current', 'true');
       a.addEventListener('click', function (e) {
         try { localStorage.setItem('rm-lang', l); } catch (err) { /* sin almacenamiento */ }
-        if (!SERVER) { e.preventDefault(); if (l !== LANG) location.reload(); else setOpen(false); return; }
+        if (!SERVER) {
+          e.preventDefault();
+          var href = a.getAttribute('href');
+          if (l === LANG) setOpen(false);
+          else if (href.charAt(0) === '?') location.href = href + location.hash; // alojamiento estático con ?lang=
+          else location.reload();
+          return;
+        }
         if (l === LANG) { e.preventDefault(); setOpen(false); return; }
         if (location.hash && !/^#legal/.test(location.hash)) { e.preventDefault(); location.href = a.getAttribute('href') + location.hash; }
       });

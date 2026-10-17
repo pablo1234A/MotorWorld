@@ -51,6 +51,31 @@ se recuerda en el navegador.
 SITE_URL=https://www.tudominio.com npm start
 ```
 
+## Publicada en Wix
+
+La web está alojada como sitio **Wix Headless** (estático) en la cuenta del propietario:
+
+- En vivo: https://headless-saobftrkqwx-pablogrcab1023-140e.wix-site-host.com
+- Panel: https://manage.wix.com/dashboard/0bac41b8-4481-4530-bf84-040f8872f7f2
+  (desde ahí se conecta un dominio propio).
+
+Diferencias con la versión con servidor Node:
+
+- Las imágenes se sirven desde la biblioteca de medios del sitio (`scripts/wix-media.json`).
+- Los idiomas se enlazan con `?lang=en|fr|de|it` en lugar de `/en/`…; la detección automática funciona igual.
+- La reserva usa la lógica del navegador (el formulario sigue siendo una demostración que no envía nada).
+- `robots.txt`, `sitemap.xml`, `hreflang`, Open Graph y JSON-LD se generan con la URL pública.
+
+Para regenerar los archivos (por ejemplo, tras conectar un dominio):
+
+```bash
+SITE_URL=https://www.tudominio.com npm run build:wix   # genera dist-wix/
+# opcional, archivos más ligeros:
+npx esbuild dist-wix/assets/js/main.js --minify --charset=utf8 --outfile=dist-wix/assets/js/main.js --allow-overwrite
+```
+
+y se vuelven a subir todos los archivos de `dist-wix/` al mismo sitio.
+
 ## Secciones
 
 | # | Sección | Animación |
@@ -102,6 +127,8 @@ richard-mille/
 │   └── img/                   imágenes WebP + 24 piezas recortadas del reloj
 ├── dist/richard-mille.html    versión de un solo archivo (npm run build)
 ├── scripts/build-single.js    genera la versión de un solo archivo
+├── scripts/build-wix.js       genera dist-wix/ para el alojamiento en Wix
+├── scripts/wix-media.json     imágenes → URLs de la biblioteca de medios de Wix
 ├── server/server.js           backend Node sin dependencias
 ├── server/api.test.js         tests (node --test)
 └── package.json
