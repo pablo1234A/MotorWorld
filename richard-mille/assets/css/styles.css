@@ -84,7 +84,7 @@ ul, ol { list-style: none; }
 }
 .eyebrow::before { content: ''; width: 22px; height: 1px; background: currentColor; }
 .eyebrow__dot { display: none; }
-.section { padding-block: clamp(110px, 16vw, 220px); position: relative; }
+.section { padding-block: clamp(56px, 5.5vw, 80px); position: relative; }
 .section__head { margin-bottom: clamp(48px, 7vw, 96px); max-width: 980px; }
 .section__head--row { max-width: none; display: flex; justify-content: space-between; align-items: flex-end; gap: 48px; flex-wrap: wrap; }
 .section__head--row .section__lead { max-width: 420px; }
@@ -297,7 +297,7 @@ ul, ol { list-style: none; }
 /* --------------------------------------------------------------------------
    02 · Manifiesto
    -------------------------------------------------------------------------- */
-.manifesto { padding-block: clamp(140px, 22vh, 260px); background: linear-gradient(#000, var(--bg) 30%); }
+.manifesto { padding-block: clamp(90px, 14vh, 150px) clamp(40px, 8vh, 90px); background: linear-gradient(#000, var(--bg) 30%); }
 .manifesto__text {
   font-size: clamp(1.9rem, 4.1vw, 4.4rem); line-height: 1.1; font-weight: 600; letter-spacing: -.035em;
   font-variation-settings: 'wdth' 104; max-width: 1280px;
@@ -432,7 +432,23 @@ ul, ol { list-style: none; }
    Puente · referencias en movimiento
    -------------------------------------------------------------------------- */
 .piece { padding-bottom: clamp(70px, 8vw, 120px); }
-.families { padding-top: clamp(70px, 8vw, 120px); }
+.families { padding-top: clamp(70px, 8vw, 120px); padding-bottom: clamp(48px, 5vw, 72px); }
+.boutiques { padding-top: clamp(48px, 5vw, 72px); }
+
+/* Puente · cifras entre la colección y las boutiques */
+.figures { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); }
+.figures::before, .figures::after { content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--line); transform: scaleX(0); transform-origin: left; transition: transform 1.4s var(--ease); }
+.figures::before { top: 0; } .figures::after { bottom: 0; transition-delay: .15s; }
+.figures.is-in::before, .figures.is-in::after { transform: scaleX(1); }
+.figure { display: flex; align-items: baseline; gap: 18px; padding: clamp(22px, 2.6vw, 34px) clamp(16px, 2vw, 28px); }
+.figure + .figure { border-left: 1px solid var(--line); }
+.figure b { font-size: clamp(2.6rem, 5vw, 4.6rem); font-weight: 800; line-height: 1; letter-spacing: -.04em; font-variation-settings: 'wdth' 112; font-variant-numeric: tabular-nums; }
+.figure span { color: var(--muted); line-height: 1.4; }
+.figure span em { font-style: normal; color: var(--text); }
+@media (max-width: 760px) {
+  .figures { grid-template-columns: 1fr; }
+  .figure + .figure { border-left: 0; border-top: 1px solid var(--line); }
+}
 .refs { position: relative; overflow: hidden; }
 .refs__head { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; flex-wrap: wrap; }
 .refs__head .eyebrow { margin-bottom: 22px; color: var(--text); }
@@ -650,7 +666,7 @@ ul, ol { list-style: none; }
 /* --------------------------------------------------------------------------
    Footer
    -------------------------------------------------------------------------- */
-.footer { padding-top: clamp(90px, 12vw, 160px); border-top: 1px solid var(--line); background: #000; overflow: hidden; }
+.footer { padding-top: clamp(70px, 8vw, 110px); border-top: 1px solid var(--line); background: #000; overflow: hidden; }
 .footer__top { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; flex-wrap: wrap; }
 .footer__claim { font-size: clamp(2rem, 4.4vw, 4.4rem); line-height: .98; font-weight: 700; letter-spacing: -.04em; font-variation-settings: 'wdth' 108; }
 .footer__cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: clamp(70px, 9vw, 120px); padding-top: 40px; border-top: 1px solid var(--line); }

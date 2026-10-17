@@ -1279,6 +1279,34 @@
   })();
 
   /* ====================================================================== */
+  /* Cifras puente: se cuentan al aparecer, a partir de los datos reales     */
+  /* ====================================================================== */
+  function initFigures() {
+    var wrap = $('#figures');
+    var values = { families: $$('.family').length, boutiques: RM.BOUTIQUES.length };
+    $('[data-count-text="regions"]', wrap).textContent = RM.REGIONS.length;
+    var nums = $$('[data-count]', wrap);
+    function run() {
+      wrap.classList.add('is-in');
+      nums.forEach(function (el, k) {
+        var to = values[el.getAttribute('data-count')], t0 = null;
+        if (reduced) { el.textContent = pad2(to); return; }
+        (function tick(now) {
+          if (t0 === null) t0 = now + k * 120;
+          var t = clamp((now - t0) / 1100, 0, 1);
+          el.textContent = pad2(Math.round(to * easeOut(t)));
+          if (t < 1) requestAnimationFrame(tick);
+        })(performance.now());
+      });
+    }
+    if (!('IntersectionObserver' in window)) { run(); return; }
+    var io = new IntersectionObserver(function (es) {
+      if (es[0].isIntersecting) { run(); io.disconnect(); }
+    }, { threshold: .6 });
+    io.observe(wrap);
+  }
+
+  /* ====================================================================== */
   /* Reloj del footer (hora de la manufactura)                               */
   /* ====================================================================== */
   function initClock() {
@@ -1301,6 +1329,7 @@
     boutiques.build();
     booking.build();
     initClock();
+    initFigures();
 
     scenes.push(explodeScene(), manifestoScene(), historyScene(), engineScene(), refsScene(), footerScene());
     measureAll();
