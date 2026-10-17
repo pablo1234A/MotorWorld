@@ -19,14 +19,36 @@
     endpoints: { booking: "", contact: "", order: "", newsletter: "" }
   };
 
-  // Precios orientativos, IVA incluido. Cambie `img` cuando lleguen las fotografías de cada referencia.
+  // Precios orientativos, IVA incluido. `dark: true` = fotografía con fondo negro (se muestra a sangre).
   const PRODUCTS = {
-    "126610LN": { name: "Submariner Date", sub: "Oystersteel · Bisel Cerachrom negro", price: 11350, img: "assets/img/submariner.webp", swatch: "#111" },
-    "124060":   { name: "Submariner", sub: "Oystersteel · Sin fecha · Bisel negro", price: 10250, img: null, swatch: "#1a1a1a" },
-    "126610LV": { name: "Submariner Date", sub: "Oystersteel · Bisel Cerachrom verde", price: 11750, img: null, swatch: "#0f5a3a" },
-    "126619LB": { name: "Submariner Date", sub: "Oro blanco 18 ct · Bisel azul", price: 46100, img: null, swatch: "#1d3f86" }
+    "126610LN": {
+      family: "Submariner", name: "Submariner Date", sub: "Oystersteel · Bisel Cerachrom negro", price: 11350,
+      img: "assets/img/submariner.webp", swatch: "#111",
+      specs: [["Caja", "Oyster, 41 mm, Oystersteel"], ["Hermeticidad", "Hasta 300 metros"], ["Calibre", "3235, automático, 70 h de reserva"], ["Brazalete", "Oyster, Oysterlock con Glidelock"]]
+    },
+    "126710BLRO": {
+      family: "GMT-Master II", name: "GMT-Master II", sub: "Oystersteel · Bisel Cerachrom azul y rojo", price: 11800,
+      img: "assets/img/gmt-126710blro.webp", dark: true, swatch: "linear-gradient(90deg,#1d3f86 50%,#b3202a 50%)",
+      specs: [["Caja", "Oyster, 40 mm, Oystersteel"], ["Bisel", "Giratorio bidireccional 24 h, Cerachrom azul y rojo"], ["Calibre", "3285, GMT, 70 h de reserva"], ["Brazalete", "Jubilee, Oysterclasp con Easylink"], ["Hermeticidad", "Hasta 100 metros"]]
+    },
+    "126334": {
+      family: "Datejust", name: "Datejust 41", sub: "Rolesor blanco · Esfera azul brillante", price: 11300,
+      img: "assets/img/m126334.webp", swatch: "#1f4fa3",
+      specs: [["Caja", "Oyster, 41 mm, Oystersteel y oro blanco"], ["Bisel", "Estriado en oro blanco de 18 ct"], ["Calibre", "3235, automático, 70 h de reserva"], ["Brazalete", "Jubilee, cierre Crownclasp oculto"], ["Hermeticidad", "Hasta 100 metros"]]
+    },
+    "126518LN": {
+      family: "Cosmograph Daytona", name: "Cosmograph Daytona", sub: "Oro amarillo 18 ct · Esfera turquesa", price: 41900,
+      img: "assets/img/m126518ln.webp", swatch: "#6fd3cf",
+      specs: [["Caja", "Oyster, 40 mm, oro amarillo de 18 ct"], ["Bisel", "Monobloque Cerachrom negro, escala taquimétrica"], ["Calibre", "4131, cronógrafo, 72 h de reserva"], ["Correa", "Oysterflex, cierre Oysterlock"], ["Hermeticidad", "Hasta 100 metros"]]
+    },
+    "DJ36-DIAM": {
+      family: "Datejust", name: "Datejust 36 Diamantes", sub: "Acero y oro amarillo · Esfera verde engastada", price: 13900,
+      img: "assets/img/datejust36-diamonds.webp", swatch: "#1f6b3a", badge: "Personalizado",
+      note: "Engaste de diamantes realizado fuera de la manufactura Rolex: no está cubierto por la garantía internacional Rolex.",
+      specs: [["Caja", "Oyster, 36 mm, acero y oro amarillo de 18 ct"], ["Bisel", "Engastado con diamantes (posventa)"], ["Esfera", "Verde soleil, números romanos con diamantes (posventa)"], ["Brazalete", "Jubilee, acero y oro amarillo"], ["Garantía", "Del vendedor; consulte condiciones"]]
+    }
   };
-  const FAMILY = ["124060", "126610LV", "126619LB"];
+  const FAMILY = ["126710BLRO", "126334", "126518LN", "DJ36-DIAM"];
 
   const BOUTIQUES = [
     { id: "mad", city: "Madrid", addr: "Calle de Serrano · Madrid", hours: "Lun–Sáb · 10:00–20:00" },
@@ -398,19 +420,20 @@
   const sizeOut = $("#sizeOut");
   $$('input[name="size"]').forEach(r => r.addEventListener("change", () => { sizeOut.textContent = r.value; }));
 
+  const media = (p, cls = "") => `<img class="${cls}${p.dark ? " is-dark" : ""}" src="${p.img}" alt="Rolex ${p.name}, ${p.sub}" loading="lazy">`;
   $("#cards").innerHTML = FAMILY.map((id, i) => {
     const p = PRODUCTS[id];
-    const media = p.img
-      ? `<img src="${p.img}" alt="Rolex ${p.name}, ${p.sub}" loading="lazy">`
-      : `<img class="card__ghost" src="assets/img/submariner-sm.webp" alt="" loading="lazy"><span class="card__pending">Fotografía en preparación</span>`;
-    return `<article class="card" data-reveal style="--d:${i * .08}s">
-      <div class="card__media"><span class="card__dot" style="--sw:${p.swatch}"><i></i>${id}</span>${media}</div>
+    return `<article class="card${p.dark ? " card--dark" : ""}" data-reveal style="--d:${i * .08}s">
+      <button class="card__media" data-quick="${id}" aria-label="Ver detalles de ${p.name}">
+        <span class="card__dot" style="--sw:${p.swatch}"><i></i>${p.badge || id}</span>${media(p)}
+        <span class="card__view">Ver detalles</span>
+      </button>
       <div class="card__body">
-        <span class="card__ref">Oyster Perpetual</span>
-        <h3 class="card__name">${p.name}</h3>
+        <span class="card__ref">${p.family}</span>
+        <h3 class="card__name"><button data-quick="${id}">${p.name}</button></h3>
         <p class="muted" style="font-size:14px">${p.sub}</p>
         <div class="card__foot"><span class="card__price tnum">${money(p.price)}</span>
-          <button class="card__add" data-add="${id}" aria-label="Añadir ${p.name} ${id} a la cesta"><svg><use href="#i-plus"/></svg></button>
+          <button class="card__add" data-add="${id}" aria-label="Añadir ${p.name} a la cesta"><svg><use href="#i-plus"/></svg></button>
         </div>
       </div>
     </article>`;
@@ -433,8 +456,8 @@
       body.innerHTML = bag.map((l, i) => {
         const p = PRODUCTS[l.id];
         return `<div class="line-item">
-          <div class="line-item__img"><img src="${p.img || "assets/img/submariner-sm.webp"}" alt=""${p.img ? "" : ' style="opacity:.15;filter:grayscale(1)"'}></div>
-          <div><span class="line-item__ref">Ref. ${l.id}</span><p class="line-item__name">${p.name}</p><p class="line-item__opt">${p.sub}<br>Muñeca: ${l.size}</p>
+          <div class="line-item__img${p.dark ? " is-dark" : ""}"><img src="${p.img}" alt=""></div>
+          <div><span class="line-item__ref">${p.family}${p.badge ? "" : " · Ref. " + l.id}</span><p class="line-item__name">${p.name}</p><p class="line-item__opt">${p.sub}<br>Muñeca: ${l.size}</p>
           <button class="line-item__rm" data-rm="${i}">Eliminar</button></div>
           <div class="line-item__price tnum">${money(p.price)}</div>
         </div>`;
@@ -459,20 +482,22 @@
   };
 
   const addToBag = (id, btn) => {
-    const size = id === "126610LN" ? ($('input[name="size"]:checked') || {}).value : "Ajuste en boutique";
+    const scope = btn && btn.closest("#quick") ? "#quick" : btn && btn.closest(".product") ? ".product" : null;
+    const size = scope ? ($(`${scope} input[type="radio"]:checked`) || {}).value : "Ajuste en boutique";
+    if (scope === "#quick") closeQuick();
     if (bag.some(l => l.id === id && l.size === size)) { toast("Esta referencia ya está en su cesta."); openDrawer(); return; }
     bag.push({ id, size });
     renderBag();
     const cnt = $("#bagCount"); cnt.classList.remove("is-bump"); void cnt.offsetWidth; cnt.classList.add("is-bump");
     flyToBag(btn, PRODUCTS[id].img);
-    toast(`${PRODUCTS[id].name} · ${id} añadido a su cesta`);
+    toast(`${PRODUCTS[id].name} añadido a su cesta`);
     setTimeout(openDrawer, reduced ? 0 : 650);
   };
 
   // pequeña animación: la imagen vuela hasta la cesta
   const flyToBag = (btn, src) => {
     if (reduced || !btn) return;
-    const from = (btn.closest(".product, .card") || btn).querySelector("img") || btn;
+    const from = (btn.closest(".product, .card, .quick") || btn).querySelector("img") || btn;
     const r1 = from.getBoundingClientRect(), r2 = $("#bagBtn").getBoundingClientRect();
     const ghost = document.createElement("img");
     ghost.src = src || "assets/img/submariner-sm.webp";
@@ -488,6 +513,9 @@
   };
 
   document.addEventListener("click", (e) => {
+    const qv = e.target.closest("[data-quick]");
+    if (qv) { openQuick(qv.dataset.quick); return; }
+    if (e.target.closest("[data-close-quick]") || e.target === quick) { closeQuick(); return; }
     const add = e.target.closest("[data-add]");
     if (add) { addToBag(add.dataset.add, add); return; }
     const rm = e.target.closest("[data-rm]");
@@ -499,12 +527,40 @@
     const bk = e.target.closest("[data-book]");
     if (bk) { const r2 = $("#r2"); if (r2) { r2.checked = true; r2.dispatchEvent(new Event("change", { bubbles: true })); } $("#bNotes").value = "Interés en Ref. " + bk.dataset.book; }
   });
+  /* ---------------------------------------------------------- vista rápida */
+  const quick = $("#quick");
+  const openQuick = (id) => {
+    const p = PRODUCTS[id];
+    $("#qImg").className = p.dark ? "is-dark" : ""; $("#qImg").src = p.img; $("#qImg").alt = `Rolex ${p.name}, ${p.sub}`;
+    $("#qMedia").classList.toggle("is-dark", !!p.dark);
+    $("#qFamily").textContent = p.family + (p.badge ? " · " + p.badge : " · Ref. " + id);
+    $("#qName").textContent = p.name;
+    $("#qSub").textContent = p.sub;
+    $("#qPrice").textContent = money(p.price);
+    $("#qSpecs").innerHTML = p.specs.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+    $("#qNote").textContent = p.note || "Precio orientativo. Disponibilidad sujeta a la asignación de cada boutique.";
+    $("#qNote").classList.toggle("is-warn", !!p.note);
+    $("#qAdd").dataset.add = id; $("#qBook").dataset.book = id;
+    lastFocus = document.activeElement;
+    quick.classList.add("is-open"); quick.setAttribute("aria-hidden", "false"); scrim.classList.add("is-on");
+    document.body.classList.add("is-locked");
+    setTimeout(() => $("#qClose").focus(), 300);
+  };
+  function closeQuick() {
+    if (!quick.classList.contains("is-open")) return;
+    quick.classList.remove("is-open"); quick.setAttribute("aria-hidden", "true");
+    scrim.classList.remove("is-on"); document.body.classList.remove("is-locked");
+    if (lastFocus) lastFocus.focus({ preventScroll: true });
+  }
+  $("#qBook").addEventListener("click", closeQuick);
+
   $("#bagBtn").addEventListener("click", openDrawer);
-  scrim.addEventListener("click", () => { closeDrawer(); closeCheckout(); });
+  scrim.addEventListener("click", () => { closeDrawer(); closeCheckout(); closeQuick(); });
   $("#lightbox").addEventListener("click", function () { this.classList.remove("is-open"); this.setAttribute("aria-hidden", "true"); });
   addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
-    if ($("#checkout").classList.contains("is-open")) closeCheckout();
+    if (quick.classList.contains("is-open")) closeQuick();
+    else if ($("#checkout").classList.contains("is-open")) closeCheckout();
     else if (drawer.classList.contains("is-open")) closeDrawer();
     $("#lightbox").classList.remove("is-open");
   });
@@ -518,7 +574,7 @@
     if (!bag.length) return;
     $("#miniItems").innerHTML = bag.map(l => {
       const p = PRODUCTS[l.id];
-      return `<div class="mini-item"><img src="${p.img || "assets/img/submariner-sm.webp"}" alt=""${p.img ? "" : ' style="opacity:.2"'}><div><b>${p.name}</b>Ref. ${l.id} · ${l.size}</div><span class="tnum">${money(p.price)}</span></div>`;
+      return `<div class="mini-item"><img src="${p.img}" alt=""${p.dark ? ' class="is-dark"' : ""}><div><b>${p.name}</b>${l.size}</div><span class="tnum">${money(p.price)}</span></div>`;
     }).join("");
     $("#coSub").textContent = money(total()); $("#coTotal").textContent = money(total());
     coForm.style.display = ""; $("#orderOk").classList.remove("is-on");

@@ -293,8 +293,8 @@
         <div class="family">
           <div class="family__head">
             <div>
-              <span class="eyebrow" data-reveal>La familia Submariner</span>
-              <h2 class="h2" data-reveal style="--d:.08s">Elija su <em>profundidad.</em></h2>
+              <span class="eyebrow" data-reveal>La colección</span>
+              <h2 class="h2" data-reveal style="--d:.08s">Elija su <em>icono.</em></h2>
             </div>
             <a class="link-u" href="#cita" data-reveal>Consultar disponibilidad <svg width="16" height="16"><use href="#i-arrow"/></svg></a>
           </div>
@@ -688,6 +688,35 @@
           </div>
           <p class="secure"><svg><use href="#i-shield"/></svg>Conexión cifrada. No almacenamos datos de tarjeta: el pago se procesa en la pasarela del banco.</p>
         </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== VISTA RÁPIDA ===================== -->
+  <div class="modal" id="quick" role="dialog" aria-modal="true" aria-labelledby="qName" aria-hidden="true">
+    <div class="modal__box quick">
+      <button class="icon-btn modal__close" id="qClose" data-close-quick aria-label="Cerrar"><svg><use href="#i-close"/></svg></button>
+      <div class="quick__media" id="qMedia"><img id="qImg" alt=""></div>
+      <div class="quick__info">
+        <span class="product__ref" id="qFamily"></span>
+        <h2 class="quick__name" id="qName"></h2>
+        <p class="product__sub" id="qSub"></p>
+        <div class="product__price"><b class="tnum" id="qPrice"></b><small>IVA incluido</small></div>
+        <p class="product__note" id="qNote"></p>
+        <dl class="specs" id="qSpecs"></dl>
+        <div class="option">
+          <div class="option__label"><span>Contorno de muñeca</span></div>
+          <div class="chips" role="radiogroup" aria-label="Contorno de muñeca">
+            <label class="chip"><input type="radio" name="qsize" value="15–16 cm"><span>15–16</span></label>
+            <label class="chip"><input type="radio" name="qsize" value="17–18 cm" checked><span>17–18</span></label>
+            <label class="chip"><input type="radio" name="qsize" value="19–20 cm"><span>19–20</span></label>
+            <label class="chip"><input type="radio" name="qsize" value="21+ cm"><span>21+</span></label>
+          </div>
+        </div>
+        <div class="product__actions">
+          <button class="btn btn--dark" id="qAdd" data-add="">Añadir a la cesta <svg><use href="#i-arrow"/></svg></button>
+          <a class="btn btn--ghost-dark" id="qBook" href="#cita" data-book="">Ver en boutique</a>
+        </div>
       </div>
     </div>
   </div>

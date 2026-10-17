@@ -39,8 +39,10 @@ cd rolex && npx http-server -p 8080
 
 ## Añadir las nuevas imágenes
 
-- **Referencias de la colección**: en `assets/js/main.js`, objeto `PRODUCTS`, cambie `img: null` por la ruta
-  (por ejemplo `"assets/img/126610LV.webp"`). Las tarjetas sin imagen muestran «Fotografía en preparación».
+- **Referencias de la colección**: en `assets/js/main.js`, objeto `PRODUCTS` (nombre, precio, imagen, ficha técnica)
+  y array `FAMILY` (orden de las tarjetas). Ahora en venta: Submariner Date 126610LN (ficha principal),
+  GMT-Master II 126710BLRO, Datejust 41 126334, Cosmograph Daytona 126518LN y Datejust 36 con diamantes (personalizado).
+  Use `dark: true` si la fotografía tiene fondo negro. Cada tarjeta abre una vista rápida con ficha y selección de talla.
 - **Precios**: en el mismo objeto `PRODUCTS` (orientativos, IVA incluido).
 - **Boutiques**: array `BOUTIQUES` (se usan en reserva, contacto y checkout).
 - **Historia**: imágenes de cada hito en `index.html`, sección `#historia`.
