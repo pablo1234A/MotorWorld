@@ -21,6 +21,8 @@
   var easeIO = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
   var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
   var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
+  // En la versión de un solo archivo las imágenes van incrustadas en window.RM_ASSETS
+  var asset = function (path) { return (window.RM_ASSETS && window.RM_ASSETS[path]) || path; };
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -65,7 +67,7 @@
   /* ====================================================================== */
   function preload() {
     $$('.preloader__mark span').forEach(function (s, i) { s.style.setProperty('--i', i); });
-    var srcs = ['assets/img/rm-assembled.webp'].concat(SCENE.parts.map(function (p) { return 'assets/img/parts/' + p[0] + '.webp'; }));
+    var srcs = [asset('assets/img/rm-assembled.webp')].concat(SCENE.parts.map(function (p) { return asset('assets/img/parts/' + p[0] + '.webp'); }));
     var total = srcs.length + 1, loaded = 0, shown = 0, done = false;
     var bar = $('#preloaderBar'), count = $('#preloaderCount');
     var tick = function () { loaded++; };
@@ -293,7 +295,7 @@
     var parts = order.map(function (id) {
       var d = byId[id], cx = d[1] + d[3] / 2, cy = d[2] + d[4] / 2;
       var img = document.createElement('img');
-      img.src = 'assets/img/parts/' + id + '.webp';
+      img.src = asset('assets/img/parts/' + id + '.webp');
       img.alt = ''; img.decoding = 'async'; img.draggable = false;
       img.style.left = d[1] + 'px'; img.style.top = d[2] + 'px'; img.style.width = d[3] + 'px'; img.style.height = d[4] + 'px';
       partsEl.appendChild(img);

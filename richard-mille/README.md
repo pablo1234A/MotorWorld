@@ -6,6 +6,10 @@ mapa de boutiques y reserva de cita privada **simulada**.
 
 ## Cómo verla
 
+**Versión de un solo archivo:** `dist/richard-mille.html` lleva dentro estilos, código e imágenes.
+Se puede descargar, enviar y abrir con doble clic sin ninguna carpeta al lado. Se regenera con
+`npm run build`. Las tipografías se cargan de Google Fonts, así que conviene tener internet.
+
 **Opción 1. Sin instalar nada:** abra `index.html` en el navegador. Todo funciona; la lógica de
 reservas se ejecuta en el propio navegador.
 
@@ -69,6 +73,8 @@ richard-mille/
 │   ├── js/scene-data.js       coordenadas del despiece y máscara del mapa mundial
 │   ├── js/main.js             interacción y animaciones (vanilla JS, sin librerías)
 │   └── img/                   imágenes WebP + 24 piezas recortadas del reloj
+├── dist/richard-mille.html    versión de un solo archivo (npm run build)
+├── scripts/build-single.js    genera la versión de un solo archivo
 ├── server/server.js           backend Node sin dependencias
 ├── server/api.test.js         tests (node --test)
 └── package.json
