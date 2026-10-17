@@ -60,3 +60,12 @@ El checkout no recoge datos de tarjeta: en producción se redirige a la pasarela
 
 Los datos marcados en dorado como `[Razón social del titular]`, `[NIF/CIF]`, etc. deben completarse
 con los datos reales del titular y revisarse por su asesoría legal antes de publicar.
+
+## Versión en un solo archivo
+
+`rolex-web.html` contiene toda la web (estilos, scripts, imágenes y páginas legales) en un único HTML:
+basta con abrirlo con doble clic. Tras modificar cualquier archivo, regénérelo con:
+
+```bash
+python3 rolex/build-single.py
+```
