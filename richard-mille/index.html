@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Richard Mille — Una máquina de carreras en la muñeca</title>
+  <meta name="description" content="Descubra el universo Richard Mille: ingeniería, materiales y historia. Encuentre su boutique y reserve una cita privada.">
+  <meta name="theme-color" content="#050505">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Richard Mille — Una máquina de carreras en la muñeca">
+  <meta property="og:description" content="Ingeniería, materiales e historia. Reserve una cita privada en boutique.">
+  <meta property="og:image" content="assets/img/og.jpg">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050505'/%3E%3Ctext x='32' y='41' font-family='Arial' font-weight='900' font-size='24' fill='%23ece8e1' text-anchor='middle'%3ERM%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="preload" as="image" href="assets/img/rm-assembled.webp" fetchpriority="high">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script>document.documentElement.classList.replace('no-js', 'js');</script>
+</head>
+<body class="is-loading">
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <!-- ============ PRELOADER ============ -->
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="preloader__inner">
+      <div class="preloader__mark">
+        <span>R</span><span>I</span><span>C</span><span>H</span><span>A</span><span>R</span><span>D</span>
+        <span class="sp"></span>
+        <span>M</span><span>I</span><span>L</span><span>L</span><span>E</span>
+      </div>
+      <div class="preloader__bar"><i id="preloaderBar"></i></div>
+      <div class="preloader__meta">
+        <span>Calibrando el tourbillon</span>
+        <span class="mono" id="preloaderCount">000</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cursor" aria-hidden="true"><span class="cursor__dot"></span><span class="cursor__ring"><em class="cursor__label"></em></span></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <a href="#top" class="nav__logo" aria-label="Richard Mille — inicio">RICHARD MILLE</a>
+    <nav class="nav__links" aria-label="Principal">
+      <a href="#desmontaje" data-nav>Despiece</a>
+      <a href="#historia" data-nav>Historia</a>
+      <a href="#ingenieria" data-nav>Ingeniería</a>
+      <a href="#materiales" data-nav>Materiales</a>
+      <a href="#coleccion" data-nav>Colección</a>
+      <a href="#boutiques" data-nav>Boutiques</a>
+    </nav>
+    <a href="#cita" class="btn btn--ghost nav__cta" data-magnetic><span>Reservar cita</span></a>
+    <button class="nav__burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú"><i></i><i></i></button>
+  </header>
+
+  <div class="menu" id="menu" hidden>
+    <nav class="menu__links" aria-label="Menú móvil">
+      <a href="#desmontaje"><small>01</small>Despiece</a>
+      <a href="#historia"><small>02</small>Historia</a>
+      <a href="#ingenieria"><small>03</small>Ingeniería</a>
+      <a href="#materiales"><small>04</small>Materiales</a>
+      <a href="#coleccion"><small>05</small>Colección</a>
+      <a href="#boutiques"><small>06</small>Boutiques</a>
+      <a href="#cita"><small>07</small>Reservar cita</a>
+    </nav>
+    <p class="menu__foot mono">Les Breuleux · Suiza · Desde 1999</p>
+  </div>
+
+  <main id="main">
+    <span id="top"></span>
+
+    <!-- ============ 01 · DESPIECE (scroll-driven) ============ -->
+    <section class="explode" id="desmontaje" aria-label="RM 002-V2: despiece interactivo">
+      <div class="explode__sticky">
+        <div class="explode__glow" aria-hidden="true"></div>
+
+        <div class="explode__stage" id="stage" aria-hidden="true">
+          <img class="explode__whole" id="whole" src="assets/img/rm-assembled.webp" width="1600" height="1600" alt="">
+          <div class="explode__parts" id="parts"></div>
+        </div>
+        <div class="explode__labels" id="labels" aria-hidden="true"></div>
+
+        <div class="explode__intro" id="intro">
+          <p class="eyebrow"><span class="eyebrow__dot"></span>RM 002-V2 · Tourbillon</p>
+          <h1 class="display">
+            <span class="line"><span>Una máquina</span></span>
+            <span class="line"><span>de carreras</span></span>
+            <span class="line"><span><em class="serif">en la muñeca.</em></span></span>
+          </h1>
+          <p class="explode__lead">Desde 1999, cada reloj se concibe como un prototipo de competición. Deslice para desmontarlo pieza a pieza.</p>
+        </div>
+
+        <div class="explode__scrollhint" id="scrollhint" aria-hidden="true">
+          <span class="mono">Desplácese</span><i></i>
+        </div>
+
+        <div class="explode__hud" aria-hidden="true">
+          <div class="hud__count">
+            <span class="mono hud__label">Piezas liberadas</span>
+            <span class="hud__num"><b id="hudCount">00</b><span>/<span id="hudTotal">24</span></span></span>
+          </div>
+          <div class="hud__ticker mono" id="hudTicker">Ensamblado</div>
+        </div>
+
+        <ol class="explode__phases" aria-hidden="true" id="phases">
+          <li class="is-active"><span>01</span>Ensamblado</li>
+          <li><span>02</span>Apertura</li>
+          <li><span>03</span>Despiece</li>
+          <li><span>04</span>Anatomía</li>
+          <i class="explode__phasebar"><b id="phaseBar"></b></i>
+        </ol>
+
+        <div class="explode__outro" id="outro">
+          <p class="eyebrow">Anatomía</p>
+          <h2 class="h2">Cada pieza,<br><em class="serif">una decisión de ingeniería.</em></h2>
+        </div>
+
+        <noscript><img class="explode__fallback" src="assets/img/rm-exploded.webp" alt="RM 002-V2 despiezado: cristal, bisel, esfera, calibre, tourbillon, caja y correa."></noscript>
+      </div>
+    </section>
+
+    <!-- ============ 02 · MANIFIESTO ============ -->
+    <section class="manifesto" id="manifiesto">
+      <div class="container">
+        <p class="eyebrow reveal">Manifiesto</p>
+        <p class="manifesto__text" id="manifestoText">Richard Mille no fabrica accesorios. Construye máquinas. Cada reloj nace como nacería un monoplaza de Fórmula 1: con una obsesión por el peso, por la resistencia, por los materiales que nadie había llevado antes a la muñeca. Sin concesiones a la tradición. Sin miedo a la complejidad.</p>
+        <div class="manifesto__sign reveal">
+          <span class="mono">Les Breuleux, Jura suizo</span>
+          <span class="rule"></span>
+          <span class="mono">Desde 1999</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 · HISTORIA (scroll horizontal) ============ -->
+    <section class="history" id="historia" aria-labelledby="history-title">
+      <div class="history__sticky">
+        <header class="history__head container">
+          <div>
+            <p class="eyebrow">Historia · 1951 — Hoy</p>
+            <h2 class="h2" id="history-title" data-split>Un cuarto de siglo<br><em class="serif">reescribiendo las reglas.</em></h2>
+          </div>
+          <div class="history__progress" aria-hidden="true">
+            <span class="mono" id="historyYear">1951</span>
+            <i><b id="historyBar"></b></i>
+          </div>
+        </header>
+        <div class="history__track" id="historyTrack">
+          <article class="chapter">
+            <p class="chapter__year" data-year="1951">1951</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">Draguignan, Francia</p>
+              <h3>El origen</h3>
+              <p>Nace Richard Mille. Apasionado de los coches, los aviones y la mecánica de precisión, desarrolla su carrera en la industria relojera antes de dar su nombre a una marca propia.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <p class="chapter__year" data-year="1999">1999</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">Les Breuleux, Jura suizo</p>
+              <h3>La fundación</h3>
+              <p>Junto a Dominique Guenat funda la casa con una idea radical: aplicar al reloj la tecnología, los materiales y la lógica de la competición automovilística.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <p class="chapter__year" data-year="2001">2001</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">RM 001 Tourbillon</p>
+              <h3>La primera máquina</h3>
+              <p>Caja tonel, calibre esqueletizado y una ambición técnica sin precedentes. El RM 001 sacude la alta relojería y fija el lenguaje de la marca.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <p class="chapter__year" data-year="2010">2010</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">RM 027 · Rafael Nadal</p>
+              <h3>Menos de 20 gramos</h3>
+              <p>Un tourbillon diseñado para llevarse en la pista, en pleno partido de Grand Slam. El reloj se convierte en equipamiento deportivo de élite.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <p class="chapter__year" data-year="2013">2013</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">Carbon TPT®</p>
+              <h3>Un material nuevo</h3>
+              <p>Capas finísimas de filamentos de carbono, superpuestas y prensadas en caliente. Cada caja muestra un veteado único, imposible de repetir.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <p class="chapter__year" data-year="2017">2017</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">RM 50-03 McLaren F1</p>
+              <h3>Grafeno en la muñeca</h3>
+              <p>Un cronógrafo ratrapante con tourbillon de alrededor de 40 gramos, correa incluida, gracias a un composite reforzado con grafeno.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <p class="chapter__year" data-year="2022">2022</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">RM UP-01 Ferrari</p>
+              <h3>1,75 milímetros</h3>
+              <p>El reloj mecánico más delgado del mundo en su presentación. Una demostración de que el límite está para desplazarlo.</p>
+            </div>
+          </article>
+          <article class="chapter chapter--now">
+            <p class="chapter__year" data-year="Hoy">Hoy</p>
+            <div class="chapter__body">
+              <p class="chapter__place mono">Producción limitada</p>
+              <h3>El siguiente prototipo</h3>
+              <p>Cada referencia sigue pensándose como un laboratorio. La siguiente ya se está probando en algún lugar del Jura.</p>
+              <a href="#cita" class="link-arrow">Conocerla en boutique <span aria-hidden="true">→</span></a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 04 · INGENIERÍA (zoom al tourbillon) ============ -->
+    <section class="engine" id="ingenieria" aria-labelledby="engine-title">
+      <div class="engine__sticky">
+        <div class="engine__media" id="engineMedia">
+          <img src="assets/img/rm-anatomy.webp" width="1920" height="1280" alt="Vista despiezada en titanio del RM 002-V2 con el tourbillon en el centro" loading="lazy" decoding="async">
+          <svg class="engine__reticle" id="reticle" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="92" pathLength="1"/>
+            <g class="ticks"><line x1="100" y1="0" x2="100" y2="12"/><line x1="100" y1="188" x2="100" y2="200"/><line x1="0" y1="100" x2="12" y2="100"/><line x1="188" y1="100" x2="200" y2="100"/></g>
+          </svg>
+        </div>
+        <div class="engine__vignette" aria-hidden="true"></div>
+        <div class="engine__copy container">
+          <p class="eyebrow">Ingeniería</p>
+          <h2 class="h2" id="engine-title">Del chasis<br><em class="serif">al corazón.</em></h2>
+          <ol class="engine__steps" id="engineSteps">
+            <li class="is-active">
+              <span class="mono">01 · Arquitectura</span>
+              <p>La caja no es un envoltorio: es el chasis. Tres cuerpos unidos por tornillos spline de titanio, con juntas que absorben vibraciones e impactos.</p>
+            </li>
+            <li>
+              <span class="mono">02 · Calibre esqueletizado</span>
+              <p>Platina y puentes calados hasta el límite para dejar ver el movimiento y aligerarlo sin perder un ápice de rigidez.</p>
+            </li>
+            <li>
+              <span class="mono">03 · Tourbillon</span>
+              <p>Una jaula que gira sobre sí misma una vez por minuto para compensar el efecto de la gravedad sobre el órgano regulador.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 05 · MATERIALES ============ -->
+    <section class="materials section" id="materiales" aria-labelledby="materials-title">
+      <div class="container">
+        <header class="section__head">
+          <p class="eyebrow reveal">Materiales</p>
+          <h2 class="h2" id="materials-title" data-split>Materiales<br><em class="serif">de otra órbita.</em></h2>
+          <p class="section__lead reveal">Del paddock y la industria aeroespacial a la muñeca. Pase el cursor sobre cada material para verlo bajo la luz.</p>
+        </header>
+        <div class="materials__grid">
+          <article class="material reveal" data-tilt style="--d:0">
+            <div class="material__surface material__surface--carbon"></div>
+            <div class="material__glare"></div>
+            <div class="material__info">
+              <span class="mono">01</span>
+              <h3>Carbon TPT®</h3>
+              <p>Cientos de capas de filamentos de carbono de un máximo de 30 micras, entrecruzadas y polimerizadas. Ligero, rígido, irrepetible.</p>
+            </div>
+          </article>
+          <article class="material reveal" data-tilt style="--d:1">
+            <div class="material__surface material__surface--quartz"></div>
+            <div class="material__glare"></div>
+            <div class="material__info">
+              <span class="mono">02</span>
+              <h3>Quartz TPT®</h3>
+              <p>Filamentos de sílice tratados con resina coloreada. La misma técnica que el carbono, con una luz completamente distinta.</p>
+            </div>
+          </article>
+          <article class="material reveal" data-tilt style="--d:2">
+            <div class="material__surface material__surface--titanium"></div>
+            <div class="material__glare"></div>
+            <div class="material__info">
+              <span class="mono">03</span>
+              <h3>Titanio grado 5</h3>
+              <p>Aleación aeroespacial de titanio, aluminio y vanadio. Platinas, puentes y tornillos más ligeros y resistentes a la corrosión.</p>
+            </div>
+          </article>
+          <article class="material reveal" data-tilt style="--d:3">
+            <div class="material__surface material__surface--sapphire"></div>
+            <div class="material__glare"></div>
+            <div class="material__info">
+              <span class="mono">04</span>
+              <h3>Cristal de zafiro</h3>
+              <p>Dureza 9 en la escala de Mohs, solo superado por el diamante. Transparencia absoluta para un calibre que no tiene nada que ocultar.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 06 · LA PIEZA ============ -->
+    <section class="piece section" id="pieza" aria-labelledby="piece-title">
+      <div class="container piece__grid">
+        <figure class="piece__media reveal">
+          <div class="piece__frame" id="pieceFrame">
+            <img src="assets/img/rm-front.webp" width="1920" height="1280" alt="RM 002-V2 en Carbon TPT® visto de frente, con el calibre esqueletizado" loading="lazy" decoding="async">
+            <button class="hotspot" style="--x:50%;--y:50%" type="button" aria-describedby="hs1"><span class="sr-only">Tourbillon</span></button>
+            <span class="hotspot__tip" id="hs1" role="tooltip" style="--x:50%;--y:50%">Calibre esqueletizado con puentes de titanio</span>
+            <button class="hotspot" style="--x:74.5%;--y:52%" type="button" aria-describedby="hs2"><span class="sr-only">Corona</span></button>
+            <span class="hotspot__tip" id="hs2" role="tooltip" style="--x:74.5%;--y:52%">Corona dinamométrica con inserto de caucho</span>
+            <button class="hotspot" style="--x:31.5%;--y:66%" type="button" aria-describedby="hs3"><span class="sr-only">Caja</span></button>
+            <span class="hotspot__tip" id="hs3" role="tooltip" style="--x:31.5%;--y:66%">Caja tonel en Carbon TPT®, tres cuerpos</span>
+            <button class="hotspot" style="--x:50%;--y:16%" type="button" aria-describedby="hs4"><span class="sr-only">Cristal</span></button>
+            <span class="hotspot__tip" id="hs4" role="tooltip" style="--x:50%;--y:16%">Zafiro tallado, como una gema</span>
+          </div>
+        </figure>
+        <div class="piece__copy">
+          <p class="eyebrow reveal">La pieza</p>
+          <h2 class="h2" id="piece-title" data-split>RM 002-V2</h2>
+          <p class="section__lead reveal">La segunda generación de un clásico de la casa. Tourbillon, calibre esqueletizado y una caja de carbono que convierte cada ejemplar en una pieza única.</p>
+          <dl class="specs">
+            <div class="reveal"><dt>Movimiento</dt><dd>Tourbillon de carga manual</dd></div>
+            <div class="reveal"><dt>Caja</dt><dd>Carbon TPT®, forma tonel en tres cuerpos</dd></div>
+            <div class="reveal"><dt>Esfera</dt><dd>Esqueletizada, índices luminiscentes</dd></div>
+            <div class="reveal"><dt>Cristal</dt><dd>Zafiro con tratamiento antirreflejo</dd></div>
+            <div class="reveal"><dt>Correa</dt><dd>Caucho técnico, hebilla de titanio</dd></div>
+            <div class="reveal"><dt>Disponibilidad</dt><dd>Exclusivamente en boutique</dd></div>
+          </dl>
+          <a href="#cita" class="btn btn--light reveal" data-magnetic data-preset-interest="rm002"><span>Verlo en persona</span><i aria-hidden="true">→</i></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 07 · COLECCIÓN ============ -->
+    <section class="families section" id="coleccion" aria-labelledby="families-title">
+      <div class="container">
+        <header class="section__head section__head--row">
+          <div>
+            <p class="eyebrow reveal">Colección</p>
+            <h2 class="h2" id="families-title" data-split>Lo que hacemos.</h2>
+          </div>
+          <p class="section__lead reveal">Seis familias, una misma filosofía. Todas las piezas se presentan exclusivamente en boutique, con cita previa.</p>
+        </header>
+        <ul class="families__list" id="families">
+          <li class="family reveal" data-img="assets/img/rm-front.webp" data-pos="50% 50%">
+            <a href="#cita" data-preset-interest="tourbillon"><span class="mono">01</span><strong>Tourbillons</strong><em>La complicación más emblemática de la casa.</em><i aria-hidden="true">→</i></a>
+          </li>
+          <li class="family reveal" data-img="assets/img/rm-assembled.webp" data-pos="50% 50%">
+            <a href="#cita" data-preset-interest="chrono"><span class="mono">02</span><strong>Cronógrafos</strong><em>Medir el tiempo como en el muro de boxes.</em><i aria-hidden="true">→</i></a>
+          </li>
+          <li class="family reveal" data-img="assets/img/rm-exploded.webp" data-pos="50% 55%">
+            <a href="#cita" data-preset-interest="automatic"><span class="mono">03</span><strong>Automáticos</strong><em>Rotores de geometría variable, adaptados a cada muñeca.</em><i aria-hidden="true">→</i></a>
+          </li>
+          <li class="family reveal" data-img="assets/img/rm-anatomy.webp" data-pos="50% 70%">
+            <a href="#cita" data-preset-interest="ladies"><span class="mono">04</span><strong>Colección femenina</strong><em>Alta joyería y alta mecánica, sin jerarquías.</em><i aria-hidden="true">→</i></a>
+          </li>
+          <li class="family reveal" data-img="assets/img/rm-front.webp" data-pos="72% 50%">
+            <a href="#cita" data-preset-interest="ultraflat"><span class="mono">05</span><strong>Ultraplanos</strong><em>Cuando cada décima de milímetro es una conquista.</em><i aria-hidden="true">→</i></a>
+          </li>
+          <li class="family reveal" data-img="assets/img/rm-anatomy.webp" data-pos="50% 30%">
+            <a href="#cita" data-preset-interest="any"><span class="mono">06</span><strong>Alianzas deportivas</strong><em>Probados por pilotos, tenistas y atletas en competición.</em><i aria-hidden="true">→</i></a>
+          </li>
+        </ul>
+      </div>
+      <div class="families__float" id="familiesFloat" aria-hidden="true"><img alt=""></div>
+    </section>
+
+    <!-- ============ 08 · BOUTIQUES ============ -->
+    <section class="boutiques section" id="boutiques" aria-labelledby="boutiques-title">
+      <div class="container">
+        <header class="section__head section__head--row">
+          <div>
+            <p class="eyebrow reveal">Boutiques</p>
+            <h2 class="h2" id="boutiques-title" data-split>Dónde encontrarnos.</h2>
+          </div>
+          <p class="section__lead reveal">Las piezas Richard Mille solo se adquieren en boutiques oficiales y distribuidores autorizados. Elija la suya y reserve una visita privada.</p>
+        </header>
+
+        <div class="filters reveal" role="tablist" aria-label="Filtrar por región" id="regionFilters"></div>
+
+        <div class="boutiques__grid">
+          <div class="map reveal" id="map">
+            <canvas id="mapCanvas" aria-hidden="true"></canvas>
+            <div class="map__pins" id="mapPins"></div>
+            <div class="map__legend mono"><span><i class="lg lg--b"></i>Boutique</span><span><i class="lg lg--f"></i>Flagship</span></div>
+          </div>
+          <div class="boutiques__list" id="boutiqueList" role="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 09 · CITA ============ -->
+    <section class="booking section" id="cita" aria-labelledby="booking-title">
+      <div class="container booking__grid">
+        <aside class="booking__aside">
+          <p class="eyebrow reveal">Cita privada</p>
+          <h2 class="h2" id="booking-title" data-split>Reserve<br><em class="serif">su visita.</em></h2>
+          <p class="section__lead reveal">Un especialista le recibirá en privado, con las piezas preparadas según sus intereses. Sin compromiso de compra.</p>
+
+          <div class="summary reveal" id="summary" aria-live="polite">
+            <div class="summary__media"><img src="assets/img/rm-assembled.webp" alt="" loading="lazy" decoding="async"></div>
+            <dl>
+              <div><dt>Boutique</dt><dd data-sum="boutique">—</dd></div>
+              <div><dt>Motivo</dt><dd data-sum="reason">—</dd></div>
+              <div><dt>Fecha</dt><dd data-sum="date">—</dd></div>
+              <div><dt>Hora</dt><dd data-sum="time">—</dd></div>
+            </dl>
+          </div>
+        </aside>
+
+        <div class="booking__panel reveal">
+          <ol class="stepper" id="stepper" aria-label="Progreso de la reserva">
+            <li class="is-current"><span>01</span>Boutique</li>
+            <li><span>02</span>Fecha y hora</li>
+            <li><span>03</span>Sus datos</li>
+            <li><span>04</span>Confirmación</li>
+            <i class="stepper__bar"><b id="stepperBar"></b></i>
+          </ol>
+
+          <form class="form" id="bookingForm" novalidate>
+            <!-- Paso 1 -->
+            <fieldset class="step is-active" data-step="0">
+              <legend class="sr-only">Boutique y motivo de la visita</legend>
+              <div class="field field--select">
+                <select id="f-boutique" name="boutique" required></select>
+                <label for="f-boutique">Boutique</label>
+                <p class="field__error" data-error="boutique"></p>
+              </div>
+
+              <p class="form__label" id="reason-label">Motivo de la visita</p>
+              <div class="choices" role="radiogroup" aria-labelledby="reason-label" id="reasonChoices"></div>
+              <p class="field__error" data-error="reason"></p>
+
+              <div class="field field--select">
+                <select id="f-interest" name="interest"></select>
+                <label for="f-interest">Colección de interés</label>
+              </div>
+            </fieldset>
+
+            <!-- Paso 2 -->
+            <fieldset class="step" data-step="1">
+              <legend class="sr-only">Fecha y hora</legend>
+              <div class="calendar" id="calendar">
+                <div class="calendar__head">
+                  <button type="button" class="calendar__nav" data-cal="-1" aria-label="Mes anterior">←</button>
+                  <p class="calendar__month" id="calMonth" aria-live="polite"></p>
+                  <button type="button" class="calendar__nav" data-cal="1" aria-label="Mes siguiente">→</button>
+                </div>
+                <div class="calendar__dow" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+                <div class="calendar__grid" id="calGrid" role="grid" aria-label="Seleccione un día"></div>
+              </div>
+              <p class="field__error" data-error="date"></p>
+
+              <div class="slots">
+                <p class="form__label">Hora <span class="mono slots__tz" id="slotsTz"></span></p>
+                <div class="slots__grid" id="slots" role="radiogroup" aria-label="Horas disponibles">
+                  <p class="slots__empty">Seleccione primero un día.</p>
+                </div>
+                <p class="field__error" data-error="time"></p>
+              </div>
+            </fieldset>
+
+            <!-- Paso 3 -->
+            <fieldset class="step" data-step="2">
+              <legend class="sr-only">Sus datos</legend>
+              <div class="form__row">
+                <div class="field">
+                  <input id="f-first" name="firstName" autocomplete="given-name" placeholder=" " required>
+                  <label for="f-first">Nombre</label>
+                  <p class="field__error" data-error="firstName"></p>
+                </div>
+                <div class="field">
+                  <input id="f-last" name="lastName" autocomplete="family-name" placeholder=" " required>
+                  <label for="f-last">Apellidos</label>
+                  <p class="field__error" data-error="lastName"></p>
+                </div>
+              </div>
+              <div class="form__row">
+                <div class="field">
+                  <input id="f-email" name="email" type="email" autocomplete="email" placeholder=" " required>
+                  <label for="f-email">Correo electrónico</label>
+                  <p class="field__error" data-error="email"></p>
+                </div>
+                <div class="field">
+                  <input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder=" ">
+                  <label for="f-phone">Teléfono <small>(opcional)</small></label>
+                  <p class="field__error" data-error="phone"></p>
+                </div>
+              </div>
+              <div class="field field--select">
+                <select id="f-language" name="language"></select>
+                <label for="f-language">Idioma de la cita</label>
+              </div>
+              <div class="field">
+                <textarea id="f-message" name="message" rows="3" maxlength="600" placeholder=" "></textarea>
+                <label for="f-message">Mensaje <small>(opcional)</small></label>
+                <span class="field__count mono" id="msgCount">0/600</span>
+                <p class="field__error" data-error="message"></p>
+              </div>
+              <label class="check">
+                <input type="checkbox" name="consent" id="f-consent">
+                <span class="check__box" aria-hidden="true"></span>
+                <span>He leído y acepto la <a href="#cita">política de privacidad</a>.</span>
+              </label>
+              <p class="field__error" data-error="consent"></p>
+            </fieldset>
+
+            <!-- Paso 4 -->
+            <fieldset class="step" data-step="3">
+              <legend class="sr-only">Revisar y confirmar</legend>
+              <div class="review" id="review"></div>
+              <p class="form__note mono">Entorno de demostración · Los datos no se envían ni se almacenan.</p>
+            </fieldset>
+
+            <div class="form__nav">
+              <button type="button" class="btn btn--ghost" id="prevBtn" hidden><i aria-hidden="true">←</i><span>Atrás</span></button>
+              <button type="submit" class="btn btn--light" id="nextBtn" data-magnetic><span>Continuar</span><i aria-hidden="true">→</i></button>
+            </div>
+          </form>
+
+          <div class="done" id="done" hidden tabindex="-1">
+            <svg class="done__mark" viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="54" pathLength="1"/>
+              <path d="M38 61 l15 15 l30 -32" pathLength="1"/>
+            </svg>
+            <p class="eyebrow">Solicitud recibida</p>
+            <h3 class="h3">Le esperamos.</h3>
+            <p class="done__text" id="doneText"></p>
+            <p class="done__ref mono">Referencia <b id="doneRef"></b></p>
+            <div class="done__actions">
+              <button type="button" class="btn btn--light" id="icsBtn"><span>Añadir al calendario</span><i aria-hidden="true">↓</i></button>
+              <button type="button" class="btn btn--ghost" id="againBtn"><span>Nueva cita</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__top">
+        <p class="footer__claim">Una máquina de carreras<br><em class="serif">en la muñeca.</em></p>
+        <a href="#cita" class="btn btn--light" data-magnetic><span>Reservar cita</span><i aria-hidden="true">→</i></a>
+      </div>
+      <div class="footer__cols">
+        <div><p class="mono">Explorar</p><a href="#desmontaje">Despiece</a><a href="#historia">Historia</a><a href="#ingenieria">Ingeniería</a><a href="#materiales">Materiales</a></div>
+        <div><p class="mono">Visitar</p><a href="#coleccion">Colección</a><a href="#boutiques">Boutiques</a><a href="#cita">Cita privada</a></div>
+        <div><p class="mono">Manufactura</p><span>Les Breuleux</span><span>Jura, Suiza</span></div>
+        <div><p class="mono">Hora en Les Breuleux</p><span class="footer__clock mono" id="clock">--:--:--</span></div>
+      </div>
+      <p class="footer__word" aria-hidden="true"><span>RICHARD</span><span>MILLE</span></p>
+      <div class="footer__legal">
+        <span>Concepto de diseño · Sitio no oficial sin afiliación con Richard Mille SA. Marcas e imágenes pertenecen a sus titulares.</span>
+        <a href="#top" class="mono">Volver arriba ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/scene-data.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
