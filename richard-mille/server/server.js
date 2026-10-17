@@ -35,26 +35,42 @@ const MIME = {
 };
 const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.json', '.svg']);
 
-const SECURITY_HEADERS = {
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'sha256-" + inlineScriptHash() + "'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob:",
-    "connect-src 'self'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
-  ].join('; '),
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Cross-Origin-Opener-Policy': 'same-origin',
-  'X-Frame-Options': 'DENY'
-};
+/**
+ * Cabeceras de seguridad. La CSP autoriza el pequeño script en línea de index.html
+ * (sensor de dispositivo y clase no-js → js) mediante su hash, que se recalcula
+ * automáticamente si index.html cambia, sin necesidad de reiniciar el servidor.
+ */
+let cspCache = { mtime: -1, headers: null };
+function securityHeaders() {
+  let mtime = 0;
+  try { mtime = fs.statSync(path.join(ROOT, 'index.html')).mtimeMs; } catch (e) { /* sin index.html */ }
+  if (mtime !== cspCache.mtime) {
+    cspCache = {
+      mtime,
+      headers: {
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'sha256-" + inlineScriptHash() + "'",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "font-src 'self' https://fonts.gstatic.com",
+          "img-src 'self' data: blob:",
+          "connect-src 'self'",
+          "frame-ancestors 'none'",
+          "base-uri 'self'",
+          "form-action 'self'"
+        ].join('; '),
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'X-Frame-Options': 'DENY'
+      }
+    };
+  }
+  return cspCache.headers;
+}
 
-/** Hash CSP del pequeño script en línea de index.html (cambio de clase no-js → js). */
+/** Hash CSP del script en línea de index.html. */
 function inlineScriptHash() {
   try {
     const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
@@ -85,7 +101,7 @@ function createRateLimiter(limit, windowMs) {
 function send(req, res, status, body, headers = {}) {
   const accept = String(req.headers['accept-encoding'] || '');
   let payload = Buffer.isBuffer(body) ? body : Buffer.from(body);
-  const h = Object.assign({}, SECURITY_HEADERS, headers);
+  const h = Object.assign({}, securityHeaders(), headers);
   if (h['X-Compress'] && payload.length > 1024 && /\bbr\b/.test(accept)) {
     payload = zlib.brotliCompressSync(payload); h['Content-Encoding'] = 'br';
   } else if (h['X-Compress'] && payload.length > 1024 && /\bgzip\b/.test(accept)) {
@@ -218,7 +234,7 @@ function createApp(options = {}) {
         'X-Compress': COMPRESSIBLE.has(ext)
       };
       if (req.headers['if-none-match'] === etag) {
-        const h = Object.assign({}, SECURITY_HEADERS, headers); delete h['X-Compress'];
+        const h = Object.assign({}, securityHeaders(), headers); delete h['X-Compress'];
         res.writeHead(304, h); return res.end();
       }
       fs.readFile(file, (e, buf) => e ? send(req, res, 500, 'Error', { 'Content-Type': 'text/plain' }) : send(req, res, 200, buf, headers));

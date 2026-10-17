@@ -208,11 +208,15 @@
       c.classList.toggle('is-label', !!lab);
       if (lab) label.textContent = lab;
     });
-    (function loop() {
+    var ringRun = false;
+    function ringLoop() {
       rx = lerp(rx, x, .2); ry = lerp(ry, y, .2);
       ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
-      requestAnimationFrame(loop);
-    })();
+      if (Math.abs(rx - x) + Math.abs(ry - y) > .1) requestAnimationFrame(ringLoop); else ringRun = false;
+    }
+    window.addEventListener('pointermove', function () {
+      if (!ringRun) { ringRun = true; requestAnimationFrame(ringLoop); }
+    }, { passive: true });
   }
 
   function initMagnetic() {
@@ -234,6 +238,7 @@
   function measureAll() {
     vw = window.innerWidth; vh = window.innerHeight;
     scenes.forEach(function (s) { s.measure && s.measure(); });
+    wake();
   }
   function sectionProgress(cache, y) {
     var dist = cache.height - vh;
@@ -335,6 +340,7 @@
       fit.s = Math.min(aw / CONTENT.w, ah / CONTENT.h);
       fit.cx = vw / 2;
       fit.cy = vh / 2 + (fit.mobile ? vh * .1 : vh * .015);
+      lastKey = '';
       render(p, true);
     }
 
@@ -344,7 +350,7 @@
       }, { passive: true });
     }
 
-    var lastPhase = -1, lastCount = -1, lastTicker = '';
+    var lastPhase = -1, lastCount = -1, lastTicker = '', lastKey = '';
 
     // Curva suave (smoothstep): arranca y frena sin tirones, como un plano de cámara
     var soft = function (t) { return t * t * (3 - 2 * t); };
@@ -432,6 +438,7 @@
       if (!reduced) intro.style.transform = (fit.mobile ? '' : 'translateY(-46%) ') + 'translateY(' + (-60 * easeIO(io)).toFixed(1) + 'px)';
       intro.style.visibility = io >= 1 && !reduced ? 'hidden' : '';
       hint.style.opacity = 1 - range(prog, 0, .03);
+      hint.classList.toggle('anim-off', prog > .03);
       var oo = easeOut(range(prog, .86, .95));
       outro.style.opacity = oo.toFixed(3);
       outro.style.transform = 'translateY(' + (30 * (1 - oo)).toFixed(1) + 'px)';
@@ -447,6 +454,10 @@
         pointer.sy = damp(pointer.sy, pointer.y, 4, dt);
         // Inercia suave: el despiece "fluye" tras el scroll en lugar de saltar con cada rueda del ratón
         p = Math.abs(target - p) < .0002 ? target : damp(p, target, 4.2, dt);
+        // En reposo (scroll y ratón quietos) no se recalcula nada: ahorra CPU y batería
+        var key = p.toFixed(5) + '|' + pointer.sx.toFixed(4) + '|' + pointer.sy.toFixed(4);
+        if (key === lastKey) return;
+        lastKey = key;
         render(p, false);
       }
     };
@@ -572,7 +583,8 @@
         if (y + vh < cache.top || y > cache.top + cache.height) return;
         var pr = sectionProgress(cache, y);
         var pp = range(pr, .04, .94);
-        x = damp(x, -pp * dist, 8, dt);
+        var tx = -pp * dist;
+        if (Math.abs(tx - x) < .05) { if (x === tx) return; x = tx; } else x = damp(x, tx, 8, dt);
         track.style.transform = 'translate3d(' + x.toFixed(2) + 'px,0,0)';
         bar.style.transform = 'scaleX(' + pp.toFixed(4) + ')';
         // Capítulo activo: el más cercano al 35 % del ancho de pantalla
@@ -608,7 +620,7 @@
       update: function (dt, y) {
         if (!cache || y + vh < cache.top || y > cache.top + cache.height) return;
         var target = reduced ? .5 : sectionProgress(cache, y);
-        p = damp(p, target, 6, dt);
+        if (Math.abs(target - p) < .0002) { if (p === target) return; p = target; } else p = damp(p, target, 6, dt);
         var z = easeIO(range(p, .04, .86));
         media.style.transform = 'scale(' + (1 + z * 1.7).toFixed(4) + ')';
         var r = range(p, .62, .82);
@@ -652,6 +664,7 @@
           if (r.x > 0) r.x -= r.w;
           r.track.style.transform = 'translate3d(' + r.x.toFixed(2) + 'px,0,0)';
         });
+        return true; // movimiento continuo mientras la franja está en pantalla
       }
     };
   }
@@ -673,15 +686,37 @@
     };
   }
 
+  // El bucle solo corre mientras hay algo que animar: se despierta con scroll, ratón o cambio de tamaño
+  // y se duerme cuando todo se ha asentado (salvo escenas con movimiento continuo visibles).
+  var loop = { running: false, until: 0, last: 0 };
+  function wake() {
+    loop.until = performance.now() + 2500;
+    if (loop.running) return;
+    loop.running = true;
+    loop.last = performance.now();
+    requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    var dt = Math.min(.05, (now - loop.last) / 1000); loop.last = now;
+    var y = window.scrollY, keep = false;
+    navUpdate(y);
+    for (var i = 0; i < scenes.length; i++) if (scenes[i].update(dt, y) === true) keep = true;
+    if (keep || now < loop.until) requestAnimationFrame(frame);
+    else loop.running = false;
+  }
+  function pauseOffscreen() {
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { e.target.classList.toggle('anim-off', !e.isIntersecting); });
+    });
+    $$('.piece__frame, .map').forEach(function (el) { io.observe(el); });
+  }
+
   function startLoop() {
-    var last = performance.now();
-    (function frame(now) {
-      var dt = Math.min(.05, (now - last) / 1000); last = now;
-      var y = window.scrollY;
-      navUpdate(y);
-      for (var i = 0; i < scenes.length; i++) scenes[i].update(dt, y);
-      requestAnimationFrame(frame);
-    })(last);
+    window.addEventListener('scroll', wake, { passive: true });
+    window.addEventListener('resize', wake);
+    window.addEventListener('pointermove', wake, { passive: true });
+    wake();
   }
 
   /* ====================================================================== */
@@ -690,6 +725,7 @@
   function initTilt() {
     if (isMobile) {
       var grid = $('.materials__grid');
+      grid.tabIndex = 0; grid.setAttribute('role', 'region'); grid.setAttribute('aria-label', 'Materiales, deslice para ver más');
       carousel(grid, function () { return $$('.material', grid); });
       return;
     }
@@ -945,7 +981,7 @@
         pinsEl.appendChild(pin);
         pins[b.id] = pin;
 
-        var card = document.createElement('article');
+        var card = document.createElement('div');
         card.className = 'bcard';
         card.setAttribute('role', 'listitem');
         card.tabIndex = 0;
@@ -1003,7 +1039,7 @@
   /* Reserva de cita                                                         */
   /* ====================================================================== */
   var booking = (function () {
-    var form = $('#bookingForm'), stepsEls = $$('.step', form), stepperItems = $$('#stepper li');
+    var form = $('#bookingForm'), stepsEls = $$('.step', form), stepperItems = $$('#stepper li:not(.stepper__bar)');
     var stepperBar = $('#stepperBar'), prevBtn = $('#prevBtn'), nextBtn = $('#nextBtn');
     var selBoutique = $('#f-boutique'), selInterest = $('#f-interest'), selLang = $('#f-language');
     var reasonWrap = $('#reasonChoices'), calGrid = $('#calGrid'), calMonth = $('#calMonth'), slotsEl = $('#slots');
@@ -1534,6 +1570,7 @@
       new ResizeObserver(function () { clearTimeout(rt); rt = setTimeout(measureAll, 150); }).observe(document.body);
     }
     window.addEventListener('load', measureAll);
+    pauseOffscreen();
     startLoop();
     preload();
     api.ready.then(function (on) {

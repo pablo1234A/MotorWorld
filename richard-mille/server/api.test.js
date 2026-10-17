@@ -108,6 +108,15 @@ test('estáticos: sirve la web y bloquea rutas fuera de lo público', async (t) 
   assert.equal((await fetch(url(s, '/assets/..%2f..%2fserver/server.js'))).status, 404);
 });
 
+test('CSP: autoriza exactamente el script en línea actual de index.html', async (t) => {
+  const s = await start(); t.after(() => s.close());
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+  const inline = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const hash = require('crypto').createHash('sha256').update(inline).digest('base64');
+  const csp = (await fetch(url(s, '/'))).headers.get('content-security-policy');
+  assert.ok(csp.includes("'sha256-" + hash + "'"), 'la CSP no coincide con el script de index.html');
+});
+
 test('limitador de peticiones', () => {
   const allow = createRateLimiter(2, 1000);
   assert.equal(allow('a', 0), true);
