@@ -812,3 +812,116 @@ body.legal-open { overflow: hidden; }
   .js .reveal { opacity: 1; transform: none; }
   .js .w > span { transform: none; }
 }
+
+/* ==========================================================================
+   VERSIÓN MÓVIL
+   Solo se aplica cuando el sensor de <head> marca <html class="is-mobile">
+   (teléfonos). En ordenador ninguna de estas reglas tiene efecto.
+   ========================================================================== */
+.is-mobile { -webkit-tap-highlight-color: transparent; }
+.is-mobile a, .is-mobile button, .is-mobile [role='radio'] { touch-action: manipulation; }
+.is-mobile .grain { display: none; } /* ahorra batería: sin capa animada a pantalla completa */
+
+/* Zonas seguras (notch, barra inferior del iPhone) */
+.is-mobile .nav { padding-top: env(safe-area-inset-top); height: calc(var(--nav-h) + env(safe-area-inset-top)); }
+.is-mobile .menu { padding-top: calc(var(--nav-h) + env(safe-area-inset-top) + 20px); padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+.is-mobile .explode__hud { bottom: calc(22px + env(safe-area-inset-bottom)); }
+.is-mobile .footer__legal { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+.is-mobile .legal__bar { padding-top: env(safe-area-inset-top); height: calc(var(--nav-h) + env(safe-area-inset-top)); }
+
+/* Despiece: menos recorrido de scroll, el mismo plano */
+.is-mobile .explode { height: 640vh; }
+.is-mobile .explode__intro { top: calc(var(--nav-h) + env(safe-area-inset-top) + 3vh); }
+.is-mobile .explode__outro { top: calc(var(--nav-h) + env(safe-area-inset-top) + 2vh); }
+.is-mobile .explode__outro .h2 { font-size: 2rem; }
+
+/* Ingeniería: zoom algo más corto para no cansar el pulgar */
+.is-mobile .engine { height: 300vh; }
+.is-mobile .engine__copy .h2 { font-size: 2.6rem; }
+
+/* --- Carruseles táctiles (historia, materiales, boutiques) --- */
+.is-mobile .history__track,
+.is-mobile .materials__grid,
+.is-mobile .boutiques__list {
+  position: relative; display: flex; flex-direction: row; gap: 12px;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
+}
+.is-mobile .history__track::-webkit-scrollbar,
+.is-mobile .materials__grid::-webkit-scrollbar,
+.is-mobile .boutiques__list::-webkit-scrollbar { display: none; }
+.is-mobile .materials__grid, .is-mobile .boutiques__list { margin-inline: calc(var(--gutter) * -1); }
+.carousel-nav { display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 18px; min-height: 24px; }
+.carousel-nav button { width: 22px; height: 24px; display: grid; place-items: center; }
+.carousel-nav button span { display: block; width: 6px; height: 6px; border-radius: 3px; background: var(--line-2); transition: width .4s var(--ease), background-color .4s; }
+.carousel-nav button.is-active span { width: 20px; background: var(--text); }
+.carousel-count { color: var(--muted); }
+.carousel-count b { color: var(--text); font-weight: 500; }
+
+/* Historia: un capítulo por pantalla, se desliza con el dedo */
+.is-mobile .history { padding-block: 90px 70px; }
+.is-mobile .history__track { width: auto; gap: 14px; }
+.is-mobile .chapter { flex: 0 0 84%; scroll-snap-align: start; opacity: .4; }
+.is-mobile .chapter.is-active { opacity: 1; }
+.is-mobile .chapter__year { font-size: 4.6rem; }
+.is-mobile .history__progress { display: flex; flex-direction: row; align-items: center; gap: 14px; min-width: 0; width: 100%; }
+.is-mobile .history__progress i { flex: 1; width: auto; }
+
+/* Materiales: tarjetas grandes deslizables, con la descripción siempre visible */
+.is-mobile .material { flex: 0 0 82%; aspect-ratio: 4 / 5; scroll-snap-align: start; }
+.is-mobile .material__info p { max-height: none; opacity: 1; }
+.is-mobile .material__surface { filter: brightness(.9); }
+
+/* La pieza: puntos más grandes para el dedo y leyenda bajo la imagen */
+.is-mobile .hotspot { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+.is-mobile .hotspot::before { inset: 14px; }
+.is-mobile .hotspot.is-on::before { background: var(--red); transform: scale(1.35); }
+.is-mobile .hotspot__tip { display: none; }
+.piece__caption { display: flex; align-items: center; gap: 14px; min-height: 52px; margin-top: 12px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); font-size: 14px; line-height: 1.45; }
+.piece__caption .mono { color: var(--red); flex: none; }
+.is-mobile .specs > div { grid-template-columns: 112px 1fr; }
+
+/* Colección: cada familia enseña su reloj (en móvil no existe el "pasar el ratón") */
+.is-mobile .family a { grid-template-columns: 26px minmax(0, 1fr) 92px; gap: 12px; padding-block: 14px; }
+.is-mobile .family strong { font-size: 1.65rem; }
+.is-mobile .family i { display: none; }
+.family__thumb { width: 92px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 3px; justify-self: end; background: #fff; }
+.is-mobile .family a:active strong { transform: translateX(6px); }
+
+/* Cifras: las tres en una fila compacta */
+.is-mobile .figures { grid-template-columns: repeat(3, 1fr); }
+.is-mobile .figure { flex-direction: column; gap: 6px; padding: 20px 10px; }
+.is-mobile .figure + .figure { border-top: 0; border-left: 1px solid var(--line); }
+.is-mobile .figure b { font-size: 2.4rem; }
+.is-mobile .figure span { font-size: 9.5px; }
+
+/* Boutiques: filtros deslizables, mapa ampliado que viaja a cada ciudad y tarjetas en carrusel */
+.is-mobile .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); }
+.is-mobile .filters::-webkit-scrollbar { display: none; }
+.is-mobile .chip { height: 44px; flex: none; }
+.is-mobile .boutiques__grid { gap: 14px; }
+.is-mobile .map { aspect-ratio: auto; height: 64vw; }
+.map__pan { position: absolute; left: 0; top: 0; width: 250%; aspect-ratio: 225 / 86; transition: transform 1s var(--ease); will-change: transform; }
+.is-mobile .pin { width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+.is-mobile .pin::before { inset: 13px; }
+.is-mobile .map__legend { bottom: 10px; left: 12px; }
+.is-mobile .boutiques__list { max-height: none; grid-template-columns: none; padding-block: 2px; }
+.is-mobile .bcard { flex: 0 0 84%; scroll-snap-align: center; }
+.is-mobile .bcard__cta { min-height: 40px; }
+
+/* Cita: botón de avanzar siempre a mano del pulgar */
+.is-mobile .booking__panel { padding-bottom: 0; }
+.is-mobile .form__nav {
+  position: sticky; bottom: 0; z-index: 5; margin: 26px -18px 0; padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(rgba(15, 15, 16, 0), rgba(15, 15, 16, .94) 34%); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.is-mobile .form__nav #nextBtn { flex: 1; }
+.is-mobile .form__nav .btn { --h: 54px; }
+.is-mobile .done { padding-bottom: 28px; }
+.is-mobile .summary { margin-top: 28px; }
+.is-mobile .slots__grid { grid-template-columns: repeat(3, 1fr); }
+.is-mobile .day { max-height: none; min-height: 40px; }
+
+/* Footer */
+.is-mobile .footer__cols a, .is-mobile .footer__legalnav a { padding-block: 4px; }

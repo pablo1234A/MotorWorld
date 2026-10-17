@@ -26,6 +26,8 @@
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  // Detectado en <head> antes de pintar (ver index.html): solo teléfonos reciben la versión móvil
+  var isMobile = document.documentElement.classList.contains('is-mobile');
   var vw = window.innerWidth, vh = window.innerHeight;
 
   function onResize(fn) {
@@ -356,6 +358,15 @@
       var cam = lerp(1 + .78 * a, 1, pull) * (1 + .04 * soft(range(prog, .8, 1)));
       var zf = clamp((cam - 1) / .78, 0, 1);
       var fx = lerp(CONTENT.x + CONTENT.w / 2, 960, zf), fy = lerp(CONTENT.y + CONTENT.h / 2, 640, zf);
+      if (isMobile) {
+        // Pantalla vertical: la cámara se mantiene cerca y acompaña la columna de capas mientras se separan,
+        // y solo al final se abre para mostrar las piezas laterales, la caja y las correas.
+        var ZM = 2.3;
+        cam = lerp(1 + (ZM - 1) * a, 1, soft(range(prog, .6, .84)));
+        zf = clamp((cam - 1) / (ZM - 1), 0, 1);
+        fx = lerp(CONTENT.x + CONTENT.w / 2, 960, zf);
+        fy = lerp(CONTENT.y + CONTENT.h / 2, lerp(648, 540, soft(range(explodeQ, 0, .6))), zf);
+      }
       var S = fit.s * cam;
       var tx = fit.cx - fx * S + pointer.sx * 14;
       var ty = fit.cy - fy * S + pointer.sy * 10;
@@ -467,6 +478,51 @@
   /* ---------------------------------------------------------------------- */
   /* 03 · Historia: scroll vertical → recorrido horizontal                  */
   /* ---------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------- */
+  /* Móvil: carrusel táctil con scroll-snap nativo e indicador              */
+  /* ---------------------------------------------------------------------- */
+  function carousel(scroller, getItems, opts) {
+    opts = opts || {};
+    var nav = document.createElement('div');
+    nav.className = 'carousel-nav';
+    nav.setAttribute('aria-hidden', 'true');
+    (opts.after || scroller).insertAdjacentElement('afterend', nav);
+    var current = -1, raf = 0;
+    function render() {
+      var items = getItems();
+      if (items.length <= 10) {
+        if (nav.childElementCount !== items.length || nav.querySelector('.carousel-count')) {
+          nav.innerHTML = items.map(function () { return '<button type="button" tabindex="-1"><span></span></button>'; }).join('');
+          $$('button', nav).forEach(function (b, i) { b.addEventListener('click', function () { go(i); }); });
+        }
+        $$('button', nav).forEach(function (b, i) { b.classList.toggle('is-active', i === current); });
+      } else {
+        nav.innerHTML = '<span class="carousel-count mono"><b>' + pad2(current + 1) + '</b> / ' + pad2(items.length) + '</span>';
+      }
+    }
+    function nearest() {
+      var items = getItems(), mid = scroller.scrollLeft + scroller.clientWidth / 2, best = 0, bd = Infinity;
+      items.forEach(function (it, i) {
+        var d = Math.abs(it.offsetLeft + it.offsetWidth / 2 - mid);
+        if (d < bd) { bd = d; best = i; }
+      });
+      return best;
+    }
+    function sync() {
+      raf = 0;
+      var i = nearest();
+      if (i !== current) { current = i; render(); if (opts.onChange) opts.onChange(i, getItems()[i]); }
+    }
+    function go(i, smooth) {
+      var it = getItems()[i];
+      if (!it) return;
+      scroller.scrollTo({ left: it.offsetLeft - (scroller.clientWidth - it.offsetWidth) / 2, behavior: smooth === false || reduced ? 'auto' : 'smooth' });
+    }
+    scroller.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(sync); }, { passive: true });
+    current = 0; render();
+    return { go: go, refresh: function () { current = -1; sync(); render(); }, index: function () { return current; } };
+  }
+
   function historyScene() {
     var section = $('#historia'), track = $('#historyTrack'), bar = $('#historyBar'), yearEl = $('#historyYear');
     var chapters = $$('.chapter', track);
@@ -483,10 +539,18 @@
     if ('IntersectionObserver' in window) {
       // Modo vertical (móvil): cada capítulo se activa al entrar en pantalla
       var io = new IntersectionObserver(function (es) {
-        if (horizontal) return;
+        if (horizontal || isMobile) return;
         es.forEach(function (e) { if (e.isIntersecting) e.target.classList.add('is-active'); });
       }, { rootMargin: '0px 0px -25% 0px' });
       chapters.forEach(function (c) { io.observe(c); });
+    }
+
+    if (isMobile) {
+      carousel(track, function () { return chapters; }, {
+        onChange: function (i) { setActive(i); bar.style.transform = 'scaleX(' + ((i + 1) / chapters.length).toFixed(3) + ')'; }
+      });
+      setActive(0);
+      bar.style.transform = 'scaleX(' + (1 / chapters.length).toFixed(3) + ')';
     }
 
     return {
@@ -624,6 +688,11 @@
   /* Materiales: inclinación y reflejo según el puntero                      */
   /* ====================================================================== */
   function initTilt() {
+    if (isMobile) {
+      var grid = $('.materials__grid');
+      carousel(grid, function () { return $$('.material', grid); });
+      return;
+    }
     if (!finePointer || reduced) return;
     $$('[data-tilt]').forEach(function (card) {
       card.addEventListener('pointermove', function (e) {
@@ -644,9 +713,36 @@
   }
 
   /* ====================================================================== */
+  /* La pieza (móvil): leyenda bajo la imagen al tocar cada punto            */
+  /* ====================================================================== */
+  function initPieceMobile() {
+    if (!isMobile) return;
+    var frame = $('#pieceFrame'), spots = $$('.hotspot', frame);
+    var cap = document.createElement('p');
+    cap.className = 'piece__caption';
+    cap.setAttribute('aria-live', 'polite');
+    frame.insertAdjacentElement('afterend', cap);
+    function pick(i) {
+      spots.forEach(function (h, k) { h.classList.toggle('is-on', k === i); h.setAttribute('aria-pressed', k === i); });
+      cap.innerHTML = '<span class="mono">' + pad2(i + 1) + ' / ' + pad2(spots.length) + '</span>' + escapeHTML(spots[i].nextElementSibling.textContent);
+    }
+    spots.forEach(function (h, i) { h.addEventListener('click', function () { pick(i); }); });
+    pick(0);
+  }
+
+  /* ====================================================================== */
   /* Colección: imagen flotante que sigue al cursor                          */
   /* ====================================================================== */
   function initFamilies() {
+    if (isMobile) {
+      $$('#families .family').forEach(function (li) {
+        var img = document.createElement('img');
+        img.className = 'family__thumb'; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+        img.src = li.getAttribute('data-img');
+        $('a', li).insertBefore(img, $('a i', li));
+      });
+      return;
+    }
     if (!finePointer || reduced) return;
     var list = $('#families'), float = $('#familiesFloat'), img = $('img', float);
     var x = 0, y = 0, fx = 0, fy = 0, rot = 0, on = false, running = false;
@@ -706,7 +802,11 @@
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       var cw = W / map.cols, ch = H / map.rows;
       dots = cells.map(function (c) { return [(c[0] + .5) * cw, (c[1] + .5) * ch]; });
-      if (activeId) { var b = RM.getBoutique(activeId), pr = project(b.lat, b.lng); hl.x = hl.tx = pr.x * W; hl.y = hl.ty = pr.y * H; }
+      if (activeId) {
+        var b = RM.getBoutique(activeId), pr = project(b.lat, b.lng);
+        hl.x = hl.tx = pr.x * W; hl.y = hl.ty = pr.y * H;
+        if (pan) panTo(pr, true);
+      }
       draw();
     }
 
@@ -764,6 +864,17 @@
       });
     }
 
+    // Móvil: el mapa se amplía dentro de un marco y se desplaza hasta la boutique activa
+    var pan = null, cards$ = null, syncing = false;
+    function panTo(pr, instant) {
+      if (!pan) return;
+      var mw = canvas.parentNode.parentNode.clientWidth, mh = canvas.parentNode.parentNode.clientHeight;
+      var pw = pan.offsetWidth, ph = pan.offsetHeight;
+      var tx = clamp(mw / 2 - pr.x * pw, mw - pw, 0), ty = clamp(mh / 2 - pr.y * ph, mh - ph, 0);
+      pan.style.transition = instant || reduced ? 'none' : '';
+      pan.style.transform = 'translate3d(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px,0)';
+    }
+
     function select(id, opts) {
       opts = opts || {};
       var b = RM.getBoutique(id);
@@ -777,6 +888,15 @@
       var pr = project(b.lat, b.lng);
       hl.tx = pr.x * W; hl.ty = pr.y * H; hl.ta = 1;
       if (opts.instant) { hl.x = hl.tx; hl.y = hl.ty; hl.a = 1; draw(); } else animate();
+      if (pan) {
+        panTo(pr, opts.instant);
+        if (!opts.fromCarousel && cards$) {
+          var vis = $$('.bcard:not(.is-hidden)', listEl);
+          syncing = true;
+          cards$.go(vis.indexOf(cards[id]), !opts.instant);
+          setTimeout(function () { syncing = false; }, 700);
+        }
+      }
       if (opts.scrollList && listEl.scrollHeight > listEl.clientHeight) {
         var c = cards[id];
         listEl.scrollTo({ top: c.offsetTop - listEl.offsetTop - 8, behavior: reduced ? 'auto' : 'smooth' });
@@ -795,6 +915,8 @@
       });
       var cur = RM.getBoutique(activeId);
       if (!cur || (reg !== 'all' && cur.region !== reg)) select(first, { scrollList: true });
+      else if (cards$) select(activeId);
+      if (cards$) setTimeout(cards$.refresh, 60);
     }
 
     function build() {
@@ -856,6 +978,19 @@
       var tz = '';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { /* noop */ }
       var near = RM.BOUTIQUES.filter(function (b) { return b.tz === tz; })[0];
+      if (isMobile) {
+        pan = document.createElement('div');
+        pan.className = 'map__pan';
+        canvas.parentNode.insertBefore(pan, canvas);
+        pan.appendChild(canvas); pan.appendChild(pinsEl);
+        cards$ = carousel(listEl, function () { return $$('.bcard:not(.is-hidden)', listEl); }, {
+          onChange: function (i, card) {
+            if (syncing || !card) return;
+            var id = Object.keys(cards).filter(function (k) { return cards[k] === card; })[0];
+            if (id && id !== activeId) select(id, { fromCarousel: true });
+          }
+        });
+      }
       size();
       select(near ? near.id : 'paris', { instant: true });
       onResize(size);
@@ -1384,6 +1519,7 @@
     initMagnetic();
     initTilt();
     initFamilies();
+    initPieceMobile();
     boutiques.build();
     booking.build();
     initClock();

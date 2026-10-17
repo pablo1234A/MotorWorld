@@ -832,8 +832,132 @@ body.legal-open { overflow: hidden; }
   .js .w > span { transform: none; }
 }
 
+/* ==========================================================================
+   VERSIÓN MÓVIL
+   Solo se aplica cuando el sensor de <head> marca <html class="is-mobile">
+   (teléfonos). En ordenador ninguna de estas reglas tiene efecto.
+   ========================================================================== */
+.is-mobile { -webkit-tap-highlight-color: transparent; }
+.is-mobile a, .is-mobile button, .is-mobile [role='radio'] { touch-action: manipulation; }
+.is-mobile .grain { display: none; } /* ahorra batería: sin capa animada a pantalla completa */
+
+/* Zonas seguras (notch, barra inferior del iPhone) */
+.is-mobile .nav { padding-top: env(safe-area-inset-top); height: calc(var(--nav-h) + env(safe-area-inset-top)); }
+.is-mobile .menu { padding-top: calc(var(--nav-h) + env(safe-area-inset-top) + 20px); padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+.is-mobile .explode__hud { bottom: calc(22px + env(safe-area-inset-bottom)); }
+.is-mobile .footer__legal { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+.is-mobile .legal__bar { padding-top: env(safe-area-inset-top); height: calc(var(--nav-h) + env(safe-area-inset-top)); }
+
+/* Despiece: menos recorrido de scroll, el mismo plano */
+.is-mobile .explode { height: 640vh; }
+.is-mobile .explode__intro { top: calc(var(--nav-h) + env(safe-area-inset-top) + 3vh); }
+.is-mobile .explode__outro { top: calc(var(--nav-h) + env(safe-area-inset-top) + 2vh); }
+.is-mobile .explode__outro .h2 { font-size: 2rem; }
+
+/* Ingeniería: zoom algo más corto para no cansar el pulgar */
+.is-mobile .engine { height: 300vh; }
+.is-mobile .engine__copy .h2 { font-size: 2.6rem; }
+
+/* --- Carruseles táctiles (historia, materiales, boutiques) --- */
+.is-mobile .history__track,
+.is-mobile .materials__grid,
+.is-mobile .boutiques__list {
+  position: relative; display: flex; flex-direction: row; gap: 12px;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
+}
+.is-mobile .history__track::-webkit-scrollbar,
+.is-mobile .materials__grid::-webkit-scrollbar,
+.is-mobile .boutiques__list::-webkit-scrollbar { display: none; }
+.is-mobile .materials__grid, .is-mobile .boutiques__list { margin-inline: calc(var(--gutter) * -1); }
+.carousel-nav { display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 18px; min-height: 24px; }
+.carousel-nav button { width: 22px; height: 24px; display: grid; place-items: center; }
+.carousel-nav button span { display: block; width: 6px; height: 6px; border-radius: 3px; background: var(--line-2); transition: width .4s var(--ease), background-color .4s; }
+.carousel-nav button.is-active span { width: 20px; background: var(--text); }
+.carousel-count { color: var(--muted); }
+.carousel-count b { color: var(--text); font-weight: 500; }
+
+/* Historia: un capítulo por pantalla, se desliza con el dedo */
+.is-mobile .history { padding-block: 90px 70px; }
+.is-mobile .history__track { width: auto; gap: 14px; }
+.is-mobile .chapter { flex: 0 0 84%; scroll-snap-align: start; opacity: .4; }
+.is-mobile .chapter.is-active { opacity: 1; }
+.is-mobile .chapter__year { font-size: 4.6rem; }
+.is-mobile .history__progress { display: flex; flex-direction: row; align-items: center; gap: 14px; min-width: 0; width: 100%; }
+.is-mobile .history__progress i { flex: 1; width: auto; }
+
+/* Materiales: tarjetas grandes deslizables, con la descripción siempre visible */
+.is-mobile .material { flex: 0 0 82%; aspect-ratio: 4 / 5; scroll-snap-align: start; }
+.is-mobile .material__info p { max-height: none; opacity: 1; }
+.is-mobile .material__surface { filter: brightness(.9); }
+
+/* La pieza: puntos más grandes para el dedo y leyenda bajo la imagen */
+.is-mobile .hotspot { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+.is-mobile .hotspot::before { inset: 14px; }
+.is-mobile .hotspot.is-on::before { background: var(--red); transform: scale(1.35); }
+.is-mobile .hotspot__tip { display: none; }
+.piece__caption { display: flex; align-items: center; gap: 14px; min-height: 52px; margin-top: 12px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); font-size: 14px; line-height: 1.45; }
+.piece__caption .mono { color: var(--red); flex: none; }
+.is-mobile .specs > div { grid-template-columns: 112px 1fr; }
+
+/* Colección: cada familia enseña su reloj (en móvil no existe el "pasar el ratón") */
+.is-mobile .family a { grid-template-columns: 26px minmax(0, 1fr) 92px; gap: 12px; padding-block: 14px; }
+.is-mobile .family strong { font-size: 1.65rem; }
+.is-mobile .family i { display: none; }
+.family__thumb { width: 92px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 3px; justify-self: end; background: #fff; }
+.is-mobile .family a:active strong { transform: translateX(6px); }
+
+/* Cifras: las tres en una fila compacta */
+.is-mobile .figures { grid-template-columns: repeat(3, 1fr); }
+.is-mobile .figure { flex-direction: column; gap: 6px; padding: 20px 10px; }
+.is-mobile .figure + .figure { border-top: 0; border-left: 1px solid var(--line); }
+.is-mobile .figure b { font-size: 2.4rem; }
+.is-mobile .figure span { font-size: 9.5px; }
+
+/* Boutiques: filtros deslizables, mapa ampliado que viaja a cada ciudad y tarjetas en carrusel */
+.is-mobile .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); }
+.is-mobile .filters::-webkit-scrollbar { display: none; }
+.is-mobile .chip { height: 44px; flex: none; }
+.is-mobile .boutiques__grid { gap: 14px; }
+.is-mobile .map { aspect-ratio: auto; height: 64vw; }
+.map__pan { position: absolute; left: 0; top: 0; width: 250%; aspect-ratio: 225 / 86; transition: transform 1s var(--ease); will-change: transform; }
+.is-mobile .pin { width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+.is-mobile .pin::before { inset: 13px; }
+.is-mobile .map__legend { bottom: 10px; left: 12px; }
+.is-mobile .boutiques__list { max-height: none; grid-template-columns: none; padding-block: 2px; }
+.is-mobile .bcard { flex: 0 0 84%; scroll-snap-align: center; }
+.is-mobile .bcard__cta { min-height: 40px; }
+
+/* Cita: botón de avanzar siempre a mano del pulgar */
+.is-mobile .booking__panel { padding-bottom: 0; }
+.is-mobile .form__nav {
+  position: sticky; bottom: 0; z-index: 5; margin: 26px -18px 0; padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(rgba(15, 15, 16, 0), rgba(15, 15, 16, .94) 34%); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.is-mobile .form__nav #nextBtn { flex: 1; }
+.is-mobile .form__nav .btn { --h: 54px; }
+.is-mobile .done { padding-bottom: 28px; }
+.is-mobile .summary { margin-top: 28px; }
+.is-mobile .slots__grid { grid-template-columns: repeat(3, 1fr); }
+.is-mobile .day { max-height: none; min-height: 40px; }
+
+/* Footer */
+.is-mobile .footer__cols a, .is-mobile .footer__legalnav a { padding-block: 4px; }
+
 </style>
-  <script>document.documentElement.classList.replace('no-js', 'js');</script>
+  <script>
+    /* Sensor de dispositivo: marca la página como móvil solo en teléfonos (táctil + pantalla pequeña o navegador móvil).
+       En ordenador no se añade ninguna clase y la web se ve exactamente igual. */
+    (function (d, n) {
+      var c = d.documentElement.classList, ua = n.userAgent || '';
+      c.replace('no-js', 'js');
+      var handheld = (n.userAgentData && n.userAgentData.mobile) || /iPhone|iPod|Android.+Mobile|Windows Phone|Mobi/i.test(ua) ||
+        (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+      var phone = handheld && !/iPad|Tablet/i.test(ua) && Math.min(screen.width, screen.height) < 600;
+      if (phone) c.add('is-mobile');
+    })(document, navigator);
+  </script>
 </head>
 <body class="is-loading">
   <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -1856,6 +1980,8 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  // Detectado en <head> antes de pintar (ver index.html): solo teléfonos reciben la versión móvil
+  var isMobile = document.documentElement.classList.contains('is-mobile');
   var vw = window.innerWidth, vh = window.innerHeight;
 
   function onResize(fn) {
@@ -2186,6 +2312,15 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
       var cam = lerp(1 + .78 * a, 1, pull) * (1 + .04 * soft(range(prog, .8, 1)));
       var zf = clamp((cam - 1) / .78, 0, 1);
       var fx = lerp(CONTENT.x + CONTENT.w / 2, 960, zf), fy = lerp(CONTENT.y + CONTENT.h / 2, 640, zf);
+      if (isMobile) {
+        // Pantalla vertical: la cámara se mantiene cerca y acompaña la columna de capas mientras se separan,
+        // y solo al final se abre para mostrar las piezas laterales, la caja y las correas.
+        var ZM = 2.3;
+        cam = lerp(1 + (ZM - 1) * a, 1, soft(range(prog, .6, .84)));
+        zf = clamp((cam - 1) / (ZM - 1), 0, 1);
+        fx = lerp(CONTENT.x + CONTENT.w / 2, 960, zf);
+        fy = lerp(CONTENT.y + CONTENT.h / 2, lerp(648, 540, soft(range(explodeQ, 0, .6))), zf);
+      }
       var S = fit.s * cam;
       var tx = fit.cx - fx * S + pointer.sx * 14;
       var ty = fit.cy - fy * S + pointer.sy * 10;
@@ -2297,6 +2432,51 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
   /* ---------------------------------------------------------------------- */
   /* 03 · Historia: scroll vertical → recorrido horizontal                  */
   /* ---------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------- */
+  /* Móvil: carrusel táctil con scroll-snap nativo e indicador              */
+  /* ---------------------------------------------------------------------- */
+  function carousel(scroller, getItems, opts) {
+    opts = opts || {};
+    var nav = document.createElement('div');
+    nav.className = 'carousel-nav';
+    nav.setAttribute('aria-hidden', 'true');
+    (opts.after || scroller).insertAdjacentElement('afterend', nav);
+    var current = -1, raf = 0;
+    function render() {
+      var items = getItems();
+      if (items.length <= 10) {
+        if (nav.childElementCount !== items.length || nav.querySelector('.carousel-count')) {
+          nav.innerHTML = items.map(function () { return '<button type="button" tabindex="-1"><span></span></button>'; }).join('');
+          $$('button', nav).forEach(function (b, i) { b.addEventListener('click', function () { go(i); }); });
+        }
+        $$('button', nav).forEach(function (b, i) { b.classList.toggle('is-active', i === current); });
+      } else {
+        nav.innerHTML = '<span class="carousel-count mono"><b>' + pad2(current + 1) + '</b> / ' + pad2(items.length) + '</span>';
+      }
+    }
+    function nearest() {
+      var items = getItems(), mid = scroller.scrollLeft + scroller.clientWidth / 2, best = 0, bd = Infinity;
+      items.forEach(function (it, i) {
+        var d = Math.abs(it.offsetLeft + it.offsetWidth / 2 - mid);
+        if (d < bd) { bd = d; best = i; }
+      });
+      return best;
+    }
+    function sync() {
+      raf = 0;
+      var i = nearest();
+      if (i !== current) { current = i; render(); if (opts.onChange) opts.onChange(i, getItems()[i]); }
+    }
+    function go(i, smooth) {
+      var it = getItems()[i];
+      if (!it) return;
+      scroller.scrollTo({ left: it.offsetLeft - (scroller.clientWidth - it.offsetWidth) / 2, behavior: smooth === false || reduced ? 'auto' : 'smooth' });
+    }
+    scroller.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(sync); }, { passive: true });
+    current = 0; render();
+    return { go: go, refresh: function () { current = -1; sync(); render(); }, index: function () { return current; } };
+  }
+
   function historyScene() {
     var section = $('#historia'), track = $('#historyTrack'), bar = $('#historyBar'), yearEl = $('#historyYear');
     var chapters = $$('.chapter', track);
@@ -2313,10 +2493,18 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
     if ('IntersectionObserver' in window) {
       // Modo vertical (móvil): cada capítulo se activa al entrar en pantalla
       var io = new IntersectionObserver(function (es) {
-        if (horizontal) return;
+        if (horizontal || isMobile) return;
         es.forEach(function (e) { if (e.isIntersecting) e.target.classList.add('is-active'); });
       }, { rootMargin: '0px 0px -25% 0px' });
       chapters.forEach(function (c) { io.observe(c); });
+    }
+
+    if (isMobile) {
+      carousel(track, function () { return chapters; }, {
+        onChange: function (i) { setActive(i); bar.style.transform = 'scaleX(' + ((i + 1) / chapters.length).toFixed(3) + ')'; }
+      });
+      setActive(0);
+      bar.style.transform = 'scaleX(' + (1 / chapters.length).toFixed(3) + ')';
     }
 
     return {
@@ -2454,6 +2642,11 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
   /* Materiales: inclinación y reflejo según el puntero                      */
   /* ====================================================================== */
   function initTilt() {
+    if (isMobile) {
+      var grid = $('.materials__grid');
+      carousel(grid, function () { return $$('.material', grid); });
+      return;
+    }
     if (!finePointer || reduced) return;
     $$('[data-tilt]').forEach(function (card) {
       card.addEventListener('pointermove', function (e) {
@@ -2474,9 +2667,36 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
   }
 
   /* ====================================================================== */
+  /* La pieza (móvil): leyenda bajo la imagen al tocar cada punto            */
+  /* ====================================================================== */
+  function initPieceMobile() {
+    if (!isMobile) return;
+    var frame = $('#pieceFrame'), spots = $$('.hotspot', frame);
+    var cap = document.createElement('p');
+    cap.className = 'piece__caption';
+    cap.setAttribute('aria-live', 'polite');
+    frame.insertAdjacentElement('afterend', cap);
+    function pick(i) {
+      spots.forEach(function (h, k) { h.classList.toggle('is-on', k === i); h.setAttribute('aria-pressed', k === i); });
+      cap.innerHTML = '<span class="mono">' + pad2(i + 1) + ' / ' + pad2(spots.length) + '</span>' + escapeHTML(spots[i].nextElementSibling.textContent);
+    }
+    spots.forEach(function (h, i) { h.addEventListener('click', function () { pick(i); }); });
+    pick(0);
+  }
+
+  /* ====================================================================== */
   /* Colección: imagen flotante que sigue al cursor                          */
   /* ====================================================================== */
   function initFamilies() {
+    if (isMobile) {
+      $$('#families .family').forEach(function (li) {
+        var img = document.createElement('img');
+        img.className = 'family__thumb'; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+        img.src = li.getAttribute('data-img');
+        $('a', li).insertBefore(img, $('a i', li));
+      });
+      return;
+    }
     if (!finePointer || reduced) return;
     var list = $('#families'), float = $('#familiesFloat'), img = $('img', float);
     var x = 0, y = 0, fx = 0, fy = 0, rot = 0, on = false, running = false;
@@ -2536,7 +2756,11 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       var cw = W / map.cols, ch = H / map.rows;
       dots = cells.map(function (c) { return [(c[0] + .5) * cw, (c[1] + .5) * ch]; });
-      if (activeId) { var b = RM.getBoutique(activeId), pr = project(b.lat, b.lng); hl.x = hl.tx = pr.x * W; hl.y = hl.ty = pr.y * H; }
+      if (activeId) {
+        var b = RM.getBoutique(activeId), pr = project(b.lat, b.lng);
+        hl.x = hl.tx = pr.x * W; hl.y = hl.ty = pr.y * H;
+        if (pan) panTo(pr, true);
+      }
       draw();
     }
 
@@ -2594,6 +2818,17 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
       });
     }
 
+    // Móvil: el mapa se amplía dentro de un marco y se desplaza hasta la boutique activa
+    var pan = null, cards$ = null, syncing = false;
+    function panTo(pr, instant) {
+      if (!pan) return;
+      var mw = canvas.parentNode.parentNode.clientWidth, mh = canvas.parentNode.parentNode.clientHeight;
+      var pw = pan.offsetWidth, ph = pan.offsetHeight;
+      var tx = clamp(mw / 2 - pr.x * pw, mw - pw, 0), ty = clamp(mh / 2 - pr.y * ph, mh - ph, 0);
+      pan.style.transition = instant || reduced ? 'none' : '';
+      pan.style.transform = 'translate3d(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px,0)';
+    }
+
     function select(id, opts) {
       opts = opts || {};
       var b = RM.getBoutique(id);
@@ -2607,6 +2842,15 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
       var pr = project(b.lat, b.lng);
       hl.tx = pr.x * W; hl.ty = pr.y * H; hl.ta = 1;
       if (opts.instant) { hl.x = hl.tx; hl.y = hl.ty; hl.a = 1; draw(); } else animate();
+      if (pan) {
+        panTo(pr, opts.instant);
+        if (!opts.fromCarousel && cards$) {
+          var vis = $$('.bcard:not(.is-hidden)', listEl);
+          syncing = true;
+          cards$.go(vis.indexOf(cards[id]), !opts.instant);
+          setTimeout(function () { syncing = false; }, 700);
+        }
+      }
       if (opts.scrollList && listEl.scrollHeight > listEl.clientHeight) {
         var c = cards[id];
         listEl.scrollTo({ top: c.offsetTop - listEl.offsetTop - 8, behavior: reduced ? 'auto' : 'smooth' });
@@ -2625,6 +2869,8 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
       });
       var cur = RM.getBoutique(activeId);
       if (!cur || (reg !== 'all' && cur.region !== reg)) select(first, { scrollList: true });
+      else if (cards$) select(activeId);
+      if (cards$) setTimeout(cards$.refresh, 60);
     }
 
     function build() {
@@ -2686,6 +2932,19 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
       var tz = '';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { /* noop */ }
       var near = RM.BOUTIQUES.filter(function (b) { return b.tz === tz; })[0];
+      if (isMobile) {
+        pan = document.createElement('div');
+        pan.className = 'map__pan';
+        canvas.parentNode.insertBefore(pan, canvas);
+        pan.appendChild(canvas); pan.appendChild(pinsEl);
+        cards$ = carousel(listEl, function () { return $$('.bcard:not(.is-hidden)', listEl); }, {
+          onChange: function (i, card) {
+            if (syncing || !card) return;
+            var id = Object.keys(cards).filter(function (k) { return cards[k] === card; })[0];
+            if (id && id !== activeId) select(id, { fromCarousel: true });
+          }
+        });
+      }
       size();
       select(near ? near.id : 'paris', { instant: true });
       onResize(size);
@@ -3214,6 +3473,7 @@ window.RM_SCENE = {"canvas":[1920,1280],"parts":[["crystal",793,26,334,126],["be
     initMagnetic();
     initTilt();
     initFamilies();
+    initPieceMobile();
     boutiques.build();
     booking.build();
     initClock();
