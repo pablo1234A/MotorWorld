@@ -58,6 +58,7 @@
     { id: 'automatic', label: 'Automáticos' },
     { id: 'ladies', label: 'Colección femenina' },
     { id: 'ultraflat', label: 'Ultraplanos' },
+    { id: 'sport', label: 'Alianzas deportivas' },
     { id: 'rm002', label: 'RM 002-V2' }
   ];
 

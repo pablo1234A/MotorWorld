@@ -1307,6 +1307,64 @@
   }
 
   /* ====================================================================== */
+  /* Páginas legales: panel con ruta propia (#legal/privacidad, …)           */
+  /* ====================================================================== */
+  function initLegal() {
+    var panel = $('#legal'), scroller = $('#legalScroll'), docs = $$('.doc', panel), tabs = $$('.legal__tabs a', panel);
+    var lastFocus = null, closeT;
+    var DOCS = docs.map(function (d) { return d.getAttribute('data-doc'); });
+
+    function show(doc) {
+      if (DOCS.indexOf(doc) < 0) doc = 'aviso';
+      docs.forEach(function (d) { d.classList.toggle('is-active', d.getAttribute('data-doc') === doc); });
+      tabs.forEach(function (t) {
+        if (t.getAttribute('data-doc') === doc) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+      });
+      scroller.scrollTop = 0;
+      var title = $('.doc.is-active .h2', panel);
+      document.title = (title ? title.textContent + ' — ' : '') + 'Richard Mille';
+    }
+    function open(doc) {
+      clearTimeout(closeT);
+      if (panel.hidden) {
+        lastFocus = document.activeElement;
+        panel.hidden = false;
+        document.body.classList.add('legal-open');
+        requestAnimationFrame(function () { panel.classList.add('is-open'); });
+      }
+      show(doc);
+      setTimeout(function () { scroller.focus({ preventScroll: true }); }, 50);
+    }
+    function close() {
+      if (panel.hidden) return;
+      panel.classList.remove('is-open');
+      document.body.classList.remove('legal-open');
+      document.title = 'Richard Mille — Una máquina de carreras en la muñeca';
+      if (/^#legal/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+      closeT = setTimeout(function () { panel.hidden = true; }, reduced ? 0 : 800);
+      if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+    }
+    function route() {
+      var m = location.hash.match(/^#legal\/([a-z]+)/);
+      if (m) open(m[1]); else close();
+    }
+
+    $('#legalClose').addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+      if (panel.hidden) return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'Tab') { // mantiene el foco dentro del panel
+        var f = $$('a, button, [tabindex="0"]', panel).filter(function (el) { return el.offsetParent !== null; });
+        if (!f.length) return;
+        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+      }
+    });
+    window.addEventListener('hashchange', route);
+    route();
+  }
+
+  /* ====================================================================== */
   /* Reloj del footer (hora de la manufactura)                               */
   /* ====================================================================== */
   function initClock() {
@@ -1330,6 +1388,7 @@
     booking.build();
     initClock();
     initFigures();
+    initLegal();
 
     scenes.push(explodeScene(), manifestoScene(), historyScene(), engineScene(), refsScene(), footerScene());
     measureAll();
