@@ -1,0 +1,10 @@
+{
+  "name": "WEB SELLER OS",
+  "short_name": "Seller OS",
+  "description": "Tu centro de operaciones para vender páginas web.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#08090a",
+  "theme_color": "#08090a",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
