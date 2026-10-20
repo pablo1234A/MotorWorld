@@ -1,0 +1,297 @@
+{
+  "name": "NEXO · [3] Vigilante de llamadas",
+  "flow": [
+    {
+      "id": 1,
+      "module": "datastore:SearchRecord",
+      "version": 1,
+      "parameters": {
+        "limit": 20,
+        "continueWhenNoRes": false
+      },
+      "mapper": {
+        "filter": [
+          [
+            {
+              "a": "STATUS",
+              "o": "text:equal",
+              "b": "IN_PROGRESS"
+            }
+          ],
+          [
+            {
+              "a": "STATUS",
+              "o": "text:equal",
+              "b": "CALL_REQUESTED"
+            }
+          ],
+          [
+            {
+              "a": "STATUS",
+              "o": "text:equal",
+              "b": "ENDED_PENDING_ANALYSIS"
+            }
+          ],
+          [
+            {
+              "a": "STATUS",
+              "o": "text:equal",
+              "b": "COMPLETED"
+            },
+            {
+              "a": "EMAIL_SENT",
+              "o": "boolean:isfalse"
+            }
+          ]
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "🔎 Llamadas sin cerrar"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "¿Qué le pasa?"
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 3,
+              "module": "vapi:makeApiCall2",
+              "version": 2,
+              "parameters": {},
+              "mapper": {
+                "method": "GET",
+                "relativeURL": "/call/{{1.data.CALL_ID}}",
+                "headers": [],
+                "qs": []
+              },
+              "metadata": {
+                "designer": {
+                  "x": 600,
+                  "y": -150,
+                  "name": "📞 Vapi: estado real de la llamada"
+                }
+              },
+              "filter": {
+                "name": "Tiene CALL_ID, parada >15 min, <24 h",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.data.CALL_ID}}",
+                      "o": "exist"
+                    },
+                    {
+                      "a": "{{1.data.STATUS}}",
+                      "o": "text:notequal",
+                      "b": "CALL_REQUESTED"
+                    },
+                    {
+                      "a": "{{1.data.UPDATED_AT}}",
+                      "o": "date:less",
+                      "b": "{{addMinutes(now; -15)}}"
+                    },
+                    {
+                      "a": "{{1.data.DATE}}",
+                      "o": "date:greater",
+                      "b": "{{addHours(now; -24)}}"
+                    }
+                  ]
+                ]
+              },
+              "onerror": [
+                {
+                  "id": 31,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 600,
+                      "y": 150,
+                      "name": "Continuar sin fallar"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "module": "json:TransformToJSON",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "object": "{{3.body}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": -150,
+                  "name": "Llamada → JSON"
+                }
+              },
+              "filter": {
+                "name": "La llamada ya terminó",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.body.status}}",
+                      "o": "text:equal",
+                      "b": "ended"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 5,
+              "module": "http:ActionSendData",
+              "version": 3,
+              "parameters": {
+                "handleErrors": true,
+                "useNewZLibDeCompress": true
+              },
+              "mapper": {
+                "url": "https://hook.eu1.make.com/0x167wyfv35e7hbtzdk54bv1icl9quou?k=<WEBHOOK_SECRET>",
+                "method": "post",
+                "headers": [],
+                "qs": [],
+                "bodyType": "raw",
+                "contentType": "application/json",
+                "parseResponse": false,
+                "serializeUrl": false,
+                "shareCookies": false,
+                "rejectUnauthorized": true,
+                "followRedirect": true,
+                "followAllRedirects": false,
+                "useQuerystring": false,
+                "gzip": true,
+                "useMtls": false,
+                "data": "{\"message\":{\"type\":\"end-of-call-report\",\"source\":\"watchdog\",\"call\":{{4.json}}}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": -150,
+                  "name": "🔁 Reinyectar en el escenario 2"
+                }
+              },
+              "onerror": [
+                {
+                  "id": 51,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 1200,
+                      "y": 150,
+                      "name": "Continuar sin fallar"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 6,
+              "module": "datastore:UpdateRecord",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "key": "{{1.key}}",
+                "upsert": true,
+                "overwriteArrays": false,
+                "data": {
+                  "STATUS": "ABORTED",
+                  "UPDATED_AT": "{{now}}",
+                  "NEXT_ACTION": "Relanzar la llamada si procede",
+                  "LAST_ERROR": "Vapi nunca confirmó la llamada (timeout)"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 600,
+                  "y": 300,
+                  "name": "🧯 Marcar llamada abortada"
+                }
+              },
+              "filter": {
+                "name": "Nunca confirmada por Vapi (>15 min)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.data.STATUS}}",
+                      "o": "text:equal",
+                      "b": "CALL_REQUESTED"
+                    },
+                    {
+                      "a": "{{1.data.UPDATED_AT}}",
+                      "o": "date:less",
+                      "b": "{{addMinutes(now; -15)}}"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 7,
+              "module": "email:ActionSendMeEmail",
+              "version": 7,
+              "parameters": {},
+              "mapper": {
+                "to": "pablogrcab1023@gmail.com",
+                "subject": "🧯 NEXO: llamada abortada — {{1.data.RESTAURANT_NAME}}",
+                "html": "<p>La llamada a <b>{{1.data.PHONE_NUMBER}}</b> ({{1.data.RESTAURANT_NAME}}) se registró pero Vapi nunca la confirmó. Se ha marcado como ABORTED y puede relanzarse.</p>"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 300,
+                  "name": "Alerta interna (sin conexión)"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "instant": false,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}

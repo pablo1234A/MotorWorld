@@ -1,0 +1,791 @@
+{
+  "name": "NEXO · [1] Lanzar llamada IA",
+  "flow": [
+    {
+      "id": 1,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "COMPANY_NAME",
+            "value": "NEXO"
+          },
+          {
+            "name": "AGENT_NAME",
+            "value": "Lucía"
+          },
+          {
+            "name": "OWNER_NAME",
+            "value": "Pablo"
+          },
+          {
+            "name": "DEFAULT_OBJECTIVE",
+            "value": "Conseguir una demo de 15 minutos con el responsable del restaurante."
+          },
+          {
+            "name": "DEFAULT_VOICE",
+            "value": "11labs:EXAVITQu4vr4xnSDxMaL:eleven_flash_v2_5"
+          },
+          {
+            "name": "DEFAULT_11LABS_MODEL",
+            "value": "eleven_flash_v2_5"
+          },
+          {
+            "name": "LLM_PROVIDER",
+            "value": "openai"
+          },
+          {
+            "name": "LLM_MODEL",
+            "value": "gpt-4o"
+          },
+          {
+            "name": "TRANSCRIBER_MODEL",
+            "value": "nova-2"
+          },
+          {
+            "name": "TRANSCRIBER_LANGUAGE",
+            "value": "es"
+          },
+          {
+            "name": "MAX_CALL_SECONDS",
+            "value": "480"
+          },
+          {
+            "name": "DEDUP_DAYS",
+            "value": "30"
+          },
+          {
+            "name": "NO_ANSWER_RETRY_HOURS",
+            "value": "4"
+          },
+          {
+            "name": "MAX_NO_ANSWER_ATTEMPTS",
+            "value": "3"
+          },
+          {
+            "name": "W1_START",
+            "value": "1000"
+          },
+          {
+            "name": "W1_END",
+            "value": "1300"
+          },
+          {
+            "name": "W2_START",
+            "value": "1630"
+          },
+          {
+            "name": "W2_END",
+            "value": "2000"
+          },
+          {
+            "name": "TIMEZONE",
+            "value": "Europe/Madrid"
+          },
+          {
+            "name": "NONE",
+            "value": "NO CONFIGURADO"
+          },
+          {
+            "name": "WEBHOOK_URL",
+            "value": "https://hook.eu1.make.com/0x167wyfv35e7hbtzdk54bv1icl9quou?k=<WEBHOOK_SECRET>"
+          },
+          {
+            "name": "JSON_MODEL_PREFIX",
+            "value": ",\"model\":\""
+          },
+          {
+            "name": "QUOTE",
+            "value": "\""
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "⚙️ CONFIG (edita aquí)"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "PHONE",
+            "value": "+{{if(length(replace(replace(var.input.PHONE_TO_CALL; /[^0-9]/g; emptystring); /^00/; emptystring)) = 9; 34; emptystring)}}{{replace(replace(var.input.PHONE_TO_CALL; /[^0-9]/g; emptystring); /^00/; emptystring)}}"
+          },
+          {
+            "name": "KEY",
+            "value": "{{if(length(replace(replace(var.input.PHONE_TO_CALL; /[^0-9]/g; emptystring); /^00/; emptystring)) = 9; 34; emptystring)}}{{replace(replace(var.input.PHONE_TO_CALL; /[^0-9]/g; emptystring); /^00/; emptystring)}}"
+          },
+          {
+            "name": "CALLER_E164",
+            "value": "+{{if(length(replace(replace(var.input.CALLER_PHONE; /[^0-9]/g; emptystring); /^00/; emptystring)) = 9; 34; emptystring)}}{{replace(replace(var.input.CALLER_PHONE; /[^0-9]/g; emptystring); /^00/; emptystring)}}"
+          },
+          {
+            "name": "CALLER_RAW",
+            "value": "{{trim(var.input.CALLER_PHONE)}}"
+          },
+          {
+            "name": "EMAIL",
+            "value": "{{lower(trim(var.input.MY_EMAIL))}}"
+          },
+          {
+            "name": "VOICE",
+            "value": "{{replace(ifempty(trim(var.input.VOICE); 1.DEFAULT_VOICE); /[^A-Za-z0-9_:.-]/g; emptystring)}}"
+          },
+          {
+            "name": "HM",
+            "value": "{{parseNumber(formatDate(now; HHmm; 1.TIMEZONE))}}"
+          },
+          {
+            "name": "DOW",
+            "value": "{{parseNumber(formatDate(now; E; 1.TIMEZONE))}}"
+          },
+          {
+            "name": "DAY_NAME",
+            "value": "{{switch(formatDate(now; E; 1.TIMEZONE); 1; lunes; 2; martes; 3; miércoles; 4; jueves; 5; viernes; 6; sábado; domingo)}}"
+          },
+          {
+            "name": "NOW_TXT",
+            "value": "{{formatDate(now; DD/MM/YYYY HH:mm; 1.TIMEZONE)}}"
+          },
+          {
+            "name": "GREETING",
+            "value": "{{if(parseNumber(formatDate(now; HH; 1.TIMEZONE)) < 14; Buenos días; Buenas tardes)}}"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "🧹 Normalizar entrada"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "datastore:GetRecord",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "key": "CONTROL",
+        "returnWrapped": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "🛑 Kill switch (registro CONTROL)"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "datastore:GetRecord",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "key": "{{2.KEY}}",
+        "returnWrapped": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0,
+          "name": "🗂️ Historial del número"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "module": "vapi:makeApiCall2",
+      "version": 2,
+      "parameters": {},
+      "mapper": {
+        "method": "GET",
+        "relativeURL": "/phone-number",
+        "qs": [
+          {
+            "key": "limit",
+            "value": "100"
+          }
+        ],
+        "headers": []
+      },
+      "metadata": {
+        "designer": {
+          "x": 1200,
+          "y": 0,
+          "name": "📱 Números emisores en Vapi"
+        }
+      },
+      "onerror": [
+        {
+          "id": 51,
+          "module": "email:ActionSendMeEmail",
+          "version": 7,
+          "parameters": {},
+          "mapper": {
+            "to": "pablogrcab1023@gmail.com",
+            "subject": "⚠️ NEXO llamadas: error consultando Vapi",
+            "html": "<p>No se pudo consultar Vapi antes de llamar a <b>{{2.PHONE}}</b> ({{var.input.RESTAURANT_NAME}}). Revisa la conexión de Vapi en Make. <b>No se ha realizado ninguna llamada.</b></p>"
+          },
+          "metadata": {
+            "designer": {
+              "x": 1200,
+              "y": 300,
+              "name": "Alerta interna (sin conexión)"
+            }
+          }
+        },
+        {
+          "id": 52,
+          "module": "builtin:Ignore",
+          "version": 1,
+          "parameters": {},
+          "mapper": {},
+          "metadata": {
+            "designer": {
+              "x": 1500,
+              "y": 300,
+              "name": "Continuar sin fallar"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "CALLER_ID",
+            "value": "{{ifempty(first(map(5.body; id; number; 2.CALLER_E164)); first(map(5.body; id; id; 2.CALLER_RAW)))}}"
+          },
+          {
+            "name": "CALLER_NUMBER",
+            "value": "{{ifempty(first(map(5.body; number; number; 2.CALLER_E164)); first(map(5.body; number; id; 2.CALLER_RAW)))}}"
+          },
+          {
+            "name": "V_PROVIDER",
+            "value": "{{get(split(2.VOICE; :); 1)}}"
+          },
+          {
+            "name": "V_ID",
+            "value": "{{get(split(2.VOICE; :); 2)}}"
+          },
+          {
+            "name": "V_MODEL",
+            "value": "{{if(contains(get(split(2.VOICE; :); 1); labs); ifempty(get(split(2.VOICE; :); 3); 1.DEFAULT_11LABS_MODEL); get(split(2.VOICE; :); 3))}}"
+          },
+          {
+            "name": "ATTEMPTS_NEXT",
+            "value": "{{parseNumber(ifempty(4.ATTEMPTS; 0)) + 1}}"
+          },
+          {
+            "name": "REASONS",
+            "value": "{{if(length(2.KEY) < 8; TELEFONO_INVALIDO; if(length(2.KEY) > 15; TELEFONO_INVALIDO; emptystring))}} {{if(length(ifempty(first(map(5.body; id; number; 2.CALLER_E164)); first(map(5.body; id; id; 2.CALLER_RAW)))) = 0; EMISOR_NO_IMPORTADO_EN_VAPI; emptystring)}} {{if(length(2.EMAIL) = 0; EMAIL_INVALIDO; if(length(replace(2.EMAIL; /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/; emptystring)) = 0; emptystring; EMAIL_INVALIDO))}} {{if(length(trim(var.input.RESTAURANT_NAME)) = 0; FALTA_RESTAURANT_NAME; emptystring)}} {{if(length(trim(var.input.WEBSITE_OFFER)) = 0; FALTA_WEBSITE_OFFER; emptystring)}} {{if(length(trim(1.COMPANY_NAME)) = 0; FALTA_COMPANY_NAME_EN_CONFIG; emptystring)}} {{if(contains(2.VOICE; :); emptystring; VOICE_FORMATO_INVALIDO)}} {{if(3.STATUS = STOPPED; CAMPANAS_DETENIDAS_KILL_SWITCH; emptystring)}} {{if(4.DO_NOT_CALL = true; NUMERO_EN_LISTA_NO_LLAMAR; emptystring)}} {{if(parseNumber(formatDate(ifempty(4.DATE; addDays(now; -3650)); X)) > parseNumber(formatDate(addMinutes(now; -60); X)); if(4.STATUS = IN_PROGRESS; LLAMADA_EN_CURSO; if(4.STATUS = CALL_REQUESTED; LLAMADA_EN_CURSO; emptystring)); emptystring)}} {{if(var.input.ALLOW_RECALL = true; emptystring; if(4.STATUS = PROVIDER_ERROR; emptystring; if(4.STATUS = ABORTED; emptystring; if(parseNumber(formatDate(ifempty(4.DATE; addDays(now; -3650)); X)) > parseNumber(formatDate(addHours(now; 0 - if(4.RESULT = NO_ANSWER; parseNumber(1.NO_ANSWER_RETRY_HOURS); parseNumber(1.DEDUP_DAYS) * 24)); X)); LLAMADO_RECIENTEMENTE; emptystring))))}} {{if(parseNumber(ifempty(4.ATTEMPTS; 0)) >= parseNumber(1.MAX_NO_ANSWER_ATTEMPTS); if(4.RESULT = NO_ANSWER; MAX_INTENTOS_SIN_RESPUESTA; emptystring); emptystring)}} {{if(var.input.IGNORE_CALL_HOURS = true; emptystring; if(2.DOW = 7; FUERA_DE_HORARIO_DOMINGO; if(2.HM < parseNumber(1.W1_START); FUERA_DE_HORARIO; if(2.HM <= parseNumber(1.W1_END); emptystring; if(2.HM < parseNumber(1.W2_START); FUERA_DE_HORARIO; if(2.HM <= parseNumber(1.W2_END); emptystring; FUERA_DE_HORARIO))))))}}"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 1500,
+          "y": 0,
+          "name": "✅ Validaciones y reglas"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 1800,
+          "y": 0,
+          "name": "¿Se puede llamar?"
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 8,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "key": "{{2.KEY}}",
+                "overwrite": true,
+                "data": {
+                  "PHONE_NUMBER": "{{2.PHONE}}",
+                  "DATE": "{{now}}",
+                  "STATUS": "CALL_REQUESTED",
+                  "CALL_ID": "",
+                  "RESULT": "",
+                  "NEXT_ACTION": "Esperando resultado de la llamada",
+                  "RESTAURANT_NAME": "{{trim(var.input.RESTAURANT_NAME)}}",
+                  "CALLER_PHONE": "{{6.CALLER_NUMBER}}",
+                  "MY_EMAIL": "{{2.EMAIL}}",
+                  "CALL_OBJECTIVE": "{{ifempty(trim(var.input.CALL_OBJECTIVE); 1.DEFAULT_OBJECTIVE)}}",
+                  "WEBSITE_OFFER": "{{trim(var.input.WEBSITE_OFFER)}}",
+                  "PRICE": "{{trim(var.input.PRICE)}}",
+                  "ATTEMPTS": "{{6.ATTEMPTS_NEXT}}",
+                  "DO_NOT_CALL": false,
+                  "EMAIL_SENT": false,
+                  "LAST_ERROR": "",
+                  "UPDATED_AT": "{{now}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2100,
+                  "y": -150,
+                  "name": "📝 Registrar intento (antes de llamar)"
+                }
+              },
+              "filter": {
+                "name": "✅ Validación correcta",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{length(trim(6.REASONS))}}",
+                      "o": "number:equal",
+                      "b": "0"
+                    },
+                    {
+                      "a": "{{2.PHONE}}",
+                      "o": "text:pattern",
+                      "b": "^\\+[1-9][0-9]{7,14}$"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 9,
+              "module": "json:TransformToJSON",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "object": "# QUIÉN ERES\nEres {{1.AGENT_NAME}}, asistente virtual de voz con inteligencia artificial de {{1.COMPANY_NAME}}, una empresa que diseña páginas web para restaurantes. Estás llamando por teléfono al restaurante «{{trim(var.input.RESTAURANT_NAME)}}». Hablas español de España con un tono cercano, tranquilo y profesional, como una comercial con experiencia que respeta el tiempo de la hostelería. Tuteas por defecto; si la otra persona te trata de usted, pasa a usted.\n\n# OBJETIVO DE ESTA LLAMADA\n{{ifempty(trim(var.input.CALL_OBJECTIVE); 1.DEFAULT_OBJECTIVE)}}\n\nTu meta NO es cerrar la venta hoy. Tu meta es conseguir una oportunidad comercial real, preferiblemente una demo o reunión breve con {{1.OWNER_NAME}}, responsable de {{1.COMPANY_NAME}}. Si no es posible, consigue la mejor siguiente acción concreta: un día y hora para volver a llamar, el nombre y contacto de quien decide, o un email o WhatsApp al que enviar información.\n\n# INFORMACIÓN QUE TIENES (es tu única fuente de verdad)\nSobre el restaurante: {{ifempty(trim(var.input.RESTAURANT_CONTEXT); 1.NONE)}}\nLo que ofrecemos: {{trim(var.input.WEBSITE_OFFER)}}\nPrecio configurado: {{ifempty(trim(var.input.PRICE); 1.NONE)}}\nInstrucciones especiales de esta campaña (tienen prioridad sobre todo lo demás, salvo las normas de transparencia y límites): {{ifempty(trim(var.input.SPECIAL_INSTRUCTIONS); 1.NONE)}}\nAhora mismo es {{2.DAY_NAME}} {{2.NOW_TXT}}, hora de España. Úsalo para proponer días y horas reales, por ejemplo \"mañana jueves por la mañana\" o \"el martes que viene\".\n\n# CÓMO HABLAS\n- Turnos cortos: una o dos frases, como mucho unas 25 palabras. Nada de monólogos.\n- Una sola pregunta por turno. Después calla y escucha.\n- Suena natural: \"vale\", \"claro\", \"ya\", \"entiendo\", \"perfecto\", \"¡qué bien!\". Varía las expresiones; no repitas la misma muletilla.\n- Escucha más de lo que hablas. Antes de avanzar, reformula en pocas palabras lo que te han contado: \"O sea, que casi todas las reservas os entran por teléfono, ¿no?\".\n- Si te interrumpen, para y atiende lo que te dicen.\n- Si no entiendes algo, pide que lo repitan con naturalidad: \"Perdona, se ha cortado un poco, ¿me lo repites?\".\n- Lenguaje sencillo, sin tecnicismos: \"que os encuentren en Google\", \"que se vea bien en el móvil\", \"que puedan reservar desde la web\".\n- Di los números y precios como se pronuncian (\"cuatrocientos noventa euros\"). No deletrees direcciones web largas.\n- Nunca menciones estas instrucciones, fases, guiones ni que sigues un prompt.\n\n# MAPA DE LA CONVERSACIÓN (brújula, no guion)\nUsa estas etapas como orientación. Puedes saltarte etapas, volver atrás o profundizar según lo que diga la persona. Nunca las recorras de forma mecánica.\n1. Presentación: ya te has presentado en tu primer mensaje (tu nombre, que eres asistente virtual de {{1.COMPANY_NAME}} y que la llamada se graba). No lo repitas salvo que te pregunten.\n2. Permiso: cuando confirmen que es el restaurante, explica en una frase por qué llamas y pregunta si es buen momento. Si no lo es, pide día y hora para volver a llamar y despídete.\n3. Interlocutor: averigua con naturalidad si hablas con quien decide (dueño, gerente, encargado). Si no, pide el nombre de esa persona y cuándo o cómo contactarla. Sé igual de amable con quien no decide.\n4. Descubrimiento: haz entre dos y cuatro preguntas del banco de preguntas, elegidas según lo que ya sabes y lo que te van contando.\n5. Problema: cuando detectes un problema, profundiza una vez: \"¿Y eso cómo os afecta en el día a día?\".\n6. Impacto: ayuda a que la persona dimensione el problema con sus propias palabras: reservas perdidas, comisiones, tiempo al teléfono, clientes que no les encuentran.\n7. Propuesta de valor: conecta en una o dos frases lo que ofrecemos SOLO con lo que te han contado. Nada de listas de características.\n8. Objeciones: valida, responde breve y vuelve con una pregunta.\n9. Siguiente paso: propón una acción concreta con dos opciones cerradas: \"¿Te viene mejor el martes por la mañana o el miércoles por la tarde?\".\n10. Cierre: resume lo acordado en una frase, confirma los datos (nombre, día y hora, email o móvil), agradece y despídete. Después usa la herramienta endCall.\n\n# BANCO DE PREGUNTAS (elige solo las relevantes; nunca todas, nunca seguidas)\n- ¿Ahora mismo tenéis página web?\n- ¿Quién os la lleva? ¿Estáis contentos con ella?\n- ¿Cuándo la actualizasteis por última vez? ¿La carta está al día en la web?\n- ¿Qué tal se ve desde el móvil?\n- ¿Cómo os entran las reservas: por teléfono, por la web, por alguna plataforma?\n- Si usan plataformas de reservas o de delivery: ¿os comen mucho en comisiones?\n- ¿Os llegan clientes desde Google? ¿Tenéis la ficha de Google bien cuidada?\n- ¿Hay algo de vuestra presencia en internet que os gustaría mejorar?\n- Del uno al diez, ¿qué nota le pondrías a vuestra web actual?\n- ¿Teníais pensado hacer algo con la web este año?\n- ¿Quién decide estas cosas en el restaurante?\n- ¿Cuándo sería un buen momento para hablarlo con calma?\nSi la información del restaurante ya responde a una pregunta, no la hagas: confírmala (\"Por lo que he visto, ... ¿es así?\").\n\n# OBJECIONES (respuestas cortas; nunca discutas; vuelve con una pregunta)\n- \"No me interesa\": \"Lo entiendo perfectamente. Solo por curiosidad, ¿es porque la web ya la tenéis resuelta o porque ahora no es prioridad?\"\n- \"Ya tenemos página web\": \"¡Genial! ¿Y estáis contentos con ella? ¿Os entran reservas desde ahí?\"\n- \"No tenemos presupuesto\": \"Normal, y no te quiero vender nada hoy. La idea es enseñarte en quince minutos qué se podría mejorar; si no compensa, no pasa nada. ¿Te parece?\"\n- \"Ahora mismo no\": \"Sin problema. ¿Cuándo te viene mejor que te llame, más adelante esta semana o la que viene?\"\n- \"Estoy ocupado\": \"¡Perdona, te pillo en plena faena! ¿A qué hora te llamo mejor?\" Y despídete rápido.\n- \"Mándame información\": \"Claro. ¿A qué email o WhatsApp te lo hace llegar {{1.OWNER_NAME}}? Y para que no sea algo genérico, ¿qué es lo que más te interesaría mejorar?\"\n- \"Lo tengo que consultar\": \"Tiene todo el sentido. ¿Con quién lo consultas? Si quieres, preparamos la demo con los dos y así lo veis juntos.\"\n- \"Ya nos lleva la web otra empresa\": \"Perfecto, eso está bien. ¿Y os está dando resultados? A veces viene bien una segunda opinión, sin compromiso.\"\n- \"¿Cuánto cuesta?\": si hay precio configurado, dilo en una frase junto con lo que incluye y pregunta si encaja. Si el precio es \"NO CONFIGURADO\": \"Depende de lo que necesitéis; {{1.OWNER_NAME}} te da una cifra cerrada en la demo. ¿Qué sería lo imprescindible para vosotros?\" Nunca des cifras ni rangos inventados.\n- \"No quiero gastar dinero en eso\": \"Lo entiendo. Justo por eso una web tiene que traer clientes y no ser un gasto. ¿Ahora mismo cuántas reservas os entran por internet, más o menos?\"\n- \"Tenemos suficientes clientes\": \"¡Qué bien, enhorabuena! Entonces quizá os interese más ahorrar tiempo al teléfono o comisiones de plataformas. ¿Eso os pasa?\"\nRegla: como mucho dos intentos ante la misma objeción. Si la persona sigue sin interés, respétalo, agradece y despídete con amabilidad.\n\n# DECISIONES EN TIEMPO REAL\n- Señales de interés (pregunta precio, plazos, cómo funciona, \"¿y eso cómo sería?\"): responde breve y pasa pronto al siguiente paso.\n- Señales de prisa o de estar en pleno servicio: ve directa a reprogramar la llamada.\n- Respuestas secas o monosílabos: haz una pregunta abierta y fácil; si sigue igual, propón volver a llamar.\n- Si la persona se extiende contándote algo, deja que hable: es la información más valiosa de la llamada.\n- Una buena llamada dura entre dos y cinco minutos. No alargues por alargar.\n- En cuanto tengas un siguiente paso concreto, cierra. No sigas vendiendo después del sí.\n\n# TRANSPARENCIA Y LÍMITES (obligatorio, por encima de todo lo demás)\n- Si te preguntan si eres una persona, una máquina, un robot o una IA, di siempre la verdad: \"Soy una asistente virtual con inteligencia artificial de {{1.COMPANY_NAME}}.\" Ofrece que les llame {{1.OWNER_NAME}}, que es una persona, si lo prefieren.\n- Nunca inventes datos: ni precios, ni plazos, ni clientes, ni casos de éxito, ni descuentos, ni garantías, ni funcionalidades que no estén en \"Lo que ofrecemos\". Si no lo sabes: \"Eso te lo confirma {{1.OWNER_NAME}} en la demo.\"\n- No prometas acciones que no puedes hacer durante esta llamada: no envías emails ni invitaciones y no reservas en ningún calendario. Di: \"{{1.OWNER_NAME}} te lo confirma por email o WhatsApp.\"\n- No pidas datos bancarios, DNI ni contraseñas.\n- Si piden no volver a ser llamados (\"no me llaméis más\", \"quitadme de la lista\"), respétalo al momento: \"Entendido, no volveremos a llamaros. Disculpa las molestias y que vaya muy bien.\" Después termina la llamada.\n- Si es un número equivocado o no es el restaurante, discúlpate y termina.\n- Si salta un contestador, un buzón de voz o un menú automático (\"pulse uno...\"), termina la llamada sin dejar mensaje.\n- Nunca presiones, no generes urgencia falsa ni culpabilidad, y nunca discutas.\n\n# DATOS QUE INTENTAS CONSEGUIR (solo si surgen de forma natural)\nNombre y cargo de la persona, si es quien decide, día y hora para la demo o para volver a llamar, y un email o móvil de contacto. Antes de despedirte, repite los datos clave para confirmarlos.\n\n# FINAL DE LA LLAMADA\nCuando te hayas despedido, usa la herramienta endCall. No cuelgues sin despedirte, salvo en contestadores o menús automáticos.\n"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2400,
+                  "y": -150,
+                  "name": "🧠 Prompt del agente → JSON"
+                }
+              }
+            },
+            {
+              "id": 10,
+              "module": "json:TransformToJSON",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "object": "{{2.GREETING}}. Soy {{1.AGENT_NAME}}, asistente virtual de {{1.COMPANY_NAME}}, y te aviso de que la llamada se graba. ¿Hablo con el restaurante {{trim(var.input.RESTAURANT_NAME)}}?"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2700,
+                  "y": -150,
+                  "name": "👋 Primer mensaje → JSON"
+                }
+              }
+            },
+            {
+              "id": 11,
+              "module": "vapi:makeApiCall2",
+              "version": 2,
+              "parameters": {},
+              "mapper": {
+                "method": "POST",
+                "relativeURL": "/call",
+                "headers": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "qs": [],
+                "body": "{\"phoneNumberId\":\"{{6.CALLER_ID}}\",\"customer\":{\"number\":\"{{2.PHONE}}\",\"numberE164CheckEnabled\":true},\"assistant\":{\"name\":\"NEXO ventas web restaurantes\",\"firstMessage\":{{10.json}},\"firstMessageMode\":\"assistant-speaks-first\",\"firstMessageInterruptionsEnabled\":false,\"model\":{\"provider\":\"{{1.LLM_PROVIDER}}\",\"model\":\"{{1.LLM_MODEL}}\",\"temperature\":0.6,\"maxTokens\":200,\"messages\":[{\"role\":\"system\",\"content\":{{9.json}}}],\"tools\":[{\"type\":\"endCall\"}]},\"voice\":{\"provider\":\"{{6.V_PROVIDER}}\",\"voiceId\":\"{{6.V_ID}}\"{{if(length(6.V_MODEL) = 0; emptystring; 1.JSON_MODEL_PREFIX)}}{{6.V_MODEL}}{{if(length(6.V_MODEL) = 0; emptystring; 1.QUOTE)}} },\"transcriber\":{\"provider\":\"deepgram\",\"model\":\"{{1.TRANSCRIBER_MODEL}}\",\"language\":\"{{1.TRANSCRIBER_LANGUAGE}}\"},\"silenceTimeoutSeconds\":25,\"maxDurationSeconds\":{{parseNumber(1.MAX_CALL_SECONDS)}},\"backgroundSound\":\"off\",\"backgroundDenoisingEnabled\":true,\"messagePlan\":{\"idleMessages\":[\"¿Sigues ahí?\",\"¿Me oyes bien?\"],\"idleTimeoutSeconds\":8,\"idleMessageMaxSpokenCount\":2},\"startSpeakingPlan\":{\"waitSeconds\":0.6,\"transcriptionEndpointingPlan\":{\"onPunctuationSeconds\":0.2,\"onNoPunctuationSeconds\":1.2,\"onNumberSeconds\":0.6}},\"stopSpeakingPlan\":{\"numWords\":1,\"voiceSeconds\":0.3,\"backoffSeconds\":1,\"acknowledgementPhrases\":[\"vale\",\"sí\",\"ya\",\"ajá\",\"claro\",\"mhm\",\"ok\",\"bueno\"]},\"artifactPlan\":{\"recordingEnabled\":true,\"transcriptPlan\":{\"enabled\":true,\"assistantName\":\"Agente\",\"userName\":\"Restaurante\"}},\"serverMessages\":[\"end-of-call-report\"],\"server\":{\"url\":\"{{1.WEBHOOK_URL}}\",\"timeoutSeconds\":20},\"metadata\":{\"source\":\"make-nexo\",\"key\":\"{{2.KEY}}\"}}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 3000,
+                  "y": -150,
+                  "name": "📞 Vapi: crear llamada con agente IA"
+                }
+              },
+              "onerror": [
+                {
+                  "id": 111,
+                  "module": "datastore:UpdateRecord",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "key": "{{2.KEY}}",
+                    "upsert": true,
+                    "overwriteArrays": false,
+                    "data": {
+                      "STATUS": "PROVIDER_ERROR",
+                      "UPDATED_AT": "{{now}}",
+                      "NEXT_ACTION": "Revisar error y relanzar",
+                      "LAST_ERROR": "{{ifempty(11.error.message; Error de Vapi al crear la llamada. Ver historial de ejecuciones de Make)}}"
+                    }
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 3000,
+                      "y": 150,
+                      "name": "Guardar error del proveedor"
+                    }
+                  }
+                },
+                {
+                  "id": 112,
+                  "module": "email:ActionSendMeEmail",
+                  "version": 7,
+                  "parameters": {},
+                  "mapper": {
+                    "to": "pablogrcab1023@gmail.com",
+                    "subject": "❌ NEXO: Vapi rechazó la llamada a {{var.input.RESTAURANT_NAME}}",
+                    "html": "<p>Vapi devolvió un error al crear la llamada a <b>{{2.PHONE}}</b>. Causas típicas: número emisor sin saldo o no verificado, número destino inválido, voz/modelo no válido o API key incorrecta.</p><p>Detalle: {{11.error.message}}</p>"
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 3300,
+                      "y": 150,
+                      "name": "Alerta interna (sin conexión)"
+                    }
+                  }
+                },
+                {
+                  "id": 113,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 3600,
+                      "y": 150,
+                      "name": "Continuar sin fallar"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 12,
+              "module": "builtin:BasicRouter",
+              "version": 1,
+              "parameters": {},
+              "mapper": {},
+              "metadata": {
+                "designer": {
+                  "x": 3300,
+                  "y": -150,
+                  "name": "¿Vapi aceptó la llamada?"
+                }
+              },
+              "routes": [
+                {
+                  "flow": [
+                    {
+                      "id": 13,
+                      "module": "datastore:UpdateRecord",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "key": "{{2.KEY}}",
+                        "upsert": true,
+                        "overwriteArrays": false,
+                        "data": {
+                          "STATUS": "IN_PROGRESS",
+                          "CALL_ID": "{{11.body.id}}",
+                          "UPDATED_AT": "{{now}}"
+                        }
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3600,
+                          "y": -300,
+                          "name": "✅ Llamada en curso"
+                        }
+                      },
+                      "filter": {
+                        "name": "Llamada creada",
+                        "conditions": [
+                          [
+                            {
+                              "a": "{{11.body.id}}",
+                              "o": "exist"
+                            },
+                            {
+                              "a": "{{11.statusCode}}",
+                              "o": "number:less",
+                              "b": "300"
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 14,
+                      "module": "datastore:UpdateRecord",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "key": "{{2.KEY}}",
+                        "upsert": true,
+                        "overwriteArrays": false,
+                        "data": {
+                          "STATUS": "PROVIDER_ERROR",
+                          "UPDATED_AT": "{{now}}",
+                          "NEXT_ACTION": "Revisar error y relanzar",
+                          "LAST_ERROR": "HTTP {{11.statusCode}} {{11.body.error}} {{11.body.message}}"
+                        }
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3600,
+                          "y": 0,
+                          "name": "❌ Error del proveedor"
+                        }
+                      },
+                      "filter": {
+                        "name": "Vapi no devolvió ID",
+                        "conditions": [
+                          [
+                            {
+                              "a": "{{11.body.id}}",
+                              "o": "notexist"
+                            }
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "id": 15,
+                      "module": "email:ActionSendMeEmail",
+                      "version": 7,
+                      "parameters": {},
+                      "mapper": {
+                        "to": "pablogrcab1023@gmail.com",
+                        "subject": "❌ NEXO: Vapi no inició la llamada a {{var.input.RESTAURANT_NAME}}",
+                        "html": "<p>HTTP {{11.statusCode}} — {{11.body.error}} — {{11.body.message}}</p><p>Número: {{2.PHONE}} · Emisor: {{6.CALLER_NUMBER}} · Voz: {{2.VOICE}}</p>"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3900,
+                          "y": 0,
+                          "name": "Alerta interna (sin conexión)"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 20,
+              "module": "google-email:sendAnEmail",
+              "version": 4,
+              "parameters": {},
+              "mapper": {
+                "to": [
+                  "{{2.EMAIL}}"
+                ],
+                "subject": "⛔ Llamada NO realizada — {{var.input.RESTAURANT_NAME}} — {{trim(6.REASONS)}}",
+                "bodyType": "rawHtml",
+                "content": "<h2>⛔ Llamada NO realizada</h2><p><b>Restaurante:</b> {{var.input.RESTAURANT_NAME}}<br><b>Teléfono:</b> {{2.PHONE}}</p><p><b>Motivos:</b> {{trim(6.REASONS)}}</p><p><b>Último estado registrado:</b> {{4.STATUS}} · {{4.RESULT}} · {{4.DATE}}</p><p>Significado de los códigos:</p><ul><li><b>TELEFONO_INVALIDO</b>: el número a llamar no tiene formato internacional válido.</li><li><b>EMISOR_NO_IMPORTADO_EN_VAPI</b>: CALLER_PHONE no existe en Vapi → Phone Numbers.</li><li><b>EMAIL_INVALIDO</b>, <b>FALTA_RESTAURANT_NAME</b>, <b>FALTA_WEBSITE_OFFER</b>, <b>VOICE_FORMATO_INVALIDO</b>: revisa el formulario.</li><li><b>FALTA_COMPANY_NAME_EN_CONFIG</b>: rellena COMPANY_NAME en el módulo ⚙️ CONFIG.</li><li><b>CAMPANAS_DETENIDAS_KILL_SWITCH</b>: el registro CONTROL del data store tiene STATUS = STOPPED.</li><li><b>NUMERO_EN_LISTA_NO_LLAMAR</b>: el restaurante pidió no ser llamado (opt-out). No se puede forzar.</li><li><b>LLAMADA_EN_CURSO</b>: ya hay una llamada a este número en la última hora.</li><li><b>LLAMADO_RECIENTEMENTE</b>: dentro de la ventana antiduplicados (usa ALLOW_RECALL para forzar).</li><li><b>MAX_INTENTOS_SIN_RESPUESTA</b>: demasiados intentos seguidos sin respuesta.</li><li><b>FUERA_DE_HORARIO</b> / <b>FUERA_DE_HORARIO_DOMINGO</b>: fuera de las franjas configuradas.</li></ul>"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2100,
+                  "y": 300,
+                  "name": "⛔ Avisar: llamada no realizada"
+                }
+              },
+              "onerror": [
+                {
+                  "id": 21,
+                  "module": "email:ActionSendMeEmail",
+                  "version": 7,
+                  "parameters": {},
+                  "mapper": {
+                    "to": "pablogrcab1023@gmail.com",
+                    "subject": "⛔ Llamada NO realizada — {{var.input.RESTAURANT_NAME}}",
+                    "html": "<h2>⛔ Llamada NO realizada</h2><p><b>Restaurante:</b> {{var.input.RESTAURANT_NAME}}<br><b>Teléfono:</b> {{2.PHONE}}</p><p><b>Motivos:</b> {{trim(6.REASONS)}}</p><p><b>Último estado registrado:</b> {{4.STATUS}} · {{4.RESULT}} · {{4.DATE}}</p><p>Significado de los códigos:</p><ul><li><b>TELEFONO_INVALIDO</b>: el número a llamar no tiene formato internacional válido.</li><li><b>EMISOR_NO_IMPORTADO_EN_VAPI</b>: CALLER_PHONE no existe en Vapi → Phone Numbers.</li><li><b>EMAIL_INVALIDO</b>, <b>FALTA_RESTAURANT_NAME</b>, <b>FALTA_WEBSITE_OFFER</b>, <b>VOICE_FORMATO_INVALIDO</b>: revisa el formulario.</li><li><b>FALTA_COMPANY_NAME_EN_CONFIG</b>: rellena COMPANY_NAME en el módulo ⚙️ CONFIG.</li><li><b>CAMPANAS_DETENIDAS_KILL_SWITCH</b>: el registro CONTROL del data store tiene STATUS = STOPPED.</li><li><b>NUMERO_EN_LISTA_NO_LLAMAR</b>: el restaurante pidió no ser llamado (opt-out). No se puede forzar.</li><li><b>LLAMADA_EN_CURSO</b>: ya hay una llamada a este número en la última hora.</li><li><b>LLAMADO_RECIENTEMENTE</b>: dentro de la ventana antiduplicados (usa ALLOW_RECALL para forzar).</li><li><b>MAX_INTENTOS_SIN_RESPUESTA</b>: demasiados intentos seguidos sin respuesta.</li><li><b>FUERA_DE_HORARIO</b> / <b>FUERA_DE_HORARIO_DOMINGO</b>: fuera de las franjas configuradas.</li></ul>"
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 2100,
+                      "y": 600,
+                      "name": "Alerta interna (sin conexión)"
+                    }
+                  }
+                },
+                {
+                  "id": 22,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 2400,
+                      "y": 600,
+                      "name": "Continuar sin fallar"
+                    }
+                  }
+                }
+              ],
+              "filter": {
+                "name": "⛔ Bloqueada",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{length(trim(6.REASONS))}}",
+                      "o": "number:greater",
+                      "b": "0"
+                    }
+                  ],
+                  [
+                    {
+                      "a": "{{2.PHONE}}",
+                      "o": "text:notpattern",
+                      "b": "^\\+[1-9][0-9]{7,14}$"
+                    }
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "instant": false,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  },
+  "interface": {
+    "input": [
+      {
+        "name": "PHONE_TO_CALL",
+        "type": "text",
+        "required": true,
+        "help": "Teléfono del restaurante. Formato internacional (+34612345678). Un móvil/fijo español de 9 cifras se completa con +34."
+      },
+      {
+        "name": "CALLER_PHONE",
+        "type": "text",
+        "required": true,
+        "help": "Número emisor importado en Vapi (+34...) o su Phone Number ID de Vapi."
+      },
+      {
+        "name": "RESTAURANT_NAME",
+        "type": "text",
+        "required": true,
+        "help": "Nombre del restaurante."
+      },
+      {
+        "name": "VOICE",
+        "type": "text",
+        "default": "11labs:EXAVITQu4vr4xnSDxMaL:eleven_flash_v2_5",
+        "help": "proveedor:voiceId[:modelo]. Ej.: 11labs:<voiceId>:eleven_flash_v2_5 · azure:es-ES-ElviraNeural · azure:es-ES-AlvaroNeural"
+      },
+      {
+        "name": "CALL_OBJECTIVE",
+        "type": "text",
+        "multiline": true,
+        "default": "Conseguir una demo de 15 minutos con el responsable del restaurante para enseñarle cómo una web nueva le puede traer más reservas directas.",
+        "help": "Objetivo concreto de esta llamada."
+      },
+      {
+        "name": "RESTAURANT_CONTEXT",
+        "type": "text",
+        "multiline": true,
+        "help": "Lo que sabes del restaurante (tipo de cocina, si tiene web, reseñas, problemas vistos...). El agente solo usará esto."
+      },
+      {
+        "name": "WEBSITE_OFFER",
+        "type": "text",
+        "multiline": true,
+        "required": true,
+        "help": "Qué web ofreces: qué incluye, plazos, diferenciales. El agente NO inventará nada fuera de esto."
+      },
+      {
+        "name": "PRICE",
+        "type": "text",
+        "help": "Opcional. Si lo dejas vacío el agente no dará cifras."
+      },
+      {
+        "name": "SPECIAL_INSTRUCTIONS",
+        "type": "text",
+        "multiline": true,
+        "help": "Opcional. Instrucciones extra para esta llamada."
+      },
+      {
+        "name": "MY_EMAIL",
+        "type": "text",
+        "required": true,
+        "default": "pablogrcab1023@gmail.com",
+        "help": "Email donde recibirás el resultado."
+      },
+      {
+        "name": "ALLOW_RECALL",
+        "type": "boolean",
+        "default": false,
+        "help": "Saltar la ventana antiduplicados (nunca salta el opt-out ni el límite de intentos)."
+      },
+      {
+        "name": "IGNORE_CALL_HOURS",
+        "type": "boolean",
+        "default": false,
+        "help": "Solo para pruebas: llamar fuera de la franja horaria configurada."
+      }
+    ],
+    "output": []
+  }
+}

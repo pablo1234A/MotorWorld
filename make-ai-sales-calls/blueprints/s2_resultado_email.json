@@ -1,0 +1,570 @@
+{
+  "name": "NEXO · [2] Resultado → análisis → email",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": 3941798,
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "🔔 Vapi: fin de llamada"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "CALL_ID",
+            "value": "{{ifempty(1.message.call.id; 1.message.callId)}}"
+          },
+          {
+            "name": "KEY",
+            "value": "{{replace(ifempty(1.message.call.customer.number; 1.message.customer.number); /[^0-9]/g; emptystring)}}"
+          },
+          {
+            "name": "PHONE",
+            "value": "+{{replace(ifempty(1.message.call.customer.number; 1.message.customer.number); /[^0-9]/g; emptystring)}}"
+          },
+          {
+            "name": "ENDED_REASON",
+            "value": "{{ifempty(1.message.endedReason; 1.message.call.endedReason)}}"
+          },
+          {
+            "name": "TRANSCRIPT",
+            "value": "{{substring(ifempty(1.message.artifact.transcript; ifempty(1.message.transcript; 1.message.call.artifact.transcript)); 0; 15000)}}"
+          },
+          {
+            "name": "RECORDING_URL",
+            "value": "{{ifempty(1.message.artifact.recordingUrl; ifempty(1.message.recordingUrl; 1.message.call.artifact.recordingUrl))}}"
+          },
+          {
+            "name": "DURATION",
+            "value": "{{round(ifempty(1.message.durationSeconds; parseNumber(formatDate(ifempty(1.message.call.endedAt; now); X)) - parseNumber(formatDate(ifempty(1.message.call.startedAt; ifempty(1.message.call.endedAt; now)); X))))}}"
+          },
+          {
+            "name": "VAPI_SUMMARY",
+            "value": "{{ifempty(1.message.analysis.summary; ifempty(1.message.summary; 1.message.call.analysis.summary))}}"
+          },
+          {
+            "name": "COST",
+            "value": "{{ifempty(1.message.cost; 1.message.call.cost)}}"
+          },
+          {
+            "name": "SOURCE",
+            "value": "{{ifempty(1.message.source; vapi)}}"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "📥 Extraer informe de Vapi"
+        }
+      },
+      "filter": {
+        "name": "Informe de fin de llamada auténtico",
+        "conditions": [
+          [
+            {
+              "a": "{{1.message.type}}",
+              "o": "text:equal",
+              "b": "end-of-call-report"
+            },
+            {
+              "a": "{{1.k}}",
+              "o": "text:equal",
+              "b": "<WEBHOOK_SECRET>"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "module": "datastore:GetRecord",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "key": "{{2.KEY}}",
+        "returnWrapped": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "🗂️ Datos de la campaña"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "datastore:UpdateRecord",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "key": "{{2.KEY}}",
+        "upsert": true,
+        "overwriteArrays": false,
+        "data": {
+          "PHONE_NUMBER": "{{2.PHONE}}",
+          "CALL_ID": "{{2.CALL_ID}}",
+          "STATUS": "ENDED_PENDING_ANALYSIS",
+          "ENDED_REASON": "{{2.ENDED_REASON}}",
+          "DURATION_SEC": "{{2.DURATION}}",
+          "TRANSCRIPT": "{{2.TRANSCRIPT}}",
+          "RECORDING_URL": "{{2.RECORDING_URL}}",
+          "SUMMARY": "{{2.VAPI_SUMMARY}}",
+          "UPDATED_AT": "{{now}}"
+        }
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0,
+          "name": "💾 Guardar datos brutos (antes de la IA)"
+        }
+      },
+      "filter": {
+        "name": "No procesada aún (idempotencia)",
+        "conditions": [
+          [
+            {
+              "a": "{{3.CALL_ID}}",
+              "o": "text:notequal",
+              "b": "{{2.CALL_ID}}"
+            }
+          ],
+          [
+            {
+              "a": "{{3.EMAIL_SENT}}",
+              "o": "text:notequal",
+              "b": "true"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "module": "ai-tools:Extract",
+      "version": 2,
+      "parameters": {
+        "makeConnectionId": 11043344
+      },
+      "mapper": {
+        "input": "Eres un director comercial experto en venta consultiva de páginas web para restaurantes. Analiza esta llamada comercial hecha por un agente de voz IA y extrae la información pedida. Básate SOLO en la transcripción: no inventes nada; si un dato no aparece, déjalo vacío o indica 'No detectado'. Escribe en español.\n\nCONTEXTO DE LA CAMPAÑA\nRestaurante: {{3.RESTAURANT_NAME}}\nObjetivo: {{3.CALL_OBJECTIVE}}\nOferta: {{3.WEBSITE_OFFER}}\nPrecio configurado: {{ifempty(3.PRICE; no configurado)}}\n\nDATOS TÉCNICOS\nMotivo de fin de llamada (Vapi): {{2.ENDED_REASON}}\nDuración: {{2.DURATION}} segundos\n\nTRANSCRIPCIÓN (Agente = IA de ventas, Restaurante = interlocutor)\n{{ifempty(2.TRANSCRIPT; SIN TRANSCRIPCION, no hubo conversacion)}}",
+        "fields": [
+          {
+            "name": "classification",
+            "type": "string",
+            "description": "Clasificación del lead. Responde EXACTAMENTE uno de: HOT_LEAD, WARM_LEAD, FOLLOW_UP, NOT_INTERESTED, WRONG_NUMBER, NO_ANSWER, CALLBACK_REQUESTED, MEETING_BOOKED. Reglas por prioridad: MEETING_BOOKED = aceptó un día y hora concretos para demo o reunión. CALLBACK_REQUESTED = pidió que le llamen en otro momento sin entrar en materia. HOT_LEAD = interés alto y explícito (pregunta precio, plazos o quiere avanzar) pero sin cita cerrada. WARM_LEAD = reconoce un problema o muestra interés moderado. FOLLOW_UP = pidió información por email o WhatsApp, tiene que consultarlo, no era el decisor o la conversación quedó a medias. NOT_INTERESTED = rechazo claro. WRONG_NUMBER = no es el restaurante. NO_ANSWER = no hubo conversación humana (no contesta, buzón de voz, contestador, menú automático o cuelgan al instante)."
+          },
+          {
+            "name": "interest_level",
+            "type": "number",
+            "description": "Nivel de interés del interlocutor de 0 a 100 según lo que dijo realmente. 0 si no hubo conversación."
+          },
+          {
+            "name": "conversion_probability",
+            "type": "number",
+            "description": "Probabilidad estimada de que acabe comprando, de 0 a 100. Sé conservador."
+          },
+          {
+            "name": "summary",
+            "type": "string",
+            "description": "Resumen breve de la llamada en 2 a 4 frases, en español."
+          },
+          {
+            "name": "main_need",
+            "type": "string",
+            "description": "Principal necesidad o problema detectado. 'No detectada' si no hay."
+          },
+          {
+            "name": "main_objection",
+            "type": "string",
+            "description": "Principal objeción del cliente. 'Ninguna' si no hubo."
+          },
+          {
+            "name": "objections",
+            "type": "string",
+            "description": "Todas las objeciones planteadas y cómo respondió el agente, separadas por ' · '."
+          },
+          {
+            "name": "customer_key_points",
+            "type": "string",
+            "description": "Lo más importante que dijo el cliente (hechos, citas literales cortas), separado por ' · '."
+          },
+          {
+            "name": "recommended_offer",
+            "type": "string",
+            "description": "Qué producto u oferta encaja mejor según la conversación, sin inventar productos que no estén en la oferta."
+          },
+          {
+            "name": "next_step",
+            "type": "string",
+            "description": "Próximo paso recomendado, concreto y accionable, con fecha si se acordó."
+          },
+          {
+            "name": "meeting_datetime",
+            "type": "string",
+            "description": "Día y hora acordados para la demo/reunión tal y como se dijeron. Vacío si no hay."
+          },
+          {
+            "name": "callback_datetime",
+            "type": "string",
+            "description": "Cuándo pidió que se le vuelva a llamar. Vacío si no aplica."
+          },
+          {
+            "name": "contact_name_role",
+            "type": "string",
+            "description": "Nombre y cargo del interlocutor o del decisor si se mencionaron."
+          },
+          {
+            "name": "contact_details",
+            "type": "string",
+            "description": "Email, móvil o WhatsApp facilitados. Vacío si no se dieron."
+          },
+          {
+            "name": "decision_maker",
+            "type": "string",
+            "description": "¿Hablaba con quien decide? 'Sí', 'No' o 'Desconocido'."
+          },
+          {
+            "name": "website_status",
+            "type": "string",
+            "description": "Situación de su web actual: si tienen, si está actualizada, móvil, reservas, carta, Google, satisfacción. 'Desconocido' si no se habló."
+          },
+          {
+            "name": "do_not_call",
+            "type": "boolean",
+            "description": "true SOLO si el interlocutor pidió explícitamente no volver a ser llamado o ser eliminado de la lista."
+          },
+          {
+            "name": "agent_feedback",
+            "type": "string",
+            "description": "Una o dos frases de mejora para el agente de voz (qué hizo bien o mal)."
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 1200,
+          "y": 0,
+          "name": "🤖 Analizar y clasificar el lead (IA)"
+        }
+      },
+      "onerror": [
+        {
+          "id": 51,
+          "module": "datastore:UpdateRecord",
+          "version": 1,
+          "parameters": {},
+          "mapper": {
+            "key": "{{2.KEY}}",
+            "upsert": true,
+            "overwriteArrays": false,
+            "data": {
+              "STATUS": "AI_ERROR",
+              "RESULT": "FOLLOW_UP",
+              "EMAIL_SENT": true,
+              "NEXT_ACTION": "Revisión manual: el análisis IA falló",
+              "LAST_ERROR": "{{ifempty(5.error.message; Fallo del módulo de IA)}}",
+              "UPDATED_AT": "{{now}}"
+            }
+          },
+          "metadata": {
+            "designer": {
+              "x": 1200,
+              "y": 300,
+              "name": "Guardar fallo de IA"
+            }
+          }
+        },
+        {
+          "id": 52,
+          "module": "google-email:sendAnEmail",
+          "version": 4,
+          "parameters": {},
+          "mapper": {
+            "to": [
+              "{{3.MY_EMAIL}}"
+            ],
+            "subject": "Resultado llamada — {{ifempty(3.RESTAURANT_NAME; 2.PHONE)}} — REVISIÓN MANUAL",
+            "bodyType": "rawHtml",
+            "content": "<h2>⚠️ Llamada terminada — análisis IA no disponible</h2><p>La llamada se guardó correctamente, pero el análisis automático falló. Revisión manual necesaria.</p><p><b>Restaurante:</b> {{3.RESTAURANT_NAME}}<br><b>Teléfono:</b> {{2.PHONE}}<br><b>Duración:</b> {{2.DURATION}} s<br><b>Fin:</b> {{2.ENDED_REASON}}</p><p><b>Resumen de Vapi:</b> {{2.VAPI_SUMMARY}}</p><p><b>Grabación:</b> {{2.RECORDING_URL}}</p><h3>TRANSCRIPCIÓN</h3><div style=\"white-space:pre-wrap;font-family:monospace\">{{escapeHTML(2.TRANSCRIPT)}}</div>"
+          },
+          "metadata": {
+            "designer": {
+              "x": 1500,
+              "y": 300,
+              "name": "Email de respaldo (sin IA)"
+            }
+          },
+          "onerror": [
+            {
+              "id": 53,
+              "module": "email:ActionSendMeEmail",
+              "version": 7,
+              "parameters": {},
+              "mapper": {
+                "to": "pablogrcab1023@gmail.com",
+                "subject": "Resultado llamada — {{2.PHONE}} — REVISIÓN MANUAL",
+                "html": "<h2>⚠️ Llamada terminada — análisis IA no disponible</h2><p>La llamada se guardó correctamente, pero el análisis automático falló. Revisión manual necesaria.</p><p><b>Restaurante:</b> {{3.RESTAURANT_NAME}}<br><b>Teléfono:</b> {{2.PHONE}}<br><b>Duración:</b> {{2.DURATION}} s<br><b>Fin:</b> {{2.ENDED_REASON}}</p><p><b>Resumen de Vapi:</b> {{2.VAPI_SUMMARY}}</p><p><b>Grabación:</b> {{2.RECORDING_URL}}</p><h3>TRANSCRIPCIÓN</h3><div style=\"white-space:pre-wrap;font-family:monospace\">{{escapeHTML(2.TRANSCRIPT)}}</div>"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 600,
+                  "name": "Alerta interna (sin conexión)"
+                }
+              }
+            },
+            {
+              "id": 54,
+              "module": "builtin:Ignore",
+              "version": 1,
+              "parameters": {},
+              "mapper": {},
+              "metadata": {
+                "designer": {
+                  "x": 1800,
+                  "y": 600,
+                  "name": "Continuar sin fallar"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 55,
+          "module": "builtin:Ignore",
+          "version": 1,
+          "parameters": {},
+          "mapper": {},
+          "metadata": {
+            "designer": {
+              "x": 1800,
+              "y": 300,
+              "name": "Continuar sin fallar"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "RESULT",
+            "value": "{{if(length(replace(ifempty(2.ENDED_REASON; x); /did.not.answer|busy|voicemail|failed.to.connect|no.answer|unanswered|rejected/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); NO_ANSWER; ifempty(if(length(replace(upper(trim(5.information.classification)); /^(HOT_LEAD|WARM_LEAD|FOLLOW_UP|NOT_INTERESTED|WRONG_NUMBER|NO_ANSWER|CALLBACK_REQUESTED|MEETING_BOOKED)$/; emptystring)) = 0; upper(trim(5.information.classification)); FOLLOW_UP); FOLLOW_UP))}}"
+          },
+          {
+            "name": "CALL_STATUS",
+            "value": "{{if(length(replace(ifempty(2.ENDED_REASON; x); /busy/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); OCUPADO; if(length(replace(ifempty(2.ENDED_REASON; x); /voicemail/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); BUZON_DE_VOZ; if(length(replace(ifempty(2.ENDED_REASON; x); /failed.to.connect|error/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); FALLO_DE_CONEXION; if(length(replace(ifempty(2.ENDED_REASON; x); /did.not.answer|busy|voicemail|failed.to.connect|no.answer|unanswered|rejected/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); NO_CONTESTA; CONVERSACION))))}}"
+          },
+          {
+            "name": "INTEREST",
+            "value": "{{if(length(replace(ifempty(2.ENDED_REASON; x); /did.not.answer|busy|voicemail|failed.to.connect|no.answer|unanswered|rejected/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); 0; round(parseNumber(ifempty(5.information.interest_level; 0))))}}"
+          },
+          {
+            "name": "CONVERSION",
+            "value": "{{if(length(replace(ifempty(2.ENDED_REASON; x); /did.not.answer|busy|voicemail|failed.to.connect|no.answer|unanswered|rejected/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); 0; round(parseNumber(ifempty(5.information.conversion_probability; 0))))}}"
+          },
+          {
+            "name": "NEXT_ACTION",
+            "value": "{{if(length(replace(ifempty(2.ENDED_REASON; x); /did.not.answer|busy|voicemail|failed.to.connect|no.answer|unanswered|rejected/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); Reintentar en otra franja horaria; ifempty(5.information.next_step; Revisar la llamada manualmente))}}"
+          },
+          {
+            "name": "DO_NOT_CALL",
+            "value": "{{if(5.information.do_not_call = true; true; false)}}"
+          },
+          {
+            "name": "ATTEMPTS",
+            "value": "{{if(length(replace(ifempty(2.ENDED_REASON; x); /did.not.answer|busy|voicemail|failed.to.connect|no.answer|unanswered|rejected/; emptystring)) < length(ifempty(2.ENDED_REASON; x)); parseNumber(ifempty(3.ATTEMPTS; 1)); 0)}}"
+          },
+          {
+            "name": "DURATION_TXT",
+            "value": "{{floor(2.DURATION / 60)}} min {{2.DURATION - floor(2.DURATION / 60) * 60}} s"
+          },
+          {
+            "name": "SUMMARY",
+            "value": "{{ifempty(5.information.summary; 2.VAPI_SUMMARY)}}"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 1500,
+          "y": 0,
+          "name": "🏷️ Clasificación final"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "module": "datastore:UpdateRecord",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "key": "{{2.KEY}}",
+        "upsert": true,
+        "overwriteArrays": false,
+        "data": {
+          "STATUS": "COMPLETED",
+          "RESULT": "{{6.RESULT}}",
+          "NEXT_ACTION": "{{6.NEXT_ACTION}}",
+          "INTEREST": "{{6.INTEREST}}",
+          "CONVERSION_PROB": "{{6.CONVERSION}}",
+          "SUMMARY": "{{6.SUMMARY}}",
+          "DO_NOT_CALL": "{{6.DO_NOT_CALL}}",
+          "ATTEMPTS": "{{6.ATTEMPTS}}",
+          "EMAIL_SENT": false,
+          "LAST_ERROR": "",
+          "UPDATED_AT": "{{now}}"
+        }
+      },
+      "metadata": {
+        "designer": {
+          "x": 1800,
+          "y": 0,
+          "name": "💾 Guardar clasificación"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "module": "google-email:sendAnEmail",
+      "version": 4,
+      "parameters": {},
+      "mapper": {
+        "to": [
+          "{{3.MY_EMAIL}}"
+        ],
+        "subject": "Resultado llamada — {{ifempty(3.RESTAURANT_NAME; 2.PHONE)}} — {{6.RESULT}}",
+        "bodyType": "rawHtml",
+        "content": "<div style=\"font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;line-height:1.5;color:#222;max-width:720px\"><table style=\"border-collapse:collapse\"><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Restaurante:</b></td><td style=\"padding:6px 0\">{{ifempty(3.RESTAURANT_NAME; Desconocido)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Teléfono:</b></td><td style=\"padding:6px 0\">{{2.PHONE}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Duración:</b></td><td style=\"padding:6px 0\">{{6.DURATION_TXT}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Resultado:</b></td><td style=\"padding:6px 0\"><b>{{6.RESULT}}</b> · {{6.CALL_STATUS}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Nivel de interés:</b></td><td style=\"padding:6px 0\">{{6.INTEREST}} / 100</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Probabilidad de conversión:</b></td><td style=\"padding:6px 0\">{{6.CONVERSION}} %</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Reunión acordada:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.meeting_datetime; —)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Volver a llamar:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.callback_datetime; —)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Interlocutor:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.contact_name_role; —)}} · ¿Decisor?: {{ifempty(5.information.decision_maker; Desconocido)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Contacto facilitado:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.contact_details; —)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>No volver a llamar:</b></td><td style=\"padding:6px 0\">{{if(6.DO_NOT_CALL = true; SÍ, añadido a la lista de exclusión; No)}}</td></tr></table><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">RESUMEN:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(6.SUMMARY)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">NECESIDAD DETECTADA:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.main_need)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">OBJECIONES:</h3><div style=\"white-space:pre-wrap\">Principal: {{escapeHTML(5.information.main_objection)}}<br>{{escapeHTML(5.information.objections)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">QUÉ DIJO EL CLIENTE:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.customer_key_points)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">SITUACIÓN DE SU WEB:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.website_status)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">OFERTA QUE ENCAJA:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.recommended_offer)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">PRÓXIMO PASO:</h3><div style=\"white-space:pre-wrap\"><b>{{escapeHTML(6.NEXT_ACTION)}}</b></div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">MEJORA PARA EL AGENTE:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.agent_feedback)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">TRANSCRIPCIÓN:</h3><div style=\"white-space:pre-wrap\"><span style=\"font-family:ui-monospace,Menlo,monospace;font-size:12px\">{{ifempty(escapeHTML(2.TRANSCRIPT); No disponible)}}</span></div><p style=\"margin-top:24px;color:#777;font-size:12px\">Grabación: {{ifempty(2.RECORDING_URL; no disponible)}}<br>Call ID: {{2.CALL_ID}} · Fin: {{2.ENDED_REASON}} · Coste Vapi: {{2.COST}} USD · Origen: {{2.SOURCE}}</p></div>"
+      },
+      "metadata": {
+        "designer": {
+          "x": 2100,
+          "y": 0,
+          "name": "📧 Email al propietario"
+        }
+      },
+      "onerror": [
+        {
+          "id": 81,
+          "module": "email:ActionSendMeEmail",
+          "version": 7,
+          "parameters": {},
+          "mapper": {
+            "to": "pablogrcab1023@gmail.com",
+            "subject": "Resultado llamada — {{ifempty(3.RESTAURANT_NAME; 2.PHONE)}} — {{6.RESULT}}",
+            "html": "<p style=\"color:#b00\">Aviso: Gmail falló o no hay MY_EMAIL; enviado por el email interno de Make.</p><div style=\"font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;line-height:1.5;color:#222;max-width:720px\"><table style=\"border-collapse:collapse\"><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Restaurante:</b></td><td style=\"padding:6px 0\">{{ifempty(3.RESTAURANT_NAME; Desconocido)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Teléfono:</b></td><td style=\"padding:6px 0\">{{2.PHONE}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Duración:</b></td><td style=\"padding:6px 0\">{{6.DURATION_TXT}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Resultado:</b></td><td style=\"padding:6px 0\"><b>{{6.RESULT}}</b> · {{6.CALL_STATUS}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Nivel de interés:</b></td><td style=\"padding:6px 0\">{{6.INTEREST}} / 100</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Probabilidad de conversión:</b></td><td style=\"padding:6px 0\">{{6.CONVERSION}} %</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Reunión acordada:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.meeting_datetime; —)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Volver a llamar:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.callback_datetime; —)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Interlocutor:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.contact_name_role; —)}} · ¿Decisor?: {{ifempty(5.information.decision_maker; Desconocido)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>Contacto facilitado:</b></td><td style=\"padding:6px 0\">{{ifempty(5.information.contact_details; —)}}</td></tr><tr><td style=\"padding:6px 12px 6px 0;color:#555;white-space:nowrap;vertical-align:top\"><b>No volver a llamar:</b></td><td style=\"padding:6px 0\">{{if(6.DO_NOT_CALL = true; SÍ, añadido a la lista de exclusión; No)}}</td></tr></table><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">RESUMEN:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(6.SUMMARY)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">NECESIDAD DETECTADA:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.main_need)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">OBJECIONES:</h3><div style=\"white-space:pre-wrap\">Principal: {{escapeHTML(5.information.main_objection)}}<br>{{escapeHTML(5.information.objections)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">QUÉ DIJO EL CLIENTE:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.customer_key_points)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">SITUACIÓN DE SU WEB:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.website_status)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">OFERTA QUE ENCAJA:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.recommended_offer)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">PRÓXIMO PASO:</h3><div style=\"white-space:pre-wrap\"><b>{{escapeHTML(6.NEXT_ACTION)}}</b></div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">MEJORA PARA EL AGENTE:</h3><div style=\"white-space:pre-wrap\">{{escapeHTML(5.information.agent_feedback)}}</div><h3 style=\"margin:22px 0 6px;font-size:14px;letter-spacing:.04em;color:#111\">TRANSCRIPCIÓN:</h3><div style=\"white-space:pre-wrap\"><span style=\"font-family:ui-monospace,Menlo,monospace;font-size:12px\">{{ifempty(escapeHTML(2.TRANSCRIPT); No disponible)}}</span></div><p style=\"margin-top:24px;color:#777;font-size:12px\">Grabación: {{ifempty(2.RECORDING_URL; no disponible)}}<br>Call ID: {{2.CALL_ID}} · Fin: {{2.ENDED_REASON}} · Coste Vapi: {{2.COST}} USD · Origen: {{2.SOURCE}}</p></div>"
+          },
+          "metadata": {
+            "designer": {
+              "x": 2100,
+              "y": 300,
+              "name": "Alerta interna (sin conexión)"
+            }
+          }
+        },
+        {
+          "id": 82,
+          "module": "datastore:UpdateRecord",
+          "version": 1,
+          "parameters": {},
+          "mapper": {
+            "key": "{{2.KEY}}",
+            "upsert": true,
+            "overwriteArrays": false,
+            "data": {
+              "EMAIL_SENT": true,
+              "LAST_ERROR": "Gmail falló; email enviado por respaldo interno de Make",
+              "UPDATED_AT": "{{now}}"
+            }
+          },
+          "metadata": {
+            "designer": {
+              "x": 2400,
+              "y": 300,
+              "name": "Marcar enviado por respaldo"
+            }
+          }
+        },
+        {
+          "id": 83,
+          "module": "builtin:Ignore",
+          "version": 1,
+          "parameters": {},
+          "mapper": {},
+          "metadata": {
+            "designer": {
+              "x": 2700,
+              "y": 300,
+              "name": "Continuar sin fallar"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "module": "datastore:UpdateRecord",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "key": "{{2.KEY}}",
+        "upsert": true,
+        "overwriteArrays": false,
+        "data": {
+          "EMAIL_SENT": true,
+          "UPDATED_AT": "{{now}}"
+        }
+      },
+      "metadata": {
+        "designer": {
+          "x": 2400,
+          "y": 0,
+          "name": "✅ Marcar email enviado"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "instant": true,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": true,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}
