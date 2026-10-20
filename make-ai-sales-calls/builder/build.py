@@ -136,6 +136,8 @@ S1_REASONS = " ".join([
     "{{if(length(trim(1.COMPANY_NAME)) = 0; FALTA_COMPANY_NAME_EN_CONFIG; emptystring)}}",
     "{{if(contains(2.VOICE; :); emptystring; VOICE_FORMATO_INVALIDO)}}",
     "{{if(3.STATUS = STOPPED; CAMPANAS_DETENIDAS_KILL_SWITCH; emptystring)}}",
+    # tope de gasto: lo gastado + lo que podría costar esta llamada no puede superar el tope
+    "{{if(ifempty(3.SPENT_USD; 0) + parseNumber(1.MAX_CALL_COST_ESTIMATE_USD) > parseNumber(1.MAX_SPEND_USD); TOPE_DE_GASTO_ALCANZADO; emptystring)}}",
     "{{if(4.DO_NOT_CALL = true; NUMERO_EN_LISTA_NO_LLAMAR; emptystring)}}",
     # llamada en curso (doble clic / ejecución duplicada) en los últimos 60 min
     "{{if(" + ts("ifempty(4.DATE; addDays(now; -3650))") + " > " + ts("addMinutes(now; -60)")
@@ -163,6 +165,8 @@ REASONS_LEGEND = (
     "<li><b>LLAMADO_RECIENTEMENTE</b>: dentro de la ventana antiduplicados (usa ALLOW_RECALL para forzar).</li>"
     "<li><b>MAX_INTENTOS_SIN_RESPUESTA</b>: demasiados intentos seguidos sin respuesta.</li>"
     "<li><b>FUERA_DE_HORARIO</b> / <b>FUERA_DE_HORARIO_DOMINGO</b>: fuera de las franjas configuradas.</li>"
+    "<li><b>TOPE_DE_GASTO_ALCANZADO</b>: el gasto acumulado (SPENT_USD del registro CONTROL) más el margen de una "
+    "llamada supera MAX_SPEND_USD. Para reanudar: recarga crédito y pon SPENT_USD = 0, o sube el tope en ⚙️ CONFIG.</li>"
     "</ul>"
 )
 
@@ -188,6 +192,8 @@ def build_s1(datastore, secret):
         ("DEDUP_DAYS", "30"),
         ("NO_ANSWER_RETRY_HOURS", "4"),
         ("MAX_NO_ANSWER_ATTEMPTS", "3"),
+        ("MAX_SPEND_USD", "9"),                 # tope de gasto total en Vapi
+        ("MAX_CALL_COST_ESTIMATE_USD", "1.5"),  # margen: coste máximo estimado de una llamada
         ("W1_START", "1000"), ("W1_END", "1300"),
         ("W2_START", "1630"), ("W2_END", "2000"),
         ("TIMEZONE", "Europe/Madrid"),
@@ -424,7 +430,17 @@ def build_s2(datastore, secret):
                        "STATUS": "ENDED_PENDING_ANALYSIS", "ENDED_REASON": "{{2.ENDED_REASON}}",
                        "DURATION_SEC": "{{2.DURATION}}", "TRANSCRIPT": "{{2.TRANSCRIPT}}",
                        "RECORDING_URL": "{{2.RECORDING_URL}}", "SUMMARY": "{{2.VAPI_SUMMARY}}",
-                       "UPDATED_AT": "{{now}}"}})
+                       "COST_USD": "{{ifempty(2.COST; 0)}}", "UPDATED_AT": "{{now}}"}})
+
+    # Tope de gasto: suma el coste de la llamada al registro CONTROL una sola vez por llamada
+    # (3.COST_USD es el valor previo: si ya existía, esta llamada ya se contó).
+    spent_expr = "ifempty(10.SPENT_USD; 0) + if(ifempty(3.COST_USD; -1) = -1; ifempty(2.COST; 0); 0)"
+    get_control = mod(10, "datastore:GetRecord", 1, 900, -300, "💰 Gasto acumulado (CONTROL)",
+                      mapper={"key": "CONTROL", "returnWrapped": False}, parameters=ds(datastore))
+    add_spend = mod(11, "datastore:UpdateRecord", 1, 1050, -300, "💰 Sumar coste de la llamada",
+                    parameters=ds(datastore),
+                    mapper={"key": "CONTROL", "upsert": True, "overwriteArrays": False,
+                            "data": {"SPENT_USD": "{{" + spent_expr + "}}", "UPDATED_AT": "{{now}}"}})
 
     ai_input = (
         "Eres un director comercial experto en venta consultiva de páginas web para restaurantes. Analiza esta llamada "
@@ -526,7 +542,8 @@ def build_s2(datastore, secret):
         + block("TRANSCRIPCIÓN:", "<span style=\"font-family:ui-monospace,Menlo,monospace;font-size:12px\">"
                 "{{ifempty(escapeHTML(2.TRANSCRIPT); No disponible)}}</span>")
         + "<p style=\"margin-top:24px;color:#777;font-size:12px\">Grabación: {{ifempty(2.RECORDING_URL; no disponible)}}<br>"
-          "Call ID: {{2.CALL_ID}} · Fin: {{2.ENDED_REASON}} · Coste Vapi: {{2.COST}} USD · Origen: {{2.SOURCE}}</p>"
+          "Call ID: {{2.CALL_ID}} · Fin: {{2.ENDED_REASON}} · Coste Vapi: {{2.COST}} USD · "
+          "Gasto acumulado: {{" + spent_expr + "}} USD · Origen: {{2.SOURCE}}</p>"
         "</div>"
     )
     subject = "Resultado llamada — {{ifempty(3.RESTAURANT_NAME; 2.PHONE)}} — {{6.RESULT}}"
@@ -550,7 +567,7 @@ def build_s2(datastore, secret):
                parameters={"hook": HOOK_ID, "maxResults": 1})
     return {
         "name": "NEXO · [2] Resultado → análisis → email",
-        "flow": [hook, extract, get_rec, save_raw, analyze, classify, save_final, send, mark_sent],
+        "flow": [hook, extract, get_rec, save_raw, get_control, add_spend, analyze, classify, save_final, send, mark_sent],
         "metadata": scenario_meta(instant=True, sequential=True, dlq=True),
     }
 

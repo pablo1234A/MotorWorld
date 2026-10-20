@@ -70,6 +70,7 @@ PRICE, SPECIAL_INSTRUCTIONS, MY_EMAIL` (+ `ALLOW_RECALL`, `IGNORE_CALL_HOURS` pa
 | Doble ejecución | llamada `CALL_REQUESTED/IN_PROGRESS` en la última hora | bloquea |
 | Franjas horarias (Europe/Madrid) | fuera de servicio de cocina | 10:00–13:00 y 16:30–20:00, sin domingos |
 | Duración máxima | `maxDurationSeconds` | 8 min |
+| **Tope de gasto** | gasto acumulado (`SPENT_USD` del registro `CONTROL`) + margen de una llamada (`MAX_CALL_COST_ESTIMATE_USD`) > `MAX_SPEND_USD` → no llama. Para reanudar: recarga y pon `SPENT_USD = 0` | 9 $ (margen 1,5 $) |
 | Transparencia IA | primer mensaje: "asistente virtual de NEXO" + aviso de grabación; si preguntan, dice que es IA | — |
 
 Revisa la normativa aplicable antes de llamar (en España: art. 66 de la Ley 11/2022 General de
@@ -79,7 +80,8 @@ obligación de informar de que se habla con una IA del Reglamento de IA). Esto n
 ## Registro (data store) — campos
 `PHONE_NUMBER, DATE, STATUS, CALL_ID, RESULT, NEXT_ACTION` + `RESTAURANT_NAME, CALLER_PHONE, MY_EMAIL,
 CALL_OBJECTIVE, WEBSITE_OFFER, PRICE, ATTEMPTS, ENDED_REASON, DURATION_SEC, INTEREST, CONVERSION_PROB,
-SUMMARY, TRANSCRIPT, RECORDING_URL, DO_NOT_CALL, EMAIL_SENT, LAST_ERROR, UPDATED_AT`. Clave = número en dígitos.
+SUMMARY, TRANSCRIPT, RECORDING_URL, DO_NOT_CALL, EMAIL_SENT, LAST_ERROR, UPDATED_AT, COST_USD`
+(+ `SPENT_USD` solo en el registro `CONTROL`). Clave = número en dígitos.
 
 `STATUS`: `CALL_REQUESTED → IN_PROGRESS → ENDED_PENDING_ANALYSIS → COMPLETED` · errores: `PROVIDER_ERROR`,
 `ABORTED`, `AI_ERROR`.
