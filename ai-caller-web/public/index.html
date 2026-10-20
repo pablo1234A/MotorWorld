@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXO · Llamadas IA</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232f54eb%22/%3E%3Cpath d=%22M10 22V10l12 12V10%22 stroke=%22white%22 stroke-width=%223%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f5f2;--surface:#ffffff;--surface-2:#fbfaf8;--ink:#17171a;--ink-2:#55555c;--ink-3:#8b8b93;
+  --line:#e7e5e0;--line-2:#d9d6cf;--accent:#2f54eb;--accent-ink:#ffffff;--accent-soft:#eef1fe;
+  --ok:#18794e;--ok-soft:#e6f4ec;--warn:#9a6700;--warn-soft:#fdf3d8;--bad:#c4321c;--bad-soft:#fdecea;
+  --hot:#c2410c;--hot-soft:#fff1e6;--info:#1d4ed8;--info-soft:#e8efff;--mute-soft:#f0efec;
+  --radius:14px;--shadow:0 1px 2px rgba(20,20,30,.04),0 8px 24px -12px rgba(20,20,30,.10);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f0f12;--surface:#17171b;--surface-2:#1c1c21;--ink:#f1f0ee;--ink-2:#b4b3b9;--ink-3:#7d7c84;
+  --line:#26262d;--line-2:#33333b;--accent:#6b86ff;--accent-ink:#0b0b10;--accent-soft:#1d2340;
+  --ok:#4cc38a;--ok-soft:#14291f;--warn:#e5b54b;--warn-soft:#2c2414;--bad:#ff7a66;--bad-soft:#331a17;
+  --hot:#ff9a5c;--hot-soft:#33200f;--info:#8fb0ff;--info-soft:#18213a;--mute-soft:#202026;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -16px rgba(0,0,0,.6);color-scheme:dark;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;padding:14px 24px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand b{font-size:17px;letter-spacing:.14em}
+.brand span{color:var(--ink-3);font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;color:var(--ink-2);white-space:nowrap}
+.meter{width:84px;height:6px;border-radius:9px;background:var(--mute-soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .4s}
+.switch{position:relative;width:34px;height:20px;border-radius:99px;background:var(--line-2);border:0;cursor:pointer;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch[aria-checked=true]{background:var(--ok)}
+.switch[aria-checked=true]::after{transform:translateX(14px)}
+main{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:24px;max-width:1320px;margin:0 auto;padding:24px}
+@media (max-width:920px){main{grid-template-columns:1fr;padding:16px}.top{padding:12px 16px;flex-wrap:wrap}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card>header{padding:18px 20px 0}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+h2{font-size:17px}
+.sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+form{padding:8px 20px 20px}
+fieldset{border:0;margin:0;padding:14px 0 4px;border-top:1px solid var(--line)}
+fieldset:first-of-type{border-top:0}
+legend{padding:0;margin-bottom:10px;font-size:11.5px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.field{display:block;margin-bottom:12px}
+.field>span{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:550;color:var(--ink-2);margin-bottom:5px}
+.field>span em{font-style:normal;font-weight:400;color:var(--ink-3)}
+input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface-2);outline:none;transition:border-color .15s,box-shadow .15s}
+textarea{resize:vertical;min-height:64px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.row2{grid-template-columns:1fr}}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);margin:6px 0}
+.check input{margin-top:3px;accent-color:var(--accent)}
+.primary{width:100%;height:46px;margin-top:10px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:650;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .08s,filter .15s}
+.primary:hover{filter:brightness(1.06)}.primary:active{transform:translateY(1px)}
+.primary[disabled]{opacity:.55;cursor:progress}
+.ghost{height:34px;padding:0 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);cursor:pointer;font-size:13px;font-weight:550}
+.ghost:hover{background:var(--surface-2)}
+.ghost.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,var(--line-2))}
+.notice{margin:14px 20px 0;padding:12px 14px;border-radius:12px;font-size:13.5px}
+.notice ul{margin:6px 0 0;padding-left:18px}
+.notice.bad{background:var(--bad-soft);color:var(--bad)}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.ok{background:var(--ok-soft);color:var(--ok)}
+.list-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px}
+.calls{list-style:none;margin:0;padding:0 8px 8px}
+.calls li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px;border-radius:11px;cursor:pointer;transition:background .12s}
+.calls li:hover,.calls li[aria-selected=true]{background:var(--surface-2)}
+.calls .name{font-weight:600}
+.calls .meta{grid-column:1;color:var(--ink-3);font-size:12.5px}
+.calls .right{grid-row:1 / span 2;grid-column:2;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:99px;font-size:11.5px;font-weight:650;letter-spacing:.02em;background:var(--mute-soft);color:var(--ink-2)}
+.b-MEETING_BOOKED{background:var(--ok-soft);color:var(--ok)}
+.b-HOT_LEAD{background:var(--hot-soft);color:var(--hot)}
+.b-WARM_LEAD{background:var(--warn-soft);color:var(--warn)}
+.b-CALLBACK_REQUESTED,.b-FOLLOW_UP{background:var(--info-soft);color:var(--info)}
+.b-NOT_INTERESTED,.b-WRONG_NUMBER{background:var(--bad-soft);color:var(--bad)}
+.live{background:var(--accent-soft);color:var(--accent)}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.live::before{animation:none}}
+.bar{width:72px;height:5px;border-radius:9px;background:var(--mute-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.empty{padding:48px 24px;text-align:center;color:var(--ink-3)}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.drawer{position:fixed;inset:0;z-index:20;display:none}
+.drawer.open{display:block}
+.drawer .scrim{position:absolute;inset:0;background:rgba(10,10,14,.32)}
+.drawer .panel{position:absolute;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--surface);border-left:1px solid var(--line);overflow:auto;box-shadow:-24px 0 48px -24px rgba(0,0,0,.25);animation:slide .22s ease-out}
+@keyframes slide{from{transform:translateX(24px);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.drawer .panel{animation:none}}
+.dhead{position:sticky;top:0;background:var(--surface);padding:18px 22px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start;z-index:1}
+.dhead h2{font-size:19px}
+.dbody{padding:18px 22px 40px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.kpi{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.kpi small{display:block;color:var(--ink-3);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+.kpi b{font-size:20px;font-variant-numeric:tabular-nums}
+.sec{margin-top:18px}
+.sec h3{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:650;margin-bottom:6px}
+.sec p,.sec ul{margin:0}.sec ul{padding-left:18px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+.facts dt{color:var(--ink-3)}.facts dd{margin:0}
+.chat{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.msg{max-width:86%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45}
+.msg.agent{align-self:flex-start;background:var(--accent-soft);border-bottom-left-radius:4px}
+.msg.user{align-self:flex-end;background:var(--mute-soft);border-bottom-right-radius:4px}
+.msg small{display:block;font-size:11px;color:var(--ink-3);margin-bottom:2px;font-weight:600}
+.close{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:18px;line-height:1}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><b>NEXO</b><span>Llamadas comerciales con IA</span></div>
+  <span class="chip" title="Gasto estimado acumulado frente al tope"><span id="spendTxt">— $</span><span class="meter"><i id="spendBar" style="width:0"></i></span></span>
+  <span class="chip"><span id="runTxt">Campañas activas</span><button class="switch" id="runSwitch" role="switch" aria-checked="true" aria-label="Activar o detener campañas"></button></span>
+</div>
+
+<main>
+  <section class="card" aria-labelledby="newTitle">
+    <header><h2 id="newTitle">Nueva llamada</h2><div class="sub" id="agentLine">El agente llama, conversa y te manda el resumen.</div></header>
+    <div id="problems"></div>
+    <div id="formMsg"></div>
+    <form id="callForm" novalidate>
+      <fieldset>
+        <legend>Teléfonos</legend>
+        <div class="row2">
+          <label class="field"><span>Restaurante a llamar</span><input type="tel" name="phoneToCall" placeholder="+34 612 345 678" required autocomplete="off"></label>
+          <label class="field"><span>Llamar desde <em>Twilio</em></span><input type="tel" name="callerPhone" placeholder="+34 911 234 567" required></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Restaurante</legend>
+        <label class="field"><span>Nombre</span><input type="text" name="restaurantName" placeholder="Casa Lola" required></label>
+        <label class="field"><span>Lo que sabes de él <em>opcional</em></span><textarea name="restaurantContext" rows="3" placeholder="Cocina mediterránea, 4,6★ en Google, sin web propia, reservas solo por teléfono…"></textarea></label>
+      </fieldset>
+      <fieldset>
+        <legend>Oferta</legend>
+        <label class="field"><span>Qué web vendes</span><textarea name="websiteOffer" rows="3" required placeholder="Web a medida con carta digital, reservas online sin comisión, optimizada para móvil y Google. Lista en 10 días."></textarea></label>
+        <div class="row2">
+          <label class="field"><span>Precio <em>opcional</em></span><input type="text" name="price" placeholder="490 € + 19 €/mes"></label>
+          <label class="field"><span>Voz</span>
+            <select name="ttsProvider"><option value="ElevenLabs">ElevenLabs</option><option value="Google">Google</option><option value="Amazon">Amazon</option></select>
+          </label>
+        </div>
+        <label class="field"><span>ID de voz <em>vacío = voz por defecto en español</em></span><input type="text" name="voice" placeholder="p. ej. un voiceId de ElevenLabs"></label>
+        <label class="field"><span>Objetivo de la llamada</span><textarea name="callObjective" rows="2">Conseguir una demo de 15 minutos con el responsable del restaurante.</textarea></label>
+        <label class="field"><span>Instrucciones especiales <em>opcional</em></span><textarea name="specialInstructions" rows="2" placeholder="Menciona que estamos en su barrio…"></textarea></label>
+      </fieldset>
+      <fieldset>
+        <legend>Resultado</legend>
+        <label class="field"><span>Enviar el resumen a</span><input type="email" name="myEmail" placeholder="tu@email.com" required></label>
+        <label class="check"><input type="checkbox" name="allowRecall"> <span>Permitir volver a llamar aunque se contactó hace poco <br><small style="color:var(--ink-3)">Nunca salta la lista de “no llamar” ni el límite de intentos.</small></span></label>
+        <label class="check"><input type="checkbox" name="ignoreCallHours"> <span>Ignorar franja horaria <small style="color:var(--ink-3)">(solo para pruebas a tu móvil)</small></span></label>
+      </fieldset>
+      <button class="primary" id="callBtn" type="submit">Llamar ahora</button>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="histTitle">
+    <div class="list-head"><div><h2 id="histTitle">Llamadas</h2><div class="sub" id="histSub">Se actualiza solo.</div></div></div>
+    <ul class="calls" id="calls" role="listbox" aria-label="Historial de llamadas"></ul>
+  </section>
+</main>
+
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="scrim" data-close></div>
+  <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="dhead"><div><h2 id="dTitle">—</h2><div class="sub" id="dSub"></div></div><button class="close" data-close aria-label="Cerrar">×</button></div>
+    <div class="dbody" id="dBody"></div>
+  </aside>
+</div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const LABEL = { MEETING_BOOKED: "Reunión cerrada", HOT_LEAD: "Lead caliente", WARM_LEAD: "Lead templado", FOLLOW_UP: "Seguimiento", CALLBACK_REQUESTED: "Volver a llamar", NOT_INTERESTED: "No interesado", WRONG_NUMBER: "Número equivocado", NO_ANSWER: "Sin respuesta" };
+const CALL_STATUS = { CONVERSACION: "Hubo conversación", NO_CONTESTA: "No contestó", OCUPADO: "Comunicaba", BUZON_DE_VOZ: "Contestador", FALLO_DE_CONEXION: "Fallo de conexión", CANCELADA: "Cancelada", SIN_CONVERSACION: "Sin conversación", ERROR_PROVEEDOR: "Error del proveedor" };
+const LIVE = { queued: "En cola", calling: "Llamando", ringing_answered: "Descolgado", in_progress: "En conversación" };
+const STORE_KEY = "nexo-campaign-v1";
+let selected = null, timer = null;
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  const body = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, body };
+}
+const money = (n) => `${(n || 0).toFixed(2).replace(".", ",")} $`;
+const dur = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "—");
+const when = (iso) => new Date(iso).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+function badge(c) {
+  if (LIVE[c.status]) return `<span class="badge live">${LIVE[c.status]}</span>`;
+  if (c.status === "provider_error") return `<span class="badge b-NOT_INTERESTED">Error proveedor</span>`;
+  if (c.status === "aborted") return `<span class="badge">Abortada</span>`;
+  return c.result ? `<span class="badge b-${c.result}">${LABEL[c.result] || c.result}</span>` : `<span class="badge">Analizando…</span>`;
+}
+
+async function loadStatus() {
+  const { ok, body } = await api("/api/status");
+  if (!ok) return;
+  const s = body.spend;
+  $("#spendTxt").textContent = `${money(s.spentUsd)} de ${money(s.maxSpendUsd)}`;
+  $("#spendBar").style.width = `${Math.min(100, (s.spentUsd / s.maxSpendUsd) * 100)}%`;
+  $("#runSwitch").setAttribute("aria-checked", String(!body.stopped));
+  $("#runTxt").textContent = body.stopped ? "Campañas detenidas" : "Campañas activas";
+  $("#agentLine").textContent = `${body.agent.agentName}, de ${body.agent.companyName}, llama, conversa y te envía el resumen.`;
+  const form = $("#callForm");
+  if (!form.myEmail.value && body.defaultEmail) form.myEmail.value = body.defaultEmail;
+  const problems = body.problems || [];
+  $("#problems").innerHTML = problems.length
+    ? `<div class="notice warn"><b>Falta configurar el servidor</b><ul>${problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>`
+    : "";
+}
+
+async function loadCalls() {
+  const { ok, body } = await api("/api/calls");
+  if (!ok) return;
+  const ul = $("#calls");
+  if (!body.length) {
+    ul.innerHTML = `<li class="empty" style="display:block;cursor:default"><b>Aún no hay llamadas</b>Rellena el formulario y pulsa “Llamar ahora”. Para probar, llama a tu propio móvil.</li>`;
+    return;
+  }
+  ul.innerHTML = body.map((c) => `
+    <li role="option" data-id="${c.id}" aria-selected="${c.id === selected}">
+      <span class="name">${esc(c.restaurantName)}</span>
+      <span class="meta">${esc(c.phone)} · ${when(c.createdAt)} · ${dur(c.durationSeconds)}</span>
+      <span class="right">${badge(c)}${c.interest != null && c.result && c.result !== "NO_ANSWER" ? `<span class="bar" title="Interés ${c.interest}/100"><i style="width:${c.interest}%"></i></span>` : ""}</span>
+    </li>`).join("");
+  $("#histSub").textContent = body.some((c) => LIVE[c.status]) ? "Hay una llamada en curso…" : "Se actualiza solo.";
+}
+
+function list(items) { return items?.length ? `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : "<p>—</p>"; }
+
+async function openCall(id) {
+  selected = id;
+  const { ok, body: c } = await api(`/api/calls/${id}`);
+  if (!ok) return;
+  const a = c.analysis;
+  $("#dTitle").textContent = c.campaign.restaurantName;
+  $("#dSub").innerHTML = `${esc(c.phone)} · ${when(c.createdAt)} · ${badge(c)}`;
+  const live = Boolean(LIVE[c.status]);
+  const failed = ["aborted", "provider_error"].includes(c.status);
+  const chat = (c.transcript || []).map((t) => `<div class="msg ${t.role}"><small>${t.role === "agent" ? "Agente" : "Restaurante"}</small>${esc(t.text)}</div>`).join("");
+  $("#dBody").innerHTML = `
+    ${c.lastError ? `<div class="notice bad" style="margin:0 0 14px">${esc(c.lastError)}</div>` : ""}
+    <div class="kpis">
+      <div class="kpi"><small>Duración</small><b>${dur(c.durationSeconds)}</b></div>
+      <div class="kpi"><small>Interés</small><b>${a ? a.interest_level : "—"}</b></div>
+      <div class="kpi"><small>Conversión</small><b>${a ? a.conversion_probability + "%" : "—"}</b></div>
+    </div>
+    ${a ? `
+      <div class="sec"><h3>Resumen</h3><p>${esc(a.summary)}</p></div>
+      <div class="sec"><h3>Ficha</h3><dl class="facts">
+        <dt>Resultado</dt><dd>${esc(LABEL[c.result] || c.result)} · ${esc(CALL_STATUS[c.callStatusLabel] || c.callStatusLabel)}</dd>
+        <dt>Necesidad</dt><dd>${esc(a.main_need)}</dd>
+        <dt>Objeción</dt><dd>${esc(a.main_objection)}</dd>
+        ${a.meeting_datetime ? `<dt>Reunión</dt><dd>${esc(a.meeting_datetime)}</dd>` : ""}
+        ${a.callback_datetime ? `<dt>Rellamar</dt><dd>${esc(a.callback_datetime)}</dd>` : ""}
+        ${a.contact_name_role ? `<dt>Contacto</dt><dd>${esc(a.contact_name_role)} · ¿Decide?: ${esc(a.decision_maker)}</dd>` : ""}
+        ${a.contact_details ? `<dt>Datos</dt><dd>${esc(a.contact_details)}</dd>` : ""}
+        ${a.recommended_offer ? `<dt>Encaja</dt><dd>${esc(a.recommended_offer)}</dd>` : ""}
+        ${a.do_not_call ? `<dt>Opt-out</dt><dd><b>No volver a llamar</b></dd>` : ""}
+      </dl></div>
+      <div class="sec"><h3>Próximo paso</h3><p><b>${esc(a.next_step)}</b></p></div>
+      <div class="sec"><h3>Qué dijo el cliente</h3>${list(a.customer_key_points)}</div>
+      <div class="sec"><h3>Objeciones</h3>${list(a.objections)}</div>
+      ${a.agent_feedback ? `<div class="sec"><h3>Mejora para el agente</h3><p>${esc(a.agent_feedback)}</p></div>` : ""}
+    ` : `<div class="notice ${failed ? "bad" : "ok"}" style="margin:0">${live ? "Llamada en curso: la transcripción aparece en directo." : failed ? "La llamada no llegó a completarse. Puedes relanzarla." : "Analizando la llamada…"}</div>`}
+    <div class="sec"><h3>Transcripción</h3><div class="chat">${chat || "<p>—</p>"}</div></div>
+    <div class="actions">
+      ${live ? `<button class="ghost danger" data-act="hangup">Colgar ahora</button>` : ""}
+      ${a ? `<button class="ghost" data-act="email">${c.emailSent ? "Reenviar email" : "Enviar email"}</button>` : ""}
+      ${c.emailError ? `<span class="sub">Email: ${esc(c.emailError)}</span>` : ""}
+    </div>`;
+  const drawer = $("#drawer");
+  if (!drawer.classList.contains("open")) { drawer.classList.add("open"); drawer.setAttribute("aria-hidden", "false"); $(".close", drawer).focus(); }
+  clearTimeout(timer);
+  if (live || (!a && !failed)) timer = setTimeout(() => selected === id && openCall(id), 2000);
+}
+
+function closeDrawer() { $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden", "true"); selected = null; clearTimeout(timer); loadCalls(); }
+
+$("#drawer").addEventListener("click", async (e) => {
+  if (e.target.closest("[data-close]")) return closeDrawer();
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if (act === "hangup") await api(`/api/calls/${selected}/hangup`, { method: "POST" });
+  if (act === "email") { const r = await api(`/api/calls/${selected}/resend-email`, { method: "POST" }); alert(r.ok ? "Email enviado" : `No se pudo enviar: ${r.body.error}`); }
+  if (act) openCall(selected);
+});
+document.addEventListener("keydown", (e) => e.key === "Escape" && selected && closeDrawer());
+$("#calls").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openCall(li.dataset.id); });
+
+$("#runSwitch").addEventListener("click", async (e) => {
+  const running = e.currentTarget.getAttribute("aria-checked") === "true";
+  if (running || confirm("¿Reanudar las campañas?")) await api("/api/control", { method: "POST", body: JSON.stringify({ stopped: running }) });
+  loadStatus();
+});
+
+const form = $("#callForm");
+try { const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); for (const [k, v] of Object.entries(saved)) if (form[k] && form[k].type !== "checkbox") form[k].value = v; } catch {}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(form));
+  data.allowRecall = form.allowRecall.checked;
+  data.ignoreCallHours = form.ignoreCallHours.checked;
+  try { const { phoneToCall, restaurantName, restaurantContext, allowRecall, ignoreCallHours, ...keep } = data; localStorage.setItem(STORE_KEY, JSON.stringify(keep)); } catch {}
+  const btn = $("#callBtn"); btn.disabled = true; btn.textContent = "Llamando…";
+  const r = await api("/api/calls", { method: "POST", body: JSON.stringify(data) });
+  btn.disabled = false; btn.textContent = "Llamar ahora";
+  const msg = $("#formMsg");
+  if (r.status === 422) msg.innerHTML = `<div class="notice bad"><b>No se ha llamado</b><ul>${r.body.blocked.map((b) => `<li>${esc(b.message)}</li>`).join("")}</ul></div>`;
+  else if (!r.ok) msg.innerHTML = `<div class="notice bad"><b>No se pudo llamar</b><ul>${(r.body.problems || [r.body.error]).map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>`;
+  else { msg.innerHTML = `<div class="notice ok">Llamando a ${esc(r.body.restaurantName)}…</div>`; form.phoneToCall.value = ""; await loadCalls(); openCall(r.body.id); }
+});
+
+loadStatus(); loadCalls();
+setInterval(() => { loadCalls(); loadStatus(); }, 5000);
+</script>
+</body>
+</html>

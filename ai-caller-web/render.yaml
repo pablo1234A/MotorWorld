@@ -1,0 +1,33 @@
+# Despliegue en Render (https://render.com): New + > Blueprint > este repositorio.
+services:
+  - type: web
+    name: nexo-ai-caller
+    runtime: node
+    rootDir: ai-caller-web
+    plan: starter            # necesita disco persistente para guardar las llamadas
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATA_FILE
+        value: /var/data/db.json
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: PANEL_PASSWORD
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: APP_SECRET
+        generateValue: true
