@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MotorWorld Studio — Fotografía con IA</title>
+<meta name="description" content="Estudio de fotografía con inteligencia artificial: dirige la cámara, la óptica y la luz como un fotógrafo profesional y revela cada imagen con película, grano y halación reales.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;
+  --surface:#141418;
+  --surface2:#1b1b20;
+  --line:#26262c;
+  --text:#eceef1;
+  --muted:#93939d;
+  --red:#e01a2b;
+  --red-dim:#8f1420;
+  --blue:#2f6feb;
+  --blue-dim:#1f4aa3;
+  --font-display:'Rajdhani',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius:2px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none;}
+ul{list-style:none;}
+img,svg,canvas{display:block;max-width:100%;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+::selection{background:var(--red);color:#fff;}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+
+.container{max-width:1400px;margin:0 auto;padding:0 24px;}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--red);
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:'';width:22px;height:1px;background:var(--red);}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;letter-spacing:.01em;text-transform:uppercase;line-height:1.05;}
+
+/* ---------- HEADER (idéntico al sitio) ---------- */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,10,13,.86);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;max-width:1400px;margin:0 auto;gap:20px;}
+.logo{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px;}
+.logo span{color:var(--red);}
+.logo small{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;color:var(--muted);border:1px solid var(--line);padding:2px 7px;margin-left:6px;font-weight:500;}
+nav.main-nav{display:flex;gap:32px;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+nav.main-nav a{color:var(--muted);transition:color .2s;position:relative;padding:4px 0;}
+nav.main-nav a:hover,nav.main-nav a.active{color:var(--text);}
+nav.main-nav a.active::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--red);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.icon-btn{height:38px;min-width:38px;padding:0 12px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.2s;border-radius:var(--radius);font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.icon-btn:hover{border-color:var(--red);color:var(--text);}
+.engine-dot{width:7px;height:7px;border-radius:50%;background:#2fbf71;box-shadow:0 0 0 3px rgba(47,191,113,.15);}
+
+/* ---------- INTRO ---------- */
+.intro{position:relative;padding:54px 0 34px;overflow:hidden;}
+.intro::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(224,26,43,.14), transparent 45%),
+    radial-gradient(circle at 5% 100%, rgba(47,111,235,.10), transparent 40%);
+  pointer-events:none;
+}
+.intro-grid{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;}
+.intro h1{font-size:clamp(38px,5.6vw,72px);line-height:.95;margin-top:14px;}
+.intro h1 .accent{color:var(--red);}
+.intro p{color:var(--muted);max-width:440px;font-size:15px;}
+
+/* ---------- WORKSPACE ---------- */
+.workspace{display:grid;grid-template-columns:420px minmax(0,1fr);gap:28px;align-items:start;padding-bottom:80px;}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);}
+.controls{position:sticky;top:90px;max-height:calc(100vh - 110px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent;}
+.block{padding:22px 22px;border-bottom:1px solid var(--line);}
+.block:last-child{border-bottom:none;}
+.label{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;}
+.label b{color:var(--text);font-weight:500;}
+.step{color:var(--red);margin-right:8px;}
+
+textarea.prompt{
+  width:100%;min-height:118px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);
+  color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.5;padding:14px;
+}
+textarea.prompt:focus{outline:none;border-color:var(--red);}
+.prompt-tools{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;}
+.link-btn{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em;display:inline-flex;gap:6px;align-items:center;}
+.link-btn:hover{color:var(--text);}
+.link-btn .k{color:var(--red);}
+
+.styles{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.style-card{
+  text-align:left;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);transition:.2s;
+}
+.style-card:hover{border-color:#3a3a42;}
+.style-card[aria-pressed="true"]{border-color:var(--red);background:linear-gradient(180deg,rgba(224,26,43,.10),rgba(224,26,43,0));}
+.style-card strong{display:block;font-family:var(--font-display);font-size:16px;letter-spacing:.02em;text-transform:uppercase;line-height:1.1;}
+.style-card span{display:block;font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35;}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field label{display:block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+select,input[type=text],input[type=password],input[type=number]{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);
+  font-family:var(--font-body);font-size:14px;padding:10px 11px;appearance:none;
+}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%2393939d' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;}
+select:focus,input:focus{outline:none;border-color:var(--red);}
+
+.segmented{display:flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.segmented button{flex:1;padding:9px 4px;font-family:var(--font-mono);font-size:12px;color:var(--muted);border-right:1px solid var(--line);transition:.15s;}
+.segmented button:last-child{border-right:none;}
+.segmented button:hover{color:var(--text);}
+.segmented button[aria-pressed="true"]{background:var(--text);color:var(--bg);}
+
+.realism{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.realism button{padding:10px 8px;border:1px solid var(--line);border-radius:var(--radius);text-align:left;background:var(--bg);}
+.realism button strong{display:block;font-family:var(--font-display);text-transform:uppercase;font-size:15px;}
+.realism button span{display:block;font-size:11px;color:var(--muted);line-height:1.3;}
+.realism button[aria-pressed="true"]{border-color:var(--red);}
+
+.seed-row{display:flex;gap:8px;align-items:center;}
+.seed-row input{font-family:var(--font-mono);}
+.lock{width:40px;height:40px;flex:none;border:1px solid var(--line);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.lock[aria-pressed="true"]{border-color:var(--red);color:var(--red);}
+
+.generate-bar{position:sticky;bottom:0;background:var(--surface);padding:18px 22px;border-top:1px solid var(--line);display:flex;gap:10px;}
+.btn{
+  font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:15px;
+  padding:14px 22px;border-radius:var(--radius);transition:.25s;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-primary{background:var(--red);color:#fff;flex:1;}
+.btn-primary:hover{background:#ff2338;}
+.btn-primary:disabled{background:var(--red-dim);cursor:progress;}
+.btn-outline{border:1px solid var(--line);color:var(--text);}
+.btn-outline:hover{border-color:var(--text);}
+.count{width:74px;flex:none;}
+
+details.final{margin-top:14px;}
+details.final summary{cursor:pointer;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);list-style:none;display:flex;gap:8px;align-items:center;}
+details.final summary::-webkit-details-marker{display:none;}
+details.final summary::before{content:'+';color:var(--red);font-size:14px;}
+details.final[open] summary::before{content:'−';}
+details.final pre{margin-top:10px;white-space:pre-wrap;font-family:var(--font-mono);font-size:11.5px;line-height:1.6;color:#c9c9ce;background:var(--bg);border:1px solid var(--line);padding:12px;max-height:220px;overflow:auto;}
+
+/* ---------- STAGE ---------- */
+.stage-wrap{display:flex;flex-direction:column;gap:18px;min-width:0;}
+.stage{position:relative;background:#050507;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:340px;}
+.stage canvas{width:100%;height:auto;max-height:78vh;object-fit:contain;cursor:zoom-in;user-select:none;-webkit-user-select:none;touch-action:none;}
+.stage .ab-tag{position:absolute;top:14px;left:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;background:rgba(10,10,13,.75);border:1px solid var(--line);padding:5px 9px;text-transform:uppercase;opacity:0;transition:opacity .15s;pointer-events:none;}
+.stage.showing-original .ab-tag{opacity:1;}
+.exif{position:absolute;left:0;right:0;bottom:0;display:flex;gap:18px;flex-wrap:wrap;padding:30px 16px 12px;background:linear-gradient(transparent,rgba(5,5,7,.85));font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:#c9c9ce;pointer-events:none;}
+.exif span b{color:var(--red);font-weight:500;margin-right:6px;}
+
+.empty{padding:60px 30px;text-align:center;max-width:520px;}
+.empty .frame{width:100%;aspect-ratio:3/2;border:1px dashed #33333b;position:relative;margin-bottom:26px;display:flex;align-items:center;justify-content:center;}
+.empty .frame::before,.empty .frame::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--red);border-style:solid;}
+.empty .frame::before{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+.empty .frame::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+.empty .frame svg{width:54px;color:#3a3a42;}
+.empty h3{font-size:24px;margin-bottom:8px;}
+.empty p{color:var(--muted);font-size:14px;}
+
+.developing{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(5,5,7,.88);z-index:3;text-align:center;padding:20px;}
+.stage.busy .developing{display:flex;}
+.aperture{width:64px;height:64px;animation:spin 2.4s linear infinite;color:var(--red);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.developing strong{font-family:var(--font-display);font-size:22px;text-transform:uppercase;letter-spacing:.04em;}
+.developing small{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.06em;}
+.developing .btn{padding:9px 16px;font-size:13px;}
+@media (prefers-reduced-motion:reduce){.aperture{animation:none;}}
+
+.error{display:none;margin:0;padding:14px 16px;border:1px solid var(--red-dim);background:rgba(224,26,43,.08);font-size:14px;border-radius:var(--radius);}
+.error.show{display:block;}
+.error b{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);display:block;margin-bottom:4px;}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.toolbar .group{display:flex;gap:8px;flex-wrap:wrap;}
+.toolbar .hint{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);letter-spacing:.04em;}
+
+.contact{display:none;}
+.contact.show{display:block;}
+.contact-strip{display:flex;gap:10px;overflow-x:auto;padding:12px;background:#0d0d10;border:1px solid var(--line);scrollbar-width:thin;}
+.contact-strip button{flex:none;position:relative;border:2px solid transparent;padding:0;}
+.contact-strip button[aria-pressed="true"]{border-color:var(--red);}
+.contact-strip img{height:84px;width:auto;}
+.contact-strip .num{position:absolute;bottom:3px;left:5px;font-family:var(--font-mono);font-size:10px;color:#ffb38a;text-shadow:0 1px 2px #000;}
+
+/* ---------- DARKROOM ---------- */
+.darkroom{padding:22px;}
+.darkroom-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+.darkroom-head h3{font-size:22px;}
+.films{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.film{padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius);font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;color:var(--muted);display:flex;gap:8px;align-items:center;}
+.film i{width:10px;height:10px;display:block;border-radius:1px;}
+.film:hover{color:var(--text);border-color:#3a3a42;}
+.film[aria-pressed="true"]{color:var(--text);border-color:var(--red);}
+.sliders{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 26px;}
+.slider label{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.slider output{color:var(--text);}
+input[type=range]{width:100%;appearance:none;-webkit-appearance:none;background:transparent;height:18px;}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);}
+input[type=range]::-moz-range-track{height:2px;background:var(--line);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--text);border-radius:50%;margin-top:-6px;border:3px solid var(--bg);box-shadow:0 0 0 1px var(--text);}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--text);border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 1px var(--text);}
+input[type=range]:focus-visible::-webkit-slider-thumb{background:var(--red);}
+.toggle{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;}
+.toggle input{accent-color:var(--red);width:16px;height:16px;}
+.darkroom.disabled{opacity:.45;pointer-events:none;}
+
+/* ---------- ARCHIVO ---------- */
+.archive{padding:70px 0 90px;border-top:1px solid var(--line);}
+.archive-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:30px;flex-wrap:wrap;}
+.archive-head h2{font-size:clamp(28px,4vw,44px);margin-top:10px;}
+.archive-head p{color:var(--muted);font-size:14px;max-width:420px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.shot{position:relative;background:var(--surface);border:1px solid var(--line);overflow:hidden;cursor:pointer;text-align:left;padding:0;}
+.shot img{width:100%;aspect-ratio:3/2;object-fit:cover;transition:transform .5s;}
+.shot:hover img{transform:scale(1.04);}
+.shot .meta{padding:10px 12px;}
+.shot .meta p{font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.shot .meta small{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em;}
+.shot .del{position:absolute;top:8px;right:8px;width:28px;height:28px;background:rgba(10,10,13,.8);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;font-size:13px;}
+.shot:hover .del,.shot:focus-within .del{opacity:1;}
+.shot .del:hover{border-color:var(--red);color:var(--red);}
+.archive-empty{color:var(--muted);font-family:var(--font-mono);font-size:13px;padding:30px;border:1px dashed var(--line);text-align:center;}
+
+/* ---------- MODAL MOTOR ---------- */
+dialog{margin:auto;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--radius);padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 40px);}
+dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(3px);}
+.modal-head{padding:22px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+.modal-head h3{font-size:26px;margin-top:8px;}
+.modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+.engine{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:block;cursor:pointer;}
+.engine:has(input:checked){border-color:var(--red);background:linear-gradient(180deg,rgba(224,26,43,.08),transparent);}
+.engine-top{display:flex;gap:12px;align-items:flex-start;}
+.engine-top input{accent-color:var(--red);margin-top:4px;}
+.engine strong{font-family:var(--font-display);font-size:18px;text-transform:uppercase;letter-spacing:.02em;}
+.engine .tag{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;padding:2px 6px;border:1px solid var(--line);margin-left:8px;color:var(--muted);vertical-align:middle;}
+.engine p{font-size:13px;color:var(--muted);margin-top:2px;}
+.engine .keys{display:none;grid-template-columns:1fr 150px;gap:8px;margin-top:12px;}
+.engine:has(input:checked) .keys{display:grid;}
+.engine .keys input{font-family:var(--font-mono);font-size:12.5px;}
+.modal-foot{padding:16px 24px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.modal-foot small{color:var(--muted);font-size:12px;max-width:300px;}
+
+/* ---------- FOOTER ---------- */
+footer{border-top:1px solid var(--line);padding:28px 0;background:var(--surface);}
+.footer-bottom{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;color:var(--muted);}
+.footer-bottom a:hover{color:var(--red);}
+
+[hidden]{display:none!important;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+@media(max-width:1180px){
+  .sliders{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:980px){
+  nav.main-nav{display:none;}
+  .workspace{grid-template-columns:1fr;}
+  .controls{position:static;max-height:none;}
+  .generate-bar{position:sticky;bottom:0;z-index:20;}
+}
+@media(max-width:560px){
+  .container{padding:0 16px;}
+  .nav-wrap{padding:14px 16px;}
+  .logo small{display:none;}
+  .icon-btn .txt{display:none;}
+  .styles{grid-template-columns:1fr 1fr;}
+  .field-grid{grid-template-columns:1fr;}
+  .sliders{grid-template-columns:1fr;}
+  .block{padding:18px 16px;}
+  .generate-bar{padding:14px 16px;}
+  .darkroom{padding:18px 16px;}
+  .engine .keys{grid-template-columns:1fr;}
+  .exif{gap:10px;font-size:10px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <a href="index__1_.html#/" class="logo"><span>MOTOR</span>WORLD <small>STUDIO</small></a>
+    <nav class="main-nav">
+      <a href="index__1_.html#/">Inicio</a>
+      <a href="index__1_.html#/marcas">Marcas</a>
+      <a href="index__1_.html#/como-funciona">Cómo funciona</a>
+      <a href="index__1_.html#/noticias">Noticias</a>
+      <a href="studio.html" class="active">Studio IA</a>
+    </nav>
+    <div class="nav-right">
+      <button class="icon-btn" id="engineBtn" aria-label="Configurar motor de IA">
+        <i class="engine-dot"></i><span class="txt" id="engineName">Motor</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="intro">
+  <div class="container intro-grid">
+    <div>
+      <div class="eyebrow">MotorWorld Studio · Fotografía con IA</div>
+      <h1>Fotos que parecen<br><span class="accent">disparadas</span> por un fotógrafo</h1>
+    </div>
+    <p>Describe la escena. El estudio la convierte en una orden de rodaje completa —cámara, óptica, luz y encuadre— y después revela la imagen con película, grano y halación como en un laboratorio analógico.</p>
+  </div>
+</section>
+
+<main class="container workspace">
+
+  <!-- ===== CONTROLES ===== -->
+  <aside class="panel controls" aria-label="Dirección de la foto">
+    <div class="block">
+      <div class="label"><span><span class="step">01</span>La escena</span></div>
+      <textarea class="prompt" id="prompt" placeholder="Ej.: Un Porsche 911 de los 70 aparcado en una calle mojada de Tokio de noche, con un mecánico limpiándose las manos al lado"></textarea>
+      <div class="prompt-tools">
+        <button class="link-btn" id="surprise"><span class="k">↻</span> Sorpréndeme</button>
+        <span class="link-btn" id="charCount">0 car.</span>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="label"><span><span class="step">02</span>Fotógrafo</span><b id="styleName"></b></div>
+      <div class="styles" id="styles"></div>
+    </div>
+
+    <div class="block">
+      <div class="label"><span><span class="step">03</span>Cámara y luz</span></div>
+      <div class="field-grid">
+        <div class="field"><label for="lens">Óptica</label><select id="lens"></select></div>
+        <div class="field"><label for="aperture">Diafragma</label><select id="aperture"></select></div>
+        <div class="field"><label for="light">Luz</label><select id="light"></select></div>
+        <div class="field"><label for="angle">Encuadre</label><select id="angle"></select></div>
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label>Formato</label>
+        <div class="segmented" id="ratio" role="group" aria-label="Formato"></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="label"><span><span class="step">04</span>Nivel de realismo</span></div>
+      <div class="realism" id="realism"></div>
+    </div>
+
+    <div class="block">
+      <div class="label"><span>Semilla</span><b class="hint">misma semilla = misma foto</b></div>
+      <div class="seed-row">
+        <input type="number" id="seed" min="0" max="2147483647" aria-label="Semilla">
+        <button class="lock" id="seedLock" aria-pressed="false" aria-label="Bloquear semilla" title="Bloquear semilla">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </button>
+      </div>
+      <details class="final">
+        <summary>Orden de rodaje (prompt final)</summary>
+        <pre id="finalPrompt"></pre>
+        <button class="link-btn" id="copyPrompt" style="margin-top:8px;"><span class="k">⧉</span> Copiar</button>
+      </details>
+    </div>
+
+    <div class="generate-bar">
+      <select class="count" id="count" aria-label="Número de fotos">
+        <option value="1">×1</option>
+        <option value="2">×2</option>
+        <option value="4">×4</option>
+      </select>
+      <button class="btn btn-primary" id="shoot">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Disparar
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== ESCENARIO ===== -->
+  <section class="stage-wrap" aria-label="Resultado">
+    <div class="stage" id="stage">
+      <div class="empty" id="empty">
+        <div class="frame">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <h3>El estudio está listo</h3>
+        <p>Escribe la escena, elige a tu fotógrafo y pulsa <strong>Disparar</strong>. Atajo: <kbd>Ctrl</kbd> + <kbd>Enter</kbd>.</p>
+      </div>
+      <canvas id="view" hidden aria-label="Foto generada"></canvas>
+      <div class="ab-tag">Original sin revelar</div>
+      <div class="exif" id="exif" hidden></div>
+      <div class="developing" role="status" aria-live="polite">
+        <svg class="aperture" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="29"/><path d="M32 3l10 22M61 32l-22 10M32 61L22 39M3 32l22-10M52.5 11.5L39 25M52.5 52.5L39 39M11.5 52.5L25 39M11.5 11.5L25 25"/></svg>
+        <strong id="devTitle">Disparando…</strong>
+        <small id="devTime">0,0 s</small>
+        <button class="btn btn-outline" id="cancel">Cancelar</button>
+      </div>
+    </div>
+
+    <p class="error" id="error" role="alert"></p>
+
+    <div class="contact" id="contact">
+      <div class="label"><span>Hoja de contactos</span><b class="hint">elige la mejor toma</b></div>
+      <div class="contact-strip" id="strip"></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="group">
+        <button class="btn btn-outline" id="download" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Descargar JPG
+        </button>
+        <button class="btn btn-outline" id="reuse" disabled title="Reutiliza escena y semilla de esta foto">Repetir toma</button>
+      </div>
+      <span class="hint">Mantén pulsada la foto para ver el original</span>
+    </div>
+
+    <div class="panel darkroom disabled" id="darkroom">
+      <div class="darkroom-head">
+        <div>
+          <div class="eyebrow">Laboratorio</div>
+          <h3>Revelado</h3>
+        </div>
+        <label class="toggle"><input type="checkbox" id="mono"> Blanco y negro</label>
+      </div>
+      <div class="films" id="films" role="group" aria-label="Película"></div>
+      <div class="sliders" id="sliders"></div>
+    </div>
+  </section>
+</main>
+
+<section class="archive">
+  <div class="container">
+    <div class="archive-head">
+      <div>
+        <div class="eyebrow">Tu archivo</div>
+        <h2>Carrete</h2>
+      </div>
+      <p>Cada foto se guarda solo en este navegador, con su escena, su semilla y su revelado, para que puedas retomarla cuando quieras.</p>
+    </div>
+    <div class="grid" id="archive"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-bottom">
+    <span>© MotorWorld Studio</span>
+    <a href="index__1_.html#/">← Volver a la enciclopedia</a>
+  </div>
+</footer>
+
+<!-- ===== MOTOR DE IA ===== -->
+<dialog id="engineDialog" aria-labelledby="engineTitle">
+  <form method="dialog">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">Configuración</div>
+        <h3 id="engineTitle">Motor de IA</h3>
+      </div>
+      <button class="icon-btn" value="cancel" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body" id="engines"></div>
+    <div class="modal-foot">
+      <small>Las claves se guardan solo en este navegador y se envían únicamente al proveedor que elijas.</small>
+      <button class="btn btn-primary" value="save" id="saveEngine" style="flex:none;">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/* =====================================================================
+   1. CEREBRO DEL FOTÓGRAFO — convierte una idea en una orden de rodaje
+   ===================================================================== */
+
+const STYLES = {
+  editorial: {
+    name: "Editorial", desc: "Portada de revista de motor",
+    camera: "Canon EOS R5", lens: "85mm", aperture: "f/2.8",
+    brief: "professional automotive editorial photograph for a print car magazine, art-directed but real, location shoot",
+    film: "natural"
+  },
+  rolling: {
+    name: "Rolling shot", desc: "Barrido en movimiento",
+    camera: "Nikon Z9", lens: "35mm", aperture: "f/8",
+    brief: "car-to-car rolling shot taken from a chase vehicle, shutter speed 1/40s, road and background streaked with motion blur, car body tack sharp, wheels and tyres blurred from rotation",
+    film: "natural"
+  },
+  film: {
+    name: "Analógico 35mm", desc: "Leica y Portra 400",
+    camera: "Leica M6", lens: "35mm", aperture: "f/4",
+    brief: "shot on Kodak Portra 400 35mm color negative film, lab scan, organic film grain, gentle highlight roll-off, slightly imperfect focus",
+    film: "portra"
+  },
+  night: {
+    name: "Noche urbana", desc: "Luz disponible, ISO alto",
+    camera: "Sony A7S III", lens: "35mm", aperture: "f/1.4",
+    brief: "available light only, ISO 6400, city lights and neon signs reflecting on wet asphalt, documentary night photography, deep shadows with real noise",
+    film: "cinestill"
+  },
+  studio: {
+    name: "Estudio", desc: "Ciclorama y softbox",
+    camera: "Phase One IQ4 150MP", lens: "80mm", aperture: "f/11",
+    brief: "high-end studio car photography on a seamless cyclorama, large overhead strip softbox, reflections shaped with black flags, product-catalog precision",
+    film: "digital"
+  },
+  candid: {
+    name: "Móvil espontáneo", desc: "Foto casual de transeúnte",
+    camera: "iPhone 15 Pro main camera", lens: "24mm", aperture: "f/1.8",
+    brief: "casual candid snapshot taken by a passerby on a phone, slightly crooked framing, everyday unstaged moment, smartphone HDR processing, not a professional photo",
+    film: "digital"
+  },
+  drone: {
+    name: "Dron aéreo", desc: "Vista cenital o alta",
+    camera: "DJI Mavic 3 Pro Hasselblad camera", lens: "24mm", aperture: "f/5.6",
+    brief: "aerial drone photograph from high above, top-down or steep high angle, sense of landscape scale, crisp atmospheric perspective",
+    film: "natural"
+  },
+  archive: {
+    name: "Archivo 70s", desc: "Diapositiva Kodachrome",
+    camera: "Nikon F2", lens: "50mm", aperture: "f/5.6",
+    brief: "authentic 1970s archival photograph on Kodachrome 64 slide film, period-correct clothing, signage and vehicles, slight color shift from age",
+    film: "kodachrome"
+  }
+};
+
+const LENSES = {
+  auto: ["Del fotógrafo", null],
+  "24": ["24 mm angular", "24mm wide-angle lens, slight perspective stretch at the edges"],
+  "35": ["35 mm reportaje", "35mm lens, natural documentary perspective"],
+  "50": ["50 mm normal", "50mm lens, perspective like the human eye"],
+  "85": ["85 mm retrato", "85mm lens, flattering compression, creamy background separation"],
+  "135": ["135 mm tele", "135mm telephoto lens, strong compression, background melts away"],
+  "200": ["200 mm tele largo", "200mm telephoto lens shot from distance, heavy compression, trackside feel"],
+  "100m": ["100 mm macro", "100mm macro lens, extreme close-up detail, razor-thin depth of field"]
+};
+
+const APERTURES = ["auto", "f/1.4", "f/2", "f/2.8", "f/4", "f/5.6", "f/8", "f/11", "f/16"];
+
+const LIGHTS = {
+  auto: ["Del fotógrafo", null],
+  golden: ["Hora dorada", "low golden-hour sun raking across the scene, warm rim light, long soft shadows"],
+  blue: ["Hora azul", "blue hour just after sunset, deep blue ambient sky, warm artificial lights switching on"],
+  overcast: ["Nublado suave", "overcast sky acting as a giant softbox, soft even light, subtle shadows, muted contrast"],
+  midday: ["Sol de mediodía", "harsh midday sun, hard shadows directly underneath, bright specular highlights"],
+  rain: ["Lluvia", "light rain falling, wet glossy surfaces, droplets beading on paint and glass, grey diffuse light"],
+  fog: ["Niebla", "morning fog and mist, layered depth, low contrast distance, soft diffused light"],
+  neon: ["Neón nocturno", "night, mixed neon and sodium street lighting, colored reflections"],
+  flash: ["Flash directo", "on-camera direct flash at night, hard frontal light, dark falloff background, paparazzi feel"]
+};
+
+const ANGLES = {
+  auto: ["Del fotógrafo", null],
+  low34: ["3/4 frontal bajo", "low camera position, front three-quarter view, the car looks planted and powerful"],
+  profile: ["Perfil lateral", "clean side profile at wheel height"],
+  rear34: ["3/4 trasero", "rear three-quarter view showing tail lights and haunches"],
+  detail: ["Detalle", "tight detail crop of a design element, badge, wheel or interior texture"],
+  wide: ["Plano ambiental", "wide environmental shot, subject small in the frame, location tells the story"],
+  eye: ["Altura de ojos", "eye-level point of view as if standing there"],
+  interior: ["Interior", "from inside the cabin, steering wheel and dashboard in frame, view through the windshield"]
+};
+
+const RATIOS = {
+  "3:2": [3, 2], "16:9": [16, 9], "4:5": [4, 5], "1:1": [1, 1], "9:16": [9, 16]
+};
+
+const REALISM = {
+  polished: { name: "Pulido", desc: "Retoque de revista", text: "subtle professional retouching, clean but believable" },
+  natural: { name: "Natural", desc: "Como sale de cámara", text: "unretouched straight-out-of-camera look, real micro-imperfections: dust, small scratches, fingerprints, uneven reflections, tyre wear, natural skin texture with pores" },
+  raw: { name: "Crudo", desc: "Imperfecto y vivido", text: "raw unpolished reality, slightly missed focus or tilted horizon, everyday mess and clutter, dirt on bodywork, lens flare and smudge, imperfect timing like a real moment caught" }
+};
+
+const SURPRISES = [
+  "Un Lancia Delta Integrale derrapando en un tramo de rally de tierra en Cerdeña, público agolpado en la cuneta levantando polvo",
+  "Un Ferrari F40 rojo aparcado frente a una gasolinera de carretera en los Alpes al amanecer, con escarcha en el parabrisas",
+  "Un mecánico de unos 60 años con las manos manchadas de grasa ajustando el carburador de un Alfa Romeo Giulia en un taller pequeño",
+  "Un Toyota Supra MK4 en un aparcamiento de Daikoku de noche, rodeado de gente mirando coches",
+  "Un Land Rover Defender embarrado cruzando un río en Islandia, salpicando agua",
+  "Un Mercedes 300SL Alas de Gaviota con las puertas abiertas en una calle empedrada de Mónaco",
+  "Boxes de Le Mans a las 3 de la madrugada durante un cambio de pilotos, mecánicos con casco y frenos al rojo vivo",
+  "Un Seat 600 cargado con maletas en el techo en un pueblo blanco de Andalucía en verano, familia junto al coche",
+  "Detalle de las gotas de lluvia sobre el capó de un BMW E30 M3 negro bajo una farola",
+  "Un Porsche 911 Safari levantando nieve en una pista forestal de Laponia"
+];
+
+const state = {
+  style: "editorial",
+  ratio: "3:2",
+  realism: "natural",
+  seedLocked: false
+};
+
+function buildPrompt() {
+  const scene = $("#prompt").value.trim() || "a classic sports car parked on a quiet road";
+  const s = STYLES[state.style];
+  const lensKey = $("#lens").value;
+  const lens = LENSES[lensKey][1] || `${s.lens} lens`;
+  const ap = $("#aperture").value === "auto" ? s.aperture : $("#aperture").value;
+  const light = LIGHTS[$("#light").value][1];
+  const angle = ANGLES[$("#angle").value][1];
+  const real = REALISM[state.realism].text;
+
+  const parts = [
+    `A real photograph, not a render. Scene: ${scene}.`,
+    `${s.brief}.`,
+    `Shot on ${s.camera}, ${lens}, aperture ${ap}, correct depth of field for that aperture and focal length.`,
+    light && `Lighting: ${light}.`,
+    angle && `Framing: ${angle}.`,
+    `${real}.`,
+    "Physically accurate reflections, shadows and contact with the ground; true-to-life proportions, panel gaps, badges, tyres and materials; natural color science; believable people with natural poses and real hands if any appear.",
+    "Avoid: CGI, 3D render, video game look, illustration, plastic or waxy surfaces, oversaturated HDR, airbrushed skin, distorted wheels, extra fingers, added text, watermark or frame."
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+/* =====================================================================
+   2. MOTORES DE IA
+   ===================================================================== */
+
+const ENGINES = {
+  pollinations: {
+    name: "Pollinations · FLUX", tag: "GRATIS",
+    desc: "Funciona sin registrarte. Ideal para empezar y probar muchas tomas.",
+    keyLabel: "Token (opcional)", modelDefault: "flux"
+  },
+  openai: {
+    name: "OpenAI · GPT Image", tag: "MÁXIMA CALIDAD",
+    desc: "El más fiel a escenas complejas, texto en matrículas y manos. Necesita clave de platform.openai.com.",
+    keyLabel: "Clave API (sk-…)", modelDefault: "gpt-image-1"
+  },
+  gemini: {
+    name: "Google · Gemini Image", tag: "MUY REALISTA",
+    desc: "Muy natural en luz y materiales. Clave gratuita en aistudio.google.com.",
+    keyLabel: "Clave API", modelDefault: "gemini-2.5-flash-image"
+  }
+};
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("mwstudio." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("mwstudio." + k, JSON.stringify(v)); } catch {} }
+};
+
+let engineCfg = store.get("engine", { provider: "pollinations", keys: {}, models: {} });
+
+function dims(ratio, longEdge) {
+  const [a, b] = RATIOS[ratio];
+  const r = a / b;
+  let w = r >= 1 ? longEdge : longEdge * r;
+  let h = r >= 1 ? longEdge / r : longEdge;
+  return [Math.round(w / 64) * 64, Math.round(h / 64) * 64];
+}
+
+function b64ToBlob(b64, type = "image/png") {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type });
+}
+
+async function apiError(res) {
+  let msg = `${res.status} ${res.statusText}`;
+  try { const j = await res.json(); msg = j.error?.message || j.message || msg; } catch {}
+  return new Error(msg);
+}
+
+const generators = {
+  async pollinations({ prompt, ratio, seed, signal }) {
+    const [w, h] = dims(ratio, 1344);
+    const p = new URLSearchParams({
+      width: w, height: h, seed, nologo: "true", private: "true", enhance: "false",
+      model: engineCfg.models.pollinations || ENGINES.pollinations.modelDefault
+    });
+    if (engineCfg.keys.pollinations) p.set("token", engineCfg.keys.pollinations);
+    const res = await fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${p}`, { signal });
+    if (!res.ok) throw await apiError(res);
+    return res.blob();
+  },
+
+  async openai({ prompt, ratio, signal }) {
+    const key = engineCfg.keys.openai;
+    if (!key) throw new Error("Falta la clave de OpenAI. Añádela en «Motor».");
+    const model = engineCfg.models.openai || ENGINES.openai.modelDefault;
+    const [a, b] = RATIOS[ratio];
+    const dalle = model.startsWith("dall-e");
+    const size = a === b ? "1024x1024" : a > b ? (dalle ? "1792x1024" : "1536x1024") : (dalle ? "1024x1792" : "1024x1536");
+    const body = { model, prompt, size, n: 1, quality: dalle ? "hd" : "high" };
+    if (dalle) body.response_format = "b64_json";
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST", signal,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw await apiError(res);
+    const j = await res.json();
+    return b64ToBlob(j.data[0].b64_json);
+  },
+
+  async gemini({ prompt, ratio, signal }) {
+    const key = engineCfg.keys.gemini;
+    if (!key) throw new Error("Falta la clave de Gemini. Añádela en «Motor».");
+    const model = engineCfg.models.gemini || ENGINES.gemini.modelDefault;
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST", signal,
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: ratio } }
+      })
+    });
+    if (!res.ok) throw await apiError(res);
+    const j = await res.json();
+    const part = j.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+    if (!part) throw new Error("Gemini no devolvió imagen (puede haber bloqueado la escena). Prueba a reformularla.");
+    return b64ToBlob(part.inlineData.data, part.inlineData.mimeType);
+  }
+};
+
+/* =====================================================================
+   3. LABORATORIO — revelado analógico sobre canvas
+   ===================================================================== */
+
+const SLIDERS = [
+  ["exposure", "Exposición", -100, 100],
+  ["contrast", "Contraste", -100, 100],
+  ["saturation", "Saturación", -100, 100],
+  ["temperature", "Temperatura", -100, 100],
+  ["fade", "Negros lavados", 0, 100],
+  ["grain", "Grano", 0, 100],
+  ["grainSize", "Tamaño de grano", 1, 4],
+  ["halation", "Halación", 0, 100],
+  ["aberration", "Aberración cromática", 0, 100],
+  ["vignette", "Viñeta", 0, 100]
+];
+
+const ZERO = { exposure: 0, contrast: 0, saturation: 0, temperature: 0, fade: 0, grain: 0, grainSize: 1, halation: 0, aberration: 0, vignette: 0, mono: false };
+
+const FILMS = {
+  digital:   { name: "Digital limpio", color: "#93939d", s: {} },
+  natural:   { name: "Natural", color: "#d9d4c7", s: { contrast: 4, fade: 3, grain: 14, grainSize: 1, aberration: 12, vignette: 16, halation: 6 } },
+  portra:    { name: "Portra 400", color: "#e8b48a", s: { temperature: 12, contrast: -6, saturation: -10, fade: 9, grain: 32, grainSize: 2, halation: 12, aberration: 10, vignette: 20 } },
+  cinestill: { name: "CineStill 800T", color: "#4f8de0", s: { temperature: -16, contrast: 8, saturation: 4, fade: 6, grain: 38, grainSize: 2, halation: 60, aberration: 14, vignette: 18 } },
+  ektar:     { name: "Ektar 100", color: "#e0442f", s: { contrast: 12, saturation: 22, temperature: 4, grain: 16, grainSize: 1, halation: 8, vignette: 14 } },
+  kodachrome:{ name: "Kodachrome 64", color: "#c9a23a", s: { contrast: 16, saturation: 14, temperature: 8, fade: 10, grain: 24, grainSize: 2, halation: 10, vignette: 26 } },
+  trix:      { name: "Tri-X 400 B/N", color: "#eceef1", s: { contrast: 24, grain: 52, grainSize: 2, vignette: 26, fade: 4, mono: true } }
+};
+
+let dev = { ...ZERO, ...FILMS.natural.s };
+let activeFilm = "natural";
+
+const grainCache = new Map();
+function grainField(w, h, size) {
+  const key = `${w}x${h}x${size}`;
+  if (grainCache.has(key)) return grainCache.get(key);
+  // Ruido gaussiano a baja resolución + reescalado suave = grano orgánico con "tamaño"
+  const gw = Math.max(1, Math.ceil(w / size)), gh = Math.max(1, Math.ceil(h / size));
+  const small = document.createElement("canvas");
+  small.width = gw; small.height = gh;
+  const sctx = small.getContext("2d");
+  const sd = sctx.createImageData(gw, gh);
+  let s = 0x9e3779b9;
+  const rnd = () => { s |= 0; s = s + 0x6d2b79f5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  for (let i = 0; i < sd.data.length; i += 4) {
+    const g = (rnd() + rnd() + rnd() + rnd() - 2) * 0.5; // aprox. gaussiana [-1,1]
+    const v = 128 + g * 127;
+    sd.data[i] = sd.data[i + 1] = sd.data[i + 2] = v; sd.data[i + 3] = 255;
+  }
+  sctx.putImageData(sd, 0, 0);
+  const big = document.createElement("canvas");
+  big.width = w; big.height = h;
+  const bctx = big.getContext("2d");
+  bctx.imageSmoothingEnabled = size > 1;
+  bctx.imageSmoothingQuality = "high";
+  bctx.drawImage(small, 0, 0, w, h);
+  const field = new Int16Array(w * h);
+  const bd = bctx.getImageData(0, 0, w, h).data;
+  for (let i = 0, j = 0; j < field.length; i += 4, j++) field[j] = bd[i] - 128;
+  if (grainCache.size > 6) grainCache.clear();
+  grainCache.set(key, field);
+  return field;
+}
+
+function halationField(src, w, h) {
+  // Brillos altos → máscara roja-anaranjada → desenfoque por reescalado (como la luz rebotando en la base de la película)
+  const sw = Math.max(1, Math.round(w / 12)), sh = Math.max(1, Math.round(h / 12));
+  const c1 = document.createElement("canvas"); c1.width = sw; c1.height = sh;
+  const x1 = c1.getContext("2d"); x1.imageSmoothingQuality = "high";
+  x1.drawImage(src, 0, 0, sw, sh);
+  const d = x1.getImageData(0, 0, sw, sh);
+  for (let i = 0; i < d.data.length; i += 4) {
+    const l = (0.2126 * d.data[i] + 0.7152 * d.data[i + 1] + 0.0722 * d.data[i + 2]) / 255;
+    const t = Math.max(0, (l - 0.72) / 0.28);
+    d.data[i] = 255 * t; d.data[i + 1] = 70 * t; d.data[i + 2] = 25 * t;
+  }
+  x1.putImageData(d, 0, 0);
+  const c2 = document.createElement("canvas"); c2.width = Math.max(1, sw >> 1); c2.height = Math.max(1, sh >> 1);
+  const x2 = c2.getContext("2d"); x2.imageSmoothingQuality = "high";
+  x2.drawImage(c1, 0, 0, c2.width, c2.height);
+  const c3 = document.createElement("canvas"); c3.width = w; c3.height = h;
+  const x3 = c3.getContext("2d"); x3.imageSmoothingQuality = "high";
+  x3.drawImage(c2, 0, 0, w, h);
+  return x3.getImageData(0, 0, w, h).data;
+}
+
+function develop(srcCanvas, out, settings) {
+  const w = srcCanvas.width, h = srcCanvas.height;
+  out.width = w; out.height = h;
+  const ctx = out.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(srcCanvas, 0, 0);
+  const img = ctx.getImageData(0, 0, w, h);
+  const src = new Uint8ClampedArray(img.data);
+  const d = img.data;
+
+  const S = settings;
+  const expo = Math.pow(2, S.exposure / 100);
+  const con = 1 + S.contrast / 100;
+  const sat = 1 + S.saturation / 100;
+  const tR = 1 + S.temperature / 100 * 0.14, tB = 1 - S.temperature / 100 * 0.14, tG = 1 + S.temperature / 100 * 0.03;
+  const fade = S.fade / 100 * 0.16;
+  const grainAmt = S.grain / 100 * 46;
+  const halAmt = S.halation / 100 * 1.1;
+  const caPx = S.aberration / 100 * Math.max(w, h) * 0.004;
+  const vig = S.vignette / 100 * 0.75;
+
+  const grain = grainAmt > 0 ? grainField(w, h, S.grainSize) : null;
+  const hal = halAmt > 0 ? halationField(srcCanvas, w, h) : null;
+
+  // Curva tonal en LUT (exposición + contraste en S + negros lavados)
+  const lut = new Float32Array(256);
+  for (let v = 0; v < 256; v++) {
+    let x = Math.min(1, (v / 255) * expo);
+    const sCurve = x * x * (3 - 2 * x);
+    x = con >= 1 ? x + (sCurve - x) * Math.min(1, con - 1) * 1.6 : 0.5 + (x - 0.5) * con;
+    x = Math.max(0, Math.min(1, x));
+    x = fade + x * (1 - fade - fade * 0.25);
+    lut[v] = x * 255;
+  }
+
+  const cx = w / 2, cy = h / 2, maxD = Math.hypot(cx, cy);
+  for (let y = 0; y < h; y++) {
+    const dy = (y - cy) / maxD;
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const dx = (x - cx) / maxD;
+      let r, g = src[i + 1], b;
+      if (caPx > 0.3) {
+        const ox = Math.round(dx * caPx), oy = Math.round(dy * caPx);
+        const xr = Math.min(w - 1, Math.max(0, x - ox)), yr = Math.min(h - 1, Math.max(0, y - oy));
+        const xb = Math.min(w - 1, Math.max(0, x + ox)), yb = Math.min(h - 1, Math.max(0, y + oy));
+        r = src[(yr * w + xr) * 4];
+        b = src[(yb * w + xb) * 4 + 2];
+      } else { r = src[i]; b = src[i + 2]; }
+
+      r = lut[r]; g = lut[g]; b = lut[b];
+      r *= tR; g *= tG; b *= tB;
+
+      const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      if (S.mono) { r = g = b = l; }
+      else if (sat !== 1) { r = l + (r - l) * sat; g = l + (g - l) * sat; b = l + (b - l) * sat; }
+
+      if (hal) {
+        const hr = hal[i] * halAmt, hg = hal[i + 1] * halAmt, hb = hal[i + 2] * halAmt;
+        r = 255 - (255 - r) * (255 - Math.min(255, hr)) / 255;
+        g = 255 - (255 - g) * (255 - Math.min(255, hg)) / 255;
+        b = 255 - (255 - b) * (255 - Math.min(255, hb)) / 255;
+      }
+
+      if (vig > 0) {
+        const rr = Math.sqrt(dx * dx + dy * dy) * 1.25;
+        const t = Math.min(1, Math.max(0, (rr - 0.45) / 0.8));
+        const m = 1 - vig * t * t * (3 - 2 * t);
+        r *= m; g *= m; b *= m;
+      }
+
+      if (grain) {
+        const lum = Math.min(1, Math.max(0, (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255));
+        const wgt = 0.35 + 0.65 * (1 - Math.pow(2 * lum - 1, 2)); // más grano en medios tonos
+        const n = grain[y * w + x] / 128 * grainAmt * wgt;
+        r += n; g += n; b += n;
+      }
+
+      d[i] = r; d[i + 1] = g; d[i + 2] = b;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/* =====================================================================
+   4. ESTADO DE LA FOTO ACTUAL Y RENDER
+   ===================================================================== */
+
+const view = $("#view");
+let current = null;      // { id, blob, prompt, scene, seed, ratio, style, engine, createdAt }
+let fullCanvas = null;   // original recortado a resolución completa
+let previewCanvas = null; // original a resolución de pantalla
+let showingOriginal = false;
+let renderQueued = false;
+
+function cropToRatio(bitmap, ratio) {
+  const [a, b] = RATIOS[ratio] || [bitmap.width, bitmap.height];
+  const target = a / b, srcR = bitmap.width / bitmap.height;
+  let sw = bitmap.width, sh = bitmap.height, sx = 0, sy = 0;
+  if (Math.abs(srcR - target) > 0.01) {
+    if (srcR > target) { sw = Math.round(sh * target); sx = Math.round((bitmap.width - sw) / 2); }
+    else { sh = Math.round(sw / target); sy = Math.round((bitmap.height - sh) / 2); }
+  }
+  const c = document.createElement("canvas");
+  c.width = sw; c.height = sh;
+  c.getContext("2d").drawImage(bitmap, sx, sy, sw, sh, 0, 0, sw, sh);
+  return c;
+}
+
+function scaled(canvas, maxEdge) {
+  const k = Math.min(1, maxEdge / Math.max(canvas.width, canvas.height));
+  if (k === 1) return canvas;
+  const c = document.createElement("canvas");
+  c.width = Math.round(canvas.width * k); c.height = Math.round(canvas.height * k);
+  const x = c.getContext("2d"); x.imageSmoothingQuality = "high";
+  x.drawImage(canvas, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function blobToCanvas(blob, ratio) {
+  let bmp;
+  if ("createImageBitmap" in window) bmp = await createImageBitmap(blob);
+  else bmp = await new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ko; im.src = URL.createObjectURL(blob); });
+  return cropToRatio(bmp, ratio);
+}
+
+async function showPhoto(photo, devSettings) {
+  current = photo;
+  fullCanvas = await blobToCanvas(photo.blob, photo.ratio);
+  const edge = Math.min(1800, Math.round(Math.max(view.parentElement.clientWidth, 600) * (window.devicePixelRatio || 1)));
+  previewCanvas = scaled(fullCanvas, edge);
+  if (devSettings) { dev = { ...ZERO, ...devSettings.s }; activeFilm = devSettings.film || null; syncDarkroom(); }
+  $("#empty").hidden = true;
+  view.hidden = false;
+  $("#darkroom").classList.remove("disabled");
+  $("#download").disabled = false;
+  $("#reuse").disabled = false;
+  renderExif(photo);
+  queueRender();
+}
+
+function renderExif(p) {
+  const s = STYLES[p.style] || STYLES.editorial;
+  const lens = p.lens && p.lens !== "auto" ? LENSES[p.lens][0].split(" ").slice(0, 2).join(" ") : s.lens.replace("mm", " mm");
+  const el = $("#exif");
+  el.hidden = false;
+  el.innerHTML = [
+    ["CAM", s.camera], ["ÓPT", lens], ["DIAF", p.aperture && p.aperture !== "auto" ? p.aperture : s.aperture],
+    ["SEM", p.seed], ["IA", ENGINES[p.engine]?.name.split(" · ")[1] || p.engine]
+  ].map(([k, v]) => `<span><b>${k}</b>${escapeHtml(String(v))}</span>`).join("");
+}
+
+function queueRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    if (!previewCanvas) return;
+    if (showingOriginal) {
+      view.width = previewCanvas.width; view.height = previewCanvas.height;
+      view.getContext("2d").drawImage(previewCanvas, 0, 0);
+    } else develop(previewCanvas, view, dev);
+  });
+}
+
+/* =====================================================================
+   5. ARCHIVO (IndexedDB)
+   ===================================================================== */
+
+const db = {
+  _p: null,
+  open() {
+    if (this._p) return this._p;
+    this._p = new Promise((ok, ko) => {
+      try {
+        const r = indexedDB.open("mwstudio", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("shots", { keyPath: "id" });
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => ko(r.error);
+      } catch (e) { ko(e); }
+    });
+    return this._p;
+  },
+  async tx(mode, fn) {
+    const d = await this.open();
+    return new Promise((ok, ko) => {
+      const t = d.transaction("shots", mode);
+      const req = fn(t.objectStore("shots"));
+      t.oncomplete = () => ok(req?.result);
+      t.onerror = () => ko(t.error);
+    });
+  },
+  put(v) { return this.tx("readwrite", s => s.put(v)).catch(() => {}); },
+  del(id) { return this.tx("readwrite", s => s.delete(id)).catch(() => {}); },
+  get(id) { return this.tx("readonly", s => s.get(id)).catch(() => null); },
+  all() { return this.tx("readonly", s => s.getAll()).catch(() => []); }
+};
+
+function thumbOf(canvas, settings = dev) {
+  const t = scaled(canvas, 480);
+  const c = document.createElement("canvas");
+  develop(t, c, settings);
+  return c.toDataURL("image/jpeg", 0.8);
+}
+
+async function saveCurrentDev() {
+  if (!current) return;
+  const rec = await db.get(current.id);
+  if (!rec) return;
+  rec.dev = { s: { ...dev }, film: activeFilm };
+  rec.thumb = thumbOf(fullCanvas);
+  await db.put(rec);
+  renderArchive();
+}
+
+async function renderArchive() {
+  const list = (await db.all()).sort((a, b) => b.createdAt - a.createdAt);
+  const el = $("#archive");
+  if (!list.length) { el.innerHTML = `<div class="archive-empty">Tu carrete está vacío. Las fotos que dispares aparecerán aquí.</div>`; return; }
+  el.innerHTML = list.map(r => `
+    <div class="shot" data-id="${r.id}" role="button" tabindex="0" aria-label="Abrir foto">
+      <img src="${r.thumb}" alt="" loading="lazy">
+      <button class="del" data-del="${r.id}" aria-label="Borrar foto">✕</button>
+      <div class="meta"><p>${escapeHtml(r.scene)}</p><small>${STYLES[r.style]?.name || ""} · ${new Date(r.createdAt).toLocaleDateString("es-ES")}</small></div>
+    </div>`).join("");
+}
+
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+/* =====================================================================
+   6. DISPARO
+   ===================================================================== */
+
+let abort = null;
+let timer = null;
+
+function randomSeed() { return Math.floor(Math.random() * 2147483647); }
+
+function setBusy(on, title) {
+  $("#stage").classList.toggle("busy", on);
+  $("#shoot").disabled = on;
+  if (title) $("#devTitle").textContent = title;
+  clearInterval(timer);
+  if (on) {
+    const t0 = performance.now();
+    timer = setInterval(() => { $("#devTime").textContent = ((performance.now() - t0) / 1000).toFixed(1).replace(".", ",") + " s"; }, 100);
+  }
+}
+
+function showError(msg) {
+  const el = $("#error");
+  if (!msg) { el.classList.remove("show"); return; }
+  el.innerHTML = `<b>No se pudo revelar</b>${escapeHtml(msg)}`;
+  el.classList.add("show");
+}
+
+async function shoot() {
+  if (abort) return;
+  showError(null);
+  const scene = $("#prompt").value.trim();
+  if (!scene) { $("#prompt").focus(); showError("Describe primero la escena que quieres fotografiar."); return; }
+
+  const n = +$("#count").value;
+  if (!state.seedLocked) $("#seed").value = randomSeed();
+  const baseSeed = +$("#seed").value || 0;
+  const prompt = buildPrompt();
+  const provider = engineCfg.provider;
+  const shotInfo = {
+    scene, prompt, ratio: state.ratio, style: state.style, realism: state.realism,
+    lens: $("#lens").value, aperture: $("#aperture").value, light: $("#light").value, angle: $("#angle").value,
+    engine: provider
+  };
+  const film = STYLES[state.style].film;
+  const devForShot = { s: { ...ZERO, ...FILMS[film].s }, film };
+
+  abort = new AbortController();
+  setBusy(true, n > 1 ? `Disparando ${n} tomas…` : "Disparando…");
+  const strip = $("#strip");
+  strip.innerHTML = "";
+  $("#contact").classList.toggle("show", n > 1);
+
+  let first = true, ok = 0, lastErr = null;
+  const jobs = Array.from({ length: n }, (_, k) => (async () => {
+    const seed = (baseSeed + k * 7919) % 2147483647;
+    try {
+      const blob = await generators[provider]({ prompt, ratio: state.ratio, seed, signal: abort.signal });
+      const photo = { id: `${Date.now()}-${k}-${seed}`, blob, seed, createdAt: Date.now(), ...shotInfo };
+      const canvas = await blobToCanvas(blob, photo.ratio);
+      const thumb = thumbOf(canvas, devForShot.s);
+      await db.put({ ...photo, thumb, dev: devForShot });
+      addToStrip(photo, thumb, k);
+      ok++;
+      if (first) { first = false; await showPhoto(photo, devForShot); markStrip(photo.id); setBusy(n > ok, `Revelando ${n - ok} más…`); }
+    } catch (e) {
+      if (e.name !== "AbortError") lastErr = e;
+    }
+  })());
+
+  await Promise.all(jobs);
+  abort = null;
+  setBusy(false);
+  renderArchive();
+  if (!ok && lastErr) showError(friendlyError(lastErr, provider));
+  else if (lastErr && ok < n) showError(`Solo salieron ${ok} de ${n} tomas: ${friendlyError(lastErr, provider)}`);
+}
+
+function friendlyError(e, provider) {
+  const m = e.message || String(e);
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) {
+    return provider === "pollinations"
+      ? "El servicio gratuito no respondió (puede estar saturado o bloqueado por tu red). Vuelve a intentarlo en unos segundos o cambia de motor en «Motor»."
+      : "No hay conexión con el proveedor. Revisa tu conexión o la clave en «Motor».";
+  }
+  if (/429|rate/i.test(m)) return "Demasiadas peticiones seguidas. Espera un momento y vuelve a disparar.";
+  if (/401|403|invalid.*key|API key/i.test(m)) return "La clave del proveedor no es válida o no tiene permisos. Revísala en «Motor».";
+  return m;
+}
+
+function addToStrip(photo, thumb, k) {
+  const b = document.createElement("button");
+  b.dataset.id = photo.id;
+  b.setAttribute("aria-pressed", "false");
+  b.setAttribute("aria-label", `Toma ${k + 1}`);
+  b.innerHTML = `<img src="${thumb}" alt=""><span class="num">${String(k + 1).padStart(2, "0")}A</span>`;
+  b.addEventListener("click", async () => {
+    const rec = await db.get(photo.id);
+    await showPhoto(rec || photo, rec?.dev);
+    markStrip(photo.id);
+  });
+  $("#strip").appendChild(b);
+}
+function markStrip(id) { $$("#strip button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === id))); }
+
+/* =====================================================================
+   7. INTERFAZ
+   ===================================================================== */
+
+function fillSelect(sel, entries) {
+  sel.innerHTML = entries.map(([v, label]) => `<option value="${v}">${label}</option>`).join("");
+}
+
+function initControls() {
+  $("#styles").innerHTML = Object.entries(STYLES).map(([k, s]) =>
+    `<button class="style-card" data-style="${k}" aria-pressed="false"><strong>${s.name}</strong><span>${s.desc}</span></button>`).join("");
+  fillSelect($("#lens"), Object.entries(LENSES).map(([k, v]) => [k, v[0]]));
+  fillSelect($("#aperture"), APERTURES.map(a => [a, a === "auto" ? "Del fotógrafo" : a]));
+  fillSelect($("#light"), Object.entries(LIGHTS).map(([k, v]) => [k, v[0]]));
+  fillSelect($("#angle"), Object.entries(ANGLES).map(([k, v]) => [k, v[0]]));
+  $("#ratio").innerHTML = Object.keys(RATIOS).map(r => `<button type="button" data-ratio="${r}" aria-pressed="false">${r}</button>`).join("");
+  $("#realism").innerHTML = Object.entries(REALISM).map(([k, r]) =>
+    `<button type="button" data-realism="${k}" aria-pressed="false"><strong>${r.name}</strong><span>${r.desc}</span></button>`).join("");
+
+  const saved = store.get("direction", null);
+  if (saved) {
+    Object.assign(state, { style: saved.style, ratio: saved.ratio, realism: saved.realism });
+    for (const k of ["lens", "aperture", "light", "angle"]) if (saved[k]) $("#" + k).value = saved[k];
+    $("#prompt").value = saved.scene || "";
+  }
+  if (!STYLES[state.style]) state.style = "editorial";
+  if (!RATIOS[state.ratio]) state.ratio = "3:2";
+  if (!REALISM[state.realism]) state.realism = "natural";
+  $("#seed").value = randomSeed();
+  syncControls();
+
+  $("#styles").addEventListener("click", e => { const b = e.target.closest("[data-style]"); if (b) { state.style = b.dataset.style; syncControls(); } });
+  $("#ratio").addEventListener("click", e => { const b = e.target.closest("[data-ratio]"); if (b) { state.ratio = b.dataset.ratio; syncControls(); } });
+  $("#realism").addEventListener("click", e => { const b = e.target.closest("[data-realism]"); if (b) { state.realism = b.dataset.realism; syncControls(); } });
+  ["lens", "aperture", "light", "angle"].forEach(id => $("#" + id).addEventListener("change", syncControls));
+  $("#prompt").addEventListener("input", syncControls);
+  $("#prompt").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); shoot(); } });
+  $("#surprise").addEventListener("click", () => {
+    let pick; do { pick = SURPRISES[Math.floor(Math.random() * SURPRISES.length)]; } while (pick === $("#prompt").value && SURPRISES.length > 1);
+    $("#prompt").value = pick; syncControls();
+  });
+  $("#seedLock").addEventListener("click", () => { state.seedLocked = !state.seedLocked; $("#seedLock").setAttribute("aria-pressed", String(state.seedLocked)); });
+  $("#copyPrompt").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#finalPrompt").textContent); $("#copyPrompt").lastChild.textContent = " Copiado"; setTimeout(() => $("#copyPrompt").lastChild.textContent = " Copiar", 1400); } catch {}
+  });
+  $("#shoot").addEventListener("click", shoot);
+  $("#cancel").addEventListener("click", () => abort?.abort());
+}
+
+function syncControls() {
+  $$("[data-style]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.style === state.style)));
+  $$("[data-ratio]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.ratio === state.ratio)));
+  $$("[data-realism]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.realism === state.realism)));
+  const s = STYLES[state.style];
+  $("#styleName").textContent = `${s.camera}`;
+  $("#charCount").textContent = `${$("#prompt").value.length} car.`;
+  $("#finalPrompt").textContent = buildPrompt();
+  store.set("direction", {
+    style: state.style, ratio: state.ratio, realism: state.realism, scene: $("#prompt").value,
+    lens: $("#lens").value, aperture: $("#aperture").value, light: $("#light").value, angle: $("#angle").value
+  });
+}
+
+function initDarkroom() {
+  $("#films").innerHTML = Object.entries(FILMS).map(([k, f]) =>
+    `<button type="button" class="film" data-film="${k}" aria-pressed="false"><i style="background:${f.color}"></i>${f.name}</button>`).join("");
+  $("#sliders").innerHTML = SLIDERS.map(([k, label, min, max]) => `
+    <div class="slider">
+      <label for="s-${k}">${label}<output id="o-${k}"></output></label>
+      <input type="range" id="s-${k}" data-k="${k}" min="${min}" max="${max}" step="1">
+    </div>`).join("");
+
+  let saveT = null;
+  const persist = () => { clearTimeout(saveT); saveT = setTimeout(saveCurrentDev, 600); };
+
+  $("#films").addEventListener("click", e => {
+    const b = e.target.closest("[data-film]"); if (!b) return;
+    activeFilm = b.dataset.film;
+    dev = { ...ZERO, ...FILMS[activeFilm].s };
+    syncDarkroom(); queueRender(); persist();
+  });
+  $("#sliders").addEventListener("input", e => {
+    const k = e.target.dataset.k; if (!k) return;
+    dev[k] = +e.target.value; activeFilm = null;
+    syncDarkroom(); queueRender(); persist();
+  });
+  $("#sliders").addEventListener("dblclick", e => {
+    const k = e.target.dataset?.k; if (!k) return;
+    dev[k] = ZERO[k]; activeFilm = null; syncDarkroom(); queueRender(); persist();
+  });
+  $("#mono").addEventListener("change", e => { dev.mono = e.target.checked; activeFilm = null; syncDarkroom(); queueRender(); persist(); });
+  syncDarkroom();
+}
+
+function syncDarkroom() {
+  for (const [k] of SLIDERS) {
+    $("#s-" + k).value = dev[k];
+    $("#o-" + k).textContent = k === "grainSize" ? `${dev[k]}×` : (dev[k] > 0 && ["exposure", "contrast", "saturation", "temperature"].includes(k) ? "+" : "") + dev[k];
+  }
+  $("#mono").checked = !!dev.mono;
+  $$("[data-film]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.film === activeFilm)));
+}
+
+function initStage() {
+  const on = e => { if (!previewCanvas) return; e.preventDefault(); showingOriginal = true; $("#stage").classList.add("showing-original"); queueRender(); };
+  const off = () => { if (!showingOriginal) return; showingOriginal = false; $("#stage").classList.remove("showing-original"); queueRender(); };
+  view.addEventListener("pointerdown", on);
+  window.addEventListener("pointerup", off);
+  view.addEventListener("pointerleave", off);
+  view.addEventListener("contextmenu", e => e.preventDefault());
+
+  $("#download").addEventListener("click", async () => {
+    if (!fullCanvas) return;
+    const btn = $("#download"); btn.disabled = true;
+    await new Promise(r => setTimeout(r, 20));
+    const out = document.createElement("canvas");
+    develop(fullCanvas, out, dev);
+    out.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `motorworld-${current.style}-${current.seed}.jpg`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      btn.disabled = false;
+    }, "image/jpeg", 0.94);
+  });
+
+  $("#reuse").addEventListener("click", () => {
+    if (!current) return;
+    $("#prompt").value = current.scene;
+    Object.assign(state, { style: current.style, ratio: current.ratio, realism: current.realism || "natural", seedLocked: true });
+    for (const k of ["lens", "aperture", "light", "angle"]) if (current[k]) $("#" + k).value = current[k];
+    $("#seed").value = current.seed;
+    $("#seedLock").setAttribute("aria-pressed", "true");
+    syncControls();
+    $("#prompt").focus();
+    if (window.innerWidth <= 980) $(".controls").scrollIntoView({ behavior: "smooth" });
+  });
+
+  let rT = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(rT);
+    rT = setTimeout(() => { if (fullCanvas) { previewCanvas = scaled(fullCanvas, Math.min(1800, Math.round(Math.max(view.parentElement.clientWidth, 600) * (window.devicePixelRatio || 1)))); queueRender(); } }, 200);
+  });
+}
+
+function initArchive() {
+  const open = async id => {
+    const rec = await db.get(id);
+    if (!rec) return;
+    await showPhoto(rec, rec.dev);
+    $("#contact").classList.remove("show");
+    window.scrollTo({ top: $(".workspace").offsetTop - 70, behavior: "smooth" });
+  };
+  $("#archive").addEventListener("click", async e => {
+    const del = e.target.closest("[data-del]");
+    if (del) { e.stopPropagation(); await db.del(del.dataset.del); renderArchive(); return; }
+    const shot = e.target.closest(".shot"); if (shot) open(shot.dataset.id);
+  });
+  $("#archive").addEventListener("keydown", e => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("shot")) { e.preventDefault(); open(e.target.dataset.id); }
+  });
+  renderArchive();
+}
+
+function initEngine() {
+  const dlg = $("#engineDialog");
+  const render = () => {
+    $("#engines").innerHTML = Object.entries(ENGINES).map(([k, e]) => `
+      <label class="engine">
+        <div class="engine-top">
+          <input type="radio" name="provider" value="${k}" ${engineCfg.provider === k ? "checked" : ""}>
+          <div><strong>${e.name}</strong><span class="tag">${e.tag}</span><p>${e.desc}</p></div>
+        </div>
+        <div class="keys">
+          <input type="password" name="key-${k}" placeholder="${e.keyLabel}" value="${escapeHtml(engineCfg.keys[k] || "")}" autocomplete="off" aria-label="${e.keyLabel}">
+          <input type="text" name="model-${k}" placeholder="${e.modelDefault}" value="${escapeHtml(engineCfg.models[k] || "")}" aria-label="Modelo">
+        </div>
+      </label>`).join("");
+  };
+  const label = () => { $("#engineName").textContent = ENGINES[engineCfg.provider].name.split(" · ")[1]; };
+  $("#engineBtn").addEventListener("click", () => { render(); dlg.returnValue = ""; dlg.showModal(); });
+  dlg.addEventListener("close", () => {
+    if (dlg.returnValue !== "save") return;
+    const f = new FormData(dlg.querySelector("form"));
+    engineCfg.provider = f.get("provider") || "pollinations";
+    for (const k of Object.keys(ENGINES)) {
+      engineCfg.keys[k] = (f.get("key-" + k) || "").trim();
+      engineCfg.models[k] = (f.get("model-" + k) || "").trim();
+    }
+    store.set("engine", engineCfg);
+    label();
+  });
+  if (!ENGINES[engineCfg.provider]) engineCfg.provider = "pollinations";
+  engineCfg.keys ||= {}; engineCfg.models ||= {};
+  label();
+}
+
+initControls();
+initDarkroom();
+initStage();
+initArchive();
+initEngine();
+</script>
+</body>
+</html>
