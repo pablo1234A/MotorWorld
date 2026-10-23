@@ -1,0 +1,5 @@
+# RÉTAME
+User-agent: *
+Allow: /
+
+# Sin dominio configurado (CONFIG.siteUrl): no se publica sitemap.

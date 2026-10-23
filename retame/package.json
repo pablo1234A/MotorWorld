@@ -1,0 +1,15 @@
+{
+  "name": "retame",
+  "version": "2.0.0",
+  "private": true,
+  "description": "RÉTAME: reto diario de lógica, memoria, números y trivia. Sitio estático sin dependencias.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "og": "node scripts/og.mjs",
+    "test": "node tests/engine.test.mjs && node tests/site.test.mjs",
+    "test:e2e": "node tests/e2e.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "engines": { "node": ">=18" }
+}

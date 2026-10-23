@@ -1,0 +1,36 @@
+{
+ "name": "RÉTAME — Reto diario",
+ "short_name": "RÉTAME",
+ "lang": "es",
+ "dir": "ltr",
+ "description": "Un reto nuevo cada día: lógica, memoria, números y trivia en dos minutos.",
+ "start_url": "/",
+ "scope": "/",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#FAF9FD",
+ "theme_color": "#5B21E8",
+ "categories": [
+  "games",
+  "entertainment",
+  "education"
+ ],
+ "icons": [
+  {
+   "src": "/icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "/icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "/icons/maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

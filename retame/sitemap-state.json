@@ -1,0 +1,250 @@
+{
+ "/": {
+  "h": "3b5b23698c",
+  "lastmod": "2026-10-23"
+ },
+ "/reto-del-dia/": {
+  "h": "8eb0b23671",
+  "lastmod": "2026-10-23"
+ },
+ "/juegos/": {
+  "h": "aec80755bb",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/": {
+  "h": "aeff6d085a",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/": {
+  "h": "b749ef113d",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/matematicas/": {
+  "h": "cca3131d84",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/palabras/": {
+  "h": "d1f73e960d",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/memoria/": {
+  "h": "6014bb9378",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/": {
+  "h": "1983ce90fc",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/estimacion/": {
+  "h": "634e19348b",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/observacion/": {
+  "h": "7a8d882dd9",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/ordenar/": {
+  "h": "93b6568a7f",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/balanza-nueve-monedas/": {
+  "h": "e19bec69a5",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/secuencia-imposible/": {
+  "h": "9da356c410",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/logica-familias-y-edades/": {
+  "h": "e31107ef14",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/acertijo-pensamiento-lateral/": {
+  "h": "7a54ff6712",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/la-cerilla-primero/": {
+  "h": "573d79b88c",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/logica/deduccion-pura/": {
+  "h": "9ec92f2507",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/matematicas/calculo-relampago/": {
+  "h": "7e5583cb37",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/matematicas/trucos-de-calculo-mental/": {
+  "h": "7e01095869",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/matematicas/porcentajes-y-rebajas/": {
+  "h": "7b5570dedc",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/matematicas/problemas-con-trampa/": {
+  "h": "70e7d3b282",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/matematicas/sigue-la-logica-numerica/": {
+  "h": "1f79647cc3",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/palabras/palabra-desordenada-naturaleza/": {
+  "h": "5a299639e5",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/palabras/palabras-encadenadas/": {
+  "h": "a84a68d3e4",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/palabras/letra-que-falta/": {
+  "h": "62b8746641",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/palabras/duelo-de-parejas-rapidas/": {
+  "h": "ea68ae17b6",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/palabras/sinonimos-y-antonimos/": {
+  "h": "58b3158c4b",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/memoria/secuencia-colores/": {
+  "h": "f99889364f",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/memoria/memoria-secuencia-simbolos/": {
+  "h": "a42af7b7a2",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/memoria/memoriza-la-ruta/": {
+  "h": "392a237fa3",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/memoria/memoriza-cifras/": {
+  "h": "1bc2ef60c1",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/trivia-capitales-mundo/": {
+  "h": "369698a451",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/planeta-en-records/": {
+  "h": "ce92994e32",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/verdad-o-mentira-datos-curiosos/": {
+  "h": "b95f5242df",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/historia-fechas-clave/": {
+  "h": "cbbdf3a42a",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/inventos-que-cambiaron-el-mundo/": {
+  "h": "85b5f2623f",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/museos-y-genios/": {
+  "h": "8890e4d02c",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/arte-y-autores/": {
+  "h": "a2b423a41b",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/empareja-cine-generos/": {
+  "h": "a687146ebe",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/cine-verdad-o-mentira/": {
+  "h": "1ac3eb6c82",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/musica-ritmo-y-memoria/": {
+  "h": "6426c537c0",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/adivina-el-instrumento/": {
+  "h": "de4cb9cf63",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/trivia/deporte-reglas-y-records/": {
+  "h": "31ff5791a3",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/estimacion/cuestion-de-numeros-estima/": {
+  "h": "5369dc9be3",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/estimacion/estima-el-record/": {
+  "h": "a02728bb0a",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/estimacion/estima-el-planeta/": {
+  "h": "e6c9133ca7",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/estimacion/estima-el-tiempo/": {
+  "h": "649356d7b4",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/observacion/patron-de-figuras/": {
+  "h": "f00bad9ca1",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/observacion/cuenta-rapido/": {
+  "h": "5356e4f1c8",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/observacion/encuentra-el-intruso/": {
+  "h": "a338a7306a",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/observacion/letras-con-patron/": {
+  "h": "1fa8b690fb",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/ordenar/observacion-orden-alfabetico/": {
+  "h": "133bfe9cef",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/ordenar/ordena-de-menor-a-mayor/": {
+  "h": "0e10b25ca8",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/ordenar/ordena-el-reino-animal/": {
+  "h": "ac3d5ba0eb",
+  "lastmod": "2026-10-23"
+ },
+ "/retos/ordenar/ordena-lo-absurdo/": {
+  "h": "2f7380c7cd",
+  "lastmod": "2026-10-23"
+ },
+ "/duelos/": {
+  "h": "b752e2169c",
+  "lastmod": "2026-10-23"
+ },
+ "/como-funciona/": {
+  "h": "7cbd6ad345",
+  "lastmod": "2026-10-23"
+ },
+ "/sobre-retame/": {
+  "h": "dddbcaf704",
+  "lastmod": "2026-10-23"
+ },
+ "/contacto/": {
+  "h": "1d7a73e3b6",
+  "lastmod": "2026-10-23"
+ },
+ "/privacidad/": {
+  "h": "476282533a",
+  "lastmod": "2026-10-23"
+ },
+ "/cookies/": {
+  "h": "c1bf4a0144",
+  "lastmod": "2026-10-23"
+ }
+}
