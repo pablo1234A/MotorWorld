@@ -3,7 +3,10 @@
  * Las usa el generador del sitio para el HTML estático y el navegador
  * para pintar sesiones y resultados: el marcado es idéntico en ambos.
  * =================================================================== */
-function href(p) { return (CONFIG.basePath || "") + p; }
+/* En la versión de un solo archivo (STANDALONE) las rutas viajan en el
+ * hash: #/retos/logica/ en lugar de /retos/logica/. */
+function isStandalone() { return typeof STANDALONE !== "undefined" && STANDALONE === true; }
+function href(p) { return isStandalone() ? "#" + p : (CONFIG.basePath || "") + p; }
 function catUrl(cat) { return href("/retos/" + cat + "/"); }
 /* Página pública del reto si la tiene; si no (generados, en grupo), la
  * zona de juego. */

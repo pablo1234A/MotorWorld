@@ -9,7 +9,11 @@
     "og": "node scripts/og.mjs",
     "test": "node tests/engine.test.mjs && node tests/site.test.mjs",
     "test:e2e": "node tests/e2e.mjs",
-    "serve": "node scripts/serve.mjs"
+    "serve": "node scripts/serve.mjs",
+    "build:single": "STANDALONE=1 node build.mjs",
+    "test:single": "node tests/standalone.mjs"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

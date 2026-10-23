@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const SHARED = ["config.js", "icons.js", "content.js", "engine.js", "ui.js"];
 
-export function loadEngine(overrides = {}) {
-  const ctx = { console, Intl, Date, Math, JSON };
+export function loadEngine(overrides = {}, globals = {}) {
+  const ctx = { console, Intl, Date, Math, JSON, ...globals };
   vm.createContext(ctx);
   for (const f of SHARED) {
     const file = path.join(ROOT, "src", f);

@@ -1,6 +1,7 @@
 /*! RÉTAME · 2026-10-23 */
 (function () {
 "use strict";
+var STANDALONE = false;
 var CONFIG = {"name":"RÉTAME","siteUrl":"","basePath":"","owner":"","ownerId":"","ownerAddress":"","contactEmail":"","launchDay":"2026-09-21","tz":"Europe/Madrid","social":{"instagram":"","tiktok":"","x":"","youtube":""},"adsense":{"client":"","slots":{"home":"","content":"","article":""}},"consent":{"mode":"google","cmpScript":""},"analytics":{"enabled":false}};
 var ICON_PATHS = {
 logica: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',
@@ -1774,7 +1775,8 @@ function gradeOf(accuracy) { return accuracy >= 100 ? "v" : accuracy >= 50 ? "~"
 var GRADE_EMOJI = { v: "🟩", "~": "🟨", x: "🟥" };
 CHALLENGES.forEach(function (c) { c.max_points = maxPoints(c.difficulty, unitsOf(c)); chBySlug[c.slug] = c; });
 var PUBLIC_CHALLENGES = CHALLENGES.filter(function (c) { return !catBySlug[c.cat].hidden; });
-function href(p) { return (CONFIG.basePath || "") + p; }
+function isStandalone() { return typeof STANDALONE !== "undefined" && STANDALONE === true; }
+function href(p) { return isStandalone() ? "#" + p : (CONFIG.basePath || "") + p; }
 function catUrl(cat) { return href("/retos/" + cat + "/"); }
 function challengeUrl(ch) {
 if (!ch.generated && catBySlug[ch.cat] && !catBySlug[ch.cat].hidden) return href("/retos/" + ch.cat + "/" + ch.slug + "/");
@@ -1828,7 +1830,12 @@ return '<li><a class="cat-card" href="' + link + '" style="--cat:' + cat.color +
 function catGrid(mode) { return '<ul class="cat-grid">' + PUBLIC_CATS.map(function (c) { return catCard(c, mode); }).join("") + "</ul>"; }
 var PAGE = document.body.getAttribute("data-page") || "";
 function siteOrigin() { return CONFIG.siteUrl || location.origin; }
-function absUrl(path) { return siteOrigin() + path; }
+function absUrl(u) {
+var base = CONFIG.basePath || "";
+var p = u.charAt(0) === "#" ? u.slice(1) : u.slice(base.length);
+if (isStandalone()) return CONFIG.siteUrl ? CONFIG.siteUrl + base + p : location.href.split("#")[0] + "#" + p;
+return siteOrigin() + base + p;
+}
 function $(s, r) { return (r || document).querySelector(s); }
 function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
 function reducedMotion() { return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); }
@@ -1868,8 +1875,15 @@ else fallback();
 }
 function getParams() {
 var q = {};
-try { new URLSearchParams(location.search).forEach(function (v, k) { q[k] = v; }); } catch (e) { /* navegador antiguo */ }
+var src = location.search;
+if (isStandalone()) { var h = location.hash, i = h.indexOf("?"); src = i >= 0 ? h.slice(i) : ""; }
+try { new URLSearchParams(src).forEach(function (v, k) { q[k] = v; }); } catch (e) { /* navegador antiguo */ }
 return q;
+}
+function queryWithout(key) {
+var q = getParams(), parts = [];
+Object.keys(q).forEach(function (k) { if (k !== key) parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(q[k])); });
+return parts.length ? "?" + parts.join("&") : "";
 }
 function track(name, props) {
 try {
@@ -2536,6 +2550,7 @@ finish: function () { self.finish(); }
 (MECH[this.ch.kind] || mcq)(this.ch.data, this.body, control);
 this.startedAt = Date.now();
 this.timer = setInterval(function () {
+if (!document.body.contains(self.stage)) { self.stop(); return; }
 var s = Math.floor((Date.now() - self.startedAt) / 1000);
 $("[data-timer]", self.bar).textContent = s;
 if (pill) pill.classList.toggle("is-over", s > self.ch.duration);
@@ -2558,8 +2573,11 @@ this.bar.hidden = true; this.body.hidden = true;
 this.result.hidden = false;
 if (this.opts.onDone) this.opts.onDone({ res: res, seconds: seconds, correct: this.correct, total: total, answers: this.answers.slice() }, this);
 };
+var ACTIVE_GAMES = [];
+function stopGames() { ACTIVE_GAMES.forEach(function (g) { g.stop(); }); ACTIVE_GAMES = []; }
 function mountGame(stage, ch, opts, autoStart) {
 var g = new Game(stage, ch, opts);
+ACTIVE_GAMES.push(g);
 if (autoStart) g.start();
 else { var b = $("[data-start]", stage); if (b) b.addEventListener("click", function () { g.start(); }); }
 return g;
@@ -2978,7 +2996,7 @@ sub.textContent = run ? "Vas por la prueba " + (run + 1) + " de " + set.rounds.l
 var cd = $("[data-countdown]", ticket);
 if (cd) {
 cd.textContent = clock(secsToMidnight());
-setInterval(function () { var s = secsToMidnight(); cd.textContent = clock(s); if (s >= 86399) location.reload(); }, 1000);
+var iv = setInterval(function () { if (!document.body.contains(cd)) { clearInterval(iv); return; } var s = secsToMidnight(); cd.textContent = clock(s); if (s >= 86399) location.reload(); }, 1000);
 }
 }
 var cta = $("[data-hero-cta]");
@@ -3052,7 +3070,7 @@ function hideSelector() { if (selector) selector.hidden = true; box.hidden = fal
 if (q.reto) {
 var base1 = resolveChallenge(q.reto);
 if (!base1 || !validateChallenge(base1)) { toast("Ese reto no existe. Te proponemos otros."); return; }
-if (!base1.generated && !catBySlug[base1.cat].hidden) { location.replace(challengeUrl(base1) + location.search.replace(/([?&])reto=[^&]*&?/, "$1").replace(/[?&]$/, "")); return; }
+if (!base1.generated && !catBySlug[base1.cat].hidden) { location.replace(challengeUrl(base1) + queryWithout("reto")); return; }
 hideSelector();
 var ch = needsSeed(base1) ? instantiate(base1, randomSeed()) : base1;
 box.innerHTML = '<header class="page-head"><p class="eyebrow">' + icon(catBySlug[ch.cat].icon) + esc(catBySlug[ch.cat].name) + "</p><h1>" + esc(ch.title) + '</h1><p class="lead">' + esc(ch.excerpt) + "</p></header>" + stageHtml(ch);
@@ -3118,7 +3136,7 @@ var q = getParams(), box = $("[data-duel-play]");
 if (!box || !q.r) return;
 var base2 = resolveChallenge(q.r);
 if (!base2 || !validateChallenge(base2)) { toast("Ese duelo ya no existe. Elige otro reto."); return; }
-if (!base2.generated && !catBySlug[base2.cat].hidden) { location.replace(challengeUrl(base2) + location.search.replace(/([?&])r=[^&]*&?/, "$1").replace(/[?&]$/, "")); return; }
+if (!base2.generated && !catBySlug[base2.cat].hidden) { location.replace(challengeUrl(base2) + queryWithout("r")); return; }
 var duel = parseDuel(q, base2.max_points);
 if (duel && duel.invalid) { toast("El enlace del duelo no es válido. Juega el reto igualmente."); duel = null; }
 var ch = needsSeed(base2) ? instantiate(base2, duel && duel.k !== undefined ? duel.k : randomSeed()) : base2;
@@ -3255,17 +3273,7 @@ if (ok && tc && (tc.eventStatus === "tcloaded" || tc.eventStatus === "useraction
 }, 100);
 } else fill();
 }
-function init() {
-var legacy = legacyTarget(location.hash);
-if (legacy) { location.replace(legacy); return; }
-var toggle = $(".nav-toggle"), nav = $("#main-nav");
-if (toggle && nav) {
-toggle.addEventListener("click", function () { var open = nav.classList.toggle("is-open"); toggle.setAttribute("aria-expanded", open ? "true" : "false"); });
-document.addEventListener("keydown", function (e) { if (e.key === "Escape" && nav.classList.contains("is-open")) { nav.classList.remove("is-open"); toggle.setAttribute("aria-expanded", "false"); toggle.focus(); } });
-}
-var y = $("[data-year]"); if (y) y.textContent = new Date().getFullYear();
-state();
-updateStreakChip();
+function mountPage() {
 try {
 if (PAGE === "home") mountHome();
 else if (PAGE === "daily") mountDailyPage();
@@ -3279,6 +3287,71 @@ if (window.console) console.error(e);
 }
 fillBestBadges();
 initAds();
+}
+var firstRoute = true;
+function findRoute(path) {
+if (typeof ROUTES === "undefined") return null;
+return ROUTES[path] || ROUTES[path.replace(/\/?$/, "/")] || null;
+}
+function renderRoute() {
+var h = location.hash || "#/";
+if (h.charAt(1) !== "/") return;
+var qi = h.indexOf("?"), path = (qi >= 0 ? h.slice(1, qi) : h.slice(1)) || "/";
+var page = findRoute(path);
+if (!page) {
+var legacy = legacyTarget(h);
+var lp = legacy ? legacy.slice(1).split("?")[0] : "";
+if (legacy && legacy !== h && lp !== "/" && findRoute(lp)) { location.replace(legacy); return; }
+page = ROUTES["/404.html"];
+}
+stopGames();
+var main = $("#main");
+main.innerHTML = page.body;
+document.title = page.title;
+var md = $('meta[name="description"]'); if (md) md.setAttribute("content", page.desc);
+PAGE = page.page;
+document.body.setAttribute("data-page", PAGE);
+var key = page.path;
+$$("#main-nav a").forEach(function (a) {
+var target = (a.getAttribute("href") || "").slice(1);
+if (target !== "/" && key.indexOf(target) === 0) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+});
+var nav = $("#main-nav"), toggle = $(".nav-toggle");
+if (nav) nav.classList.remove("is-open");
+if (toggle) toggle.setAttribute("aria-expanded", "false");
+if (!firstRoute) { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
+firstRoute = false;
+updateStreakChip();
+mountPage();
+}
+function init() {
+if (isStandalone()) {
+window.addEventListener("hashchange", renderRoute);
+document.addEventListener("click", function (e) {
+var a = e.target.closest ? e.target.closest("a[href^='#']") : null;
+if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+var hrefv = a.getAttribute("href");
+if (hrefv.charAt(1) !== "/") {
+var target = document.getElementById(hrefv.slice(1));
+e.preventDefault();
+if (target) { if (target.tagName === "DETAILS") target.open = true; target.scrollIntoView({ block: "start" }); if (target.focus) target.focus({ preventScroll: true }); }
+return;
+}
+if (hrefv === location.hash) { e.preventDefault(); renderRoute(); }
+});
+} else {
+var legacy = legacyTarget(location.hash);
+if (legacy) { location.replace(legacy); return; }
+}
+var toggle = $(".nav-toggle"), nav = $("#main-nav");
+if (toggle && nav) {
+toggle.addEventListener("click", function () { var open = nav.classList.toggle("is-open"); toggle.setAttribute("aria-expanded", open ? "true" : "false"); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && nav.classList.contains("is-open")) { nav.classList.remove("is-open"); toggle.setAttribute("aria-expanded", "false"); toggle.focus(); } });
+}
+var y = $("[data-year]"); if (y) y.textContent = new Date().getFullYear();
+state();
+updateStreakChip();
+if (isStandalone()) renderRoute(); else mountPage();
 }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

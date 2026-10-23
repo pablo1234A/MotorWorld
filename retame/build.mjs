@@ -4,6 +4,8 @@
  *   node build.mjs                 → genera public/
  *   SITE_URL=https://… node build.mjs
  *   STRICT=1 node build.mjs        → falla si falta algún dato obligatorio
+ *   STANDALONE=1 node build.mjs    → standalone/retame.html: todo en un solo
+ *                                    archivo que funciona con doble clic
  *
  * Cada URL pública es un index.html con todo su contenido en HTML: el
  * JavaScript añade el juego encima. Sin dependencias externas.
@@ -20,7 +22,8 @@ const STATE_FILE = path.join(ROOT, "sitemap-state.json");
 const overrides = {};
 if (process.env.SITE_URL !== undefined) overrides.siteUrl = process.env.SITE_URL.replace(/\/+$/, "");
 if (process.env.BASE_PATH !== undefined) overrides.basePath = process.env.BASE_PATH.replace(/\/+$/, "");
-const E = loadEngine(overrides);
+const STANDALONE = !!process.env.STANDALONE;
+const E = loadEngine(overrides, STANDALONE ? { STANDALONE: true } : {});
 const C = E.CONFIG;
 const { esc, href, icon, brandMark } = E;
 const SITE = C.siteUrl || "";
@@ -67,15 +70,17 @@ function compact(src) {
   }
   return out.join("\n");
 }
-const jsOut = `/*! RÉTAME · ${TODAY} */\n(function () {\n"use strict";\n${compact(BUNDLE.replace(/^var CONFIG = \{[\s\S]*?\n\};/m, () => "var CONFIG = " + JSON.stringify(C) + ";"))}\n})();\n`;
+const jsOut = `/*! RÉTAME · ${TODAY} */\n(function () {\n"use strict";\nvar STANDALONE = ${STANDALONE};\n${compact(BUNDLE.replace(/^var CONFIG = \{[\s\S]*?\n\};/m, () => "var CONFIG = " + JSON.stringify(C) + ";"))}\n})();\n`;
 const cssOut = fs.readFileSync(path.join(SRC, "styles.css"), "utf8");
 const JS_FILE = `assets/app.${hashOf(jsOut)}.js`, CSS_FILE = `assets/styles.${hashOf(cssOut)}.css`;
 
-fs.rmSync(OUT, { recursive: true, force: true });
-fs.mkdirSync(path.join(OUT, "assets"), { recursive: true });
-fs.writeFileSync(path.join(OUT, JS_FILE), jsOut);
-fs.writeFileSync(path.join(OUT, CSS_FILE), cssOut);
-fs.cpSync(path.join(SRC, "static"), OUT, { recursive: true });
+if (!STANDALONE) {
+  fs.rmSync(OUT, { recursive: true, force: true });
+  fs.mkdirSync(path.join(OUT, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(OUT, JS_FILE), jsOut);
+  fs.writeFileSync(path.join(OUT, CSS_FILE), cssOut);
+  fs.cpSync(path.join(SRC, "static"), OUT, { recursive: true });
+}
 
 /* --- 4. Plantilla común -------------------------------------------------- */
 const abs = (p) => SITE + href(p);
@@ -566,6 +571,49 @@ add({
 <p class="link-row"><a href="${href("/")}">Volver a RÉTAME</a></p>
 </div>`
 });
+
+/* --- 7a. Archivo único -------------------------------------------------------
+ * Todas las páginas viajan en ROUTES y el router de app.js las pinta según
+ * el hash. Fuente e icono incrustados: no necesita servidor ni internet. */
+if (STANDALONE) {
+  const font = fs.readFileSync(path.join(SRC, "static", "fonts", "bricolage-grotesque-latin.woff2")).toString("base64");
+  const css = cssOut.replace('url("../fonts/bricolage-grotesque-latin.woff2")', `url(data:font/woff2;base64,${font})`);
+  const favicon = "data:image/svg+xml," + encodeURIComponent(fs.readFileSync(path.join(SRC, "static", "favicon.svg"), "utf8"));
+  const routes = {};
+  for (const p of pages) routes[p.path] = { path: p.path, title: p.title, desc: p.desc, page: p.page || "info", body: p.body };
+  const home = pages.find((p) => p.path === "/");
+  const safe = (t) => t.replace(/<\/(script)/gi, "<\\/$1");
+  const html = `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${esc(home.title)}</title>
+<meta name="description" content="${esc(home.desc)}">
+<meta name="theme-color" content="#5B21E8">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="${favicon}">
+<style>${css}</style>
+</head>
+<body data-page="home">
+<a class="skip-link" href="#main">Saltar al contenido</a>
+${header("/")}
+<main id="main" tabindex="-1">
+${home.body}
+</main>
+${footer()}
+<div class="toast" data-toast role="status" aria-live="polite" hidden></div>
+<script>var ROUTES = ${JSON.stringify(routes).replace(/</g, "\\u003c")};</script>
+<script>${safe(jsOut)}</script>
+</body>
+</html>
+`;
+  const file = process.env.OUT_FILE ? path.resolve(process.env.OUT_FILE) : path.join(ROOT, "standalone", "retame.html");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, html);
+  console.log(`✓ Archivo único: ${path.relative(ROOT, file)} (${(html.length / 1024).toFixed(0)} KB, ${pages.length} páginas)`);
+  process.exit(0);
+}
 
 /* --- 7. Escritura, sitemap, robots, manifest ------------------------------ */
 const titles = new Map(), descs = new Map();

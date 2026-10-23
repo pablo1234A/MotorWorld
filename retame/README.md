@@ -10,7 +10,15 @@ npm run serve          # http://127.0.0.1:8080 para probarlo
 npm test               # motor + SEO del HTML generado
 npm run test:e2e       # juega de verdad en Chromium (necesita Playwright)
 npm run og             # regenera imágenes para redes e iconos (necesita Playwright)
+npm run build:single   # standalone/retame.html: todo en un archivo, se abre con doble clic
+npm run test:single    # prueba ese archivo con file://
 ```
+
+### Archivo único (`standalone/retame.html`)
+
+Un solo HTML con todas las páginas, estilos, fuente e iconos dentro. Se abre con doble clic, sin servidor ni internet, y guarda el progreso igual que la web. Las páginas viajan en el hash (`retame.html#/retos/logica/`).
+
+Sirve para probar, enseñar o jugar en local. **No sustituye a `public/` para publicar**: Google no indexa páginas separadas dentro de un hash, no hay imágenes para redes y, sin `siteUrl`, los enlaces de duelo apuntan al archivo de tu dispositivo. Con `siteUrl` configurado, los duelos creados desde el archivo apuntan a la web publicada.
 
 Node 18 o superior. Playwright solo hace falta para `og` y `test:e2e`.
 
