@@ -469,14 +469,18 @@ details.fold > div { padding: 0 0 14px; color: var(--ink-2); }
 @media (min-width: 640px) { .ach-grid { grid-template-columns: 1fr 1fr; } }
 .ach { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
 .ach .cat-tile { --cat: #E0A400; }
-.ach.is-locked { opacity: .6; }
-.ach.is-locked .cat-tile { --cat: #888; }
+.ach.is-locked .cat-tile { --cat: #888; opacity: .7; }
+.ach.is-locked b { color: var(--ink-2); }
+.ach.is-locked span { color: var(--muted); }
 .ach b { display: block; }
 .ach span { font-size: .88rem; color: var(--ink-2); }
 .table-row { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
 .table-row a, .table-row .t { font-weight: 650; }
 .table-row small { color: var(--muted); display: block; }
 .table-row b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* El progreso se pinta con JavaScript: se reserva su hueco para que el
+ * pie no salte al cargar. */
+[data-progress] { min-height: 80vh; }
 .empty { padding: 22px; border: 1px dashed var(--line-strong); border-radius: var(--r-lg); color: var(--ink-2); background: var(--surface); }
 
 /* --- Pie y avisos ---------------------------------------------------- */
@@ -497,6 +501,11 @@ details.fold > div { padding: 0 0 14px; color: var(--ink-2); }
 .ad-slot::before { content: "Publicidad"; display: block; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 .notfound { text-align: center; padding: 40px 0 10px; }
 .notfound .big { font-family: var(--font-title); font-weight: 800; font-size: clamp(5rem, 24vw, 9rem); line-height: .9; letter-spacing: -.06em; color: var(--violet); margin: 0; }
+/* Color de categoría usado como texto: más oscuro en claro y más claro en
+ * oscuro, para mantener 4,5:1 con cualquier categoría. */
+.eyebrow-cat, .eyebrow-cat .ico { color: color-mix(in srgb, var(--cat) 78%, #000); }
+:root[data-theme="dark"] .eyebrow-cat, :root[data-theme="dark"] .eyebrow-cat .ico, :root[data-theme="dark"] .notfound .big { color: color-mix(in srgb, var(--cat, #8B5CF6) 45%, #fff); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eyebrow-cat, :root:not([data-theme="light"]) .eyebrow-cat .ico, :root:not([data-theme="light"]) .notfound .big { color: color-mix(in srgb, var(--cat, #8B5CF6) 45%, #fff); } }
 .notfound .actions { justify-content: center; }
 
 @media (prefers-reduced-motion: reduce) {

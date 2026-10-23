@@ -324,6 +324,17 @@ await test("enlaces antiguos (#/…) redirigen a las URLs nuevas", async () => {
   await p.context().close();
 });
 
+await test("estabilidad visual: CLS por debajo de 0,1 en las páginas que pinta JavaScript", async () => {
+  for (const u of ["/", "/reto-del-dia/", "/progreso/", "/retos/logica/balanza-nueve-monedas/"]) {
+    const p = await newPage({ init: `window.__cls = 0; new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: "layout-shift", buffered: true });` });
+    await p.goto(BASE + u, { waitUntil: "load" });
+    await p.waitForTimeout(800);
+    const cls = await p.evaluate(() => window.__cls);
+    assert.ok(cls < 0.1, `${u}: CLS ${cls.toFixed(3)}`);
+    await p.context().close();
+  }
+});
+
 await test("404 real y útil", async () => {
   const p = await newPage();
   const r = await p.goto(BASE + "/retos/logica/no-existe/");

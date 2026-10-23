@@ -291,7 +291,10 @@ add({
   body: `<div class="wrap wrap-narrow">
 ${crumbs([["/", "Inicio"], ["/reto-del-dia/", "Reto del día"]])}
 <header class="page-head"><h1>Reto del día</h1><p class="lead">Un reto nuevo cada día a medianoche (hora peninsular española). Mismo reto para todo el mundo: compara tu resultado sin destripar las respuestas.</p></header>
-<div data-daily><div class="ticket"><div class="ticket-top"><span class="ticket-badge">${icon("calendar")}Reto del día</span></div><h2>Cinco pruebas. Una puntuación.</h2><p>Preparando el reto de hoy…</p><noscript><p><b>Para jugar necesitas activar JavaScript.</b></p></noscript></div></div>
+<div data-daily><div class="ticket"><div class="ticket-top"><span class="ticket-badge">${icon("calendar")}Reto del día</span><span class="ticket-date">&nbsp;</span></div><h2>Cinco pruebas. Una puntuación.</h2><p>Lógica, memoria, números… de menos a más. Responde con calma: la precisión pesa mucho más que la velocidad.</p>
+<ul class="rounds">${["logica", "memoria", "matematicas", "trivia", "ordenar"].map((s) => `<li class="round">${icon(E.catBySlug[s].icon)}<span>${E.catBySlug[s].label}</span></li>`).join("")}</ul>
+<div class="ticket-foot"><button type="button" class="btn btn-amber btn-lg" disabled>${icon("play")}Empezar el reto de hoy</button><div class="countdown"><span>Nuevo reto en</span><b>--:--:--</b></div></div>
+<noscript><p><b>Para jugar necesitas activar JavaScript.</b></p></noscript></div></div>
 <div data-daily-intro>
 <section class="section prose" aria-labelledby="d1"><h2 id="d1">Cómo funciona</h2>
 <p>Cada día hay entre 4 y 5 pruebas de categorías distintas —lógica, memoria, matemáticas, palabras, trivia, estimación, observación u ordenar— con dificultad creciente: empiezas en «normal» y terminas en «experto».</p>
@@ -391,7 +394,7 @@ for (const ch of E.PUBLIC_CHALLENGES) {
     body: `<div class="wrap">
 ${crumbs([["/", "Inicio"], ["/retos/", "Retos"], [`/retos/${c.slug}/`, c.name], [url, ch.title]])}
 <div class="two-col"><div>
-<header class="page-head"><p class="eyebrow" style="color:${c.color}">${icon(c.icon)}${esc(c.name)}${ch.topic ? " · " + esc(E.TOPICS[ch.topic]) : ""}</p><h1>${esc(ch.title)}</h1><p class="lead">${esc(ch.excerpt)}</p></header>
+<header class="page-head"><p class="eyebrow eyebrow-cat" style="--cat:${c.color}">${icon(c.icon)}${esc(c.name)}${ch.topic ? " · " + esc(E.TOPICS[ch.topic]) : ""}</p><h1>${esc(ch.title)}</h1><p class="lead">${esc(ch.excerpt)}</p></header>
 <div data-duel-banner></div>
 <div data-challenge="${esc(ch.slug)}">${E.stageHtml(ch, "Empezar")}</div>
 <section class="prose" aria-labelledby="about"><h2 id="about">Sobre este reto</h2><p>${esc(ch.description)}</p><p>${nq} · dificultad ${ch.difficulty} de 5 · unos ${esc(E.durLabel(ch.duration))} · hasta ${E.fmt(ch.max_points)} puntos.</p></section>
