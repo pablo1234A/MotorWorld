@@ -454,12 +454,12 @@ export class CarModel {
 
     // --- interior ---
     if (this.opts.interior && b.kind !== 'bus' && b.kind !== 'truck') {
-      const cz = p.zAt(b.cowlT) + 0.18;
+      const cz = p.zAt(b.cowlT) + 0.42;
       const dashW = p.halfWidth(b.cowlT) * 1.7;
-      const dash = new BoxGeometry(dashW, 0.18, 0.4);
-      detail.push(place(solid(dash, CELL.interior), 0, b.beltH - 0.04, cz));
+      const dash = new BoxGeometry(dashW, 0.16, 0.4);
+      detail.push(place(solid(dash, CELL.interior), 0, Math.min(b.beltH, p.top(b.cowlT)) - 0.1, cz));
       const gauge = new BoxGeometry(0.34, 0.12, 0.02);
-      detail.push(place(cellUV(gauge.toNonIndexed(), CELL.gauges, true), -b.trackF * 0.22, b.beltH + 0.08, cz + 0.12, -0.4));
+      detail.push(place(cellUV(gauge.toNonIndexed(), CELL.gauges, true), -b.trackF * 0.22, Math.min(b.beltH, p.top(b.cowlT)) + 0.0, cz + 0.12, -0.4));
       for (const sx of [-1, 1]) {
         const seat = new BoxGeometry(0.46, 0.12, 0.5);
         detail.push(place(solid(seat, CELL.leather), sx * b.trackF * 0.22, b.clearance + 0.22, cz + 0.85));

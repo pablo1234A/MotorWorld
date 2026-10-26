@@ -45,6 +45,12 @@ export function runShowroom(container: HTMLElement) {
   const d = only ? 7 : 22;
   cam.position.set(d * 0.55, d * 0.45, d * 0.85);
   cam.lookAt(0, 0.5, 0);
-  r.setAnimationLoop(() => r.render(scene, cam));
-  (window as any).__ready = true;
+  // Render a handful of frames only: keeps software-GL screenshot capture fast.
+  let frames = 0;
+  const tick = () => {
+    r.render(scene, cam);
+    if (++frames < 3) requestAnimationFrame(tick);
+    else (window as any).__ready = true;
+  };
+  tick();
 }
