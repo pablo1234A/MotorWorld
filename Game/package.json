@@ -1,0 +1,32 @@
+{
+  "name": "motorworld-open-road",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "MotorWorld: Open Road — open-world mobile racing game (Three.js + Capacitor)",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host --port 4173",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "e2e": "node tests/e2e/smoke.mjs",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.2",
+    "@capacitor/core": "^6.2.2",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/rajdhani": "^5.3.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.2",
+    "@types/three": "^0.170.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}
