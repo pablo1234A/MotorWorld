@@ -12,7 +12,7 @@ const COLORS: Record<number, [number, number, number]> = {
   [Surface.Dirt]: [0.36, 0.27, 0.17],
   [Surface.Rock]: [0.42, 0.4, 0.37],
   [Surface.Sand]: [0.72, 0.64, 0.46],
-  [Surface.Concrete]: [0.5, 0.5, 0.48],
+  [Surface.Concrete]: [0.31, 0.31, 0.3],
   [Surface.Gravel]: [0.48, 0.43, 0.35],
 };
 

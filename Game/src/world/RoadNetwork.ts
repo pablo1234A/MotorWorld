@@ -273,21 +273,6 @@ export class RoadNetwork {
         }
       }
       sm.set(raised);
-      // pin junction heights to already-built host roads
-      for (const j of r.junctions) {
-        if (!done.has(j.road)) continue;
-        const host = j.road;
-        const pin = host.py[Math.round(host.sToI(j.otherS))];
-        const i0 = Math.round(r.sToI(j.s));
-        const delta = pin - sm[i0];
-        const R = Math.round(160 / STEP);
-        for (let k = -R; k <= R; k++) {
-          let i = i0 + k;
-          if (r.loop) i = (i + n) % n;
-          else if (i < 0 || i >= n) continue;
-          sm[i] += delta * smoothstep(1, 0, Math.abs(k) / R);
-        }
-      }
       // grade limit (two passes)
       const g = r.info.maxGrade * STEP;
       for (let pass = 0; pass < 3; pass++) {
@@ -302,11 +287,30 @@ export class RoadNetwork {
           sm[i] = clamp(sm[i], sm[q] - g, sm[q] + g);
         }
       }
-      // final light smoothing for ride quality
+      // limit vertical curvature (no launch ramps on crests at the design speed)
+      const vd = r.info.speed * 1.6;
+      const kMax = 9.81 / (vd * vd) * 0.7 * STEP * STEP;
+      for (let it = 0; it < 60; it++) {
+        let worst = 0;
+        for (let i = 1; i < n - 1; i++) {
+          const a = sm[i - 1], b = sm[i], c2 = sm[i + 1];
+          const k2 = a - 2 * b + c2;
+          if (Math.abs(k2) > kMax) {
+            const corr = (k2 - Math.sign(k2) * kMax) / 6;
+            sm[i] += corr * 2;
+            sm[i - 1] -= corr;
+            sm[i + 1] -= corr;
+            worst = Math.max(worst, Math.abs(k2));
+          }
+        }
+        if (worst === 0) break;
+      }
+      // final smoothing for ride quality
       const out = new Float32Array(n);
+      const FW = r.def.kind === 'street' || r.def.kind === 'boulevard' ? 6 : 12;
       for (let i = 0; i < n; i++) {
         let sum = 0, c = 0;
-        for (let k = -6; k <= 6; k++) {
+        for (let k = -FW; k <= FW; k++) {
           let j = i + k;
           if (r.loop) j = (j + n) % n;
           else if (j < 0 || j >= n) continue;
@@ -320,6 +324,49 @@ export class RoadNetwork {
         const cm = gen.cityMask(r.px[i], r.pz[i]);
         if (cm > 0.999) out[i] = CITY_Y + 0.05;
         else if (cm > 0) out[i] = lerp(out[i], CITY_Y + 0.05, smoothstep(0.6, 1, cm));
+      }
+      // pin junction heights to already-built host roads
+      const pinned: number[] = [];
+      for (const j of r.junctions) {
+        if (!done.has(j.road)) continue;
+        const host = j.road;
+        const hi = Math.round(host.sToI(j.otherS));
+        const pin = host.py[hi];
+        const i0 = Math.round(r.sToI(j.s));
+        const delta = pin - out[i0];
+        pinned.push(i0);
+        // grade-separated crossings (bridges, tunnels, big height differences) keep their own levels
+        if (!j.end && !host.junctions.some((hj) => hj.road === r && hj.end)) {
+          if (Math.abs(delta) > 3 || host.flags[hi] & (RF.tunnel | RF.bridge)) continue;
+        }
+        // blend length grows with the height difference so the grade stays drivable
+        const R = Math.round(Math.max(160, (Math.abs(delta) / (r.info.maxGrade * 0.7)) * 1.2) / STEP);
+        for (let k = -R; k <= R; k++) {
+          let i = i0 + k;
+          if (r.loop) i = (i + n) % n;
+          else if (i < 0 || i >= n) continue;
+          out[i] += delta * smoothstep(1, 0, Math.abs(k) / R);
+        }
+      }
+      // re-limit the grade after pinning (interior samples only: junction ends stay pinned)
+      {
+        const g2 = r.info.maxGrade * 1.15 * STEP;
+        const fixed = new Set<number>(pinned);
+        if (!r.loop) {
+          fixed.add(0);
+          fixed.add(n - 1);
+        }
+        const span = r.loop ? 2 * n : n;
+        for (let pass = 0; pass < 4; pass++) {
+          for (let k = 1; k < span; k++) {
+            const i = k % n, p = (k - 1) % n;
+            if (!fixed.has(i)) out[i] = clamp(out[i], out[p] - g2, out[p] + g2);
+          }
+          for (let k = span - 2; k >= 0; k--) {
+            const i = k % n, q = (k + 1) % n;
+            if (!fixed.has(i)) out[i] = clamp(out[i], out[q] - g2, out[q] + g2);
+          }
+        }
       }
       r.py = out;
       done.add(r);
@@ -386,6 +433,7 @@ export class RoadNetwork {
     const n = hm.n;
     const wMax = new Float32Array(n * n);
     const target = new Float32Array(n * n);
+    const dMin = new Float32Array(n * n).fill(1e9);
     const res = (HALF * 2) / (n - 1);
     for (const r of this.roads) {
       for (let i = 0; i < r.n - 1; i += 2) {
@@ -415,8 +463,9 @@ export class RoadNetwork {
             let w = d <= core ? 1 : 1 - smoothstep(core, core + blend, d);
             if (bridge) w *= 0; // bridges keep terrain below
             const k = gj * n + gi;
-            if (w > wMax[k]) {
+            if (w > wMax[k] + 1e-6 || (w > 0.999 && wMax[k] > 0.999 && d < dMin[k])) {
               wMax[k] = w;
+              dMin[k] = d;
               target[k] = lerp(ay, by, t) - (d <= r.halfWidth + 0.5 ? 0.25 : 0.12);
             }
           }

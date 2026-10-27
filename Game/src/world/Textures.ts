@@ -256,7 +256,7 @@ export function concreteTexture(): Texture {
   const n = tileNoise(S, 5, 5, 8);
   const img = g.createImageData(S, S);
   for (let i = 0; i < S * S; i++) {
-    const v = 150 + n[i] * 60;
+    const v = 105 + n[i] * 45;
     img.data[i * 4] = v;
     img.data[i * 4 + 1] = v * 0.98;
     img.data[i * 4 + 2] = v * 0.94;
