@@ -46,6 +46,8 @@ export interface Settings {
   lang: 'es' | 'en';
   camera: string;
   showFps: boolean;
+  /** on-screen rear-view mirrors */
+  mirrors: boolean;
   vibration: boolean;
   traffic: number; // density multiplier 0..1.5
   hudScale: number;
@@ -77,7 +79,7 @@ export interface ProfileData {
 export const DEFAULT_SETTINGS: Settings = {
   quality: 'auto', resolution: 1, fps: 60, controls: 'tilt', sensitivity: 0.55, abs: true, tcs: true, stability: true, steerAssist: true, autoGear: true,
   volMaster: 0.9, volEngine: 0.85, volSfx: 0.8, volMusic: 0.5, units: 'kmh', lang: (typeof navigator !== 'undefined' && navigator.language?.startsWith('en') ? 'en' : 'es'),
-  camera: 'chase', showFps: false, vibration: true, traffic: 1, hudScale: 1,
+  camera: 'chase', showFps: false, mirrors: true, vibration: true, traffic: 1, hudScale: 1,
 };
 
 export function xpForLevel(level: number): number {

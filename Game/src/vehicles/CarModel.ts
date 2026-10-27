@@ -90,6 +90,8 @@ export class CarModel {
   /** Driver eye position in body-offset space. */
   readonly eye = new Vector3();
   readonly hoodCam = new Vector3();
+  /** Right side-mirror glass centre in body-offset space (the left one is mirrored in x). */
+  readonly mirrorPos = new Vector3(0.9, 1, -0.5);
 
   constructor(public readonly body: BodyStyle, public visual: VisualConfig, public opts: CarModelOptions) {
     const physical = opts.quality >= 2;
@@ -485,6 +487,7 @@ export class CarModel {
       const side = p.sideAt(mz, b.beltH + 0.02, sp);
       const mx = side.p.x + 0.11;
       const my = b.beltH + 0.075;
+      this.mirrorPos.set(mx, my, mz + 0.03);
       const housing = new SphereGeometry(1, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.62).rotateX(-Math.PI / 2).scale(0.11, 0.07, 0.085);
       both(paintParts, place(paintUV(housing), mx, my, mz + 0.02));
       const glassM = new CircleGeometry(1, 18).scale(0.095, 0.058, 1);

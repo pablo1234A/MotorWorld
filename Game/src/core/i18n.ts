@@ -55,6 +55,7 @@ const D: Record<string, [string, string]> = {
   resolution: ['Resolución', 'Resolution'],
   fps_target: ['FPS objetivo', 'Target FPS'],
   show_fps: ['Mostrar FPS', 'Show FPS'],
+  mirrors: ['Retrovisores en pantalla', 'On-screen mirrors'],
   control_mode: ['Dirección', 'Steering'],
   ctl_buttons: ['Botones', 'Buttons'],
   ctl_slider: ['Deslizar', 'Slider'],

@@ -82,6 +82,7 @@ export class SettingsScreen implements Screen {
         this.range(t('resolution'), 'resolution', 0.5, 1, 0.05, pct),
         this.options(t('fps_target'), 'fps', [[30, '30'], [60, '60']]),
         this.toggle(t('show_fps'), 'showFps'),
+        this.toggle(t('mirrors'), 'mirrors'),
         this.range(t('hud_scale'), 'hudScale', 0.75, 1.25, 0.05, pct),
       );
     } else if (this.tab === 'controls') {

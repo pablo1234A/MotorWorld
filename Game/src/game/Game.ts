@@ -44,6 +44,7 @@ import { Discovery, EVENT_COLORS, POI_COLORS } from './Discovery';
 import type { GameApi } from './GameApi';
 import { Skills } from './Skills';
 import { Vehicle } from './Vehicle';
+import { Mirrors } from '../vfx/Mirrors';
 
 const STEP = 1 / 120;
 const _v = new Vector3();
@@ -78,6 +79,7 @@ export class Game implements GameContext, GameApi {
   hud!: Hud;
   garage!: GarageScene;
   composer: EffectComposer | null = null;
+  mirrors: Mirrors | null = null;
   bloom: UnrealBloomPass | null = null;
   perf = new PerfMonitor();
   player!: Vehicle;
@@ -285,6 +287,13 @@ export class Game implements GameContext, GameApi {
       this.composer = null;
       this.bloom = null;
     }
+    // on-screen rear-view mirrors (recreated when the quality level changes)
+    if (this.mirrors && (this.mirrors as any).quality !== this.quality) {
+      this.mirrors.dispose();
+      this.mirrors = null;
+    }
+    if (!this.mirrors) this.mirrors = new Mirrors(r, this.scene, this.quality);
+    this.mirrors.enabled = this.profile.settings.mirrors;
     this.world?.configure(this.quality, q.shadows);
     this.traffic?.setCapacity(Math.round(q.traffic * this.profile.settings.traffic));
     if (this.particles) this.particles.budget = this.quality === 0 ? 0.5 : 1;
@@ -304,6 +313,7 @@ export class Game implements GameContext, GameApi {
 
   private resize() {
     const w = innerWidth, h = innerHeight;
+    this.mirrors?.resize(w, h);
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
@@ -331,6 +341,7 @@ export class Game implements GameContext, GameApi {
     this.perf.target = s.fps;
     this.applyAudioSettings();
     this.applyControlSettings();
+    if (this.mirrors) this.mirrors.enabled = s.mirrors;
     this.player.setAssists({ abs: s.abs, tcs: s.tcs, stability: s.stability, steering: s.steerAssist, autoGear: s.autoGear });
   }
 
@@ -714,8 +725,11 @@ export class Game implements GameContext, GameApi {
     this.camera.updateMatrixWorld();
     this.world.cull(this.camera);
     // render
+    const mirrorsOn = !!this.mirrors && this.mirrors.enabled && driving && this.rig.mode !== 'cinematic';
+    if (mirrorsOn) this.mirrors!.update(this.player);
     if (this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
+    if (mirrorsOn) this.mirrors!.draw();
   }
 
   private handleActions(driving: boolean) {
@@ -737,7 +751,7 @@ export class Game implements GameContext, GameApi {
     if (inp.consume('indRight')) this.player.toggleIndicator(1);
     if (inp.consume('hazard')) this.player.toggleHazard();
     if (inp.consume('gearMode')) this.toggleGearbox();
-    if (inp.consume('mirrors')) this.toggleMirrors?.();
+    if (inp.consume('mirrors')) this.toggleMirrors();
   }
 
   /** Automatic <-> manual gearbox (HUD button, G key, d-pad down). */
@@ -749,7 +763,13 @@ export class Game implements GameContext, GameApi {
     this.toast(t('transmission'), st.autoGear ? t('automatic') : t('manual'));
   }
 
-  toggleMirrors?: () => void;
+  toggleMirrors = () => {
+    const st = this.profile.settings;
+    st.mirrors = !st.mirrors;
+    this.applySettings();
+    this.profile.markDirty();
+    this.toast(t('mirrors'), st.mirrors ? 'ON' : 'OFF');
+  };
 
   private controlPlayer(dt: number) {
     const s = this.player.sim;
