@@ -415,6 +415,15 @@ export class AudioEngine {
       case 'nearmiss':
         this.noiseBurst(0.4, 0.15, 'bandpass', 900, 1.5, 300);
         break;
+      case 'tick':
+        // indicator relay: short dry click
+        this.noiseBurst(0.018, 0.09 * gain, 'bandpass', 3200, 2.5);
+        this.tone(1900, 0.012, 0.03 * gain, 'square');
+        break;
+      case 'tock':
+        this.noiseBurst(0.018, 0.07 * gain, 'bandpass', 2300, 2.5);
+        this.tone(1300, 0.012, 0.025 * gain, 'square');
+        break;
       case 'landing':
         this.noiseBurst(0.2, 0.2 * gain, 'lowpass', 400, 0.8, 80);
         break;

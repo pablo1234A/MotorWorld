@@ -19,6 +19,13 @@ export class Vehicle {
   headlights: SpotLight[] = [];
   headOn = false;
   readonly id: string;
+  /** -1 left, 0 off, 1 right */
+  indicator = 0;
+  hazard = false;
+  /** current lamp state of the blinker (on/off phase) */
+  blinkOn = false;
+  private blinkT = 0;
+  private turnArmed = false;
 
   constructor(
     public def: CarDef,
@@ -92,6 +99,43 @@ export class Vehicle {
     }
   }
 
+  /** Toggle an indicator like a stalk: pushing the same side again cancels it. */
+  toggleIndicator(side: -1 | 1) {
+    this.indicator = this.indicator === side ? 0 : side;
+    this.turnArmed = false;
+    if (this.indicator !== 0 && !this.hazard) this.blinkT = 0;
+  }
+
+  toggleHazard() {
+    this.hazard = !this.hazard;
+    this.blinkT = 0;
+  }
+
+  /**
+   * Blink timing + self-cancelling: once the wheel has been turned towards the indicated side and comes back
+   * to the centre, the indicator switches off (like a real steering column). Returns +1 / -1 on a relay click.
+   */
+  updateIndicators(dt: number, steer: number): number {
+    if (this.indicator !== 0 && !this.hazard) {
+      if (steer * this.indicator > 0.4) this.turnArmed = true;
+      else if (this.turnArmed && Math.abs(steer) < 0.08) {
+        this.indicator = 0;
+        this.turnArmed = false;
+      }
+    }
+    const active = this.hazard || this.indicator !== 0;
+    if (!active) {
+      const was = this.blinkOn;
+      this.blinkOn = false;
+      this.blinkT = 0;
+      return was ? -1 : 0;
+    }
+    const prev = this.blinkOn;
+    this.blinkT += dt;
+    this.blinkOn = this.blinkT % 0.72 < 0.36;
+    return this.blinkOn !== prev ? (this.blinkOn ? 1 : -1) : 0;
+  }
+
   setAssists(a: Assists) {
     this.sim.assists = { ...a };
   }
@@ -109,7 +153,9 @@ export class Vehicle {
     this.model.setSteeringWheel(s.steerAngle);
     const braking = s.input.brake > 0.05 && s.powertrain.gear > 0 ? s.input.brake : s.powertrain.gear < 0 && s.input.throttle > 0.05 ? 0.5 : 0;
     this.headOn = night > 0.35;
-    this.model.setLights(this.headOn, braking, night);
+    this.model.setLights(this.headOn, braking, night, s.powertrain.gear < 0);
+    const l = this.blinkOn && (this.hazard || this.indicator < 0), r = this.blinkOn && (this.hazard || this.indicator > 0);
+    this.model.setIndicators(l, r);
     for (const l of this.headlights) l.intensity = this.headOn ? 260 : 0;
     // contact shadow follows the ground under the car
     const g = { height: 0, normal: _v, surface: 0 as any, water: 0 };

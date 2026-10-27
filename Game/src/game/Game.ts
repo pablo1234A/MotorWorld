@@ -652,7 +652,7 @@ export class Game implements GameContext, GameApi {
     this.handleActions(driving);
     const sim = this.player.sim;
     if (driving) {
-      this.controlPlayer();
+      this.controlPlayer(dt);
       if (this.race) this.race.update(dt);
       this.acc += dt;
       let steps = 0;
@@ -733,9 +733,25 @@ export class Game implements GameContext, GameApi {
     const s = this.player.sim.input;
     if (inp.consume('shiftUp')) s.shiftUp = true;
     if (inp.consume('shiftDown')) s.shiftDown = true;
+    if (inp.consume('indLeft')) this.player.toggleIndicator(-1);
+    if (inp.consume('indRight')) this.player.toggleIndicator(1);
+    if (inp.consume('hazard')) this.player.toggleHazard();
+    if (inp.consume('gearMode')) this.toggleGearbox();
+    if (inp.consume('mirrors')) this.toggleMirrors?.();
   }
 
-  private controlPlayer() {
+  /** Automatic <-> manual gearbox (HUD button, G key, d-pad down). */
+  toggleGearbox() {
+    const st = this.profile.settings;
+    st.autoGear = !st.autoGear;
+    this.applySettings();
+    this.profile.markDirty();
+    this.toast(t('transmission'), st.autoGear ? t('automatic') : t('manual'));
+  }
+
+  toggleMirrors?: () => void;
+
+  private controlPlayer(dt: number) {
     const s = this.player.sim;
     const inp = this.input;
     const countdown = this.race?.state === 'countdown';
@@ -752,6 +768,8 @@ export class Game implements GameContext, GameApi {
     s.input.steer = inp.steer;
     s.input.handbrake = countdown ? true : inp.handbrake;
     s.input.nitro = inp.nitro;
+    const click = this.player.updateIndicators(dt, s.steerAngle / Math.max(0.1, s.spec.steering.maxAngle));
+    if (click) this.sfx(click > 0 ? 'tick' : 'tock', 0.9);
     // nitro regenerates slowly + with skills
     if (s.spec.nitro > 0 && !s.powertrain.nitroActive) s.nitroAmount = Math.min(1, s.nitroAmount + (this.skills.points > 0 ? 0.03 : 0.006) * (1 / 60));
   }
@@ -892,6 +910,7 @@ export class Game implements GameContext, GameApi {
       units: this.profile.settings.units, x: s.position.x, z: s.position.z, heading: s.heading, zone: this.discovery.zoneName(), clock: this.env.clock,
       cash: this.profile.data.cash, markers, route: race ? { x: race.route.x, z: race.route.z } : this.gps, others: race ? race.dots : [],
       race: race ? race.hud() : null, fps: this.profile.settings.showFps ? this.perf.fps : null,
+      indicator: this.player.hazard ? 2 : this.player.indicator, blinkOn: this.player.blinkOn, autoGear: this.profile.settings.autoGear,
     });
   }
 

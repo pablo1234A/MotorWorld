@@ -27,6 +27,10 @@ export interface HudFrame {
   others: { x: number; z: number; color: string }[];
   race: RaceHud | null;
   fps: number | null;
+  /** -1 left, 1 right, 2 hazard, 0 off */
+  indicator?: number;
+  blinkOn?: boolean;
+  autoGear?: boolean;
 }
 
 /**
@@ -53,6 +57,10 @@ export class Hud {
   private fpsEl: HTMLElement;
   private nitroEl: HTMLElement;
   private flashEl: HTMLElement;
+  private indLEl: HTMLElement;
+  private indREl: HTMLElement;
+  private hazEl: HTMLElement;
+  private modeEl: HTMLElement;
   private bigTimer = 0;
   private lastSpeedTxt = '';
   onPrompt?: () => void;
@@ -77,6 +85,19 @@ export class Hud {
     this.fpsEl = h('div', { class: 'fps hidden' });
     this.nitroEl = h('i');
     this.flashEl = h('div', { class: 'flash' });
+    const tap = (el: HTMLElement, a: Parameters<Input['trigger']>[0]) => {
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        input.trigger(a);
+      });
+      return el;
+    };
+    const arrow = (dir: 'l' | 'r') => `<svg viewBox="0 0 40 30"><path d="${dir === 'l' ? 'M2 15 L16 2 L16 9 L38 9 L38 21 L16 21 L16 28 Z' : 'M38 15 L24 2 L24 9 L2 9 L2 21 L24 21 L24 28 Z'}"/></svg>`;
+    this.indLEl = tap(h('button', { class: 'indbtn l', 'aria-label': 'left indicator', html: arrow('l') }), 'indLeft');
+    this.indREl = tap(h('button', { class: 'indbtn r', 'aria-label': 'right indicator', html: arrow('r') }), 'indRight');
+    this.hazEl = tap(h('button', { class: 'hazbtn', 'aria-label': 'hazard lights', html: '<svg viewBox="0 0 40 36"><path d="M20 3 L37 33 L3 33 Z" fill="none" stroke-width="4"/><path d="M20 13 L29 29 L11 29 Z" fill="none" stroke-width="3"/></svg>' }), 'hazard');
+    this.modeEl = tap(h('button', { class: 'gearmode' }, 'AUTO'), 'gearMode');
     const btn = (name: string, fn: () => void, label: string) => {
       const b = h('button', { class: 'hbtn', 'aria-label': label }, icon(name));
       b.addEventListener('pointerdown', (e) => {
@@ -95,7 +116,10 @@ export class Hud {
       h('div', { class: 'tr' }, this.cashEl, btn('reset', actions.reset, t('reset_car')), btn('camera', actions.camera, t('camera')), btn('map', actions.map, t('map')), btn('pause', actions.pause, t('paused'))),
       this.toastsEl,
       this.touch.el,
-      h('div', { class: 'speedo' }, this.speedCanvas, this.gearEl, this.spdEl, this.unitEl),
+      h('div', { class: 'speedo' }, this.speedCanvas, this.gearEl, this.spdEl, this.unitEl, this.modeEl),
+      this.indLEl,
+      this.indREl,
+      this.hazEl,
       h('div', { class: 'nitrobar' }, this.nitroEl),
       this.skillEl,
       this.promptEl,
@@ -177,6 +201,17 @@ export class Hud {
     (this.nitroEl.parentElement as HTMLElement).classList.toggle('hidden', !f.nitroFitted);
     this.touch.setNitro(f.nitroFitted, f.nitro);
     this.touch.update();
+    const ind = f.indicator ?? 0, on = !!f.blinkOn;
+    this.indLEl.classList.toggle('on', on && (ind === -1 || ind === 2));
+    this.indREl.classList.toggle('on', on && (ind === 1 || ind === 2));
+    this.indLEl.classList.toggle('armed', ind === -1 || ind === 2);
+    this.indREl.classList.toggle('armed', ind === 1 || ind === 2);
+    this.hazEl.classList.toggle('on', ind === 2);
+    const mode = f.autoGear === false ? 'MAN' : 'AUTO';
+    if (this.modeEl.textContent !== mode) {
+      this.modeEl.textContent = mode;
+      this.modeEl.classList.toggle('man', mode === 'MAN');
+    }
     // info
     if (this.zoneEl.textContent !== f.zone) this.zoneEl.textContent = f.zone;
     this.clockEl.textContent = f.clock;

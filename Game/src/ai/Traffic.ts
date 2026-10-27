@@ -6,7 +6,8 @@ import { Rng } from '../core/Random';
 import type { KinematicBody } from '../physics/CollisionSystem';
 import { TRAFFIC_BODIES } from '../vehicles/CarCatalog';
 import { CarModel } from '../vehicles/CarModel';
-import { getDetailMaterial } from '../vehicles/CarMaterials';
+import { CELL, cellUV, getDetailMaterial } from '../vehicles/CarMaterials';
+import { headlightTextures, taillightTextures } from '../vehicles/CarDetails';
 import { defaultVisual } from '../vehicles/Tuning';
 import { buildWheel, mergeParts } from '../vehicles/WheelBuilder';
 import { RF, type Road } from '../world/RoadNetwork';
@@ -23,9 +24,15 @@ interface TypeAssets {
   detailIM: InstancedMesh;
   headIM: InstancedMesh;
   tailIM: InstancedMesh;
+  /** amber indicator lamps, left and right blink independently (instance colour) */
+  indLIM: InstancedMesh;
+  indRIM: InstancedMesh;
   wheelPos: Vector3[];
   colors: number[];
 }
+
+const AMBER_ON = new Color(1.9, 0.95, 0.12);
+const AMBER_OFF = new Color(0.32, 0.17, 0.03);
 
 export class TrafficCar implements KinematicBody {
   active = false;
@@ -103,9 +110,11 @@ export class Traffic {
     scene.add(this.group);
     const paint = new MeshStandardMaterial({ color: 0xffffff, metalness: 0.45, roughness: 0.35, envMapIntensity: 1.2 });
     const glass = new MeshStandardMaterial({ color: 0x1a2028, metalness: 0.3, roughness: 0.08, envMapIntensity: 1.5 });
-    const headMat = new MeshBasicMaterial({ color: 0xffffff });
-    const tailMat = new MeshBasicMaterial({ color: 0xffffff });
+    const trim = new MeshStandardMaterial({ color: 0x060607, metalness: 0.1, roughness: 0.2 });
+    const indMat = new MeshBasicMaterial({ color: 0xffffff });
     TRAFFIC_BODIES.forEach((tb, ti) => {
+      const headMat = new MeshBasicMaterial({ color: 0xffffff, map: headlightTextures(tb.body.headlight).map });
+      const tailMat = new MeshBasicMaterial({ color: 0xffffff, map: taillightTextures(tb.body.taillight).map });
       const v = defaultVisual({ id: tb.id, category: 'sedan', color: 0xffffff } as any);
       v.rimStyle = ti % 3 === 0 ? 4 : ti % 3 === 1 ? 0 : 5;
       const model = new CarModel(tb.body, v, { quality: Math.min(1, quality), interior: false, wingLevel: 0, splitterLevel: 0, diffuserLevel: 0 });
@@ -120,12 +129,21 @@ export class Traffic {
         else if (m.material === model.mats.tail) tailGeo = m.geometry;
         else if (m.material === model.mats.paint) paintParts.push(m.geometry);
       }
+      // bake the projected details into the shared atlas so a traffic car stays a handful of draw calls
+      const pp = model.parts!;
+      const atl = (arr: BufferGeometry[], cell: number, pattern: boolean) => arr.map((g) => cellUV(g.clone(), cell, pattern));
+      detailGeo = mergeParts([detailGeo!, ...atl(pp.grille, CELL.grille, true), ...atl(pp.plate, CELL.plate, true), ...atl(pp.trim, CELL.gloss, false), ...atl(pp.rev, CELL.alu, false)]);
+      if (pp.drl.length) headGeo = mergeParts([headGeo!, ...pp.drl]);
+      const indLGeo = pp.indL.length ? mergeParts(pp.indL) : new BufferGeometry();
+      const indRGeo = pp.indR.length ? mergeParts(pp.indR) : new BufferGeometry();
       const cap = Math.max(2, Math.ceil(capacity * 0.7));
-      const bodyIM = new InstancedMesh(bodyGeo!, [paint, glass], cap);
+      const bodyIM = new InstancedMesh(bodyGeo!, [paint, glass, trim], cap);
       const detailIM = new InstancedMesh(detailGeo!, getDetailMaterial(), cap);
       const headIM = new InstancedMesh(headGeo!, headMat, cap);
       const tailIM = new InstancedMesh(tailGeo!, tailMat, cap);
-      for (const im of [bodyIM, detailIM, headIM, tailIM]) {
+      const indLIM = new InstancedMesh(indLGeo, indMat, cap);
+      const indRIM = new InstancedMesh(indRGeo, indMat, cap);
+      for (const im of [bodyIM, detailIM, headIM, tailIM, indLIM, indRIM]) {
         im.count = 0;
         im.instanceMatrix.setUsage(DynamicDrawUsage);
         im.frustumCulled = false;
@@ -135,13 +153,15 @@ export class Traffic {
       bodyIM.instanceColor = new InstancedBufferAttribute(new Float32Array(cap * 3), 3);
       headIM.instanceColor = new InstancedBufferAttribute(new Float32Array(cap * 3), 3);
       tailIM.instanceColor = new InstancedBufferAttribute(new Float32Array(cap * 3), 3);
+      indLIM.instanceColor = new InstancedBufferAttribute(new Float32Array(cap * 3), 3);
+      indRIM.instanceColor = new InstancedBufferAttribute(new Float32Array(cap * 3), 3);
       const p = model.profile;
       const b = tb.body;
       const wheelPos = [
         new Vector3(-b.trackF / 2, b.wheelRadius, p.axleF), new Vector3(b.trackF / 2, b.wheelRadius, p.axleF),
         new Vector3(-b.trackR / 2, b.wheelRadius, p.axleR), new Vector3(b.trackR / 2, b.wheelRadius, p.axleR),
       ];
-      this.types.push({ body: b, bodyGeo: bodyGeo!, detailGeo: detailGeo!, headGeo: headGeo!, tailGeo: tailGeo!, bodyIM, detailIM, headIM, tailIM, wheelPos, colors: tb.colors });
+      this.types.push({ body: b, bodyGeo: bodyGeo!, detailGeo: detailGeo!, headGeo: headGeo!, tailGeo: tailGeo!, bodyIM, detailIM, headIM, tailIM, indLIM, indRIM, wheelPos, colors: tb.colors });
       void paintParts;
     });
     // shared unit wheel (radius 1, width 0.7) scaled per instance
@@ -422,7 +442,7 @@ export class Traffic {
   private render() {
     const counts = new Array(this.types.length).fill(0);
     let wheels = 0;
-    const blink = Math.floor(performance.now() / 380) % 2 === 0;
+    const blink = Math.floor(performance.now() / 360) % 2 === 0;
     for (const car of this.cars) {
       if (!car.active) continue;
       const T = this.types[car.type];
@@ -435,7 +455,13 @@ export class Traffic {
       T.detailIM.setMatrixAt(k, _m);
       T.headIM.setMatrixAt(k, _m);
       T.tailIM.setMatrixAt(k, _m);
+      T.indLIM.setMatrixAt(k, _m);
+      T.indRIM.setMatrixAt(k, _m);
       T.bodyIM.setColorAt(k, car.color);
+      // indicators: positive = right; crashed cars put the hazards on
+      const indOn = blink && (car.crashed || car.indicator !== 0);
+      T.indLIM.setColorAt(k, indOn && (car.crashed || car.indicator < 0) ? AMBER_ON : AMBER_OFF);
+      T.indRIM.setColorAt(k, indOn && (car.crashed || car.indicator > 0) ? AMBER_ON : AMBER_OFF);
       const hl = 0.35 + this.night * 1.8;
       T.headIM.setColorAt(k, _c.setRGB(hl, hl, hl * 0.92));
       const hazard = car.crashed && blink;
@@ -453,7 +479,7 @@ export class Traffic {
       }
     }
     this.types.forEach((T, i) => {
-      for (const im of [T.bodyIM, T.detailIM, T.headIM, T.tailIM]) {
+      for (const im of [T.bodyIM, T.detailIM, T.headIM, T.tailIM, T.indLIM, T.indRIM]) {
         im.count = Math.min(counts[i], im.instanceMatrix.count);
         im.instanceMatrix.needsUpdate = true;
         if (im.instanceColor) im.instanceColor.needsUpdate = true;

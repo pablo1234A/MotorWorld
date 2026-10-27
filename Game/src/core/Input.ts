@@ -1,6 +1,6 @@
 import { clamp, lerp, moveTowards, smoothstep } from './MathUtil';
 
-export type Action = 'camera' | 'reset' | 'pause' | 'map' | 'horn' | 'lookBack' | 'shiftUp' | 'shiftDown' | 'nitro' | 'handbrake' | 'interact' | 'photo';
+export type Action = 'camera' | 'reset' | 'pause' | 'map' | 'horn' | 'lookBack' | 'shiftUp' | 'shiftDown' | 'nitro' | 'handbrake' | 'interact' | 'photo' | 'indLeft' | 'indRight' | 'hazard' | 'gearMode' | 'mirrors';
 
 /** Values written by the on-screen touch controls. */
 export interface TouchState {
@@ -141,6 +141,9 @@ export class Input {
       edge(10, 'horn');
       edge(11, 'lookBack');
       edge(12, 'interact');
+      edge(14, 'indLeft'); // d-pad left
+      edge(15, 'indRight'); // d-pad right
+      edge(13, 'gearMode'); // d-pad down
       break;
     }
 
@@ -189,6 +192,11 @@ const KEYMAP: Record<string, Action> = {
   KeyF: 'interact',
   Enter: 'interact',
   F2: 'photo',
+  KeyZ: 'indLeft',
+  KeyX: 'indRight',
+  KeyV: 'hazard',
+  KeyG: 'gearMode',
+  KeyK: 'mirrors',
 };
 
 /**

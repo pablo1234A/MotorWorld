@@ -2,6 +2,7 @@ import {
   BufferGeometry, CanvasTexture, Color, LinearFilter, LinearMipmapLinearFilter, Material, MeshPhysicalMaterial, MeshStandardMaterial, RepeatWrapping, SRGBColorSpace, Texture,
 } from 'three';
 import type { BodyStyle } from './BodyStyle';
+import { grilleTexture, headlightTextures, plateTexture, taillightTextures } from './CarDetails';
 import type { Finish, VisualConfig } from './Tuning';
 
 /** Atlas cells (4x4). */
@@ -318,6 +319,16 @@ export interface CarMaterials {
   caliper: MeshStandardMaterial;
   head: MeshStandardMaterial;
   tail: MeshStandardMaterial;
+  /** gloss black window frames / pillars */
+  trim: MeshStandardMaterial;
+  /** daytime running lights */
+  drl: MeshStandardMaterial;
+  /** turn indicators, left and right blink independently */
+  indL: MeshStandardMaterial;
+  indR: MeshStandardMaterial;
+  reverse: MeshStandardMaterial;
+  grille: MeshStandardMaterial;
+  plate: MeshStandardMaterial;
   detail: MeshStandardMaterial;
   livery: CanvasTexture;
   canvas: HTMLCanvasElement;
@@ -345,13 +356,22 @@ export function createCarMaterials(body: BodyStyle, v: VisualConfig, physical: b
   const rim = new MeshStandardMaterial({ color: v.rimColor, metalness: 0.85, roughness: 0.28, envMapIntensity: 1.2 });
   const caliper = new MeshStandardMaterial({ color: v.caliperColor, metalness: 0.3, roughness: 0.4 });
   const lightTint = [0xffffff, 0x9aa4ad, 0xbfd8ff][v.lights] ?? 0xffffff;
-  const head = new MeshStandardMaterial({ color: lightTint, emissive: 0xfff3e0, emissiveIntensity: 0.25, metalness: 0.4, roughness: 0.1 });
-  const tail = new MeshStandardMaterial({ color: 0x5a0306, emissive: 0xff1010, emissiveIntensity: 0.35, metalness: 0.2, roughness: 0.25 });
+  const ht = headlightTextures(body.headlight);
+  const head = new MeshStandardMaterial({ color: lightTint, map: ht.map, emissive: 0xfff3e0, emissiveMap: ht.emissive, emissiveIntensity: 0, metalness: 0.55, roughness: 0.08, envMapIntensity: 1.6 });
+  const tt = taillightTextures(body.taillight);
+  const tail = new MeshStandardMaterial({ color: 0xffffff, map: tt.map, emissive: 0xff1a12, emissiveMap: tt.emissive, emissiveIntensity: 0.35, metalness: 0.2, roughness: 0.12, envMapIntensity: 1.3 });
+  const trim = new MeshStandardMaterial({ color: 0x050506, metalness: 0.1, roughness: 0.16, envMapIntensity: 1.3 });
+  const drl = new MeshStandardMaterial({ color: 0xffffff, emissive: 0xf4f8ff, emissiveIntensity: 1.6, roughness: 0.2 });
+  const indL = new MeshStandardMaterial({ color: 0x8a4a00, emissive: 0xff8a00, emissiveIntensity: 0, metalness: 0.2, roughness: 0.15 });
+  const indR = indL.clone();
+  const reverse = new MeshStandardMaterial({ color: 0xd9dde2, emissive: 0xffffff, emissiveIntensity: 0, metalness: 0.3, roughness: 0.1 });
+  const grille = new MeshStandardMaterial({ map: grilleTexture(body.grille), metalness: body.grille === 'chrome' || body.grille === 'tall' ? 0.9 : 0.3, roughness: body.grille === 'chrome' || body.grille === 'tall' ? 0.15 : 0.5, envMapIntensity: 1.2 });
+  const plate = new MeshStandardMaterial({ map: plateTexture(), roughness: 0.45, metalness: 0.1 });
   const detail = getDetailMaterial();
   return {
-    paint, glass, rim, caliper, head, tail, detail, livery, canvas,
+    paint, glass, rim, caliper, head, tail, trim, drl, indL, indR, reverse, grille, plate, detail, livery, canvas,
     dispose() {
-      [paint, glass, rim, caliper, head, tail].forEach((m: Material) => m.dispose());
+      [paint, glass, rim, caliper, head, tail, trim, drl, indL, indR, reverse, grille, plate].forEach((m: Material) => m.dispose());
       livery.dispose();
     },
   };
