@@ -45,6 +45,8 @@ import type { GameApi } from './GameApi';
 import { Skills } from './Skills';
 import { Vehicle } from './Vehicle';
 import { Mirrors } from '../vfx/Mirrors';
+import { TrafficControl } from '../world/TrafficControl';
+import { Pedestrians } from '../ai/Pedestrians';
 
 const STEP = 1 / 120;
 const _v = new Vector3();
@@ -80,6 +82,8 @@ export class Game implements GameContext, GameApi {
   garage!: GarageScene;
   composer: EffectComposer | null = null;
   mirrors: Mirrors | null = null;
+  control!: TrafficControl;
+  peds!: Pedestrians;
   private clusterT = 0;
   bloom: UnrealBloomPass | null = null;
   perf = new PerfMonitor();
@@ -182,6 +186,14 @@ export class Game implements GameContext, GameApi {
       setTimeout(() => (this.rig.mode = (this.profile.settings.camera as CamMode) || 'chase'), 6000);
     };
     this.traffic = new Traffic(this.world, this.scene, PROFILES.ultra.traffic, this.quality);
+    // traffic lights, signs, road markings at junctions
+    this.control = new TrafficControl(this.world.data.roads);
+    this.control.buildMeshes(this.quality);
+    this.scene.add(this.control.group);
+    this.traffic.control = this.control;
+    this.peds = new Pedestrians(this.world, this.scene, 110);
+    this.peds.control = this.control;
+    this.peds.max = [16, 35, 60, 90][this.quality] ?? 40;
     this.traffic.setCapacity(this.qp.traffic);
     this.traffic.events = {
       nearMiss: (_c, d) => {
@@ -323,6 +335,7 @@ export class Game implements GameContext, GameApi {
     this.mirrors.enabled = this.profile.settings.mirrors;
     this.world?.configure(this.quality, q.shadows);
     this.traffic?.setCapacity(Math.round(q.traffic * this.profile.settings.traffic));
+    if (this.peds) this.peds.max = [16, 35, 60, 90][this.quality] ?? 40;
     if (this.particles) this.particles.budget = this.quality === 0 ? 0.5 : 1;
     this.resize();
   }
@@ -709,7 +722,9 @@ export class Game implements GameContext, GameApi {
       this.traffic.night = this.env.night;
       this.traffic.rainFactor = 1 - this.env.wetness * 0.15;
       this.traffic.density = this.profile.settings.traffic;
-      this.traffic.update(dt, { x: sim.position.x, y: sim.position.y, z: sim.position.z, vx: sim.velocity.x, vz: sim.velocity.z, fx: f.x, fz: f.z, speed: sim.speed }, this.aiVehicles.map((v) => ({ x: v.sim.position.x, z: v.sim.position.z })));
+      this.control.update(dt);
+      this.peds.update(dt, { x: sim.position.x, z: sim.position.z, vx: sim.velocity.x, vz: sim.velocity.z });
+      this.traffic.update(dt, { x: sim.position.x, y: sim.position.y, z: sim.position.z, vx: sim.velocity.x, vz: sim.velocity.z, fx: f.x, fz: f.z, speed: sim.speed }, [...this.aiVehicles.map((v) => ({ x: v.sim.position.x, z: v.sim.position.z })), ...this.peds.crossingBodies]);
       this.skills.driftBoost = this.race?.def.type === 'drift' ? 1.3 : this.discovery.inDriftZone ? 1.6 : 1;
       this.skills.update(dt, sim);
       this.discovery.update(dt, sim.position.x, sim.position.y, sim.position.z, sim.speed, !!this.race);

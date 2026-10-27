@@ -11,6 +11,7 @@ import { headlightTextures, taillightTextures } from '../vehicles/CarDetails';
 import { defaultVisual } from '../vehicles/Tuning';
 import { buildWheel, mergeParts } from '../vehicles/WheelBuilder';
 import { RF, type Road } from '../world/RoadNetwork';
+import type { Approach, TrafficControl } from '../world/TrafficControl';
 import type { World } from '../world/World';
 import type { BodyStyle } from '../vehicles/BodyStyle';
 
@@ -48,6 +49,17 @@ export class TrafficCar implements KinematicBody {
   cruise = 15;
   braking = false;
   indicator = 0;
+  /** junction turn decided ahead of time (indicator on), or null = straight on */
+  turnPlan: { j: { s: number; road: Road; otherS: number; end: boolean }; dir: number; side: number } | null = null;
+  planDone = -1;
+  /** STOP sign handling */
+  stopFor: Approach | null = null;
+  stopWait = 0;
+  /** visual blend after a road switch (turning) */
+  turnBlend = 0;
+  offX = 0;
+  offZ = 0;
+  offH = 0;
   crashed = false;
   crashTime = 0;
   yawRate = 0;
@@ -104,6 +116,9 @@ export class Traffic {
   events: TrafficEvents = {};
   private spawnTimer = 0;
   private playerS = new Map<Road, { s: number; lat: number }>();
+  /** traffic lights & signs (set by the game once the world is built) */
+  control: TrafficControl | null = null;
+  private playerPos = { x: 0, z: 0, speed: 0 };
 
   constructor(private world: World, scene: Scene, capacity: number, quality: number) {
     this.maxCars = capacity;
@@ -215,6 +230,12 @@ export class Traffic {
     const lane = this.rng.int(0, r.info.lanesPerDir - 1);
     car.active = true;
     car.crashed = false;
+    car.turnPlan = null;
+    car.planDone = -1;
+    car.stopFor = null;
+    car.stopWait = 0;
+    car.turnBlend = 0;
+    car.indicator = 0;
     car.road = r;
     car.s = hit.s;
     car.dir = dir;
@@ -244,6 +265,47 @@ export class Traffic {
     car.heading = Math.atan2(-tx, -tz);
     car.vx = tx * car.speed;
     car.vz = tz * car.speed;
+    if (car.turnBlend > 0) {
+      // ease from the old path into the new road so turns are smooth arcs, not snaps
+      const k = car.turnBlend * car.turnBlend * (3 - 2 * car.turnBlend);
+      car.x += car.offX * k;
+      car.z += car.offZ * k;
+      car.heading += car.offH * k;
+    }
+  }
+
+  /** Switch a car onto another road keeping its visual pose continuous. */
+  private switchRoad(car: TrafficCar, road: Road, s: number, dir: number) {
+    const ox = car.x, oz = car.z, oh = car.heading;
+    car.road = road;
+    car.dir = road.info.oneWay ? 1 : dir;
+    car.s = s;
+    car.lane = Math.min(car.lane, road.info.lanesPerDir - 1);
+    car.lat = car.latTarget = road.laneOffset(car.lane, car.dir);
+    car.cruise = road.info.speed * (0.85 + Math.random() * 0.25);
+    car.turnBlend = 0;
+    this.place(car);
+    car.offX = ox - car.x;
+    car.offZ = oz - car.z;
+    let dh = oh - car.heading;
+    while (dh > Math.PI) dh -= Math.PI * 2;
+    while (dh < -Math.PI) dh += Math.PI * 2;
+    car.offH = dh;
+    car.turnBlend = 1;
+    car.turnPlan = null;
+    car.stopFor = null;
+  }
+
+  /** No crossing traffic (or the player) moving through the intersection. */
+  private crossClear(a: Approach, car: TrafficCar): boolean {
+    const I = a.inter;
+    for (const o of this.cars) {
+      if (!o.active || o === car || o.crashed || o.speed < 1) continue;
+      if (o.road === car.road && o.dir === car.dir) continue;
+      if (Math.hypot(o.x - I.x, o.z - I.z) < 22) return false;
+    }
+    if (this.playerPos.speed > 2 && Math.hypot(this.playerPos.x - I.x, this.playerPos.z - I.z) < 24) return false;
+    return true;
   }
 
   /** Project the player onto nearby roads (used for leader detection). */
@@ -266,6 +328,9 @@ export class Traffic {
       this.trySpawn(player.x, player.z, player.fx, player.fz);
     }
     this.updatePlayerProjection(player.x, player.z);
+    this.playerPos.x = player.x;
+    this.playerPos.z = player.z;
+    this.playerPos.speed = player.speed;
     const ps = Math.hypot(player.vx, player.vz);
     for (const car of this.cars) {
       if (!car.active) continue;
@@ -353,11 +418,40 @@ export class Traffic {
         leaderV = 0;
       }
     }
+    // ---- traffic lights / STOP / YIELD ----
+    let capV = Infinity;
+    const ctl = this.control?.next(r, car.s, car.dir, 90);
+    if (ctl) {
+      const a = ctl.a;
+      const ds = ctl.ds - car.hz;
+      let stop = false;
+      if (a.control === 'signal') stop = !this.control!.canGo(a, ds, car.speed);
+      else if (a.control === 'stop' && car.stopFor !== a) {
+        stop = true;
+        if (ds < 3 && car.speed < 0.5) {
+          car.stopWait += dt;
+          if (car.stopWait > 1.2 && this.crossClear(a, car)) {
+            car.stopFor = a;
+            stop = false;
+          }
+        } else if (ds > 6) car.stopWait = 0;
+      } else if (a.control === 'yield') {
+        if (ds < 30) capV = 7;
+        if (ds < 12 && !this.crossClear(a, car)) stop = true;
+      }
+      if (stop && ds < gap) {
+        gap = Math.max(0.2, ds);
+        leaderV = 0;
+      }
+    }
+    // ---- plan turns at the next junction (indicator on ~45 m before) ----
+    this.planTurn(car);
+    if (car.turnPlan) capV = Math.min(capV, 8);
     // curvature-limited speed (look ahead)
     const i0 = Math.round(r.sToI(car.s));
     const look = Math.round(r.sToI(car.s + car.dir * clamp(car.speed * 2.5, 10, 60)));
     const turn = Math.abs(Math.atan2(r.tx[i0] * r.tz[look] - r.tz[i0] * r.tx[look], r.tx[i0] * r.tx[look] + r.tz[i0] * r.tz[look]));
-    let v0 = car.cruise * this.rainFactor;
+    let v0 = Math.min(car.cruise * this.rainFactor, capV);
     if (turn > 0.15) v0 = Math.min(v0, Math.max(7, car.cruise * (1 - turn * 0.9)));
     // ---- IDM ----
     const aMax = 2.0, bComf = 3.2, T = 1.3, s0 = 3.5;
@@ -381,9 +475,16 @@ export class Traffic {
       }
     }
     car.lat = moveTowards(car.lat, car.latTarget, dt * 1.3);
-    if (Math.abs(car.lat - car.latTarget) < 0.01) car.indicator = 0;
+    if (Math.abs(car.lat - car.latTarget) < 0.01) car.indicator = car.turnPlan ? car.turnPlan.side : 0;
+    if (car.turnBlend > 0) car.turnBlend = Math.max(0, car.turnBlend - dt / 1.3);
     // ---- advance & junctions ----
+    const sPrev = car.s;
     car.s += car.dir * car.speed * dt;
+    const tp = car.turnPlan;
+    if (tp && !tp.j.end && (tp.j.s - sPrev) * car.dir >= 0 && (tp.j.s - car.s) * car.dir < 0) {
+      this.switchRoad(car, tp.j.road, tp.j.otherS + tp.dir * 3, tp.dir);
+      return;
+    }
     if (!r.loop && (car.s < 0 || car.s > r.length)) this.continueAtEnd(car);
     else if (r.loop) car.s = ((car.s % r.length) + r.length) % r.length;
     this.place(car);
@@ -392,24 +493,21 @@ export class Traffic {
 
   private continueAtEnd(car: TrafficCar) {
     const r = car.road;
-    const atEnd = car.s > r.length;
-    const endS = atEnd ? r.length : 0;
+    const tp = car.turnPlan;
+    if (tp && tp.j.end) {
+      this.switchRoad(car, tp.j.road, tp.j.otherS + tp.dir * 3, tp.dir);
+      return;
+    }
+    const endS = car.s > r.length ? r.length : 0;
     const opts = r.junctions.filter((j) => j.end && Math.abs(j.s - endS) < 10 && j.road.info.traffic);
     if (opts.length) {
       const j = opts[Math.floor(Math.random() * opts.length)];
       const o = j.road;
-      car.road = o;
-      // choose a direction on the new road heading away from the junction
       let dir: number;
       if (!o.loop && j.otherS < 15) dir = 1;
       else if (!o.loop && j.otherS > o.length - 15) dir = -1;
       else dir = Math.random() < 0.5 ? 1 : -1;
-      if (o.info.oneWay) dir = 1;
-      car.dir = dir;
-      car.s = j.otherS + dir * 4;
-      car.lane = Math.min(car.lane, o.info.lanesPerDir - 1);
-      car.lat = car.latTarget = o.laneOffset(car.lane, dir);
-      car.cruise = o.info.speed * (0.85 + Math.random() * 0.25);
+      this.switchRoad(car, o, j.otherS + dir * 4, dir);
       car.speed = Math.min(car.speed, 8);
     } else {
       // dead end: turn around
@@ -417,6 +515,44 @@ export class Traffic {
       car.s = clamp(car.s, 0, r.length);
       car.lat = car.latTarget = r.laneOffset(car.lane, car.dir);
     }
+  }
+
+  /**
+   * Decide what to do at the next junction ahead: carry on, or turn into the crossing road. The choice is
+   * made ~45 m before so the indicator goes on in time; the side comes from the new heading.
+   */
+  private planTurn(car: TrafficCar) {
+    const r = car.road;
+    if (car.turnPlan) return;
+    let next: { s: number; road: Road; otherS: number; end: boolean } | null = null, nd = 46;
+    for (const j of r.junctions) {
+      if (!j.road.info.traffic) continue;
+      const ds = (j.s - car.s) * car.dir;
+      if (ds > 8 && ds < nd) {
+        nd = ds;
+        next = j;
+      }
+    }
+    if (!next) return;
+    const key = next.road.index * 100000 + Math.round(next.s);
+    if (car.planDone === key) return;
+    car.planDone = key;
+    const o = next.road;
+    // at a road end the car has to turn; elsewhere it turns sometimes
+    const atEnd = !r.loop && ((car.dir > 0 && r.length - next.s < 12) || (car.dir < 0 && next.s < 12));
+    if (!atEnd && Math.random() > 0.35) return;
+    let dirs: number[] = o.info.oneWay ? [1] : [1, -1];
+    if (!o.loop) dirs = dirs.filter((d) => (d > 0 ? o.length - next!.otherS > 30 : next!.otherS > 30));
+    if (!dirs.length) return;
+    const dir = dirs[Math.floor(Math.random() * dirs.length)];
+    o.pointAt(next.otherS, pt);
+    const nhx = pt.tx * dir, nhz = pt.tz * dir;
+    const i = Math.round(r.sToI(car.s));
+    const hx = r.tx[i] * car.dir, hz = r.tz[i] * car.dir;
+    // right of the current heading is (-hz, hx)
+    const side = Math.sign(nhx * -hz + nhz * hx) || 1;
+    car.turnPlan = { j: atEnd ? { ...next, end: true } : next, dir, side };
+    car.indicator = side;
   }
 
   private updateCrashed(car: TrafficCar, dt: number) {
