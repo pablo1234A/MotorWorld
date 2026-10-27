@@ -136,7 +136,9 @@ export class Game implements GameContext, GameApi {
     addEventListener('resize', () => this.resize());
     this.resize();
 
-    const data = await generateWorld((p, label) => this.loading.progress(p * 0.75, t('gen_' + label) || t('loading')));
+    const tGen = performance.now();
+    const data = await generateWorld((p, label) => this.loading.progress(p * 0.75, t('gen_' + label) || t('loading')), true);
+    console.info(`[MotorWorld] terrain ${Math.round(performance.now() - tGen)} ms`);
     this.loading.progress(0.78, t('gen_world'));
     await new Promise((r) => setTimeout(r, 0));
     this.world = new World(data, this.scene);
@@ -201,6 +203,7 @@ export class Game implements GameContext, GameApi {
     this.perf.target = this.profile.settings.fps;
     this.perf.onDowngrade = () => this.autoDowngrade();
     this.loading.progress(1, t('loading'));
+    console.info(`[MotorWorld] boot ${Math.round(performance.now() - tGen)} ms`);
     this.loading.ready();
     this.loading.onStart = async () => {
       try {
@@ -705,6 +708,9 @@ export class Game implements GameContext, GameApi {
     this.updateAudio(dt, driving);
     // hud
     if (driving || this.resultsTimer > 0) this.updateHud(dt);
+    // occlusion culling (needs the final camera matrices)
+    this.camera.updateMatrixWorld();
+    this.world.cull(this.camera);
     // render
     if (this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);

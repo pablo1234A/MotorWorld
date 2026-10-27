@@ -70,12 +70,19 @@ function roundedRect(x0: number, z0: number, x1: number, z1: number, r: number):
     [x0 + r, z1 - r, Math.PI / 2],
     [x0 + r, z0 + r, Math.PI],
   ];
-  for (const [cx, cz, a0] of corners) {
+  corners.forEach(([cx, cz, a0], ci) => {
     for (let k = 0; k <= 3; k++) {
       const a = a0 + (k / 3) * (Math.PI / 2);
       pts.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]);
     }
-  }
+    // straight edge to the next corner: intermediate points keep the spline straight
+    const [nx, nz, na] = corners[(ci + 1) % 4];
+    const ex = cx + Math.cos(a0 + Math.PI / 2) * r, ez = cz + Math.sin(a0 + Math.PI / 2) * r;
+    const sx = nx + Math.cos(na) * r, sz = nz + Math.sin(na) * r;
+    const L = Math.hypot(sx - ex, sz - ez);
+    const k = Math.floor(L / 60);
+    for (let i = 1; i < k; i++) pts.push([ex + ((sx - ex) * i) / k, ez + ((sz - ez) * i) / k]);
+  });
   return pts;
 }
 

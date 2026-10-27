@@ -30,6 +30,16 @@ export class TerrainGen {
     return { d: Math.sqrt(best), water };
   }
 
+  private riverBoxes: number[][] = [];
+  nearRiver(x: number, z: number, pad: number): boolean {
+    if (!this.riverBoxes.length) {
+      const p = RIVER.pts;
+      for (let i = 0; i < p.length - 1; i++) this.riverBoxes.push([Math.min(p[i][0], p[i + 1][0]), Math.min(p[i][1], p[i + 1][1]), Math.max(p[i][0], p[i + 1][0]), Math.max(p[i][1], p[i + 1][1])]);
+    }
+    for (const b of this.riverBoxes) if (x > b[0] - pad && x < b[2] + pad && z > b[1] - pad && z < b[3] + pad) return true;
+    return false;
+  }
+
   shoreX(z: number) {
     return 1615 + 70 * this.n2.noise(0.3, z / 520) + 25 * this.n2.noise(5.1, z / 140);
   }
@@ -79,8 +89,8 @@ export class TerrainGen {
     if (sm > 0) h = lerp(h, PORT_Y + 1, sm);
     const rm = this.racewayMask(x, z);
     if (rm > 0) h = lerp(h, 24, rm);
-    // river valley
-    const rv = this.river(x, z);
+    // river valley (cheap AABB reject first: most of the island is far from the river)
+    const rv = this.nearRiver(x, z, RIVER.width * 3) ? this.river(x, z) : FAR_RIVER;
     if (rv.d < RIVER.width * 3) {
       const bed = rv.water - 3;
       const bank = smoothstep(RIVER.width * 0.35, RIVER.width * 1.7, rv.d);
@@ -100,6 +110,8 @@ export class TerrainGen {
     return h;
   }
 }
+
+const FAR_RIVER = { d: 1e9, water: 0 };
 
 export function rectDist(x: number, z: number, x0: number, z0: number, x1: number, z1: number) {
   const dx = Math.max(x0 - x, 0, x - x1);

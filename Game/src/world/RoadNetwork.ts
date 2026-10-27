@@ -101,18 +101,29 @@ export class RoadNetwork {
         const i = atStart ? 0 : r.n - 1;
         const x = r.px[i], z = r.pz[i];
         let best: { x: number; z: number; d: number } | null = null;
+        let connected = false;
         for (const o of this.roads) {
           if (o === r) continue;
           const h = this.closestOnRoad(o, x, z);
+          if (h.d <= 0.8) connected = true;
           if (h.d < 28 && h.d > 0.8 && (!best || h.d < best.d)) {
             const pt = { x: 0, y: 0, z: 0, tx: 0, tz: 0 };
             o.pointAt(h.s, pt);
             best = { x: pt.x, z: pt.z, d: h.d };
           }
         }
-        if (best) {
+        if (best && !connected) {
           const pts = r.def.pts;
-          if (atStart) pts.unshift([best.x, best.z]);
+          if (pts.length === 2) {
+            // straight roads stay straight: move the endpoint along the road onto the other road
+            const [a, b] = atStart ? [pts[1], pts[0]] : [pts[0], pts[1]];
+            const dx = b[0] - a[0], dz = b[1] - a[1];
+            const L = Math.hypot(dx, dz) || 1;
+            const ext = ((best.x - a[0]) * dx + (best.z - a[1]) * dz) / L;
+            const np: [number, number] = [a[0] + (dx / L) * ext, a[1] + (dz / L) * ext];
+            if (atStart) pts[0] = np;
+            else pts[1] = np;
+          } else if (atStart) pts.unshift([best.x, best.z]);
           else pts.push([best.x, best.z]);
           changed = true;
         }

@@ -1,5 +1,5 @@
 import {
-  AdditiveBlending, BufferGeometry, Color, CylinderGeometry, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, Scene, Vector3,
+  Box3, Camera, AdditiveBlending, BufferGeometry, Color, CylinderGeometry, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, Scene, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { clamp, smoothstep } from '../core/MathUtil';
@@ -10,6 +10,7 @@ import { buildChunkRoads } from './RoadMesh';
 import { RF, ROAD_STEP } from './RoadNetwork';
 import { buildChunkStructures, buildSkyline, Structures } from './Structures';
 import { Ground } from './Ground';
+import { Occlusion } from './Occlusion';
 import { buildFarTerrain, buildTerrainChunk } from './TerrainMesh';
 import { radialTexture, SHOULDER } from './Textures';
 import { buildTreeMeshes, scatterChunk } from './Vegetation';
@@ -18,6 +19,7 @@ import type { WorldData } from './WorldGen';
 import { CHUNK_SIZE, CHUNKS, CITY_Y, HALF, type RoadKind } from './WorldDef';
 
 interface Chunk {
+  box: Box3;
   cx: number;
   cz: number;
   lod: number;
@@ -272,7 +274,7 @@ export class World implements PhysicsWorld {
       group.add(m);
     }
     if (sg.neon) group.add(new Mesh(sg.neon, this.neonMat));
-    const ch: Chunk = { cx, cz, lod, group, terrain, detailed: false, colliders: [], lastSeen: this.frame };
+    const ch: Chunk = { box: new Box3().setFromObject(group), cx, cz, lod, group, terrain, detailed: false, colliders: [], lastSeen: this.frame };
     this.root.add(group);
     this.chunks.set(this.key(cx, cz), ch);
     if (detailed) this.addDetail(ch);
@@ -300,6 +302,38 @@ export class World implements PhysicsWorld {
       if ((o as InstancedMesh).isInstancedMesh) (o as InstancedMesh).dispose();
     });
     if (ch.colliders.length) this.removeStatic(ch.colliders);
+  }
+
+  readonly occlusion = new Occlusion();
+  private occluders: { x: number; z: number; w: number; d: number; h: number; y: number; rot: number; tiers?: number }[] = [];
+
+  /** Software occlusion culling of whole chunks behind large buildings (city only). */
+  cull(camera: Camera) {
+    const cam = camera.position;
+    const oc = this.occlusion;
+    const inCity = this.data.gen.cityMask(cam.x, cam.z) > 0.5 && cam.y < 60;
+    if (!inCity || !oc.enabled) {
+      for (const ch of this.chunks.values()) ch.group.visible = true;
+      return;
+    }
+    if (!this.occluders.length) {
+      for (const s of this.structures.list) if (s.kind === 'building' && s.h > 14) this.occluders.push({ x: s.x, z: s.z, w: s.w, d: s.d, h: s.h, y: s.y, rot: s.rot, tiers: s.tiers });
+    }
+    oc.begin(camera);
+    const near = this.occluders
+      .map((o) => [o, (o.x - cam.x) ** 2 + (o.z - cam.z) ** 2] as const)
+      .filter(([, d2]) => d2 < 220 * 220)
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, 48);
+    for (const [o] of near) oc.addBox(o.x, o.y, o.z, o.w / 2, (o.tiers ?? 1) > 1 ? o.h * 0.55 : o.h, o.d / 2, o.rot);
+    const ccx = Math.floor((cam.x + HALF) / CHUNK_SIZE), ccz = Math.floor((cam.z + HALF) / CHUNK_SIZE);
+    for (const ch of this.chunks.values()) {
+      if (Math.abs(ch.cx - ccx) <= 0 && Math.abs(ch.cz - ccz) <= 0) {
+        ch.group.visible = true;
+        continue;
+      }
+      oc.apply(ch.group, ch.box);
+    }
   }
 
   /** Night factor drives street lights and windows. */

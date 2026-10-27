@@ -3,7 +3,12 @@ import { Surface } from '../physics/Surface';
 import { Heightmap } from './Heightmap';
 import { RoadNetwork } from './RoadNetwork';
 import { rectDist, TerrainGen } from './TerrainGen';
-import { CITY, PORT, ROADS } from './WorldDef';
+import { CITY, PORT, RIVER, ROADS } from './WorldDef';
+import { checksum } from '../save/SaveSystem';
+import { loadWorldCache, saveWorldCache } from '../save/WorldCache';
+
+/** Bump when the terrain/road generation code changes to invalidate cached islands. */
+export const WORLD_VERSION = 'island-9';
 
 export interface WorldData {
   gen: TerrainGen;
@@ -17,9 +22,30 @@ const yieldFrame = () => new Promise<void>((r) => setTimeout(r, 0));
  * Deterministic island generation: natural terrain -> road profiles -> road flattening -> biomes.
  * Async with progress so the loading screen stays responsive on phones.
  */
-export async function generateWorld(onProgress: (p: number, label: string) => void = () => {}): Promise<WorldData> {
+export async function generateWorld(onProgress: (p: number, label: string) => void = () => {}, useCache = false): Promise<WorldData> {
   const gen = new TerrainGen();
   const hm = new Heightmap();
+  const key = WORLD_VERSION + ':' + checksum(JSON.stringify([ROADS, RIVER]));
+  if (useCache) {
+    const c = await loadWorldCache(key);
+    if (c && c.h.length === hm.h.length && c.roads.length === ROADS.length) {
+      onProgress(0.5, 'roads');
+      hm.h.set(c.h);
+      hm.surf.set(c.surf);
+      const roads = new RoadNetwork(ROADS);
+      roads.findJunctions();
+      roads.roads.forEach((r, i) => {
+        if (c.roads[i].py.length === r.n) {
+          r.py = c.roads[i].py;
+          r.flags = c.roads[i].flags;
+        }
+      });
+      roads.buildIndex();
+      onProgress(1, 'done');
+      console.info('[MotorWorld] island loaded from cache');
+      return { gen, hm, roads };
+    }
+  }
   const n = hm.n;
   let t = performance.now();
   for (let j = 0; j < n; j++) {
@@ -44,6 +70,7 @@ export async function generateWorld(onProgress: (p: number, label: string) => vo
   await yieldFrame();
   computeSurfaces(gen, hm);
   onProgress(1, 'done');
+  if (useCache) void saveWorldCache({ key, h: hm.h, surf: hm.surf, roads: roads.roads.map((r) => ({ py: r.py, flags: r.flags })) });
   return { gen, hm, roads };
 }
 
