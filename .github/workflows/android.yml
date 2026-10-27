@@ -1,0 +1,58 @@
+name: Build & test (web + Android APK)
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: Game
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Game/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests (physics, tuning, world, AI, save system)
+        run: npx vitest run --no-file-parallelism
+
+      - name: Type-check and production web build
+        run: npm run build
+
+      - name: Sync web build into the Android project
+        run: npx cap sync android
+
+      - name: Assemble debug APK
+        working-directory: Game/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MotorWorld-OpenRoad-debug-apk
+          path: Game/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MotorWorld-OpenRoad-web
+          path: Game/dist

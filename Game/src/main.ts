@@ -19,6 +19,8 @@ async function main() {
   }
 }
 
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !view) navigator.serviceWorker.register('./sw.js').catch(() => {});
+
 main().catch((e) => {
   console.error(e);
   document.body.insertAdjacentHTML('beforeend', `<pre style="position:fixed;inset:0;color:#fff;background:#200;padding:20px;white-space:pre-wrap;z-index:99">${String(e?.stack ?? e)}</pre>`);

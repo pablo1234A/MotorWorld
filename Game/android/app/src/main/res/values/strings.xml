@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MotorWorld Open Road</string>
+    <string name="title_activity_main">MotorWorld Open Road</string>
+    <string name="package_name">com.motorworld.openroad</string>
+    <string name="custom_url_scheme">com.motorworld.openroad</string>
+</resources>
