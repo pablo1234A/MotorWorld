@@ -157,9 +157,21 @@ export class BodyProfile {
     const rtHood = clamp(0.03 + 0.09 * r, 0.02, Math.max(0.02, (yt - yb) * 0.3));
     const rtRoof = 0.04 + 0.11 * r;
     const rt = lerp(rtHood, rtRoof, g);
-    const sideTop = lerp(yt - rt, belt, g);
+    let sideTop = lerp(yt - rt, belt, g);
+    // fender bulges over the wheels: the shoulder rises above the arch even when the hood is low
+    let fenderF = 0;
+    const z = this.zAt(t);
+    for (const az of [this.axleF, this.axleR]) {
+      const f = smoothstep(1.75, 0.55, Math.abs(z - az) / this.archR);
+      if (f > fenderF) fenderF = f;
+    }
+    // never a tall ridge above the bonnet, and fade out where the greenhouse starts
+    const fenderY = Math.min(b.wheelRadius * 2 + 0.06, yt + 0.07);
+    const raise = fenderF > 0 && fenderY > sideTop ? fenderF * (1 - smoothstep(0.0, 0.35, g)) : 0;
+    if (raise > 0) sideTop = lerp(sideTop, Math.max(sideTop, fenderY), raise);
     const rb = clamp(0.05 + 0.11 * r, 0.02, Math.max(0.02, (sideTop - yb) * 0.45));
-    const roofHalf = lerp(w - 0.012, w * b.roofW, g);
+    let roofHalf = lerp(w - 0.012, w * b.roofW, g);
+    if (raise > 0) roofHalf = lerp(roofHalf, Math.min(roofHalf, w * 0.78), raise * (1 - g));
     const crown = 0.015 + 0.025 * r;
     const bulge = 0.012 + 0.02 * r;
     out.length = 0;
@@ -206,7 +218,7 @@ function stations(p: BodyProfile): number[] {
   const add = (t: number) => {
     if (t >= 0 && t <= 1) ts.add(Math.round(t * 20000) / 20000);
   };
-  for (let i = 0; i <= 60; i++) add(i / 60);
+  for (let i = 0; i <= 90; i++) add(i / 90);
   for (const t of [0.004, 0.01, 0.018, 0.028, 0.04, 0.055, 0.96, 0.972, 0.982, 0.99, 0.996]) add(t);
   for (const az of [p.axleF, p.axleR]) {
     for (let i = -14; i <= 14; i++) add(p.tAt(az + (i / 14) * p.archR * 1.02));
@@ -229,7 +241,8 @@ function stations(p: BodyProfile): number[] {
 /** t-ranges of side glass (excluding pillars). */
 export function glassRanges(b: BodyStyle): [number, number][] {
   const start = b.cowlT + 0.012;
-  const end = (b.kind === 'truck' ? b.roofT1 : b.deckT) - 0.012;
+  const midEngine = b.kind === 'mid' || b.kind === 'hyper';
+  const end = (b.kind === 'truck' ? b.roofT1 : midEngine ? b.roofT1 + 0.035 : b.deckT) - 0.012;
   const pillars: number[] = [];
   if (b.bPillar > 0) pillars.push(lerp(b.roofT0, b.roofT1, b.bPillar));
   if (b.cPillar && b.cPillar > 0) pillars.push(lerp(b.roofT1, b.deckT, b.cPillar));
@@ -266,10 +279,36 @@ export function buildBodyGeometry(b: BodyStyle): BodyGeoResult {
     }
   }
   const S = ts.length;
+  // Taubin smoothing of the parametric grid: removes creases between stations while keeping volume
+  {
+    const tmp = new Float32Array(pos.length);
+    const pass = (k: number) => {
+      tmp.set(pos);
+      for (let s = 1; s < S - 1; s++)
+        for (let i = 1; i < N - 1; i++) {
+          const v = (s * N + i) * 3;
+          const up = ((s - 1) * N + i) * 3, dn = ((s + 1) * N + i) * 3, l = (s * N + i - 1) * 3, r = (s * N + i + 1) * 3;
+          // weight neighbours by inverse spacing along the length (stations are not uniform)
+          const dzu = Math.max(1e-3, Math.abs(pos[v + 2] - pos[up + 2])), dzd = Math.max(1e-3, Math.abs(pos[dn + 2] - pos[v + 2]));
+          const wu = 1 / dzu, wd = 1 / dzd;
+          for (let c = 0; c < 2; c++) {
+            const along = (pos[up + c] * wu + pos[dn + c] * wd) / (wu + wd);
+            const across = (pos[l + c] + pos[r + c]) / 2;
+            const avg = along * 0.6 + across * 0.4;
+            tmp[v + c] = pos[v + c] + k * (avg - pos[v + c]);
+          }
+        }
+      pos.splice(0, pos.length, ...tmp);
+    };
+    for (let it = 0; it < 3; it++) {
+      pass(0.5);
+      pass(-0.53);
+    }
+  }
   const glass = glassRanges(b);
   const inGlassSide = (t: number) => glass.some(([a, c]) => t > a && t < c);
   const ws0 = b.cowlT + 0.006, ws1 = b.roofT0 - 0.004;
-  const rw0 = b.roofT1 + 0.006, rw1 = b.deckT - 0.008;
+  const rw0 = b.roofT1 + 0.006, rw1 = b.kind === 'mid' || b.kind === 'hyper' ? b.roofT1 + 0.09 : b.deckT - 0.008;
   const hasRearGlass = b.kind !== 'truck' && b.kind !== 'bus' && !(b.kind === 'van');
   const paintIdx: number[] = [];
   const glassIdx: number[] = [];

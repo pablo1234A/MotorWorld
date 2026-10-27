@@ -133,10 +133,19 @@ export class CarModel {
     for (const az of [p.axleF, p.axleR]) {
       const t = p.tAt(az);
       const hw = p.halfWidth(t);
-      const inner = (az < 0 ? b.trackF : b.trackR) / 2 - (az < 0 ? b.tireWidthF : b.tireWidthR) / 2 - 0.05;
+      const inner = Math.max((az < 0 ? b.trackF : b.trackR) / 2 - (az < 0 ? b.tireWidthF : b.tireWidthR) / 2 - 0.05, hw * 0.7);
       const len = Math.max(0.1, hw - inner);
+      // lowest point of the body's upper surface above the liner: the liner must stay below it
+      const sec = p.section(t, []);
+      let skin = Infinity;
+      for (let k = 7; k < sec.length / 2 - 1; k++) {
+        const x0 = sec[k * 2], y0 = sec[k * 2 + 1], x1 = sec[k * 2 + 2], y1 = sec[k * 2 + 3];
+        if (Math.max(x0, x1) >= inner && Math.min(x0, x1) <= hw) skin = Math.min(skin, y0, y1);
+      }
+      const archTop = Math.max(0.05, Math.min(p.archR, skin - b.wheelRadius - 0.09));
       const liner = new CylinderGeometry(p.archR, p.archR, len, 14, 1, true, 0, Math.PI);
       liner.applyMatrix4(m4.makeRotationZ(Math.PI / 2));
+      liner.scale(1, archTop / p.archR, 1);
       // flip normals inward by using BackSide-equivalent: duplicate reversed faces
       const lg = solid(liner, CELL.soot);
       const rev = lg.clone();
@@ -151,9 +160,12 @@ export class CarModel {
         g.applyMatrix4(m4.makeTranslation(inner + len / 2, b.wheelRadius, az));
         both(detail, g);
       }
+      // inner wall of the wheel well (kept below the hood line so it never pokes through)
+      const capH = archTop;
       const cap = new CircleGeometry(p.archR, 10, 0, Math.PI);
+      cap.scale(1, capH / p.archR, 1);
       cap.applyMatrix4(m4.makeRotationY(Math.PI / 2));
-        cap.applyMatrix4(m4.makeTranslation(inner, b.wheelRadius, az));
+      cap.applyMatrix4(m4.makeTranslation(inner, b.wheelRadius, az));
       both(detail, solid(cap, CELL.soot));
     }
 
@@ -322,7 +334,7 @@ export class CarModel {
     }
     // exhausts
     const ex = b.exhaust;
-    const exY = b.clearance + 0.1;
+    const exY = p.bottom(0.985, false) + 0.06;
     const exXs: number[] = [];
     if (ex.style === 'center') {
       for (let i = 0; i < ex.count; i++) exXs.push((i - (ex.count - 1) / 2) * ex.spread);
@@ -331,10 +343,10 @@ export class CarModel {
     else for (const s of [-1, 1]) exXs.push(s * rw * ex.spread, s * (rw * ex.spread - 0.11));
     for (const x of exXs) {
       const r = ex.style === 'square' ? 0.05 : b.kind === 'hyper' || b.kind === 'mid' ? 0.055 : 0.042;
-      const tip = ex.style === 'square' ? new BoxGeometry(r * 2.4, r * 1.6, 0.14) : new CylinderGeometry(r, r, 0.14, 14, 1, true).rotateX(Math.PI / 2);
-      detail.push(place(solid(tip, CELL.chrome), x, exY, tailZ + 0.03));
+      const tip = ex.style === 'square' ? new BoxGeometry(r * 2.4, r * 1.4, 0.16) : new CylinderGeometry(r, r, 0.16, 14, 1, true).rotateX(Math.PI / 2);
+      detail.push(place(solid(tip, ex.style === 'square' ? CELL.alu : CELL.chrome), x, exY, tailZ - 0.02));
       const inner = new CircleGeometry(r * 0.85, 12);
-      detail.push(place(solid(inner, CELL.soot), x, exY, tailZ + 0.04));
+      detail.push(place(solid(inner, CELL.soot), x, exY, tailZ + 0.055));
     }
 
     // --- sides: mirrors, trim, handles, intakes, skirts ---
@@ -346,7 +358,7 @@ export class CarModel {
       const mg = place(paintUV(mirror), mx, my, p.zAt(mt));
       both(paintParts, mg);
       const glassM = new BoxGeometry(0.12, 0.07, 0.01);
-      both(detail, place(solid(glassM, CELL.chrome), mx, my, p.zAt(mt) + 0.04));
+      both(detail, place(solid(glassM, CELL.gloss), mx, my, p.zAt(mt) + 0.036));
       const arm = new BoxGeometry(0.1, 0.02, 0.03);
       both(paintParts, place(paintUV(arm), mx - 0.08, my - 0.03, p.zAt(mt)));
     }

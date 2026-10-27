@@ -37,8 +37,10 @@ export function runShowroom(container: HTMLElement) {
     if (params.get('vinyl')) v.vinyl = +params.get('vinyl')!;
     const m = new CarModel(def.body, v, { quality: 3, interior: true, wingLevel: 0, splitterLevel: 0, diffuserLevel: 0 });
     const col = i % 5, row = Math.floor(i / 5);
-    m.root.position.set((col - 2) * 2.8, 0, row * 6.5 - 3);
+    m.root.position.set(only ? 0 : (col - 2) * 2.8, 0, only ? 0 : row * 6.5 - 3);
     m.root.rotation.y = +(params.get('rot') ?? 0.6);
+    const hide = params.get('hide');
+    if (hide) m.root.traverse((o: any) => { if (o.isMesh && (hide === 'detail' ? o.material === m.mats.detail : hide === 'body' ? Array.isArray(o.material) : hide === 'wheels' ? o.parent !== m.bodyGroup : o.material === m.mats.paint && !Array.isArray(o.material))) o.visible = false; });
     scene.add(m.root);
   });
   const cam = new PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 500);
