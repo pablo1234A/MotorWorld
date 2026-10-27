@@ -202,11 +202,11 @@ input[type='color'] { width: 34px; height: 34px; border: 1px solid var(--line-st
 .hbtn svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; }
 .hudcash { font-family: var(--font-display); font-weight: 700; font-size: 18px; padding: 0 10px; text-shadow: 0 1px 8px #000; }
 
-.speedo { position: absolute; bottom: calc(10px + var(--safe-b)); left: 50%; transform: translateX(-50%) scale(var(--hud)); transform-origin: bottom center; width: 230px; height: 150px; pointer-events: none; }
+.speedo { position: absolute; bottom: calc(2px + var(--safe-b)); left: 50%; transform: translateX(-50%) scale(calc(var(--hud) * 0.86)); transform-origin: bottom center; width: 230px; height: 150px; pointer-events: none; }
 .speedo canvas { width: 230px; height: 150px; }
 .speedo .spd { position: absolute; left: 0; right: 0; top: 50px; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 58px; line-height: 1; letter-spacing: -0.01em; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7); font-variant-numeric: tabular-nums; }
 .speedo .unit { position: absolute; left: 0; right: 0; top: 106px; text-align: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.3em; color: rgba(255, 255, 255, 0.6); }
-.speedo .gear { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font-family: var(--font-display); font-weight: 700; font-size: 26px; width: 40px; height: 36px; text-align: center; line-height: 36px; border-bottom: 2px solid var(--red); }
+.speedo .gear { position: absolute; left: calc(50% + 58px); top: 62px; font-family: var(--font-display); font-weight: 700; font-size: 24px; width: 30px; height: 32px; text-align: center; line-height: 32px; border-bottom: 2px solid var(--red); text-shadow: 0 2px 10px rgba(0,0,0,.7); }
 .speedo .gear.shift { color: var(--red-hot); animation: blink 0.12s steps(2) infinite; }
 @keyframes blink { 50% { opacity: 0.3; } }
 
@@ -302,3 +302,6 @@ input[type='color'] { width: 34px; height: 34px; border: 1px solid var(--line-st
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+#ui > .screen { pointer-events: none; }
+#ui > .screen.on { pointer-events: auto; }
+#ui > .hud { pointer-events: none; }

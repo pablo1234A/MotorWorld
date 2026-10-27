@@ -120,7 +120,8 @@ const vcMats = new Map<string, MeshStandardMaterial>();
 export function vcMaterial(rough = 0.8, metal = 0, doubleSide = false): MeshStandardMaterial {
   const k = `${rough}|${metal}|${doubleSide}`;
   if (vcMats.has(k)) return vcMats.get(k)!;
-  const m = new MeshStandardMaterial({ vertexColors: true, roughness: rough, metalness: metal, side: doubleSide ? DoubleSide : undefined });
+  const m = new MeshStandardMaterial({ vertexColors: true, roughness: rough, metalness: metal });
+  if (doubleSide) m.side = DoubleSide;
   vcMats.set(k, m);
   return m;
 }

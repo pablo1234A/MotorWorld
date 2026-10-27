@@ -153,3 +153,18 @@ export function computeStats(s: CarSpec): PerfStats {
     layout: s.drivetrain.layout,
   };
 }
+
+/** Fast analytic PI estimate (no simulation) for AI car selection. */
+export function quickPI(s: CarSpec): number {
+  const ps = powerStats(s.engine);
+  const hpt = ps.peakHp / (s.chassis.mass / 1000);
+  const z = (1.6 + 1100 / hpt) * (s.drivetrain.layout === 'AWD' ? 0.78 : 1);
+  const lg = lateralG(s);
+  const br = 772 / (17.6 * lg);
+  const top = topSpeed(s);
+  const A = clamp((11 - z) / 9, 0, 1);
+  const S = clamp((top - 160) / 260, 0, 1);
+  const H = clamp((lg - 0.8) / 0.75, 0, 1);
+  const B = clamp((48 - br) / 22, 0, 1);
+  return Math.round(100 + 899 * clamp(0.3 * A + 0.24 * S + 0.3 * H + 0.16 * B, 0, 1));
+}
