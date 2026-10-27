@@ -143,4 +143,18 @@ describe('VehicleSim', () => {
     expect(sim.powertrain.gear).toBe(-1);
     expect(sim.forwardSpeed).toBeLessThan(-2);
   });
+  it('automatic gearbox does not upshift on wheelspin alone', () => {
+    const spec = testSpec('RWD');
+    spec.engine.peakTorque = 900;
+    const sim = new VehicleSim(spec, new FlatWorld());
+    sim.reset(0, 0.6, 0, 0);
+    sim.assists.tcs = false;
+    run(sim, 1);
+    sim.input.throttle = 1;
+    let maxGearSlow = 0;
+    run(sim, 3, () => {
+      if (sim.forwardSpeed * 3.6 < 25) maxGearSlow = Math.max(maxGearSlow, sim.powertrain.gear);
+    });
+    expect(maxGearSlow).toBe(1);
+  });
 });

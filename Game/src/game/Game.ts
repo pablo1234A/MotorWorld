@@ -793,7 +793,7 @@ export class Game implements GameContext, GameApi {
         if (!driving) continue;
         if (!surf.dusty) {
           if (slip > 1.5 && (spd > 2 || Math.abs(w.omega * w.radius) > 5) && wet < 0.5) {
-            const rate = clamp((slip - 1.4) * 0.6, 0, 1.2) * dt * 60;
+            const rate = clamp((slip - 1.4) * 0.5, 0, 1) * Math.min(dt, 1 / 30) * 60;
             for (let k = 0; k < rate; k++) if (Math.random() < 0.5) this.particles.emit('smoke', w.contactPoint, s.velocity, clamp(slip / 2, 0.4, 1.4));
           }
           const mark = slip > 1.0 || (w.brakeTorque > 0 && w.omega === 0 && spd > 2) ? clamp((slip - 0.9) * 1.5, 0.3, 1) : 0;

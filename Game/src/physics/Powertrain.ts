@@ -79,9 +79,11 @@ export class Powertrain {
 
   /**
    * @param wheelOmega averaged angular velocity of driven wheels (rad/s)
+   * @param groundOmega road speed expressed as wheel angular velocity (rad/s); the automatic box shifts on it
+   *   like a real one shifts on output-shaft speed, so wheelspin does not trigger upshifts
    * @returns torque applied to the driven axles combined (Nm, signed in wheel space)
    */
-  update(dt: number, throttle: number, wheelOmega: number, autoGear: boolean, nitro: boolean, driverThrottle: number, braking: number): number {
+  update(dt: number, throttle: number, wheelOmega: number, autoGear: boolean, nitro: boolean, driverThrottle: number, braking: number, groundOmega = wheelOmega): number {
     const s = this.spec;
     const e = s.engine;
     this.shiftEvent = 0;
@@ -156,7 +158,8 @@ export class Powertrain {
       const n = this.gearCount;
       const dthr = clamp(driverThrottle * 1.2, 0, 1);
       const upRpm = e.redline * lerp(0.55, 0.97, dthr);
-      if (this.gear < n && this.rpm > upRpm && this.sinceShift > 0.45) {
+      const roadRpm = Math.abs(groundOmega * ratio) / RPM_TO_RADS;
+      if (this.gear < n && this.rpm > upRpm && roadRpm > upRpm * 0.85 && this.sinceShift > 0.45) {
         this.requestGear(this.gear + 1);
       } else if (this.gear > 1) {
         const lowerRpm = (this.rpm * this.ratio(this.gear - 1)) / this.ratio(this.gear);

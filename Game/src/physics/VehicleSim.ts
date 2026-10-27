@@ -334,15 +334,15 @@ export class VehicleSim {
     const driverThrottle = throttle;
     if (this.assists.tcs && pt.gear !== 0 && Math.abs(this.forwardSpeed) > 0.5) {
       // PI controller holding driven-wheel slip near the tire's peak
-      const err = maxDrivenSlip - 0.13;
+      const err = maxDrivenSlip - 0.115; // tire peak is 0.11
       this.tcsCut = clamp(this.tcsCut + err * 10 * dt, 0, 0.9);
-      if (err < 0) this.tcsCut = Math.max(0, this.tcsCut - dt * 0.8);
+      if (err < 0) this.tcsCut = Math.max(0, this.tcsCut - dt * 2.5);
       throttle *= clamp(1 - this.tcsCut - Math.max(0, err) * 2.5, 0.08, 1);
     } else this.tcsCut = 0;
 
     const nitroOn = inp.nitro && this.nitroAmount > 0 && spec.nitro > 0;
     if (nitroOn && pt.nitroActive) this.nitroAmount = Math.max(0, this.nitroAmount - dt * 0.12);
-    const axleTorque = pt.update(dt, throttle, drivenOmega, this.assists.autoGear, nitroOn, driverThrottle, brake);
+    const axleTorque = pt.update(dt, throttle, drivenOmega, this.assists.autoGear, nitroOn, driverThrottle, brake, this.forwardSpeed / spec.tires.radius);
 
     // Split torque front/rear
     let tf = 0, tr = 0;

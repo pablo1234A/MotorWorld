@@ -123,9 +123,9 @@ export class Particles {
         this.soft.spawn((p) => {
           p.x = pos.x + rnd(0.3); p.y = pos.y + 0.1; p.z = pos.z + rnd(0.3);
           p.vx = vel.x * 0.25 + rnd(1.2); p.vy = 0.6 + Math.random() * 0.8; p.vz = vel.z * 0.25 + rnd(1.2);
-          p.life = 1.6 + Math.random() * 1.6 * intensity; p.size = 0.9; p.grow = 2.6;
+          p.life = 1.2 + Math.random() * 1.3 * intensity; p.size = 0.8; p.grow = 2.1;
           const c = 0.78 + Math.random() * 0.12;
-          p.r = c; p.g = c; p.b = c * 1.02; p.a = 0.2 * intensity; p.drag = 1.2;
+          p.r = c; p.g = c; p.b = c * 1.02; p.a = 0.13 * intensity; p.drag = 1.2;
         });
         break;
       case 'dust': {

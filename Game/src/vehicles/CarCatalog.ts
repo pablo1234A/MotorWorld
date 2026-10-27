@@ -193,7 +193,7 @@ export const CARS: CarDef[] = [
     q: {
       mass: 1430, wf: 0.42, cg: 0.42, idle: 1000, red: 8200, torque: 770, tRpm: 3200, plat: 6300, rFrac: 0.78, low: 0.42, cyl: 8, layout: 'V', turbo: [1.3, 3000, 2.6, true],
       drive: 'RWD', gears: [3.13, 2.19, 1.68, 1.35, 1.12, 0.94, 0.79], final: 3.4, shift: 0.07, rDiff: ['lsd', 0.5, 100],
-      spring: [80000, 92000], damp: [5600, 7200], arb: [34000, 26000], travel: 0.14, tires: [265, 325], grip: [1.05, 1.08], compound: 'sport', brake: 14000, bias: 0.6,
+      spring: [80000, 92000], damp: [5600, 7200], arb: [34000, 26000], travel: 0.14, tires: [265, 325], grip: [1.0, 1.04], compound: 'semislick', brake: 14000, bias: 0.6,
       cd: 0.34, area: 1.9, cl: [0.25, 0.42],
     },
   }),
