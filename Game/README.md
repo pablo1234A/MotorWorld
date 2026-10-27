@@ -14,6 +14,14 @@ npm run build        # typecheck + build de producción en dist/
 npm run preview      # sirve dist/
 ```
 
+### Un solo archivo HTML
+
+```bash
+npm run build:html   # dist-single/MotorWorld.html (~1,1 MB, todo incluido)
+```
+
+Ese archivo se abre con doble clic o se sube a cualquier hosting estático; no necesita servidor ni conexión. Las fuentes solo incluyen los caracteres latinos (español e inglés).
+
 ### APK de Android
 
 - **CI (recomendado):** cada push ejecuta `.github/workflows/android.yml`, que pasa los tests, compila la web, sincroniza Capacitor y genera `app-debug.apk`. Se descarga desde la pestaña *Actions* del repositorio → la ejecución → artefacto **MotorWorld-OpenRoad-debug-apk**.

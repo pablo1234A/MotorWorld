@@ -4,3 +4,4 @@ android/app/build
 android/build
 android/.gradle
 *.log
+dist-single
