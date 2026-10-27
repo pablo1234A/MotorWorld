@@ -51,7 +51,9 @@ export class Input {
     addEventListener('deviceorientation', (e) => {
       if (e.beta === null || e.gamma === null) return;
       this.tiltAvailable = true;
-      this.tiltValue = tiltSteer(e.beta, e.gamma, screen.orientation?.angle ?? (window as any).orientation ?? 0, this.sensitivity);
+      const angle = screen.orientation?.angle ?? ((((window as any).orientation ?? 0) + 360) % 360);
+      // light low-pass: sensor noise must not make the car twitch, but the response stays immediate
+      this.tiltValue += (tiltSteer(e.beta, e.gamma, angle, this.sensitivity) - this.tiltValue) * 0.45;
     });
   }
 
@@ -193,7 +195,7 @@ const KEYMAP: Record<string, Action> = {
  * Steering-wheel tilt: the phone is turned like a wheel, clockwise (right side down) steers right.
  * Uses the gravity direction in screen space, which is the same for any valid (beta, gamma) pair and works
  * whether the phone is held upright, tipped back or lying flat (then rolling it right also steers right).
- * Returns -1..1; full lock at 22..40 degrees depending on sensitivity, with a small dead zone.
+ * Returns -1..1, linear in the wheel angle: full lock at 25..60 degrees depending on sensitivity, 1.5 degree dead zone.
  */
 export function tiltSteer(betaDeg: number, gammaDeg: number, screenAngleDeg: number, sensitivity = 0.6): number {
   const d = Math.PI / 180;
@@ -208,8 +210,9 @@ export function tiltSteer(betaDeg: number, gammaDeg: number, screenAngleDeg: num
   const wheel = Math.atan2(-sx, Math.max(sy, 0));
   const roll = Math.asin(clamp(-sx, -1, 1));
   const angle = lerp(roll, wheel, smoothstep(0.12, 0.4, sy)) / d;
-  const dead = 2.5;
+  // proportional, like a real wheel: a little turn gives a little steering, a big turn full lock
+  const dead = 1.5;
   const mag = Math.max(0, Math.abs(angle) - dead);
-  const full = lerp(40, 22, clamp(sensitivity, 0, 1));
+  const full = lerp(60, 25, clamp(sensitivity, 0, 1));
   return Math.sign(angle) * clamp(mag / (full - dead), 0, 1);
 }

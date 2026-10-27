@@ -217,7 +217,7 @@ export class Game implements GameContext, GameApi {
       this.toMenu();
       void tiltPermission;
       try {
-        await (screen.orientation as any)?.lock?.('portrait');
+        await (screen.orientation as any)?.lock?.('landscape');
       } catch {
         /* not supported (desktop) */
       }

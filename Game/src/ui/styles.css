@@ -408,3 +408,12 @@ input[type='color'] { width: 34px; height: 34px; border: 1px solid var(--line-st
   .results .box { padding: 20px 18px; }
   .rewards { flex-wrap: wrap; }
 }
+
+/* landscape + tilt steering: both hands hold the phone like a wheel, thumbs on brake (left) and gas (right) */
+@media (orientation: landscape) {
+  .touch[data-mode='tilt']:not(.fallback) .brake { left: calc(18px + var(--safe-l)); right: auto; bottom: calc(18px + var(--safe-b)); width: 112px; height: 124px; }
+  .touch[data-mode='tilt']:not(.fallback) .gas { right: calc(18px + var(--safe-r)); bottom: calc(18px + var(--safe-b)); width: 112px; height: 156px; }
+  .touch[data-mode='tilt']:not(.fallback) .hb { left: calc(18px + var(--safe-l)); right: auto; bottom: calc(152px + var(--safe-b)); width: 112px; height: 52px; }
+  .touch[data-mode='tilt']:not(.fallback) .nos { right: calc(18px + var(--safe-r)); bottom: calc(184px + var(--safe-b)); width: 112px; height: 52px; }
+  .touch[data-mode='tilt']:not(.fallback) .shift { right: calc(142px + var(--safe-r)); }
+}
