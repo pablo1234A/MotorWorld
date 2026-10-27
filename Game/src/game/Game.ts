@@ -1,5 +1,5 @@
 import {
-  ACESFilmicToneMapping, HalfFloatType, PCFSoftShadowMap, PerspectiveCamera, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer,
+  ACESFilmicToneMapping, HalfFloatType, PCFSoftShadowMap, PerspectiveCamera, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget,
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
@@ -45,6 +45,9 @@ import type { GameApi } from './GameApi';
 import { Skills } from './Skills';
 import { Vehicle } from './Vehicle';
 import { Mirrors } from '../vfx/Mirrors';
+import { GradeShader } from '../vfx/Grade';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { TrafficControl } from '../world/TrafficControl';
 import { Pedestrians } from '../ai/Pedestrians';
 
@@ -313,13 +316,20 @@ export class Game implements GameContext, GameApi {
     this.env.configureShadows(q.shadows, q.shadowMap, q.shadowExtent);
     if (q.post) {
       if (!this.composer) {
-        this.composer = new EffectComposer(r);
-        this.composer.renderTarget1.texture.type = HalfFloatType;
-        this.composer.renderTarget2.texture.type = HalfFloatType;
+        // MSAA render target: post-processing must not cost the anti-aliasing
+        const rt = new WebGLRenderTarget(innerWidth, innerHeight, { type: HalfFloatType, samples: 4 });
+        this.composer = new EffectComposer(r, rt);
         this.composer.addPass(new RenderPass(this.scene, this.camera));
+        if (this.quality >= 3) {
+          const ao = new GTAOPass(this.scene, this.camera, innerWidth, innerHeight);
+          ao.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1, scale: 1 });
+          ao.blendIntensity = 0.85;
+          this.composer.addPass(ao);
+        }
         this.bloom = new UnrealBloomPass(new Vector2(innerWidth / 2, innerHeight / 2), 0.35, 0.5, 0.92);
         this.composer.addPass(this.bloom);
         this.composer.addPass(new OutputPass());
+        this.composer.addPass(new ShaderPass(GradeShader));
       }
     } else if (this.composer) {
       this.composer.dispose();

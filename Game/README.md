@@ -34,7 +34,7 @@ Ese archivo se abre con doble clic o se sube a cualquier hosting estático; no n
 
 ## Controles
 
-En el móvil el juego se juega **en vertical**. Para girar, gira el móvil como si fuera un volante: hacia la derecha y el coche gira a la derecha. Funciona igual sostenido de pie, inclinado o casi plano. Un pequeño volante entre los pedales muestra cuánto estás girando. Si el dispositivo no tiene sensor de movimiento, aparecen automáticamente las flechas en pantalla.
+En el móvil el juego se juega **en horizontal**. Para girar, gira el móvil como si fuera un volante: un poco a la izquierda y el coche gira un poco a la izquierda; mucho y gira mucho (respuesta proporcional, sensibilidad ajustable). Funciona igual sostenido de pie, inclinado o casi plano. Un pequeño volante entre los pedales muestra cuánto estás girando. Si el dispositivo no tiene sensor de movimiento, aparecen automáticamente las flechas en pantalla.
 
 | Acción | Teclado | Mando | Táctil |
 |---|---|---|---|
@@ -43,7 +43,11 @@ En el móvil el juego se juega **en vertical**. Para girar, gira el móvil como 
 | Freno de mano | Espacio | A | E-BRAKE |
 | Nitro | Shift / N | B | NITRO |
 | Cambio manual ▲ / ▼ | E / Q | RB / LB | botones + / − (con el cambio manual activo) |
-| Cámara | C | Y | botón de cámara |
+| Automático ⇄ manual | G | cruceta ↓ | tocar AUTO/MAN junto al velocímetro |
+| Intermitente izq. / der. | Z / X | cruceta ← / → | flechas junto al velocímetro (se apagan solos al terminar el giro) |
+| Luces de emergencia | V | — | botón ⚠ |
+| Retrovisores en pantalla | K | — | Ajustes → Gráficos |
+| Cámara (persecución, lejana, interior, capó, parachoques, rueda, aérea, cinemática) | C | Y | botón de cámara; en interior/capó arrastra el dedo para mirar alrededor |
 | Reiniciar en carretera | R | X | botón de reinicio |
 | Mapa | M | Select | botón de mapa |
 | Pausa | Esc / P | Start | botón de pausa |
@@ -61,7 +65,10 @@ En **Ajustes** se configuran el modo de dirección táctil, la sensibilidad, el 
 - **Progresión**: dinero, XP, niveles, desbloqueo de coches y piezas, descubrimientos (miradores, radares, carreteras), con guardado local robusto (dos ranuras alternas con checksum, de modo que una escritura corrupta nunca borra el progreso, y migraciones de versión).
 - **Taller**: motor, turbo, escape, admisión, ECU, transmisión, diferencial, suspensión, frenos, neumáticos, peso y aerodinámica, todo con efecto real en la simulación; además ajuste fino (altura, rigidez, barras, caída, convergencia, reparto de frenada, relaciones de cambio, alerón) y estética (pintura y acabado, vinilos, llantas, alerón, paragolpes, capó, tintado y luces).
 - **Clima y día/noche** dinámicos: sol, nubes, lluvia y tormenta con rayos. La lluvia cambia el agarre y el asfalto se moja y se seca poco a poco.
+- **Ciudad viva**: semáforos sincronizados en dos fases con pasos de cebra y líneas de detención, señales de STOP, ceda el paso, límites de velocidad y curvas peligrosas; el tráfico respeta semáforos y señales, gira en los cruces poniendo el intermitente; peatones que pasean, esperan y cruzan con su semáforo y se apartan si vas hacia ellos.
 - **Tráfico IA** (modelo IDM, cambios de carril, cruces), **rivales IA** con perfiles, errores y rebufo, y **policía** en persecuciones.
+- **Coches detallados**: carrocería suave generada por superficies, faros con proyectores y luces diurnas LED, pilotos con gráficos LED, intermitentes, luces de marcha atrás, matrículas, rejillas, juntas de puertas, manetas, limpiaparabrisas e interior completo con cuadro de instrumentos en tiempo real.
+- **Retrovisores** reales en pantalla y 8 cámaras.
 
 ## Arquitectura
 

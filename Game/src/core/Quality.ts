@@ -20,7 +20,7 @@ export interface QualityProfile {
 
 export const PROFILES: Record<QualityName, QualityProfile> = {
   low: { level: 0, pixelRatio: 1.0, shadows: false, shadowMap: 512, shadowExtent: 50, antialias: false, post: false, traffic: 8, particles: 300, rainDrops: 1500, physicalPaint: false, carLights: false },
-  medium: { level: 1, pixelRatio: 1.35, shadows: true, shadowMap: 1024, shadowExtent: 60, antialias: false, post: false, traffic: 14, particles: 600, rainDrops: 3000, physicalPaint: false, carLights: true },
+  medium: { level: 1, pixelRatio: 1.35, shadows: true, shadowMap: 1024, shadowExtent: 60, antialias: true, post: false, traffic: 14, particles: 600, rainDrops: 3000, physicalPaint: false, carLights: true },
   high: { level: 2, pixelRatio: 1.75, shadows: true, shadowMap: 2048, shadowExtent: 80, antialias: true, post: true, traffic: 20, particles: 1000, rainDrops: 5000, physicalPaint: true, carLights: true },
   ultra: { level: 3, pixelRatio: 2.5, shadows: true, shadowMap: 4096, shadowExtent: 100, antialias: true, post: true, traffic: 28, particles: 1600, rainDrops: 8000, physicalPaint: true, carLights: true },
 };
