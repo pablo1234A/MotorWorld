@@ -38,25 +38,25 @@ export class GarageScene {
     const pm = new PMREMGenerator(renderer);
     this.env = pm.fromScene(new RoomEnvironment(), 0.04).texture;
     s.environment = this.env;
-    s.environmentIntensity = 0.8;
+    s.environmentIntensity = 0.65;
     s.add(new HemisphereLight(0xb8c4d8, 0x16120f, 0.5));
-    const key = new SpotLight(0xffffff, 380, 40, 0.55, 0.6, 1.6);
+    const key = new SpotLight(0xffffff, 140, 40, 0.55, 0.6, 1.6);
     key.position.set(4, 9, 5);
     key.castShadow = quality >= 1;
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.bias = -0.0003;
     s.add(key, key.target);
-    const rim = new SpotLight(0xff3446, 220, 30, 0.7, 0.8, 1.5);
+    const rim = new SpotLight(0xff3446, 70, 30, 0.7, 0.8, 1.5);
     rim.position.set(-6, 3, -6);
     s.add(rim, rim.target);
     const fill = new DirectionalLight(0x9db8ff, 0.7);
     fill.position.set(-5, 4, 6);
     s.add(fill);
     // floor: glossy dark with radial light pool
-    const floor = new Mesh(new CircleGeometry(30, 64).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: 0x141418, roughness: 0.32, metalness: 0.6 }));
+    const floor = new Mesh(new CircleGeometry(30, 64).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: 0x0e0e11, roughness: 0.5, metalness: 0.15, envMapIntensity: 0.35 }));
     floor.receiveShadow = true;
     s.add(floor);
-    const pool = new Mesh(new PlaneGeometry(12, 12).rotateX(-Math.PI / 2), new MeshBasicMaterial({ map: radialTexture('rgba(255,255,255,0.5)', 'rgba(255,255,255,0.12)'), transparent: true, depthWrite: false, blending: AdditiveBlending }));
+    const pool = new Mesh(new PlaneGeometry(12, 12).rotateX(-Math.PI / 2), new MeshBasicMaterial({ map: radialTexture('rgba(255,255,255,0.22)', 'rgba(255,255,255,0.05)'), transparent: true, depthWrite: false, blending: AdditiveBlending }));
     pool.position.y = 0.005;
     s.add(pool);
     // turntable
@@ -130,7 +130,7 @@ export class GarageScene {
         if ((o as Mesh).isMesh) (o as Mesh).castShadow = true;
       });
       this.turntable.add(this.model.root);
-      this.targetDist = 5.5 + def.body.length * 0.75;
+      this.targetDist = 6.5 + def.body.length * 1.05;
     } else this.model.updateVisual(visual);
     // ride height from tuning
     const spec = resolveSpec(def, parts);
@@ -138,6 +138,7 @@ export class GarageScene {
     this.model.bodyGroup.position.set(0, spec.suspension.rideOffset, 0);
     for (const w of this.model.wheels) w.root.position.y = def.body.wheelRadius - spec.suspension.rideOffset;
     this.model.setLights(true, 0, 0);
+    this.update(0);
   }
 
   get car() {

@@ -2,8 +2,8 @@ import { Vector3 } from 'three';
 import { Surface } from '../physics/Surface';
 import { Heightmap } from './Heightmap';
 import { RoadNetwork } from './RoadNetwork';
-import { TerrainGen } from './TerrainGen';
-import { ROADS } from './WorldDef';
+import { rectDist, TerrainGen } from './TerrainGen';
+import { CITY, PORT, ROADS } from './WorldDef';
 
 export interface WorldData {
   gen: TerrainGen;
@@ -57,8 +57,9 @@ function computeSurfaces(gen: TerrainGen, hm: Heightmap) {
       const h = hm.h[j * n + i];
       hm.smoothNormal(i, j, nrm);
       let s: Surface = Surface.Grass;
-      const cm = Math.max(gen.cityMask(x, z), gen.portMask(x, z));
-      if (cm > 0.85) s = Surface.Concrete;
+      const inCity = rectDist(x, z, CITY.x0 - 12, CITY.z0 - 12, CITY.x1 + 12, CITY.z1 + 12) === 0;
+      const inPort = rectDist(x, z, PORT.x0 - 20, PORT.z0 - 20, PORT.x1 + 40, PORT.z1 + 40) === 0;
+      if (inCity || inPort) s = Surface.Concrete;
       else if (h < 3.2) s = Surface.Sand;
       else if (nrm.y < 0.78) s = Surface.Rock;
       else if (h > 230 && gen.n2.noise(x / 60, z / 60) > -0.2) s = Surface.Rock;

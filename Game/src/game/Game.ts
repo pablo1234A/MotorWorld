@@ -174,6 +174,7 @@ export class Game implements GameContext, GameApi {
     this.loading.progress(0.95, t('gen_world'));
     // garage + UI
     this.garage = new GarageScene(this.renderer, this.quality);
+    this.garage.resize(innerWidth, innerHeight);
     this.buildUI();
     this.skills.bus.on('banked', (b) => {
       this.profile.addXp(b.xp, 'skill');
@@ -636,7 +637,10 @@ export class Game implements GameContext, GameApi {
     this.ui.update(dt);
     if (this.showGarage) {
       this.garage.update(dt);
+      const exp = this.renderer.toneMappingExposure;
+      this.renderer.toneMappingExposure = 1.0;
       this.renderer.render(this.garage.scene, this.garage.camera);
+      this.renderer.toneMappingExposure = exp;
       return;
     }
     const driving = this.ui.current === null && !this.inMenu;
