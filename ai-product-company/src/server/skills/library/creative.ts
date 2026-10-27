@@ -1,0 +1,203 @@
+import type { SkillDefinition } from '../types.js';
+
+export const productInsight: SkillDefinition = {
+  id: 'product-insight-extraction',
+  name: 'Product Insight Extraction',
+  version: '1.0',
+  objective: 'Extraer del producto activo los insights psicológicos que mueven la compra antes de crear nada.',
+  methodology: 'Jobs-To-Be-Done + mapa dolor/deseo/objeción + "momento wow" visual.',
+  knowledge: [
+    'Dolor principal: la frustración concreta y frecuente que el cliente ya siente (no la categoría).',
+    'Deseo principal: el resultado/estatus que quiere conseguir, expresado como estado final.',
+    'Objeción principal: la razón número uno para NO comprar (precio, desconfianza, "no funcionará para mí", complejidad).',
+    'Transformación: estado ANTES → estado DESPUÉS, visible y verificable en cámara.',
+    'Elemento visual más sorprendente: lo que el producto hace que se ve imposible, satisfactorio o inesperado en 1 segundo.',
+    'Emoción dominante: alivio, orgullo, curiosidad, envidia, seguridad, diversión… elige una, no cinco.',
+  ],
+  process: [
+    'Leer todos los campos del producto.',
+    'Elegir UN dolor, UN deseo, UNA objeción, UN beneficio principal y justificar la elección.',
+    'Describir la transformación en términos visuales.',
+    'Identificar el momento wow y la razón para prestar atención.',
+  ],
+  successCriteria: ['Insights literalmente anclados en datos del producto.', 'Formulados en lenguaje del cliente, no del vendedor.'],
+  commonMistakes: ['Listar características en lugar de beneficios.', 'Insights genéricos ("ahorra tiempo").'],
+  constraints: ['Si un campo falta, marcar la inferencia como HIPÓTESIS.'],
+  scorecard: [],
+  examples: ['Dolor: "llegar al viernes con la espalda destrozada de 8h en la silla" (no: "problemas posturales").'],
+};
+
+export const hookEngineering: SkillDefinition = {
+  id: 'hook-engineering',
+  name: 'Hook Engineering for Short-Form Video',
+  version: '1.0',
+  objective: 'Crear aperturas (0-3 s) que detienen el scroll y abren un bucle que solo se cierra viendo el vídeo, siempre con encaje de producto.',
+  methodology:
+    'Insight → mecanismo de atención → formato (texto / visual / hablado) → combinación → variantes A/B → scorecard → selección.',
+  knowledge: [
+    'Mecanismos de atención: pattern interrupt (romper la expectativa visual/sonora), curiosity gap (falta una pieza de información), open loop (pregunta o promesa que se resuelve al final), contraste (antes/después, esperado/real), sorpresa (resultado improbable), conflicto, identificación ("si eres de los que…").',
+    'Familias de hooks: Problema ("Si te pasa X…"), Deseo ("Así consigo Y sin Z"), Demostración (mostrar el resultado primero), Emocional (vulnerabilidad, orgullo), Contrarian ("Deja de hacer X"), Prueba social, Error común ("El error que todos cometen con…"), Lista ("3 cosas que…"), POV, Reto/Test, Comparativa.',
+    'Hook de texto: on-screen, ≤ 10 palabras, legible en 1 s, contraste alto, nunca tapa el producto.',
+    'Hook visual: la primera imagen hace el trabajo sin sonido (85% del consumo es sin audio): movimiento en el primer frame, primer plano, acción en curso, resultado extraño.',
+    'Hook hablado: primera frase ≤ 2 s, empieza por la palabra con más carga ("Nadie…", "Deja…", "Esto…"), sin saludos.',
+    'Direct response: especificidad > adjetivos ("en 11 segundos" > "rápido"); el lector debe verse a sí mismo en el hook.',
+    'Encaje de producto: el hook debe conducir lógicamente al producto en < 5 s; un hook viral que no vende es un fallo.',
+  ],
+  process: [
+    'Analizar primero el producto: dolor, deseo, objeción, beneficio, emoción, transformación, momento wow, razón para prestar atención.',
+    'Generar hooks de texto por familias distintas (nunca 20 variaciones de la misma frase).',
+    'Generar hooks visuales describiendo exactamente el primer frame y el movimiento.',
+    'Crear conceptos de apertura (texto + visual + hablado sincronizados en los 3 primeros segundos).',
+    'Combinar en paquetes completos hook + visual y crear variantes A/B que aíslen una sola variable.',
+    'Puntuar todos con el scorecard y seleccionar los mejores para NEO con justificación.',
+  ],
+  successCriteria: [
+    'Cada hook se entiende en < 2 s y sin sonido (si es visual/texto).',
+    'Diversidad real de mecanismos y familias.',
+    'Los seleccionados puntúan ≥ 7/10 en Product Fit y Scroll Stop.',
+  ],
+  commonMistakes: [
+    'Clickbait que no cumple la promesa (destruye retención y confianza).',
+    'Empezar con el logo, un saludo o contexto.',
+    'Hooks sobre la categoría en lugar de sobre el dolor específico.',
+    'Variantes A/B que cambian varias variables a la vez.',
+  ],
+  constraints: ['No hacer claims médicos, financieros o de resultados no verificables.', 'No usar marcas registradas de competidores en el hook.'],
+  scorecard: [
+    { criterion: 'Attention', weight: 2, description: '¿Interrumpe el patrón del feed?' },
+    { criterion: 'Curiosity', weight: 2, description: '¿Abre un bucle que obliga a seguir viendo?' },
+    { criterion: 'Product Fit', weight: 3, description: '¿Lleva naturalmente al producto y su beneficio?' },
+    { criterion: 'Novelty', weight: 1, description: '¿Es distinto a lo habitual en la categoría?' },
+    { criterion: 'Emotional Impact', weight: 2, description: '¿Activa la emoción dominante?' },
+    { criterion: 'Scroll Stop Potential', weight: 3, description: '¿Detiene el pulgar en el primer segundo?' },
+    { criterion: 'Clarity', weight: 2, description: '¿Se entiende al instante?' },
+  ],
+  examples: [
+    'Texto (problema): "Tu espalda no está cansada. Está mal sentada."',
+    'Visual (demostración): primer frame: vaso de agua sobre el producto mientras alguien salta — no se derrama.',
+    'Hablado (contrarian): "Deja de comprar cojines lumbares. Mira esto."',
+  ],
+};
+
+export const creativeStrategy: SkillDefinition = {
+  id: 'creative-strategy',
+  name: 'Creative Strategy & Video Blueprinting',
+  version: '1.0',
+  objective: 'Convertir los mejores hooks en conceptos de vídeo con estructura narrativa, intención por escena y un VIDEO BLUEPRINT ejecutable.',
+  methodology: 'Ángulo → formato → estructura (HOOK · PROBLEM · DESIRE · DEMONSTRATION · SOLUTION · PRODUCT · CTA) → guion por escenas → ritmo.',
+  knowledge: [
+    'Formatos probados: Demo-first, Problem-Agitate-Solve (PAS), Before-After-Bridge (BAB), UGC testimonial, "Us vs Them", Unboxing con giro, Tutorial/How-to, POV, Storytime.',
+    'Estructura de retención: cada 2-3 s debe pasar algo nuevo (corte, texto, cambio de plano, revelación).',
+    'Duración: 15-30 s para conversión en frío; el producto debe aparecer antes del segundo 5.',
+    'La demostración es la prueba: muestra el mecanismo, no lo describas.',
+    'CTA: una sola acción, concreta, coherente con la oferta, en voz + texto.',
+    'No todas las secciones son obligatorias: omite DESIRE o PROBLEM si el formato no lo pide, pero justifica por qué.',
+  ],
+  process: [
+    'Revisar los hooks seleccionados por NOVA y el producto.',
+    'Elegir el concepto más fuerte y su formato.',
+    'Escribir el blueprint por secciones con objetivo, visual, texto en pantalla, locución y duración.',
+    'Definir ritmo, estilo visual, emoción y transformación.',
+    'Comprobar que la suma de duraciones = duración total y que el producto aparece antes de 5 s.',
+  ],
+  successCriteria: ['Blueprint completo y coherente.', 'Cada escena tiene un propósito.', 'Hook de NOVA preservado.'],
+  commonMistakes: ['Guiones que explican en lugar de mostrar.', 'CTA múltiples.', 'Escenas de relleno.'],
+  constraints: ['Respetar tono de marca y estilo visual del producto.', 'No inventar testimonios reales: si hay testimonio, marcarlo como "actor/recreación".'],
+  scorecard: [
+    { criterion: 'Story', weight: 3, description: 'Narrativa clara con tensión y resolución.' },
+    { criterion: 'Retention design', weight: 3, description: 'Cambio de estímulo cada 2-3 s.' },
+    { criterion: 'Product clarity', weight: 2, description: 'Se entiende qué es y por qué lo quiero.' },
+  ],
+  examples: ['HOOK (0-2 s) → PROBLEM (2-5 s) → DEMONSTRATION (5-12 s) → SOLUTION/PRODUCT (12-18 s) → CTA (18-22 s).'],
+};
+
+export const videoProduction: SkillDefinition = {
+  id: 'video-production',
+  name: 'Video Production Direction',
+  version: '1.0',
+  objective: 'Dirigir la producción completa del vídeo: escenas, planos, cámara, composición, luz, movimiento, personajes, producto, diálogo, voz, texto, duración, ritmo y estilo.',
+  methodology: 'Blueprint → shot list → dirección por plano → prompts de generación → producción del raw → control técnico.',
+  knowledge: [
+    'Formato vertical 9:16, sujeto en el tercio central, zona segura: evitar 12% superior y 20% inferior para texto.',
+    'Planos: ECU (detalle textura), CU (cara/producto), MS (uso), WS (contexto). Alternar escalas mantiene la atención.',
+    'Movimiento: push-in para revelación, handheld para UGC/autenticidad, top-down para demostraciones de mesa, macro para satisfacción.',
+    'Iluminación: key suave a 45°, rim para separar producto del fondo; luz natural de ventana para UGC.',
+    'El producto siempre identificable: marca visible, uso real, manos en cuadro.',
+    'Prompts para motores de generación: sujeto + acción + entorno + cámara + luz + estilo + duración; una acción por plano.',
+    'LA HERRAMIENTA NO ES EL CEREBRO: REX decide; el motor conectado solo ejecuta.',
+  ],
+  process: [
+    'Leer el blueprint aprobado de NEO.',
+    'Desglosar en planos con duración, encuadre, movimiento de cámara, luz y acción.',
+    'Definir personajes, vestuario/props y cómo aparece el producto.',
+    'Escribir locución y texto en pantalla por plano.',
+    'Escribir el prompt de generación por plano para el motor conectado.',
+    'Producir el raw con el motor disponible y verificar duración y resolución.',
+  ],
+  successCriteria: ['Shot list completa y rodable/generable.', 'Duraciones suman la duración objetivo.', 'Producto presente y legible.'],
+  commonMistakes: ['Planos sin acción.', 'Producto pequeño o fuera de foco.', 'Texto en zonas no seguras.'],
+  constraints: ['No usar imágenes con derechos de terceros.', 'No usar rostros reales sin permiso.'],
+  scorecard: [
+    { criterion: 'Producibilidad', weight: 3, description: 'Cada plano es ejecutable.' },
+    { criterion: 'Lenguaje visual', weight: 2, description: 'Variedad de escalas y movimiento con intención.' },
+  ],
+  examples: ['Plano 1 · 0-2 s · ECU macro · push-in lento · luz lateral dura · mano presiona el producto, se ve la textura.'],
+};
+
+export const videoEditing: SkillDefinition = {
+  id: 'video-editing',
+  name: 'Post-production & Editing',
+  version: '1.0',
+  objective: 'Convertir el raw en el FINAL VIDEO: cortes, ritmo, subtítulos, overlays, transiciones, zooms, efectos, música, sound design, sincronización, color, CTA y branding.',
+  methodology: 'Edit Decision List (EDL) → assembly → ritmo → capa de texto/subtítulos → sonido → color → branding/CTA → export.',
+  knowledge: [
+    'Cortar en movimiento (cut on action) para continuidad; jump cuts para energía en UGC.',
+    'Ritmo: plano medio 1.2-2.5 s en short-form; el primer corte antes de 1.5 s.',
+    'Subtítulos: 2 líneas máx., 3-5 palabras por bloque, palabra clave resaltada, en zona segura.',
+    'Zoom punch-in (110-120%) para enfatizar una frase sin nuevo plano.',
+    'Sound design: whoosh en transiciones, impacto en revelaciones; música con BPM acorde al ritmo de corte.',
+    'Color: coherente con el estilo visual de la marca; piel natural; producto con colores fieles.',
+    'End card con CTA ≥ 2 s y branding discreto.',
+  ],
+  process: [
+    'Revisar raw y blueprint.',
+    'Construir la EDL: segmentos, transiciones, subtítulos, overlays, zooms, audio, color.',
+    'Renderizar con el motor de render disponible.',
+    'Verificar técnicamente el archivo final (duración, resolución, pistas).',
+  ],
+  successCriteria: ['FINAL VIDEO renderizado y reproducible.', 'Subtítulos legibles y sincronizados.', 'CTA y branding presentes.'],
+  commonMistakes: ['Transiciones decorativas sin propósito.', 'Subtítulos que tapan el producto.', 'Música que compite con la voz.'],
+  constraints: ['Solo música/efectos con licencia (requiere conector de librería).'],
+  scorecard: [
+    { criterion: 'Ritmo', weight: 3, description: 'Sin tiempos muertos.' },
+    { criterion: 'Legibilidad', weight: 2, description: 'Texto legible en móvil.' },
+    { criterion: 'Acabado', weight: 2, description: 'Color, sonido y branding coherentes.' },
+  ],
+  examples: ['Seg 1 0.0-2.0 s · subtítulo "Tu espalda NO está cansada" · punch-in 115% en 1.2 s · whoosh.'],
+};
+
+export const videoQA: SkillDefinition = {
+  id: 'video-qa',
+  name: 'Video Quality Assurance',
+  version: '1.0',
+  objective: 'Actuar como control de calidad final: decidir APPROVED / REVISION_REQUIRED / REJECTED con puntuación 0-100 y feedback accionable enrutado al agente responsable.',
+  methodology: 'Checklist técnico objetivo (archivo) + rúbrica creativa ponderada + diagnóstico de causa raíz + enrutamiento.',
+  knowledge: [
+    'Rúbrica: hook y primeros segundos (20), retención/ritmo (15), claridad (10), storytelling (10), producto (15), visuales (10), texto/subtítulos (5), audio (5), branding/CTA (10).',
+    'Causa raíz → responsable: concepto/estructura/guion → NEO; planos/visuales/producto mal mostrado → REX; ritmo/subtítulos/texto/color/audio/CTA en pantalla → MAX.',
+    'APPROVED: score ≥ umbral y sin defectos críticos. REVISION_REQUIRED: arreglable. REJECTED: el concepto no tiene solución (incoherente con el producto o claims prohibidos).',
+    'Defectos críticos: claims engañosos, producto no visible, archivo corrupto, duración fuera de rango, texto ilegible.',
+  ],
+  process: [
+    'Comprobar técnicamente el archivo final (duración, resolución, pistas, fotogramas).',
+    'Evaluar cada criterio de la rúbrica con evidencia concreta (escena/segundo).',
+    'Calcular el score ponderado.',
+    'Para cada problema: qué está mal, por qué, cómo solucionarlo y qué agente debe hacerlo.',
+    'Emitir veredicto y enrutar.',
+  ],
+  successCriteria: ['Feedback específico (segundo/escena).', 'Enrutamiento correcto.', 'Veredicto coherente con el score.'],
+  commonMistakes: ['Feedback vago ("mejorar ritmo").', 'Aprobar con defectos críticos.', 'Enviar todo al mismo agente.'],
+  constraints: ['Respetar el máximo de ciclos de revisión; al alcanzarlo, escalar.'],
+  scorecard: [],
+  examples: ['Problema: subtítulo 3-6 s tapa el producto · Por qué: el producto es la prueba · Solución: subir el bloque al tercio superior · Responsable: MAX.'],
+};
