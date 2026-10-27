@@ -7,7 +7,7 @@ import { now } from '../../core/ids.js';
 import type { Blueprint } from './neo.js';
 import type { Production } from './rex.js';
 import type { Edit } from './max.js';
-import type { MediaProbe } from '../../integrations/ffmpeg.js';
+import type { MediaProbe } from '../../integrations/types.js';
 import type { QAReview } from '../../videos/videoService.js';
 
 const Owner = z.enum(['NEO', 'REX', 'MAX']);
@@ -167,7 +167,7 @@ ${feedbackBlock(ctx)}`;
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-'));
     try {
       const d = q.probe.durationSec;
-      const files = await ctx.c.integrations.ffmpeg.frames(q.finalPath, [0.5, d * 0.35, d * 0.65, Math.max(0, d - 1)], dir);
+      const files = await ctx.c.integrations.media.frames(q.finalPath, [0.5, d * 0.35, d * 0.65, Math.max(0, d - 1)], dir);
       return files.map((f) => fs.readFileSync(f).toString('base64'));
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });

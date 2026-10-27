@@ -120,3 +120,32 @@ export interface StoreAdapter {
   readonly id: string;
   info(): IntegrationInfo;
 }
+
+export interface MediaProbe {
+  durationSec: number;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  fps: number;
+  frames: number;
+  videoCodec: string | null;
+  hasAudio: boolean;
+  audioCodec: string | null;
+}
+
+/** Low-level media operations the company needs (probe, join, frame grabs). ffmpeg on the server, WebCodecs in the browser. */
+export interface MediaEngine {
+  readonly available: boolean;
+  readonly label: string;
+  probe(file: string): Promise<MediaProbe>;
+  concat(files: string[], out: string): Promise<void>;
+  frames(file: string, times: number[], dir: string): Promise<string[]>;
+  /** Generated placeholder image for the fictitious test product. */
+  testProductImage(out: string, label: string): Promise<void>;
+}
+
+export interface PageSnapshotAdapter {
+  readonly id: string;
+  info(): IntegrationInfo;
+  snapshot(url: string): Promise<StorePageSnapshot>;
+}

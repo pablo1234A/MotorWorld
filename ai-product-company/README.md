@@ -11,6 +11,27 @@ La oficina visual es solo la interfaz. El núcleo es un sistema real: cola de ta
 
 ---
 
+## Edición de un solo archivo (sin instalar nada)
+
+**`release/AI-Product-Company.html`** — ábrelo con doble clic en Chrome, Edge o Safari actualizados. Toda la empresa se ejecuta dentro del navegador:
+
+- Mismo motor que el servidor: agentes, task engine, workflows, memoria, QA, aprobaciones, eventos, informes.
+- Base de datos SQLite (WebAssembly) y vídeos MP4 reales renderizados en el navegador (WebCodecs). Todo se guarda **en ese navegador** (IndexedDB) y sobrevive a recargas; *Integraciones y ajustes → Operación* permite borrarlo.
+- Botón **“Cargar producto de prueba”** para verla trabajar al instante.
+
+Diferencias con la edición servidor, por diseño:
+
+| | Servidor | Un solo archivo |
+|---|---|---|
+| Cerebro | Claude (con `ANTHROPIC_API_KEY`) o motor local | Solo motor local: **una API key nunca se pone en un navegador** |
+| Lectura de la página de tu tienda | Sí | No (el navegador bloquea leer otros dominios — CORS); EVA audita sobre el perfil |
+| Login | Cuenta de propietario | No: los datos son locales de tu dispositivo |
+| Datos | Servidor (compartibles) | Solo en ese navegador/dispositivo |
+
+Regenerarla: `npm run build:html` → `dist/standalone/index.html`.
+
+---
+
 ## Arranque rápido
 
 Requisitos: **Node ≥ 22.13** (usa el SQLite integrado en Node) y **ffmpeg** (motor de render integrado).

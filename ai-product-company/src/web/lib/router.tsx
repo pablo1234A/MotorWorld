@@ -1,18 +1,31 @@
+import './transport';
 import { createContext, useContext, useEffect, useState, type AnchorHTMLAttributes, type ReactNode } from 'react';
 
-/** Minimal history-API router (no dependency). */
+/**
+ * Minimal router (no dependency). History API on the server edition; hash routes
+ * (#/office) in the single-file edition, where file:// forbids pushState.
+ */
+const useHash = () => window.location.protocol === 'file:' || Boolean(window.__APC_LOCAL__);
+const current = () => (useHash() ? window.location.hash.slice(1) || '/' : window.location.pathname + window.location.search);
+export const hrefFor = (to: string) => (useHash() ? `#${to}` : to);
+
 const Ctx = createContext<{ path: string; navigate: (to: string) => void }>({ path: '/', navigate: () => {} });
 
 export function RouterProvider({ children }: { children: ReactNode }) {
-  const [path, setPath] = useState(window.location.pathname + window.location.search);
+  const [path, setPath] = useState(current);
   useEffect(() => {
-    const onPop = () => setPath(window.location.pathname + window.location.search);
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
+    const onChange = () => setPath(current());
+    window.addEventListener('popstate', onChange);
+    window.addEventListener('hashchange', onChange);
+    return () => {
+      window.removeEventListener('popstate', onChange);
+      window.removeEventListener('hashchange', onChange);
+    };
   }, []);
   const navigate = (to: string) => {
     if (to === path) return;
-    window.history.pushState({}, '', to);
+    if (useHash()) window.location.hash = to;
+    else window.history.pushState({}, '', to);
     setPath(to);
     window.scrollTo({ top: 0 });
   };
@@ -27,7 +40,7 @@ export function Link({ to, children, ...rest }: { to: string; children: ReactNod
   const current = to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(to + '/');
   return (
     <a
-      href={to}
+      href={hrefFor(to)}
       aria-current={current ? 'page' : undefined}
       {...rest}
       onClick={(e) => {

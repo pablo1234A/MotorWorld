@@ -13,7 +13,7 @@ const app = await buildServer(company, { webDir: process.env.NODE_ENV === 'produ
 company.scheduler.start();
 await app.listen({ port: cfg.port, host: cfg.host });
 
-const ff = company.integrations.ffmpeg.available ? 'ffmpeg OK' : 'ffmpeg NOT FOUND (render engine unavailable)';
+const ff = company.integrations.media.available ? `${company.integrations.media.label} OK` : 'ffmpeg NOT FOUND (render engine unavailable)';
 console.log(`\n  AI PRODUCT COMPANY  ·  http://${cfg.host}:${cfg.port}`);
 console.log(`  brain: ${company.llm.engineLabel}${company.llm.available ? '' : '  (INTEGRATION_REQUIRED: set ANTHROPIC_API_KEY)'}  ·  ${ff}`);
 console.log(`  data:  ${cfg.dataDir}\n`);

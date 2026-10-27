@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
+import { localTransport } from './transport';
 
 export interface CompanyEvent {
   id: number;
@@ -29,20 +30,25 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let es: EventSource | null = null;
     let retry: number | null = null;
+    const onCompany = (e: CompanyEvent) => {
+      subs.current.forEach((fn) => fn(e));
+      setEvents((prev) => [e, ...prev].slice(0, 200));
+      if (pending.current == null) {
+        pending.current = window.setTimeout(() => {
+          pending.current = null;
+          setVersion((v) => v + 1);
+        }, 350);
+      }
+    };
+    const local = localTransport();
+    if (local) {
+      setConnected(true);
+      return local.subscribe((type, data) => type === 'company' && onCompany(data as CompanyEvent));
+    }
     const connect = () => {
       es = new EventSource('/api/stream');
       es.addEventListener('hello', () => setConnected(true));
-      es.addEventListener('company', (msg) => {
-        const e = JSON.parse((msg as MessageEvent).data) as CompanyEvent;
-        subs.current.forEach((fn) => fn(e));
-        setEvents((prev) => [e, ...prev].slice(0, 200));
-        if (pending.current == null) {
-          pending.current = window.setTimeout(() => {
-            pending.current = null;
-            setVersion((v) => v + 1);
-          }, 350);
-        }
-      });
+      es.addEventListener('company', (msg) => onCompany(JSON.parse((msg as MessageEvent).data) as CompanyEvent));
       es.onerror = () => {
         setConnected(false);
         es?.close();

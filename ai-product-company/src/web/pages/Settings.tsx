@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Check, Minus, Save } from 'lucide-react';
+import { Check, Minus, Save, Trash2 } from 'lucide-react';
+import { isBrowserEdition } from '../lib/transport';
 import { api } from '../lib/api';
 import { useResource } from '../lib/live';
 import type { Integration, Settings } from '../lib/types';
@@ -89,7 +90,17 @@ function SettingsForm() {
             </select>
           </Field>
         </div>
-        <div className="row"><span className="spacer" />
+        <div className="row gap-8 wrap">
+          {isBrowserEdition() && (
+            <button
+              className="btn danger"
+              disabled={busy}
+              onClick={() => window.confirm('¿Borrar TODOS los datos de la empresa guardados en este navegador (productos, vídeos, tareas, memoria)? Es irreversible.') && run(() => api.post('/api/system/reset'))}
+            >
+              <Trash2 /> Borrar datos de este navegador
+            </button>
+          )}
+          <span className="spacer" />
           <button className="btn primary" disabled={busy} onClick={() => run(() => api.put('/api/settings', s), 'Ajustes guardados')}><Save /> Guardar ajustes</button>
         </div>
       </div>

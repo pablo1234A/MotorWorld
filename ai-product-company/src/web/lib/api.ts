@@ -1,3 +1,4 @@
+import { localTransport } from './transport';
 /** Thin API client. Cookies carry the session; the custom header is the CSRF guard. */
 export class ApiError extends Error {
   constructor(message: string, readonly status: number, readonly code?: string) {
@@ -5,7 +6,17 @@ export class ApiError extends Error {
   }
 }
 
+
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const local = localTransport();
+  if (local) {
+    const { status, data } = await local.request(method, url, body);
+    if (status >= 400) {
+      const d = data as { error?: string; code?: string } | null;
+      throw new ApiError(d?.error ?? `Error ${status}`, status, d?.code);
+    }
+    return data as T;
+  }
   const isForm = body instanceof FormData;
   const res = await fetch(url, {
     method,
@@ -34,4 +45,9 @@ export const api = {
   },
 };
 
-export const mediaUrl = (id: string | null | undefined, download = false) => (id ? `/api/media/${id}${download ? '?download=1' : ''}` : '');
+export const mediaUrl = (id: string | null | undefined, download = false) => {
+  if (!id) return '';
+  const local = localTransport();
+  if (local) return local.mediaUrl(id);
+  return `/api/media/${id}${download ? '?download=1' : ''}`;
+};

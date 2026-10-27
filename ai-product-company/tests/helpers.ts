@@ -26,4 +26,4 @@ export function activeTestProduct(c: Company, overrides: Record<string, unknown>
   return c.products.activate(p.id);
 }
 
-export const hasFfmpeg = (c: Company) => c.integrations.ffmpeg.available;
+export const hasFfmpeg = (c: Company) => c.integrations.media.available;

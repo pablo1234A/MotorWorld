@@ -34,17 +34,13 @@ export const TEST_PRODUCT: Partial<ProductInput> = {
   status: 'ready',
 };
 
-/** Creates the test product, a generated test image (if ffmpeg exists) and activates it. */
+/** Creates the test product, a generated test image (if a media engine exists) and activates it. */
 export async function seedTestProduct(c: Company) {
   const product = c.products.create(TEST_PRODUCT);
-  if (c.integrations.ffmpeg.available) {
+  if (c.integrations.media.available) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'seed-'));
     const file = path.join(dir, 'product.png');
-    await c.integrations.ffmpeg.run([
-      '-f', 'lavfi', '-i', 'color=c=#E8EEF5:s=600x600',
-      '-vf', `drawbox=x=90:y=200:w=420:h=220:color=#2B3F6C:t=fill,drawbox=x=120:y=230:w=360:h=160:color=#5BC0BE:t=fill,drawtext=fontfile='${c.cfg.fontFile}':text='TEST PRODUCT':fontsize=34:fontcolor=white:x=(w-text_w)/2:y=290`,
-      '-frames:v', '1', file,
-    ]);
+    await c.integrations.media.testProductImage(file, 'TEST PRODUCT');
     c.products.addAsset(product.id, { buffer: fs.readFileSync(file), originalName: 'test-product.png', mime: 'image/png' });
     fs.rmSync(dir, { recursive: true, force: true });
   }

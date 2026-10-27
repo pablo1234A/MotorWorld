@@ -5,6 +5,7 @@ import { useResource } from '../lib/live';
 import { Link, useRouter } from '../lib/router';
 import { money } from '../lib/format';
 import type { MemoryEntry, Product } from '../lib/types';
+import { SeedButton } from './ControlCenter';
 import { AgentMark, Empty, Field, Loading, PageHead, Panel, Status, Tabs, toast, useAction } from '../components/ui';
 
 export function Products() {
@@ -22,7 +23,11 @@ export function Products() {
         <Panel>
           <Empty icon={<Package />} title="Aún no hay productos">
             Crea tu primer producto con su información clave (dolores, deseos, objeciones, tono de marca…) y actívalo. Desde ese momento todos los agentes trabajarán con él.
-            <div style={{ marginTop: 14 }}><Link to="/products/new" className="btn primary" aria-current={undefined}><Plus /> Crear producto</Link></div>
+            <div className="row gap-8" style={{ marginTop: 14, justifyContent: 'center' }}>
+              <Link to="/products/new" className="btn primary" aria-current={undefined}><Plus /> Crear producto</Link>
+              <SeedButton />
+            </div>
+            <p className="xs faint" style={{ marginTop: 10 }}>El producto de prueba es ficticio (PostureFlex) y está marcado como tal: sirve para ver a la empresa trabajar.</p>
           </Empty>
         </Panel>
       ) : (

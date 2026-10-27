@@ -13,6 +13,7 @@ import { localDate } from '../core/ids.js';
 import { WORKFLOWS } from '../workflows/definitions.js';
 import { taskTypes } from '../tasks/types/index.js';
 import { EVENT_TYPES } from '../core/events.js';
+import { seedTestProduct } from '../seed/testProduct.js';
 
 const LaunchSchema = z.object({
   type: z.enum(['strategy', 'video_pipeline', 'store_audit', 'analytics_review', 'daily_report']),
@@ -104,6 +105,8 @@ export function registerRoutes(app: FastifyInstance, c: Company) {
     c.products.remove((req.params as { id: string }).id);
     return { ok: true };
   });
+  /** Fictitious, clearly-labelled test product so the company can be tried immediately. */
+  app.post('/api/demo/test-product', async () => seedTestProduct(c));
   app.post('/api/products/:id/activate', async (req) => c.products.activate((req.params as { id: string }).id));
   app.post('/api/products/:id/deactivate', async (req) => c.products.deactivate((req.params as { id: string }).id));
   app.post('/api/products/:id/assets', async (req) => {

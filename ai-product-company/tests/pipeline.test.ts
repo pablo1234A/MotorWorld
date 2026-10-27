@@ -36,7 +36,7 @@ describe('Video pipeline (PRODUCT ACTIVE → ATLAS → ALEX → NOVA → NEO →
       expect(v.blueprint).toBeTruthy();
       const final = c.videos.getAsset(v.finalAsset!)!;
       expect(fs.existsSync(final.path)).toBe(true);
-      const probe = await c.integrations.ffmpeg.probe(final.path);
+      const probe = await c.integrations.media.probe(final.path);
       expect(probe.durationSec).toBeGreaterThan(8);
       expect(probe.width / probe.height).toBeCloseTo(9 / 16, 2);
       expect(v.qa.at(-1)?.verdict).toBe('APPROVED');

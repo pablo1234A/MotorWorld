@@ -5,7 +5,9 @@ import { LaunchButton } from '../components/Launch';
 import { ActivityFeed, TaskSheet, Timeline } from '../components/blocks';
 import { AgentMark, Empty, Loading, PageHead, Panel, Status } from '../components/ui';
 import { Link, useRouter } from '../lib/router';
-import { mediaUrl } from '../lib/api';
+import { api, mediaUrl } from '../lib/api';
+import { isBrowserEdition } from '../lib/transport';
+import { useAction } from '../components/ui';
 import { ago, WORKFLOW_LABEL } from '../lib/format';
 
 export function ControlCenter() {
@@ -31,14 +33,21 @@ export function ControlCenter() {
           <div className="grow">
             <b>Todavía no hay PRODUCTO ACTIVO.</b> Los agentes trabajan alrededor del producto activo: créalo en el Product Center, actívalo y dile a ATLAS qué quieres conseguir.
           </div>
-          <Link to="/products" className="btn sm" aria-current={undefined}>Ir al Product Center</Link>
+          <div className="row gap-8 wrap">
+            <Link to="/products/new" className="btn sm" aria-current={undefined}>Crear producto</Link>
+            <SeedButton />
+          </div>
         </div>
       )}
       {!snap.llmConnected && (
         <div className="banner warn" style={{ marginBottom: 16 }}>
           <Cpu />
           <div className="grow">
-            <b>INTEGRATION_REQUIRED · Claude no conectado.</b> Los agentes funcionan con el motor heurístico local (reglas sobre los datos del producto). Todo lo que producen queda etiquetado como <span className="mono">local-heuristic</span>. Añade <span className="mono">ANTHROPIC_API_KEY</span> en el servidor para razonamiento real.
+            <b>INTEGRATION_REQUIRED · Claude no conectado.</b> Los agentes funcionan con el motor heurístico local (reglas sobre los datos del producto). Todo lo que producen queda etiquetado como <span className="mono">local-heuristic</span>. {isBrowserEdition() ? (
+              <>Para que razonen con Claude usa la edición servidor con <span className="mono">ANTHROPIC_API_KEY</span>: la clave nunca se pone en el navegador.</>
+            ) : (
+              <>Añade <span className="mono">ANTHROPIC_API_KEY</span> en el servidor para razonamiento real.</>
+            )}
           </div>
         </div>
       )}
@@ -145,5 +154,15 @@ export function ControlCenter() {
       </div>
       <TaskSheet id={task} onClose={() => setTask(null)} />
     </>
+  );
+}
+
+/** Loads the fictitious test product (clearly labelled) so the company can be tried immediately. */
+export function SeedButton() {
+  const { busy, run } = useAction();
+  return (
+    <button className="btn sm" disabled={busy} onClick={() => run(() => api.post('/api/demo/test-product'), 'Producto de prueba creado y activado')}>
+      {busy ? 'Creando…' : 'Cargar producto de prueba'}
+    </button>
   );
 }

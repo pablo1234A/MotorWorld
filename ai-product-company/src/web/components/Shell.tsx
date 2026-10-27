@@ -5,6 +5,7 @@ import {
 import { Link, useRouter } from '../lib/router';
 import { mediaUrl, api } from '../lib/api';
 import { useLive, useResource } from '../lib/live';
+import { isBrowserEdition } from '../lib/transport';
 import type { Snapshot } from '../lib/types';
 
 const SnapshotCtx = createContext<{ snap: Snapshot | null; reload: () => void }>({ snap: null, reload: () => {} });
@@ -66,7 +67,7 @@ export function Shell({ owner, children }: { owner: { name: string }; children: 
             <div className="row gap-8 small muted">
               <span className="agent-mark" style={{ ['--s' as string]: '24px' }}>YO</span>
               <span className="grow ellipsis">{owner.name} · Propietario</span>
-              <button
+              {!isBrowserEdition() && <button
                 className="btn ghost sm icon"
                 aria-label="Cerrar sesión"
                 title="Cerrar sesión"
@@ -76,7 +77,7 @@ export function Shell({ owner, children }: { owner: { name: string }; children: 
                 }}
               >
                 <LogOut />
-              </button>
+              </button>}
             </div>
           </div>
         </aside>
@@ -101,6 +102,12 @@ export function Shell({ owner, children }: { owner: { name: string }; children: 
               </Link>
             )}
             <span className="spacer" />
+            {isBrowserEdition() && (
+              <span className="engine hide-sm" title="Toda la empresa se ejecuta en este navegador; los datos se guardan en este dispositivo.">
+                <span className="dot" style={{ background: 'var(--info)' }} />
+                Edición navegador
+              </span>
+            )}
             <span className="engine hide-sm" title={snap?.llmConnected ? 'Agentes razonando con Claude' : 'Sin ANTHROPIC_API_KEY: motor heurístico local'}>
               <span className="dot" style={{ background: snap?.llmConnected ? 'var(--ok)' : 'var(--wait)' }} />
               {snap ? (snap.llmConnected ? snap.engine.replace('anthropic:', 'Claude · ') : 'Motor local · INTEGRATION_REQUIRED') : '…'}

@@ -2,9 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { AppError, TransientError } from '../core/errors.js';
+import type { MediaEngine, MediaProbe } from './types.js';
+
+export type { MediaProbe };
 
 /** Thin, safe wrapper around the ffmpeg/ffprobe binaries (argument arrays, never a shell). */
-export class Ffmpeg {
+export class Ffmpeg implements MediaEngine {
+  readonly label = 'ffmpeg';
   constructor(
     readonly ffmpegPath: string | null,
     readonly ffprobePath: string | null,
@@ -38,6 +42,13 @@ export class Ffmpeg {
     return out;
   }
 
+  async testProductImage(out: string, label: string): Promise<void> {
+    const dir = fs.mkdtempSync(path.join(path.dirname(out), 'img-'));
+    const text = drawText({ dir, name: 'label', text: label, font: this.fontFile!, size: 34, x: '(w-text_w)/2', y: '290' });
+    await this.run(['-f', 'lavfi', '-i', 'color=c=#E8EEF5:s=600x600', '-vf', `drawbox=x=90:y=200:w=420:h=220:color=#2B3F6C:t=fill,drawbox=x=120:y=230:w=360:h=160:color=#5BC0BE:t=fill,${text}`, '-frames:v', '1', out]);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
   async probe(file: string): Promise<MediaProbe> {
     if (!this.ffprobePath) throw new AppError('ffprobe not available', 'INTEGRATION_REQUIRED', 424);
     const out = await exec(this.ffprobePath, ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], 30_000);
@@ -62,17 +73,7 @@ export class Ffmpeg {
   }
 }
 
-export interface MediaProbe {
-  durationSec: number;
-  sizeBytes: number;
-  width: number;
-  height: number;
-  fps: number;
-  frames: number;
-  videoCodec: string | null;
-  hasAudio: boolean;
-  audioCodec: string | null;
-}
+
 
 function exec(bin: string, args: string[], timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {

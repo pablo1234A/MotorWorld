@@ -104,9 +104,9 @@ export class ToolBelt {
       paths.push(p);
     }
     let rawPath: string | null = null;
-    if (this.c.integrations.ffmpeg.available) {
+    if (this.c.integrations.media.available) {
       rawPath = path.join(dir, 'raw.mp4');
-      await this.c.integrations.ffmpeg.concat(paths, rawPath);
+      await this.c.integrations.media.concat(paths, rawPath);
     }
     return { engine: engine.id, paths, dir, rawPath };
   }
@@ -120,7 +120,7 @@ export class ToolBelt {
 
   async probe(file: string) {
     this.use('media.probe', path.basename(file));
-    return this.c.integrations.ffmpeg.probe(file);
+    return this.c.integrations.media.probe(file);
   }
 
   recordQA(videoId: string, review: QAReview) {

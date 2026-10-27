@@ -23,7 +23,7 @@ import { CampaignService } from './campaigns/campaignService.js';
 import { ReportService } from './reports/reportService.js';
 import { DeliveryService } from './deliveries/deliveryService.js';
 import { AnthropicProvider, LlmGateway, type LlmProvider } from './llm/provider.js';
-import { IntegrationRegistry } from './integrations/registry.js';
+import { IntegrationRegistry, type IntegrationOverrides } from './integrations/registry.js';
 
 /**
  * The company: one object that wires every subsystem together.
@@ -54,7 +54,7 @@ export class Company {
   readonly integrations: IntegrationRegistry;
   private activityListeners = new Set<(e: ActivityEntry) => void>();
 
-  constructor(readonly cfg: AppConfig, opts: { llmProvider?: LlmProvider } = {}) {
+  constructor(readonly cfg: AppConfig, opts: { llmProvider?: LlmProvider; integrations?: IntegrationOverrides } = {}) {
     this.db = new Database(cfg.dbFile);
     this.events = new EventBus(this.db);
     this.activity = new ActivityLog(this.db, (e) => this.activityListeners.forEach((l) => l(e)));
@@ -79,7 +79,7 @@ export class Company {
     this.llm = new LlmGateway(opts.llmProvider ?? new AnthropicProvider(cfg.anthropicApiKey, cfg.llmModel), this.db, () => this.settings.get().maxLlmCallsPerDay);
     this.reports = new ReportService(this.db, this.events, this.llm);
     this.deliveries = new DeliveryService(this.db, this.videos, this.products, this.campaigns);
-    this.integrations = new IntegrationRegistry(cfg, this.llm);
+    this.integrations = new IntegrationRegistry(cfg, this.llm, opts.integrations);
     this.workflows = new WorkflowEngine(this.db, this);
     this.chat = new ChatService(this.db, this);
     this.scheduler = new Scheduler(this);

@@ -3,7 +3,16 @@ import { IntegrationRequiredError } from '../core/errors.js';
 import type { LlmGateway } from '../llm/provider.js';
 import { Ffmpeg, detectDrawtextFeatures } from './ffmpeg.js';
 import { PublicPageSnapshotAdapter, ShopifyAdapter } from './store.js';
-import type { IntegrationInfo, RenderAdapter, VideoGenerationAdapter } from './types.js';
+import type { IntegrationInfo, MediaEngine, PageSnapshotAdapter, RenderAdapter, VideoGenerationAdapter } from './types.js';
+
+/** Replace built-in engines (e.g. the in-browser edition swaps ffmpeg for WebCodecs). */
+export interface IntegrationOverrides {
+  media?: MediaEngine;
+  videoGenerators?: VideoGenerationAdapter[];
+  renderers?: RenderAdapter[];
+  pageSnapshot?: PageSnapshotAdapter;
+  storageDescription?: string;
+}
 import { ExternalRenderSlot, ExternalVideoGenerationSlot, LocalAnimaticAdapter, LocalRenderAdapter } from './video.js';
 
 /** Static slot description for capabilities with no adapter implemented yet. */
@@ -16,18 +25,23 @@ function slot(id: string, name: string, category: IntegrationInfo['category'], d
  * capability. Agents ask the registry; they never talk to vendors directly.
  */
 export class IntegrationRegistry {
-  readonly ffmpeg: Ffmpeg;
+  readonly media: MediaEngine;
   readonly videoGenerators: VideoGenerationAdapter[];
   readonly renderers: RenderAdapter[];
-  readonly pageSnapshot = new PublicPageSnapshotAdapter();
+  readonly pageSnapshot: PageSnapshotAdapter;
   readonly shopify: ShopifyAdapter;
 
-  constructor(private cfg: AppConfig, private llm: LlmGateway) {
-    this.ffmpeg = new Ffmpeg(cfg.ffmpegPath, cfg.ffprobePath, cfg.fontFile);
-    detectDrawtextFeatures(cfg.ffmpegPath);
+  constructor(private cfg: AppConfig, private llm: LlmGateway, private overrides: IntegrationOverrides = {}) {
+    if (overrides.media) this.media = overrides.media;
+    else {
+      const ff = new Ffmpeg(cfg.ffmpegPath, cfg.ffprobePath, cfg.fontFile);
+      detectDrawtextFeatures(cfg.ffmpegPath);
+      this.media = ff;
+    }
     // Order = preference. External engines win once implemented & connected.
-    this.videoGenerators = [new ExternalVideoGenerationSlot(), new LocalAnimaticAdapter(this.ffmpeg)];
-    this.renderers = [new ExternalRenderSlot(), new LocalRenderAdapter(this.ffmpeg)];
+    this.videoGenerators = overrides.videoGenerators ?? [new ExternalVideoGenerationSlot(), new LocalAnimaticAdapter(this.media as Ffmpeg)];
+    this.renderers = overrides.renderers ?? [new ExternalRenderSlot(), new LocalRenderAdapter(this.media as Ffmpeg)];
+    this.pageSnapshot = overrides.pageSnapshot ?? new PublicPageSnapshotAdapter();
     this.shopify = new ShopifyAdapter(cfg.shopifyDomain, cfg.shopifyToken);
   }
 
@@ -102,7 +116,7 @@ export class IntegrationRegistry {
         category: 'storage',
         kind: 'builtin',
         status: 'BUILTIN',
-        description: `Vídeos e imágenes en ${this.cfg.mediaDir}. Sustituible por almacenamiento externo (S3-compatible, etc.).`,
+        description: this.overrides.storageDescription ?? `Vídeos e imágenes en ${this.cfg.mediaDir}. Sustituible por almacenamiento externo (S3-compatible, etc.).`,
         capabilities: ['store-media', 'stream-media'],
         requiredEnv: ['DATA_DIR'],
         notes: [],
