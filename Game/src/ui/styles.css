@@ -436,3 +436,4 @@ input[type='color'] { width: 34px; height: 34px; border: 1px solid var(--line-st
   .indbtn.r { right: calc(50% - 120px); }
   .hazbtn { bottom: calc(176px + var(--safe-b)); left: calc(50% - 17px); }
 }
+.hud.incar .speedo, .hud.incar .nitrobar { opacity: 0; }

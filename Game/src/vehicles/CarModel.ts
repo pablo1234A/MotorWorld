@@ -8,6 +8,7 @@ import { ellipse, grow, poly, projectShape, projectStrip, roundRect, shapePoints
 import { CELL, cellUV, createCarMaterials, updateLivery, type CarMaterials } from './CarMaterials';
 import type { VisualConfig } from './Tuning';
 import { buildWheel, mergeParts } from './WheelBuilder';
+import { buildInterior, type Cluster } from './Interior';
 
 const m4 = new Matrix4();
 const q = new Quaternion();
@@ -20,6 +21,8 @@ export interface CarModelOptions {
   wingLevel: number;
   splitterLevel: number;
   diffuserLevel: number;
+  /** draw a live instrument cluster (the player's car) */
+  live?: boolean;
 }
 
 export interface WheelVisual {
@@ -83,6 +86,11 @@ export class CarModel {
   readonly headPos: Vector3[] = [];
   readonly tailPos: Vector3[] = [];
   steeringWheel: Mesh | null = null;
+  steeringGroup: Group | null = null;
+  gearLever: Group | null = null;
+  /** live instrument cluster (player car) */
+  cluster: Cluster | null = null;
+  private bodyGeo: BufferGeometry;
   /** geometry groups of the projected details (kept for the traffic instancer) */
   parts: { drl: BufferGeometry[]; indL: BufferGeometry[]; indR: BufferGeometry[]; rev: BufferGeometry[]; grille: BufferGeometry[]; plate: BufferGeometry[]; trim: BufferGeometry[] } | null = null;
   underglow: Mesh | null = null;
@@ -99,6 +107,7 @@ export class CarModel {
     this.root.add(this.bodyGroup);
     const { geometry, profile } = buildBodyGeometry(body, opts.quality >= 2 ? 1 : opts.quality >= 1 ? 0.5 : 0);
     this.profile = profile;
+    this.bodyGeo = geometry;
     const bodyMesh = new Mesh(geometry, [this.mats.paint, this.mats.glass, this.mats.trim]);
     bodyMesh.castShadow = true;
     bodyMesh.receiveShadow = opts.quality >= 2;
@@ -578,32 +587,12 @@ export class CarModel {
 
     // --- interior ---
     if (this.opts.interior && b.kind !== 'bus' && b.kind !== 'truck') {
-      const cz = p.zAt(b.cowlT) + 0.42;
-      const dashW = p.halfWidth(b.cowlT) * 1.7;
-      const dash = new BoxGeometry(dashW, 0.16, 0.4);
-      detail.push(place(solid(dash, CELL.interior), 0, Math.min(b.beltH, p.top(b.cowlT)) - 0.1, cz));
-      const gauge = new BoxGeometry(0.34, 0.12, 0.02);
-      detail.push(place(cellUV(gauge.toNonIndexed(), CELL.gauges, true), -b.trackF * 0.22, Math.min(b.beltH, p.top(b.cowlT)) + 0.0, cz + 0.12, -0.4));
-      for (const sx of [-1, 1]) {
-        const seat = new BoxGeometry(0.46, 0.12, 0.5);
-        detail.push(place(solid(seat, CELL.leather), sx * b.trackF * 0.22, b.clearance + 0.22, cz + 0.85));
-        const back = new BoxGeometry(0.46, 0.62, 0.12);
-        detail.push(place(solid(back, CELL.leather), sx * b.trackF * 0.22, b.clearance + 0.55, cz + 1.12, -0.18));
-      }
-      const tunnel = new BoxGeometry(0.22, 0.2, 0.9);
-      detail.push(place(solid(tunnel, CELL.interior), 0, b.clearance + 0.22, cz + 0.6));
-      // steering wheel (separate group so it can turn)
-      const sw = new Group();
-      const rimG = new TorusGeometry(0.17, 0.018, 8, 24);
-      const hub = new CylinderGeometry(0.05, 0.05, 0.04, 12).rotateX(Math.PI / 2);
-      const spokeG = new BoxGeometry(0.3, 0.025, 0.02);
-      const swGeo = mergeParts([solid(rimG, CELL.interior), solid(hub, CELL.gloss), solid(spokeG, CELL.alu)]);
-      const swMesh = new Mesh(swGeo, this.mats.detail);
-      sw.add(swMesh);
-      sw.position.set(-b.trackF * 0.22, b.beltH + 0.02, cz + 0.32);
-      sw.rotation.x = -0.35;
-      this.bodyGroup.add(sw);
-      this.steeringWheel = swMesh;
+      const inner = buildInterior(p, b, this.bodyGeo, this.mats.detail, !!this.opts.live);
+      this.bodyGroup.add(inner.group);
+      this.steeringGroup = inner.steering;
+      this.gearLever = inner.gearLever;
+      this.cluster = inner.cluster;
+      this.eye.copy(inner.eye);
     }
 
     if (detail.length) {
@@ -689,7 +678,15 @@ export class CarModel {
   }
 
   setSteeringWheel(angle: number) {
-    if (this.steeringWheel) this.steeringWheel.rotation.z = -angle * 6;
+    // ~14:1 steering ratio
+    if (this.steeringGroup) this.steeringGroup.children[0].rotation.z = -angle * 14 * 0.5;
+  }
+
+  /** Gear lever position (sequential: forward = up, back = down; neutral centred). */
+  setGearLever(gear: number, shifting: boolean) {
+    if (!this.gearLever) return;
+    const target = shifting ? 0.25 : gear < 0 ? -0.2 : gear === 0 ? 0 : 0.12;
+    this.gearLever.rotation.x += (target - this.gearLever.rotation.x) * 0.3;
   }
 
   updateVisual(v: VisualConfig) {

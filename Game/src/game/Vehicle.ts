@@ -36,6 +36,7 @@ export class Vehicle {
     private scene: Scene,
     private quality: number,
     withLights: boolean,
+    private live = withLights,
   ) {
     this.id = def.id;
     const spec = resolveSpec(def, parts, tune);
@@ -69,6 +70,7 @@ export class Vehicle {
       wingLevel: this.parts.wing ?? 0,
       splitterLevel: this.parts.splitter ?? 0,
       diffuserLevel: this.parts.diffuser ?? 0,
+      live: this.live,
     });
     const s = this.sim.spec;
     m.setPhysicsOffset(s.chassis.cgHeight, s.suspension.rideOffset, s.chassis.weightFront);
@@ -151,6 +153,7 @@ export class Vehicle {
       this.model.setWheel(i, w.mount.x, w.mount.y - w.length, w.mount.z, w.steer, w.spin);
     }
     this.model.setSteeringWheel(s.steerAngle);
+    this.model.setGearLever(s.powertrain.gear, s.powertrain.shifting);
     const braking = s.input.brake > 0.05 && s.powertrain.gear > 0 ? s.input.brake : s.powertrain.gear < 0 && s.input.throttle > 0.05 ? 0.5 : 0;
     this.headOn = night > 0.35;
     this.model.setLights(this.headOn, braking, night, s.powertrain.gear < 0);

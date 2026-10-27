@@ -3,8 +3,8 @@ import { clamp, damp, lerp } from '../core/MathUtil';
 import type { Vehicle } from '../game/Vehicle';
 import type { PhysicsWorld, GroundHit } from '../physics/PhysicsWorld';
 
-export type CamMode = 'chase' | 'far' | 'hood' | 'cockpit' | 'cinematic' | 'orbit';
-export const CAM_MODES: CamMode[] = ['chase', 'far', 'hood', 'cockpit', 'cinematic'];
+export type CamMode = 'chase' | 'far' | 'hood' | 'cockpit' | 'bumper' | 'wheel' | 'top' | 'cinematic' | 'orbit';
+export const CAM_MODES: CamMode[] = ['chase', 'far', 'cockpit', 'hood', 'bumper', 'wheel', 'top', 'cinematic'];
 
 const _v = new Vector3();
 const _f = new Vector3();
@@ -34,6 +34,11 @@ export class CameraRig {
   baseFov = 62;
   private landing = 0;
   private prevAir = 0;
+  /** free look (drag on screen) in the interior / hood views, springs back when released */
+  lookYaw = 0;
+  lookPitch = 0;
+  looking = false;
+  private headYaw = 0;
 
   constructor(public camera: PerspectiveCamera) {}
 
@@ -108,19 +113,52 @@ export class CameraRig {
       cam.position.copy(this.pos);
       cam.up.set(0, 1, 0);
       cam.lookAt(this.look);
-    } else if (this.mode === 'hood' || this.mode === 'cockpit') {
+    } else if (this.mode === 'hood' || this.mode === 'cockpit' || this.mode === 'bumper') {
       const m = v.model;
-      const local = this.mode === 'hood' ? m.hoodCam : m.eye;
-      _v.copy(local).add(m.bodyGroup.position);
-      cam.position.copy(_v).applyQuaternion(s.quaternion).add(s.position);
-      // look direction with head inertia
-      _q.copy(s.quaternion);
-      if (this.lookBack) _q.multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI));
-      cam.quaternion.slerp(_q, 1 - Math.exp(-(this.mode === 'cockpit' ? 14 : 20) * dt));
-      // lateral g head tilt
+      const b = v.def.body;
+      if (this.mode === 'bumper') _v.set(0, b.clearance + 0.32, m.profile.noseZ + 0.15);
+      else _v.copy(this.mode === 'hood' ? m.hoodCam : m.eye);
+      _v.add(m.bodyGroup.position);
+      // head moves a little with the g-forces in the cockpit
       const latA = s.accel.dot(new Vector3(1, 0, 0).applyQuaternion(s.quaternion));
+      const lonA = s.accel.dot(_f);
+      if (this.mode === 'cockpit') _v.add(new Vector3(clamp(-latA * 0.004, -0.04, 0.04), 0, clamp(lonA * 0.003, -0.04, 0.04)));
+      cam.position.copy(_v).applyQuaternion(s.quaternion).add(s.position);
+      if (!this.looking) {
+        this.lookYaw *= Math.exp(-4 * dt);
+        this.lookPitch *= Math.exp(-4 * dt);
+      }
+      // the driver looks into the corner a little
+      this.headYaw = damp(this.headYaw, this.mode === 'cockpit' ? clamp(-s.steerAngle * 0.5, -0.25, 0.25) : 0, 4, dt);
+      _q.copy(s.quaternion);
+      const yaw = (this.lookBack ? Math.PI : 0) + this.lookYaw + this.headYaw;
+      if (yaw) _q.multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw));
+      if (this.lookPitch) _q.multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), this.lookPitch));
+      if (this.mode === 'cockpit') _q.multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -0.06));
+      cam.quaternion.slerp(_q, 1 - Math.exp(-(this.mode === 'cockpit' ? 14 : 20) * dt));
       cam.rotateZ(clamp(latA * 0.004, -0.06, 0.06));
-      targetFov = (this.mode === 'cockpit' ? 66 : 64) + clamp((spd - 20) * 0.18, 0, 12);
+      targetFov = (this.mode === 'cockpit' ? 72 : this.mode === 'bumper' ? 70 : 64) + clamp((spd - 20) * 0.18, 0, 12);
+    } else if (this.mode === 'wheel' || this.mode === 'top') {
+      // wheel: low side camera by the rear wheel looking forward; top: high helicopter chase
+      const b = v.def.body;
+      if (this.mode === 'wheel') {
+        _v.set(b.width / 2 + 0.95, b.wheelRadius * 1.5, b.wheelbase / 2 + 1.25).add(v.model.bodyGroup.position);
+        cam.position.copy(_v).applyQuaternion(s.quaternion).add(s.position);
+        _target.set(b.width * 0.05, b.wheelRadius * 1.2, -b.length * 3).add(v.model.bodyGroup.position).applyQuaternion(s.quaternion).add(s.position);
+        cam.up.set(0, 1, 0);
+        cam.lookAt(_target);
+        targetFov = 62 + clamp((spd - 15) * 0.25, 0, 14);
+      } else {
+        let dy = s.heading - this.yaw;
+        while (dy > Math.PI) dy -= Math.PI * 2;
+        while (dy < -Math.PI) dy += Math.PI * 2;
+        this.yaw += dy * (1 - Math.exp(-2.5 * dt));
+        const d = 9 + Math.min(spd, 60) * 0.12;
+        cam.position.set(s.position.x + Math.sin(this.yaw) * d * 0.55, s.position.y + 16 + Math.min(spd, 60) * 0.1, s.position.z + Math.cos(this.yaw) * d * 0.55);
+        cam.up.set(0, 1, 0);
+        cam.lookAt(_target.copy(s.position).addScaledVector(_f, 6 + spd * 0.15));
+        targetFov = 55;
+      }
     } else if (this.mode === 'cinematic') {
       // trackside camera: place ahead of the car, hold until it passes far enough
       this.cineTimer -= dt;

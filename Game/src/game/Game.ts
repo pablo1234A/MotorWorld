@@ -80,6 +80,7 @@ export class Game implements GameContext, GameApi {
   garage!: GarageScene;
   composer: EffectComposer | null = null;
   mirrors: Mirrors | null = null;
+  private clusterT = 0;
   bloom: UnrealBloomPass | null = null;
   perf = new PerfMonitor();
   player!: Vehicle;
@@ -129,6 +130,32 @@ export class Game implements GameContext, GameApi {
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.shadowMap.type = PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
+    // free look: drag on the 3D view in the interior / hood / bumper cameras
+    {
+      const el = this.renderer.domElement;
+      let id = -1, lx = 0, ly = 0;
+      el.addEventListener('pointerdown', (e) => {
+        if (!['cockpit', 'hood', 'bumper'].includes(this.rig.mode) || this.inMenu) return;
+        id = e.pointerId;
+        lx = e.clientX;
+        ly = e.clientY;
+        this.rig.looking = true;
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== id) return;
+        this.rig.lookYaw = clamp(this.rig.lookYaw - (e.clientX - lx) * 0.006, -2.4, 2.4);
+        this.rig.lookPitch = clamp(this.rig.lookPitch - (e.clientY - ly) * 0.004, -0.5, 0.45);
+        lx = e.clientX;
+        ly = e.clientY;
+      });
+      const up = (e: PointerEvent) => {
+        if (e.pointerId !== id) return;
+        id = -1;
+        this.rig.looking = false;
+      };
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+    }
     this.env = new Environment(this.renderer, this.scene);
     this.env.time = this.profile.data.time ?? 9.5;
     this.env.setWeather((this.profile.data.weather as WeatherKind) || 'clear');
@@ -365,7 +392,7 @@ export class Game implements GameContext, GameApi {
     const oc = this.profile.currentCar;
     const def = getCar(oc.carId);
     const old = this.player;
-    this.player = new Vehicle(def, oc.parts, oc.visual, oc.tune, this.world, this.scene, this.quality, this.qp.carLights);
+    this.player = new Vehicle(def, oc.parts, oc.visual, oc.tune, this.world, this.scene, Math.max(1, this.quality), this.qp.carLights, true);
     const s = this.profile.settings;
     this.player.setAssists({ abs: s.abs, tcs: s.tcs, stability: s.stability, steering: s.steerAssist, autoGear: s.autoGear });
     if (old) {
@@ -492,6 +519,7 @@ export class Game implements GameContext, GameApi {
     this.rig.next();
     this.profile.settings.camera = this.rig.mode;
     this.profile.markDirty();
+    this.toast(t('camera'), t('cam_' + this.rig.mode));
   }
 
   resetCar() {
@@ -721,6 +749,14 @@ export class Game implements GameContext, GameApi {
     this.updateAudio(dt, driving);
     // hud
     if (driving || this.resultsTimer > 0) this.updateHud(dt);
+    this.hud.setCockpit(this.rig.mode === 'cockpit');
+    // live instrument cluster when it can be seen
+    this.clusterT += dt;
+    if (this.player.model.cluster && (this.rig.mode === 'cockpit' || this.showGarage) && this.clusterT > 1 / 20) {
+      this.clusterT = 0;
+      const pt = sim.powertrain;
+      this.player.model.cluster.draw(pt.rpm, sim.spec.engine.redline, Math.abs(sim.forwardSpeed) * 3.6, pt.gear, this.player.hazard ? 2 : this.player.indicator, this.player.blinkOn, this.profile.settings.autoGear ? 'AUTO' : 'MAN');
+    }
     // occlusion culling (needs the final camera matrices)
     this.camera.updateMatrixWorld();
     this.world.cull(this.camera);

@@ -183,6 +183,11 @@ export class Hud {
     document.documentElement.style.setProperty('--hud', String(s));
   }
 
+  /** In the cockpit the car's own cluster shows speed and gear: hide the HUD speedometer. */
+  setCockpit(on: boolean) {
+    this.el.classList.toggle('incar', on);
+  }
+
   update(dt: number, f: HudFrame) {
     // speed & tacho
     const v = Math.abs(f.speed) * (f.units === 'mph' ? 2.23694 : 3.6);
