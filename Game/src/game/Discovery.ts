@@ -56,13 +56,19 @@ export class Discovery {
     this.beaconMat = new ShaderMaterial({
       transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide,
       uniforms: { uTime: { value: 0 } },
-      vertexShader: `varying vec3 vCol; varying float vY; varying vec2 vUv;
-        void main(){ vCol = instanceColor; vY = position.y; vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position,1.0); }`,
-      fragmentShader: `uniform float uTime; varying vec3 vCol; varying float vY; varying vec2 vUv;
-        void main(){ float a = (1.0 - vY) * 0.55 + 0.1; a *= 0.75 + 0.25 * sin(uTime * 3.0 + vY * 12.0 - vUv.x * 6.283);
-          float edge = 1.0 - abs(vUv.x - 0.5) * 0.0; gl_FragColor = vec4(vCol * 1.6, a * edge); }`,
+      vertexShader: `varying vec3 vCol; varying float vY; varying float vF;
+        void main(){ vCol = instanceColor; vY = position.y;
+          vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+          vec3 n = normalize(normalMatrix * mat3(instanceMatrix) * normal);
+          vF = abs(dot(n, normalize(-mv.xyz)));
+          gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `uniform float uTime; varying vec3 vCol; varying float vY; varying float vF;
+        void main(){
+          float a = pow(1.0 - vY, 2.2) * 0.42 * pow(vF, 2.5);
+          a *= 0.8 + 0.2 * sin(uTime * 2.5 - vY * 18.0);
+          gl_FragColor = vec4(vCol, a); }`,
     });
-    const g = new CylinderGeometry(1, 1.4, 1, 20, 1, true).translate(0, 0.5, 0);
+    const g = new CylinderGeometry(1, 1.15, 1, 24, 1, true).translate(0, 0.5, 0);
     const n = this.starts.length + POIS.length;
     this.beacons = new InstancedMesh(g, this.beaconMat, n);
     this.beacons.instanceColor = new InstancedBufferAttribute(new Float32Array(n * 3), 3);
@@ -100,8 +106,8 @@ export class Discovery {
         this.onToast?.(t('new_event'), L(s.def.name), '+150 XP');
       }
       const vis = show && known && d < 1400;
-      const h = 60;
-      m.compose(new Vector3(s.x, s.y - 1, s.z), q, vis ? new Vector3(5.5, h, 5.5) : new Vector3(0, 0, 0));
+      const h = 38;
+      m.compose(new Vector3(s.x, s.y - 1, s.z), q, vis ? new Vector3(3.2, h, 3.2) : new Vector3(0, 0, 0));
       this.beacons.setMatrixAt(k, m);
       this.beacons.setColorAt(k, c.setHex(EVENT_COLORS[s.def.type]));
       k++;

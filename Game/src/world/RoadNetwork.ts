@@ -87,8 +87,38 @@ export class RoadNetwork {
   private readonly cell = 32;
 
   constructor(defs: RoadDef[]) {
-    defs.forEach((d, i) => this.roads.push(new Road(i, d)));
+    defs.forEach((d, i) => this.roads.push(new Road(i, { ...d, pts: d.pts.map((p) => [p[0], p[1]] as [number, number]) })));
     for (const r of this.roads) this.sample(r);
+    this.extendToJunctions();
+  }
+
+  /** Make T-junctions meet: extend road ends that stop short of another road onto its centre line. */
+  private extendToJunctions() {
+    for (const r of this.roads) {
+      if (r.loop) continue;
+      let changed = false;
+      for (const atStart of [true, false]) {
+        const i = atStart ? 0 : r.n - 1;
+        const x = r.px[i], z = r.pz[i];
+        let best: { x: number; z: number; d: number } | null = null;
+        for (const o of this.roads) {
+          if (o === r) continue;
+          const h = this.closestOnRoad(o, x, z);
+          if (h.d < 28 && h.d > 0.8 && (!best || h.d < best.d)) {
+            const pt = { x: 0, y: 0, z: 0, tx: 0, tz: 0 };
+            o.pointAt(h.s, pt);
+            best = { x: pt.x, z: pt.z, d: h.d };
+          }
+        }
+        if (best) {
+          const pts = r.def.pts;
+          if (atStart) pts.unshift([best.x, best.z]);
+          else pts.push([best.x, best.z]);
+          changed = true;
+        }
+      }
+      if (changed) this.sample(r);
+    }
   }
 
   byId(id: string) {

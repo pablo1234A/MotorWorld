@@ -122,7 +122,7 @@ export class Environment {
     const overcast = 1 - this.cloud * 0.65 - this.storm * 0.2;
     if (moonUp) {
       this.sun.color.setRGB(0.55, 0.65, 1.0);
-      this.sun.intensity = 0.32 * (1 - this.cloud * 0.8);
+      this.sun.intensity = 0.7 * (1 - this.cloud * 0.6);
     } else {
       this.sun.color.copy(sunCol);
       this.sun.intensity = 3.2 * smoothstep(-0.04, 0.2, el) * overcast + this.flash * 2;
@@ -132,12 +132,12 @@ export class Environment {
     // snap shadow camera to texel grid to avoid shimmering
     this.sun.target.updateMatrixWorld();
 
-    const skyTint = new Color().setRGB(lerp(0.05, 0.62, day), lerp(0.07, 0.74, day), lerp(0.14, 0.95, day));
+    const skyTint = new Color().setRGB(lerp(0.09, 0.62, day), lerp(0.12, 0.74, day), lerp(0.22, 0.95, day));
     const grey = (skyTint.r + skyTint.g + skyTint.b) / 3;
     skyTint.lerp(new Color(grey, grey, grey), this.cloud * 0.5);
     this.hemi.color.copy(skyTint);
     this.hemi.groundColor.setRGB(lerp(0.03, 0.32, day), lerp(0.03, 0.27, day), lerp(0.04, 0.2, day));
-    this.hemi.intensity = lerp(0.55, 1.0, day) + this.flash;
+    this.hemi.intensity = lerp(1.1, 1.0, day) + this.flash;
 
     // fog matches the horizon
     const fogCol = new Color().setRGB(lerp(0.035, 0.66, day), lerp(0.05, 0.76, day), lerp(0.1, 0.88, day));
@@ -148,7 +148,7 @@ export class Environment {
     this.fog.color.copy(fogCol);
     this.fog.density = this.fogDensity;
 
-    this.renderer.toneMappingExposure = lerp(1.25, 0.92, day) + this.flash * 0.3;
+    this.renderer.toneMappingExposure = lerp(1.7, 0.92, day) + this.flash * 0.3;
 
     // refresh image based lighting when the sky changed noticeably
     const interval = quality >= 2 ? 0.2 : 0.5;
