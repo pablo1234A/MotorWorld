@@ -54,12 +54,15 @@ export class RacerAI {
   catchup = 1;
   finished = false;
   enabled = true;
+  dbg: Record<string, number> = {};
+  private mu = 9;
 
   constructor(public sim: VehicleSim, public route: Route, public profile: DriverProfile) {
     const n = route.n;
     // the AI computes exact wheel angles: no speed-sensitive steering filter
     sim.assists = { ...sim.assists, steering: false };
     const mu = lateralG(sim.spec) * 9.81;
+    this.mu = mu;
     this.speedProfile = new Float32Array(n);
     this.line = new Float32Array(n);
     // racing line: shift towards the inside of corners (smoothed curvature)
@@ -71,11 +74,13 @@ export class RacerAI {
     }
     for (let i = 0; i < n; i++) {
       const room = Math.max(0, route.hw[i] - 1.7);
-      this.line[i] = clamp(-k[i] * 28, -1, 1) * room * 0.8;
+      this.line[i] = clamp(k[i] * 28, -1, 1) * room * 0.8;
     }
     // speed profile: v = sqrt(mu * g_eff / kappa), then backward pass for braking
     for (let i = 0; i < n; i++) {
-      const kap = Math.abs(k[i]) + 1e-4;
+      // peak curvature nearby (averaging hides the apex)
+      let kap = 1e-4;
+      for (let j = -8; j <= 8; j++) kap = Math.max(kap, Math.abs(route.curv[route.idx(i + j)]));
       this.speedProfile[i] = Math.min(95, Math.sqrt((mu * 0.9) / kap));
     }
     // crests: keep the tyres on the road (v^2 * kv < g)
@@ -157,8 +162,11 @@ export class RacerAI {
     const lz = dx * _f.x + dz * _f.z;
     const alpha = Math.atan2(lx, Math.max(0.1, lz));
     const L = s.spec.chassis.wheelbase;
-    const steerAngle = Math.atan((2 * L * Math.sin(alpha)) / look);
+    let steerAngle = Math.atan((2 * L * Math.sin(alpha)) / look);
+    // countersteer when the rear steps out
+    if (v > 5) steerAngle += clamp(s.bodySlip, -0.5, 0.5) * 0.7;
     inp.steer = clamp(steerAngle / s.spec.steering.maxAngle, -1, 1);
+    this.dbg = { alpha, look, off, lx, lz, ti };
     // ---- speed control ----
     const si = r.indexAtDist(r.d[pr.i] + clamp(v * 0.35, 4, 30));
     let vt = this.speedProfile[si] * this.profile.skill * this.catchup;
@@ -168,7 +176,21 @@ export class RacerAI {
     const gap = playerProgress - this.progress;
     this.catchup = lerp(this.catchup, clamp(1 + gap / 3000, 0.94, 1.08), dt * 0.5);
     const err = vt - v;
-    if (err > 0) {
+    // predictive braking: deceleration needed to meet every profile point in the next 140 m
+    const sk = this.profile.skill * this.catchup * (this.mistakeKind === 'late' ? 1.12 : 1);
+    let need = 0;
+    for (let k = 2; k <= 70; k += 2) {
+      const j = r.idx(pr.i + k);
+      const vj = this.speedProfile[j] * sk;
+      if (v > vj) need = Math.max(need, (v * v - vj * vj) / (2 * k * 2));
+    }
+    // downhill reduces available braking
+    const grade = (r.y[r.idx(pr.i + 5)] - r.y[pr.i]) / 10;
+    const brakeCap = this.mu * 0.72 + grade * 9.81;
+    if (need > brakeCap * 0.55) {
+      inp.throttle = 0;
+      inp.brake = clamp(need / Math.max(1, brakeCap), 0.15, 1);
+    } else if (err > 0) {
       inp.throttle = clamp(0.35 + err * 0.35, 0, 1);
       inp.brake = 0;
     } else {

@@ -371,7 +371,8 @@ export class VehicleSim {
       wh.absActive = false;
       if (this.assists.abs && tb > 0 && wh.contact && Math.abs(this.forwardSpeed) > 2.5) {
         // ABS: cap brake torque near the tire's peak capacity, release further if it starts locking
-        const cap = wh.muEff * wh.load * wh.radius;
+        // EBD: rear brakes keep a lateral grip reserve so the car stays stable under braking
+        const cap = wh.muEff * wh.load * wh.radius * (wh.front ? 0.92 : 0.62);
         if (tb > cap) {
           tb = cap;
           wh.absActive = true;
