@@ -51,7 +51,10 @@ export class UI {
     if (name) {
       const s = this.screens.get(name)!;
       s.onShow?.();
-      requestAnimationFrame(() => s.el.classList.add('on'));
+      // next frame so the CSS transition runs; skip if another screen was shown in the meantime
+      requestAnimationFrame(() => {
+        if (this.current === name) s.el.classList.add('on');
+      });
     }
   }
 

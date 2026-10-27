@@ -22,6 +22,18 @@ describe('Profile', () => {
     expect(p2.level).toBe(p.level);
     expect(p2.data.cash).toBe(p.data.cash);
   });
+  it('migrates v1 saves to portrait tilt steering, keeping progress', () => {
+    const be = new MemoryBackend();
+    const p = new Profile(be);
+    p.addCash(12345);
+    p.data.version = 1;
+    p.data.settings.controls = 'buttons';
+    p.flush();
+    const p2 = new Profile(be);
+    expect(p2.data.version).toBe(2);
+    expect(p2.settings.controls).toBe('tilt');
+    expect(p2.data.cash).toBe(p.data.cash);
+  });
   it('level curve is monotonic', () => {
     for (let l = 1; l < 50; l++) expect(xpForLevel(l + 1)).toBeGreaterThan(xpForLevel(l));
     expect(levelFromXp(0)).toBe(1);

@@ -6,7 +6,8 @@ const out = process.argv[2] || '.';
 const url = process.argv[3] || 'http://localhost:5173/';
 const w = +(process.env.W || 960), h = +(process.env.H || 540);
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: w, height: h } });
+// MOBILE=1 emulates a touch phone (touch controls visible, mobile layout)
+const page = await browser.newPage({ viewport: { width: w, height: h }, ...(process.env.MOBILE ? { hasTouch: true, isMobile: true } : {}) });
 const logs = [];
 page.on('console', (m) => { if (m.type() !== 'debug') logs.push(`[${m.type()}] ${m.text()}`); });
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}\n${e.stack}`));
@@ -21,6 +22,7 @@ await page.waitForTimeout(2500);
 await shot('02-menu');
 const steps = JSON.parse(process.env.STEPS || '[]');
 for (const s of steps) {
+  if (s.tap) { await page.touchscreen.tap(s.tap[0], s.tap[1]); }
   if (s.click) { await page.click(s.click, { timeout: 20000 }).catch(e => console.log('click fail', s.click, e.message)); }
   if (s.key) await page.keyboard.down(s.key);
   if (s.up) await page.keyboard.up(s.up);

@@ -58,7 +58,7 @@ export class DealerScreen implements Screen {
     this.info = h('div', { class: 'card scroll', style: { width: 'min(360px, 42vw)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', marginLeft: 'auto' } });
     this.tabs = h('div', { class: 'tabs' });
     const stage = h('div', { style: { flex: '1', minHeight: '0', display: 'flex' } }, this.info);
-    this.el = h('div', { class: 'panelscreen' }, panelHead(t('cars'), t('dealership'), () => this.returnTo(), this.tabs), stage, this.list);
+    this.el = h('div', { class: 'panelscreen scr-dealer' }, panelHead(t('cars'), t('dealership'), () => this.returnTo(), this.tabs), stage, this.list);
     g.garage.bindInput(this.el);
   }
 
@@ -193,7 +193,7 @@ export class GarageScreen implements Screen {
     this.cashEl = h('div', { class: 'chip' });
     const testBtn = h('button', { class: 'btn ghost small' }, t('test_drive'));
     testBtn.addEventListener('click', () => this.g.testDrive());
-    this.el = h('div', { class: 'panelscreen' },
+    this.el = h('div', { class: 'panelscreen scr-garage' },
       panelHead(t('garage'), 'MOTORWORLD TUNING', () => this.returnTo(), h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } }, this.cashEl, testBtn)),
       this.tabs,
       h('div', { class: 'pbody' }, this.statsEl, this.panel),

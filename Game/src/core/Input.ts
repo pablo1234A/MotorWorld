@@ -1,4 +1,4 @@
-import { clamp, moveTowards } from './MathUtil';
+import { clamp, lerp, moveTowards, smoothstep } from './MathUtil';
 
 export type Action = 'camera' | 'reset' | 'pause' | 'map' | 'horn' | 'lookBack' | 'shiftUp' | 'shiftDown' | 'nitro' | 'handbrake' | 'interact' | 'photo';
 
@@ -32,6 +32,8 @@ export class Input {
   sensitivity = 0.6;
   tilt = false;
   private tiltValue = 0;
+  /** true once the device has reported orientation data (phones with a gyroscope/accelerometer) */
+  tiltAvailable = false;
   lastDevice: 'keyboard' | 'gamepad' | 'touch' = 'keyboard';
   enabled = true;
 
@@ -48,11 +50,27 @@ export class Input {
     addEventListener('blur', () => this.keys.clear());
     addEventListener('deviceorientation', (e) => {
       if (e.beta === null || e.gamma === null) return;
-      // landscape: beta is left/right tilt
-      const landscape = Math.abs((screen.orientation?.angle ?? 90) % 180) === 90;
-      const v = landscape ? (e.beta ?? 0) * Math.sign((screen.orientation?.angle ?? 90) === 90 ? 1 : -1) : (e.gamma ?? 0);
-      this.tiltValue = clamp(v / 30, -1, 1);
+      this.tiltAvailable = true;
+      this.tiltValue = tiltSteer(e.beta, e.gamma, screen.orientation?.angle ?? (window as any).orientation ?? 0, this.sensitivity);
     });
+  }
+
+  /** iOS asks for permission to read the motion sensors; must be called from a user gesture. */
+  static async requestTiltPermission(): Promise<boolean> {
+    const D = (window as any).DeviceOrientationEvent;
+    if (D && typeof D.requestPermission === 'function') {
+      try {
+        return (await D.requestPermission()) === 'granted';
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Current tilt steering (-1..1), for the on-screen wheel indicator. */
+  get tiltSteer() {
+    return this.tiltValue;
   }
 
   /** Trigger an action from UI buttons. */
@@ -137,7 +155,7 @@ export class Input {
       hb = hb || t.handbrake;
       nos = nos || t.nitro;
     }
-    if (this.tilt && t.active) {
+    if (this.tilt && t.active && this.tiltAvailable && !t.left && !t.right) {
       steerT = this.tiltValue;
       analog = true;
     }
@@ -170,3 +188,28 @@ const KEYMAP: Record<string, Action> = {
   Enter: 'interact',
   F2: 'photo',
 };
+
+/**
+ * Steering-wheel tilt: the phone is turned like a wheel, clockwise (right side down) steers right.
+ * Uses the gravity direction in screen space, which is the same for any valid (beta, gamma) pair and works
+ * whether the phone is held upright, tipped back or lying flat (then rolling it right also steers right).
+ * Returns -1..1; full lock at 22..40 degrees depending on sensitivity, with a small dead zone.
+ */
+export function tiltSteer(betaDeg: number, gammaDeg: number, screenAngleDeg: number, sensitivity = 0.6): number {
+  const d = Math.PI / 180;
+  const b = betaDeg * d, g = gammaDeg * d, a = screenAngleDeg * d;
+  // world "up" in device coordinates (W3C DeviceOrientation Z-X'-Y'' Euler angles)
+  const ux = -Math.sin(g) * Math.cos(b), uy = Math.sin(b);
+  // up vector in screen coordinates (x to the right of the screen as currently displayed)
+  const sx = ux * Math.cos(a) - uy * Math.sin(a);
+  const sy = ux * Math.sin(a) + uy * Math.cos(a);
+  // turning clockwise moves "up" towards the left edge of the screen. Held up (any pitch) the wheel angle is
+  // read in the screen plane; nearly flat that rotation is unobservable, so it blends to the roll angle.
+  const wheel = Math.atan2(-sx, Math.max(sy, 0));
+  const roll = Math.asin(clamp(-sx, -1, 1));
+  const angle = lerp(roll, wheel, smoothstep(0.12, 0.4, sy)) / d;
+  const dead = 2.5;
+  const mag = Math.max(0, Math.abs(angle) - dead);
+  const full = lerp(40, 22, clamp(sensitivity, 0, 1));
+  return Math.sign(angle) * clamp(mag / (full - dead), 0, 1);
+}

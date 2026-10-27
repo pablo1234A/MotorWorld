@@ -4,7 +4,7 @@ import { LocalStorageBackend, SaveSystem, type StorageBackend } from '../save/Sa
 import { CARS, getCar, STARTER_CAR } from '../vehicles/CarCatalog';
 import { DEFAULT_TUNE, defaultVisual, partPrice, type FineTune, type PartLevels, type PartSlot, type VisualConfig } from '../vehicles/Tuning';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface OwnedCar {
   uid: string;
@@ -75,7 +75,7 @@ export interface ProfileData {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  quality: 'auto', resolution: 1, fps: 60, controls: 'buttons', sensitivity: 0.55, abs: true, tcs: true, stability: true, steerAssist: true, autoGear: true,
+  quality: 'auto', resolution: 1, fps: 60, controls: 'tilt', sensitivity: 0.55, abs: true, tcs: true, stability: true, steerAssist: true, autoGear: true,
   volMaster: 0.9, volEngine: 0.85, volSfx: 0.8, volMusic: 0.5, units: 'kmh', lang: (typeof navigator !== 'undefined' && navigator.language?.startsWith('en') ? 'en' : 'es'),
   camera: 'chase', showFps: false, vibration: true, traffic: 1, hudScale: 1,
 };
@@ -128,7 +128,10 @@ export class Profile {
   readonly isNew: boolean;
 
   constructor(backend: StorageBackend = new LocalStorageBackend()) {
-    this.save = new SaveSystem<ProfileData>(backend, 'motorworld_save', SAVE_VERSION, {});
+    this.save = new SaveSystem<ProfileData>(backend, 'motorworld_save', SAVE_VERSION, {
+      // v2: the game is played in portrait and steered by turning the phone like a wheel
+      1: (d) => ({ ...d, version: 2, settings: { ...(d.settings ?? {}), controls: 'tilt' } }),
+    });
     const loaded = this.save.load();
     this.isNew = !loaded;
     this.data = loaded ? this.sanitize(loaded) : newProfile();

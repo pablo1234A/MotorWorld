@@ -19,7 +19,7 @@ export class EventsScreen implements Screen {
   constructor(private g: GameApi) {
     this.list = h('div', { class: 'card scroll', style: { flex: '1.2', minWidth: '0' } });
     this.detail = h('div', { class: 'card scroll', style: { flex: '1', minWidth: '0', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' } });
-    this.el = h('div', { class: 'panelscreen' }, h('div', { class: 'scrim full' }), panelHead(t('events'), 'MOTORWORLD', () => this.returnTo()), h('div', { class: 'pbody' }, this.list, this.detail));
+    this.el = h('div', { class: 'panelscreen scr-events' }, h('div', { class: 'scrim full' }), panelHead(t('events'), 'MOTORWORLD', () => this.returnTo()), h('div', { class: 'pbody' }, this.list, this.detail));
   }
 
   back() {

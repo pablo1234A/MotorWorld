@@ -67,6 +67,9 @@ export class CameraRig {
     this.landing = Math.max(0, this.landing - dt * 3);
 
     let targetFov = this.baseFov;
+    // portrait screens (aspect < 1): taller vertical FOV so the road is not a narrow slit,
+    // camera a bit higher and further back so the car sits low in the frame with the road ahead visible
+    const portrait = clamp((1 - cam.aspect) / 0.5, 0, 1);
     if (this.mode === 'chase' || this.mode === 'far') {
       const far = this.mode === 'far';
       // heading follows velocity direction when moving (drift view), car heading when slow
@@ -83,8 +86,8 @@ export class CameraRig {
       while (dy > Math.PI) dy -= Math.PI * 2;
       while (dy < -Math.PI) dy += Math.PI * 2;
       this.yaw += dy * (1 - Math.exp(-(this.lookBack ? 30 : 5.5) * dt));
-      const dist = (far ? 9.5 : 6.4) + v.def.body.length * 0.35 + Math.min(spd, 70) * 0.025;
-      const height = (far ? 3.4 : 2.1) + v.def.body.roofH * 0.35;
+      const dist = (far ? 9.5 : 6.4) + v.def.body.length * 0.35 + Math.min(spd, 70) * 0.025 + portrait * 1.6;
+      const height = (far ? 3.4 : 2.1) + v.def.body.roofH * 0.35 + portrait * 1.3;
       _target.set(-Math.sin(this.yaw) * -dist, height, -Math.cos(this.yaw) * -dist).add(s.position);
       // acceleration lag: braking pushes camera forward, accel pulls back
       const longA = s.accel.dot(_f);
@@ -99,7 +102,7 @@ export class CameraRig {
       // ground clearance
       world.sampleGround(this.pos.x, this.pos.z, this.pos.y + 2, _g);
       if (this.pos.y < _g.height + 0.8) this.pos.y = _g.height + 0.8;
-      this.look.copy(s.position).add(_v.set(0, 0.9 + v.def.body.roofH * 0.2, 0)).addScaledVector(_f, this.lookBack ? -3 : 3);
+      this.look.copy(s.position).add(_v.set(0, 0.9 + v.def.body.roofH * 0.2 + portrait * 0.9, 0)).addScaledVector(_f, (this.lookBack ? -3 : 3) * (1 + portrait * 1.6));
       this.look.y -= this.landing * 0.6;
       targetFov = this.baseFov + clamp((spd - 15) * 0.32, 0, 20) + (s.powertrain.nitroActive ? 6 : 0);
       cam.position.copy(this.pos);
@@ -150,6 +153,8 @@ export class CameraRig {
       cam.position.y += Math.sin(t * 47 + 1) * amp;
       cam.position.z += Math.sin(t * 53 + 2) * amp;
     }
+    if (this.mode !== 'orbit' && this.mode !== 'cinematic') targetFov = Math.min(100, targetFov * (1 + 0.4 * portrait));
+    else if (this.mode === 'orbit') targetFov *= 1 + 0.55 * portrait;
     this.fov = damp(this.fov, targetFov, 4, dt);
     if (Math.abs(cam.fov - this.fov) > 0.01) {
       cam.fov = this.fov;

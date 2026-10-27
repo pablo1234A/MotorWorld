@@ -206,6 +206,7 @@ export class Game implements GameContext, GameApi {
     console.info(`[MotorWorld] boot ${Math.round(performance.now() - tGen)} ms`);
     this.loading.ready();
     this.loading.onStart = async () => {
+      const tiltPermission = Input.requestTiltPermission();
       try {
         await this.audio.start();
       } catch {
@@ -214,8 +215,9 @@ export class Game implements GameContext, GameApi {
       this.applyAudioSettings();
       this.setupPlayerAudio();
       this.toMenu();
+      void tiltPermission;
       try {
-        await (screen.orientation as any)?.lock?.('landscape');
+        await (screen.orientation as any)?.lock?.('portrait');
       } catch {
         /* not supported (desktop) */
       }

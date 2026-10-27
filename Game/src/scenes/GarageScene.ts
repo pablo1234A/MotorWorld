@@ -29,6 +29,7 @@ export class GarageScene {
   private env: Texture;
   /** Focus offset: shift car left when a side panel covers the right of the screen. */
   offsetX = 0;
+  private portrait = 0;
   private ring: Mesh;
 
   constructor(renderer: WebGLRenderer, private quality: number) {
@@ -146,8 +147,20 @@ export class GarageScene {
   }
 
   resize(w: number, hgt: number) {
-    this.camera.aspect = w / hgt;
-    this.camera.updateProjectionMatrix();
+    const c = this.camera;
+    c.aspect = w / hgt;
+    // portrait: the panels fill the lower half, so frame the car in the upper part of the screen
+    // (render the lower window of a taller virtual frame) with a wider lens so the whole car fits
+    this.portrait = clamp((1 - c.aspect) / 0.5, 0, 1);
+    if (this.portrait > 0) {
+      const extra = 0.5 * this.portrait;
+      c.fov = 36 + 14 * this.portrait;
+      c.setViewOffset(w, hgt * (1 + extra), 0, hgt * extra, w, hgt);
+    } else {
+      c.fov = 36;
+      c.clearViewOffset();
+    }
+    c.updateProjectionMatrix();
   }
 
   update(dt: number) {
@@ -155,8 +168,10 @@ export class GarageScene {
     this.yaw = damp(this.yaw, this.targetYaw, 6, dt);
     this.dist = damp(this.dist, this.targetDist, 5, dt);
     const c = this.camera;
-    const target = new Vector3(this.offsetX * this.dist * 0.18, 0.6, 0);
-    c.position.set(target.x + Math.sin(this.yaw) * Math.cos(this.pitch) * this.dist, 0.6 + Math.sin(this.pitch) * this.dist, Math.cos(this.yaw) * Math.cos(this.pitch) * this.dist);
+    const target = new Vector3(this.offsetX * this.dist * 0.18 * (1 - this.portrait), 0.6, 0);
+    // narrow portrait screens need the camera further back for the whole car to fit across
+    const dist = this.dist * (1 + 0.6 * this.portrait);
+    c.position.set(target.x + Math.sin(this.yaw) * Math.cos(this.pitch) * dist, 0.6 + Math.sin(this.pitch) * dist, Math.cos(this.yaw) * Math.cos(this.pitch) * dist);
     c.lookAt(target);
     (this.ring.material as MeshBasicMaterial).color.setHSL(0.99, 0.8, 0.45 + Math.sin(performance.now() * 0.002) * 0.05);
   }

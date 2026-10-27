@@ -4,7 +4,7 @@
   "description": "Open-world racing on a procedural island.",
   "start_url": "./",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "portrait",
   "background_color": "#0a0a0d",
   "theme_color": "#0a0a0d",
   "icons": [

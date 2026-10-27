@@ -1,3 +1,4 @@
+import { Input } from '../../core/Input';
 import { setLang, t } from '../../core/i18n';
 import type { GameApi } from '../../game/GameApi';
 import type { Settings } from '../../progression/Profile';
@@ -39,6 +40,8 @@ export class SettingsScreen implements Screen {
     for (const [v, lbl] of opts) {
       const b = h('button', { class: 'opt' + (this.g.profile.settings[k] === v ? ' on' : '') }, lbl);
       b.addEventListener('click', () => {
+        // iOS only grants the motion sensors from inside a tap
+        if (k === 'controls' && v === 'tilt') void Input.requestTiltPermission();
         this.set(k, v, reload);
         this.render();
       });

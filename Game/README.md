@@ -34,10 +34,12 @@ Ese archivo se abre con doble clic o se sube a cualquier hosting estático; no n
 
 ## Controles
 
+En el móvil el juego se juega **en vertical**. Para girar, gira el móvil como si fuera un volante: hacia la derecha y el coche gira a la derecha. Funciona igual sostenido de pie, inclinado o casi plano. Un pequeño volante entre los pedales muestra cuánto estás girando. Si el dispositivo no tiene sensor de movimiento, aparecen automáticamente las flechas en pantalla.
+
 | Acción | Teclado | Mando | Táctil |
 |---|---|---|---|
 | Acelerar / frenar | W / S, ↑ / ↓ | RT / LT | pedales GAS / BRK |
-| Girar | A / D, ← / → | stick izq. | flechas, deslizador o inclinación (se elige en Ajustes) |
+| Girar | A / D, ← / → | stick izq. | **girar el móvil como un volante** (por defecto); flechas o deslizador en Ajustes |
 | Freno de mano | Espacio | A | E-BRAKE |
 | Nitro | Shift / N | B | NITRO |
 | Cambio manual ▲ / ▼ | E / Q | RB / LB | botones + / − (con el cambio manual activo) |

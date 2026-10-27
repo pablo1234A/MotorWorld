@@ -176,6 +176,7 @@ export class Hud {
     this.nitroEl.style.height = `${f.nitro * 100}%`;
     (this.nitroEl.parentElement as HTMLElement).classList.toggle('hidden', !f.nitroFitted);
     this.touch.setNitro(f.nitroFitted, f.nitro);
+    this.touch.update();
     // info
     if (this.zoneEl.textContent !== f.zone) this.zoneEl.textContent = f.zone;
     this.clockEl.textContent = f.clock;
