@@ -21,6 +21,7 @@ import { ApprovalService } from './approvals/approvalService.js';
 import { FindingService } from './store/findingService.js';
 import { CampaignService } from './campaigns/campaignService.js';
 import { ReportService } from './reports/reportService.js';
+import { DeliveryService } from './deliveries/deliveryService.js';
 import { AnthropicProvider, LlmGateway, type LlmProvider } from './llm/provider.js';
 import { IntegrationRegistry } from './integrations/registry.js';
 
@@ -48,6 +49,7 @@ export class Company {
   readonly findings: FindingService;
   readonly campaigns: CampaignService;
   readonly reports: ReportService;
+  readonly deliveries: DeliveryService;
   readonly llm: LlmGateway;
   readonly integrations: IntegrationRegistry;
   private activityListeners = new Set<(e: ActivityEntry) => void>();
@@ -76,6 +78,7 @@ export class Company {
     this.campaigns = new CampaignService(this.db, this.events);
     this.llm = new LlmGateway(opts.llmProvider ?? new AnthropicProvider(cfg.anthropicApiKey, cfg.llmModel), this.db, () => this.settings.get().maxLlmCallsPerDay);
     this.reports = new ReportService(this.db, this.events, this.llm);
+    this.deliveries = new DeliveryService(this.db, this.videos, this.products, this.campaigns);
     this.integrations = new IntegrationRegistry(cfg, this.llm);
     this.workflows = new WorkflowEngine(this.db, this);
     this.chat = new ChatService(this.db, this);

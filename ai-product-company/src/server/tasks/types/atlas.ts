@@ -226,7 +226,7 @@ ${feedbackBlock(ctx)}`;
       wins,
       problems,
       nextSteps,
-      messageToOwner: `BLUF: ${wins.length ? wins.slice(0, 3).join('; ') : 'sin entregas todavía'}.${problems.length ? ` Problemas: ${problems.join('; ')}.` : ''}${pending ? ` Necesito tu decisión en ${pending} aprobación(es).` : ''}`,
+      messageToOwner: `BLUF: ${wins.length ? wins.slice(0, 3).map((w) => w.replace(/\.+$/, '')).join('; ') : 'sin entregas todavía'}.${problems.length ? ` Problemas: ${problems.join('; ')}.` : ''}${pending ? ` Necesito tu decisión en ${pending} aprobación(es).` : ''}`,
     };
   },
   async apply(ctx, out) {

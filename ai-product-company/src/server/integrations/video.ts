@@ -60,7 +60,7 @@ export class LocalAnimaticAdapter implements VideoGenerationAdapter {
       base = '[bg]';
     }
     const label = drawText({ dir: work, name: 'label', text: `ANIMATIC · SHOT ${req.shot.index}/${req.totalShots} · ${req.shot.section.toUpperCase()}`, font, size: 18, x: '(w-text_w)/2', y: '64', color: 'white@0.85', box: 'black@0.35' });
-    const direction = drawText({ dir: work, name: 'dir', text: wrapText(`${req.shot.shotType} · ${req.shot.camera} — ${req.shot.action}`, 34, 4), font, size: 22, x: '(w-text_w)/2', y: 'h-text_h-150', color: 'white@0.9', box: 'black@0.45' });
+    const direction = drawText({ dir: work, name: 'dir', text: wrapText(`${req.shot.shotType} · ${req.shot.camera} — ${req.shot.action}`, 40, 3), font, size: 18, x: '(w-text_w)/2', y: 'h-text_h-34', color: 'white@0.85', box: 'black@0.45' });
     filters.push(`${base}${label},${direction},fps=${fps},format=yuv420p[v]`);
 
     await this.ff.run([...inputs, '-filter_complex', filters.join(';'), '-map', '[v]', '-t', String(d), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-r', String(fps), out]);
@@ -136,12 +136,12 @@ export class LocalRenderAdapter implements RenderAdapter {
             : `scale=${w}:${h}`;
       const chain = [zoom];
       if (i === 0 && req.edl.hookText) {
-        chain.push(drawText({ dir: work, name: `hook${i}`, text: wrapText(req.edl.hookText, 18, 3), font, size: 50, x: '(w-text_w)/2', y: 'h*0.18', color: 'white', box: `${req.palette.accent}@0.92`, lineSpacing: 10 }));
+        chain.push(drawText({ dir: work, name: `hook${i}`, text: wrapText(req.edl.hookText, 20, 4), font, size: 44, x: '(w-text_w)/2', y: 'h*0.18', color: 'white', box: `${req.palette.accent}@0.92`, lineSpacing: 10 }));
       } else if (seg.overlayText) {
         chain.push(drawText({ dir: work, name: `ovl${i}`, text: wrapText(seg.overlayText, 22, 2), font, size: 36, x: '(w-text_w)/2', y: 'h*0.16', color: 'white', box: 'black@0.55' }));
       }
       if (seg.caption) {
-        chain.push(drawText({ dir: work, name: `cap${i}`, text: wrapText(seg.caption, 26, 2), font, size: 30, x: '(w-text_w)/2', y: 'h*0.70', color: 'white', box: 'black@0.62' }));
+        chain.push(drawText({ dir: work, name: `cap${i}`, text: wrapText(seg.caption, 26, 2), font, size: 30, x: '(w-text_w)/2', y: 'h*0.64', color: 'white', box: 'black@0.62' }));
       }
       if (req.edl.watermark) {
         chain.push(drawText({ dir: work, name: `wm${i}`, text: req.edl.watermark.toUpperCase(), font, size: 16, x: '28', y: '30', color: 'white@0.6' }));

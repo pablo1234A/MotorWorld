@@ -52,31 +52,7 @@ function safe<T>(fn: () => T): T | null {
   }
 }
 
-function deliveryRows(c: Company) {
-  return c.db
-    .all('SELECT d.*, v.hook, v.status AS video_status, v.poster_asset, v.final_asset, v.raw_asset, v.revisions, v.workflow_run_id FROM deliveries d JOIN videos v ON v.id = d.video_id ORDER BY d.created_at DESC')
-    .map((r) => ({
-      id: String(r.id),
-      videoId: String(r.video_id),
-      productId: String(r.product_id),
-      productName: c.products.find(String(r.product_id))?.name ?? '—',
-      campaignId: (r.campaign_id as string) ?? null,
-      campaignName: c.campaigns.getCampaign(r.campaign_id as string)?.name ?? null,
-      title: String(r.title),
-      status: String(r.status),
-      videoStatus: String(r.video_status),
-      score: r.score == null ? null : Number(r.score),
-      hook: (r.hook as string) ?? null,
-      createdBy: String(r.created_by),
-      posterAsset: (r.poster_asset as string) ?? null,
-      finalAsset: (r.final_asset as string) ?? null,
-      rawAsset: (r.raw_asset as string) ?? null,
-      revisions: Number(r.revisions),
-      workflowRunId: String(r.workflow_run_id),
-      createdAt: String(r.created_at),
-      updatedAt: String(r.updated_at),
-    }));
-}
+const deliveryRows = (c: Company) => c.deliveries.list();
 
 export function registerRoutes(app: FastifyInstance, c: Company) {
   /* ───────────── CONTROL CENTER ───────────── */
@@ -251,13 +227,10 @@ export function registerRoutes(app: FastifyInstance, c: Company) {
   app.get('/api/deliveries', async () => deliveryRows(c));
   app.get('/api/deliveries/:videoId', async (req) => {
     const id = (req.params as { videoId: string }).videoId;
-    const video = c.videos.get(id);
-    const row = deliveryRows(c).find((d) => d.videoId === id);
+    const detail = c.deliveries.detail(id);
+    const video = detail.video;
     return {
-      delivery: row,
-      video,
-      history: JSON.parse(String(c.db.get<{ history: string }>('SELECT history FROM deliveries WHERE video_id = ?', id)?.history ?? '[]')),
-      versions: c.videos.versions(id),
+      ...detail,
       memory: c.memory.list({ scope: 'video', scopeId: id }),
       tasks: c.tasks.list({ workflowRunId: video.workflowRunId, limit: 100 }),
     };
