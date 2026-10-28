@@ -43,6 +43,8 @@ export const routes: RouteObject[] = [
           { path: '/aceptar-invitacion', lazy: lazyPage(() => import('./pages/auth/AcceptInvitationPage'), 'AcceptInvitationPage') },
         ],
       },
+      // Baja de los emails de seguimiento: la abre el cliente de la empresa, sin sesión.
+      { path: '/baja', lazy: lazyPage(() => import('./pages/UnsubscribePage'), 'UnsubscribePage') },
       {
         element: <RequireAuth />,
         children: [
@@ -63,6 +65,7 @@ export const routes: RouteObject[] = [
                 children: [
                   { index: true, lazy: lazyPage(() => import('./pages/settings/SettingsPages'), 'CompanySettingsPage') },
                   { path: 'seguimiento', lazy: lazyPage(() => import('./pages/settings/SettingsPages'), 'FollowUpRulesPage') },
+                  { path: 'automatico', lazy: lazyPage(() => import('./pages/settings/AutomationPage'), 'AutomationPage') },
                   { path: 'equipo', lazy: lazyPage(() => import('./pages/settings/SettingsPages'), 'TeamPage') },
                   { path: 'plan', lazy: lazyPage(() => import('./pages/settings/SettingsPages'), 'PlanPage') },
                   { path: 'perfil', lazy: lazyPage(() => import('./pages/settings/SettingsPages'), 'ProfilePage') },

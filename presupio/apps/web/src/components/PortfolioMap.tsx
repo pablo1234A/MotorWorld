@@ -17,10 +17,9 @@ export interface BandRules {
  *  - toca seguimiento: dentro de la secuencia configurada;
  *  - fuera de secuencia: la secuencia configurada ya habría terminado.
  */
-export function bandRules(settings: Pick<CompanySettings, 'firstFollowUpAfterDays' | 'followUpIntervalDays' | 'maxFollowUps'>): BandRules {
-  const dueFrom = settings.firstFollowUpAfterDays;
-  const steps = Math.max(settings.maxFollowUps, 1);
-  return { dueFrom, coldFrom: dueFrom + settings.followUpIntervalDays * steps };
+export function bandRules(settings: Pick<CompanySettings, 'followUpScheduleDays'>): BandRules {
+  const days = settings.followUpScheduleDays.length ? settings.followUpScheduleDays : [3];
+  return { dueFrom: days[0]!, coldFrom: days[days.length - 1]! + 1 };
 }
 
 export function bandOf(days: number, rules: BandRules): Band {

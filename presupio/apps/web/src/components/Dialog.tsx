@@ -14,6 +14,10 @@ interface DialogProps {
   submitVariant?: 'primary' | 'danger';
   submitting?: boolean;
   cancelLabel?: string;
+  /** Ancho: 'lg' para editores y vistas previas. */
+  size?: 'md' | 'lg';
+  /** Acciones secundarias, a la izquierda del pie. */
+  footerExtra?: ReactNode;
 }
 
 /**
@@ -31,6 +35,8 @@ export function Dialog({
   submitVariant = 'primary',
   submitting = false,
   cancelLabel = 'Cancelar',
+  size = 'md',
+  footerExtra,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -54,6 +60,7 @@ export function Dialog({
       </div>
       {children && <div className="dialog__body">{children}</div>}
       <div className="dialog__footer">
+        {footerExtra && <div className="dialog__footer-extra">{footerExtra}</div>}
         <Button variant="ghost" onClick={onClose} disabled={submitting}>
           {cancelLabel}
         </Button>
@@ -69,7 +76,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={size === 'lg' ? 'dialog dialog--lg' : 'dialog'}
       aria-labelledby={titleId}
       aria-describedby={description ? descId : undefined}
       onCancel={(e) => {

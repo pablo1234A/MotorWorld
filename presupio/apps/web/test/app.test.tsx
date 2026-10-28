@@ -12,15 +12,17 @@ const loggedInBasics = (me = fakeMe()) => ({
   'GET /company/settings': () => ({
     body: {
       settings: {
-        firstFollowUpAfterDays: 3,
-        followUpIntervalDays: 4,
-        maxFollowUps: 3,
+        followUpScheduleDays: [3, 7, 14],
         allowedWeekdays: [1, 2, 3, 4, 5],
         contactWindowStart: '09:00',
         contactWindowEnd: '19:00',
         defaultChannel: 'email',
         requireManualApproval: true,
         legalBasisNote: null,
+        senderName: null,
+        replyToEmail: null,
+        automationEnabled: false,
+        automationEnabledAt: null,
         updatedAt: '2026-10-28T10:00:00Z',
       },
     },

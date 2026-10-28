@@ -73,6 +73,13 @@ describe('plantillas', () => {
     expect(r.body).toBe('Hola, Ana Bcc: otro@ejemplo.test:\n\nRef. P-1');
   });
 
+  it('no repite la firma cuando el remitente y la empresa coinciden', () => {
+    const r = renderBody(DEFAULT_TEMPLATES[1]!, { ...SAMPLE_VALUES, empresa: 'Reformas Prueba', remitente: 'Reformas Prueba' });
+    expect(r.body.endsWith('Un saludo,\nReformas Prueba')).toBe(true);
+    const named = renderBody(DEFAULT_TEMPLATES[1]!, { ...SAMPLE_VALUES, empresa: 'Reformas Prueba', remitente: 'Laura' });
+    expect(named.body.endsWith('Un saludo,\nLaura\nReformas Prueba')).toBe(true);
+  });
+
   it('el HTML escapa el contenido y el pie legal identifica a la empresa con enlace de baja', () => {
     const m = composeMessage('Asunto', 'Hola, <script>alert(1)</script> & cía', sender, 'https://app.ejemplo.test/baja?token=xyz');
     expect(m.html).not.toContain('<script>');

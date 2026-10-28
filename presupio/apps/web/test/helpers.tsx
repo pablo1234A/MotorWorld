@@ -90,6 +90,6 @@ export const emptySummary = {
     recoveredSales: 0,
     recoveredAmountCents: 0,
     recoveredAmountSource: 'declared_by_company',
-    followUps: { pending: 0, overdue: 0, completed: 0 },
+    followUps: { pending: 0, overdue: 0, completed: 0, failed: 0, awaitingApproval: 0 },
   },
 };

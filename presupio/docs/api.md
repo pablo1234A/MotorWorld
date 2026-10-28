@@ -81,8 +81,8 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 | PATCH | `/me` | Sesión | `fullName` |
 | GET | `/company` | Lectura | Datos de la empresa |
 | PATCH | `/company` | owner/admin | Opcionales: `name, legalName, taxId, phone, website, timezone` |
-| GET | `/company/settings` | Lectura | Reglas base de seguimiento |
-| PATCH | `/company/settings` | owner/admin | Opcionales: `firstFollowUpAfterDays, followUpIntervalDays, maxFollowUps, allowedWeekdays[1-7], contactWindowStart "HH:MM", contactWindowEnd, defaultChannel, requireManualApproval, legalBasisNote` |
+| GET | `/company/settings` | Lectura | Reglas de seguimiento y datos de envío (incluye `automationEnabled`, `automationEnabledAt`) |
+| PATCH | `/company/settings` | owner/admin | Opcionales: `followUpScheduleDays` (1–6 días entre 1 y 180, de menor a mayor; por defecto `[3, 7, 14]`), `allowedWeekdays[1-7]`, `contactWindowStart "HH:MM"`, `contactWindowEnd`, `defaultChannel`, `requireManualApproval`, `legalBasisNote`, `senderName`, `replyToEmail`. Con el envío automático activo no se puede vaciar `replyToEmail` ni `legalBasisNote` |
 | GET | `/company/subscription` | Lectura | `{ subscription: { plan, status, trialEndsAt, hasActiveAccess, planDetails, paymentsEnabled }, plans[] }`. Solo lectura |
 
 ## Miembros — `/members`
@@ -110,10 +110,10 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
 | GET | `/quotes` | Lectura | Filtros: `status=sent,responded`, `q`, `ownerUserId`, `contactId`, `archived=false\|true\|all` |
-| GET | `/quotes/summary` | Lectura | Recuento por estado, `responded`, `reactivated`, `recoveredSales`, `recoveredAmountCents` (declarado por la empresa) y seguimientos `pending`, `overdue` y `completed` (contactos realizados; las tareas internas no cuentan) |
+| GET | `/quotes/summary` | Lectura | Recuento por estado, `responded`, `reactivated`, `recoveredSales`, `recoveredAmountCents` (declarado por la empresa) y seguimientos `pending`, `overdue`, `completed` (contactos realizados y emails automáticos enviados; las tareas internas no cuentan), `failed` y `awaitingApproval` |
 | POST | `/quotes` | Escritura | Ver los campos debajo |
 | GET | `/quotes/:id` | Lectura | `{ quote, pendingFollowUps, allowedTransitions[] }` |
-| PATCH | `/quotes/:id` | Escritura | `title, contactId, reference, description, amountCents, currency, sentAt, validUntil, ownerUserId`. **No** acepta el estado |
+| PATCH | `/quotes/:id` | Escritura | `title, contactId, reference, description, amountCents, currency, sentAt, validUntil, ownerUserId, autoFollowUpEnabled` (`false` cancela sus emails automáticos pendientes). **No** acepta el estado |
 | POST | `/quotes/:id/status` | Escritura | Ver los campos debajo |
 | POST | `/quotes/:id/archive` | Escritura | Archiva y cancela los seguimientos pendientes |
 | POST | `/quotes/:id/unarchive` | Escritura | Desarchiva |
@@ -144,11 +144,39 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
-| GET | `/follow-ups` | Lectura | Filtros: `status` (por defecto `pending`), `assignedTo=me\|<uuid>`, `quoteId`, `dueBefore` |
+| GET | `/follow-ups` | Lectura | Filtros: `status` (`pending` por defecto, `sending`, `sent`, `completed`, `failed`, `cancelled`, `all`), `approval=awaiting` (emails automáticos sin aprobar), `assignedTo=me\|<uuid>`, `quoteId`, `dueBefore` |
 | GET | `/follow-ups/:id` | Lectura | Detalle |
-| PATCH | `/follow-ups/:id` | Escritura | Solo si está pendiente: `title, notes, dueAt, assignedUserId` |
-| POST | `/follow-ups/:id/complete` | Escritura | `outcome?, notes?, completedAt?` |
-| POST | `/follow-ups/:id/cancel` | Escritura | `reason?` |
+| PATCH | `/follow-ups/:id` | Escritura | Solo manuales y pendientes: `title, notes, dueAt, assignedUserId` |
+| POST | `/follow-ups/:id/complete` | Escritura | Solo manuales: `outcome?, notes?, completedAt?` |
+| POST | `/follow-ups/:id/cancel` | Escritura | `reason?` (también emails automáticos pendientes) |
+| GET | `/follow-ups/:id/preview` | Lectura | Email automático: `{ preview: { to, replyTo, subject, body, text, approved, templateStep, templateVersion } }`. Lo aprobado o lo que se enviaría ahora |
+| POST | `/follow-ups/:id/approve` | Escritura | Aprueba un email automático pendiente y guarda la instantánea que se enviará |
+| GET | `/follow-ups/:id/deliveries` | Lectura | Intentos de envío: `attemptNumber, status (sending\|sent\|delivered\|failed\|unknown), provider, providerMessageId, recipient, subject, bodyText, contentPurgedAt, templateStep, templateVersion, errorCode, errorDetail, createdAt, sentAt, deliveredAt, failedAt` |
+
+Los seguimientos incluyen además `sequenceStep`, `approvedAt`, `approvedByUserId`, `attemptCount`, `sentAt` y `failureReason` (solo con valor en los emails automáticos, `source: "rule"`).
+
+## Envío automático — `/automation`
+
+Funcionamiento completo en [`automatizacion.md`](automatizacion.md).
+
+| Método | Ruta | Permiso | Descripción |
+|---|---|---|---|
+| GET | `/automation` | Lectura | `{ automation: { enabled, enabledAt, enabledBy, requireApproval, schedule, requirements }, provider: { name, configured, tracksDelivery, fromDomain }, counts: { scheduled, awaitingApproval, sending, sent30d, delivered30d, failed }, worker: { healthy, lastRuns[] } }` |
+| POST | `/automation/enable` | owner/admin | `confirmLegalBasis: true`. 409 sin proveedor configurado; 400 con `details` si falta `replyToEmail`, `legalBasisNote` o un plan activo |
+| POST | `/automation/disable` | owner/admin | `{ enabled: false, cancelledFollowUps }` |
+| GET | `/automation/templates` | Lectura | `{ items: [{ step, offsetDays, version, subject, body, updatedAt }], variables }` |
+| GET | `/automation/templates/:step/versions` | Lectura | Historial de versiones del paso |
+| PUT | `/automation/templates/:step` | owner/admin | `subject, body` → versión nueva (400 si hay variables desconocidas o llaves mal cerradas) |
+| POST | `/automation/templates/preview` | Lectura | `subject, body, quoteId?` → `{ preview: { subject, text, html, sample } }`. No envía nada |
+| POST | `/automation/test-email` | owner/admin | Envía el primer email con datos de ejemplo **solo a quien lo pide**. Máx. 5 por hora. `{ delivery: "sent", to, providerMessageId }` o `{ delivery: "failed", error }` |
+
+## Públicas: baja y webhooks
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/public/unsubscribe/preview` | `token` → `{ companyName, alreadyUnsubscribed }` (página `APP_WEB_URL/baja?token=…`) |
+| POST | `/public/unsubscribe` | `token` (JSON) o `?token=` con `List-Unsubscribe=One-Click` (formulario, RFC 8058). Idempotente |
+| POST | `/webhooks/mailgun` | Eventos firmados de Mailgun. 401 con firma no válida o caducada; `{ status: "duplicate" }` si el token ya se procesó; 404 si el proveedor no es Mailgun |
 
 ## Exclusiones — `/exclusions`
 

@@ -1,9 +1,11 @@
 import type {
   ActivityEntry,
   ContactChannel,
+  DeliveryStatus,
   ExclusionReason,
   FollowUpChannel,
   FollowUpOutcome,
+  FollowUpStatus,
   QuoteStatus,
   Role,
   SubscriptionStatus,
@@ -102,18 +104,59 @@ export const WEEKDAYS: Array<{ value: number; short: string; long: string }> = [
   { value: 7, short: 'D', long: 'Domingo' },
 ];
 
+export const FOLLOW_UP_STATUS_LABEL: Record<FollowUpStatus, string> = {
+  pending: 'Pendiente',
+  sending: 'Enviándose',
+  sent: 'Enviado',
+  completed: 'Realizado',
+  failed: 'No se pudo enviar',
+  cancelled: 'Cancelado',
+};
+
+/** Estado de cada intento de envío. Solo «Entregado» lo confirma el proveedor de email. */
+export const DELIVERY_STATUS_LABEL: Record<DeliveryStatus, string> = {
+  sending: 'Enviándose',
+  sent: 'Aceptado por el proveedor',
+  delivered: 'Entregado al servidor del cliente',
+  failed: 'Fallido',
+  unknown: 'Resultado desconocido',
+};
+
 const CANCEL_REASON_LABEL: Record<string, string> = {
   quote_responded: 'el cliente respondió',
   quote_accepted: 'el presupuesto se aceptó',
   quote_rejected: 'el presupuesto se rechazó',
   quote_archived: 'el presupuesto se archivó',
+  quote_draft: 'el presupuesto volvió a borrador',
   contact_excluded: 'el contacto está en la lista de exclusión',
+  contact_without_email: 'el contacto no tiene email',
   manual: 'cancelado a mano',
+  automation_disabled: 'se desactivó el envío automático',
+  quote_auto_disabled: 'se desactivaron los emails automáticos de este presupuesto',
+  rules_changed: 'cambiaron las reglas de seguimiento',
+  quote_resent: 'cambió la fecha de envío del presupuesto',
+  approval_expired: 'nadie lo aprobó a tiempo (72 h)',
+  expired: 'no pudo enviarse a tiempo',
 };
 
 export function cancelReasonLabel(reason: string | null): string {
   if (!reason) return 'cancelado';
   return CANCEL_REASON_LABEL[reason] ?? reason;
+}
+
+/** Motivo de un envío fallido, en lenguaje claro (los códigos vienen del proveedor o del motor). */
+export function failureReasonLabel(code: string | null): string {
+  if (!code) return 'motivo no indicado';
+  if (code === 'unknown_outcome') return 'el envío se interrumpió y no se sabe si salió; no se reintenta para no duplicarlo';
+  if (code === 'bounced') return 'la dirección rechazó el correo (rebote permanente)';
+  if (code === 'provider_auth') return 'el proveedor de email rechazó las credenciales del servidor';
+  if (code === 'provider_not_configured') return 'no hay proveedor de email configurado';
+  if (code === 'rate_limited') return 'el proveedor limitó temporalmente los envíos';
+  if (code === 'network_error' || code === 'provider_exception') return 'no se pudo conectar con el proveedor de email';
+  if (code === 'recipient_rejected' || /^smtp_5/.test(code)) return 'el servidor de correo rechazó la dirección';
+  if (/^rejected_4/.test(code)) return 'el proveedor rechazó el mensaje';
+  if (/^(provider|smtp)_\d+$/.test(code)) return 'error temporal del proveedor de email';
+  return code;
 }
 
 function statusName(value: unknown): string {
@@ -151,7 +194,25 @@ export function describeActivity(entry: ActivityEntry): string {
     case 'follow_up.completed':
       return m.channel === 'task' ? 'completó una tarea' : `marcó como realizado un seguimiento (${channelName(m.channel)})`;
     case 'follow_up.cancelled':
-      return 'canceló un seguimiento';
+      return m.automatic ? `canceló un email automático: ${cancelReasonLabel(typeof m.reason === 'string' ? m.reason : null)}` : 'canceló un seguimiento';
+    case 'follow_up.scheduled':
+      return `programó el email automático ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
+    case 'follow_up.approved':
+      return `aprobó el email automático ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
+    case 'follow_up.sent':
+      return `envió el email automático ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
+    case 'follow_up.failed':
+      return `no pudo enviar un email automático (${failureReasonLabel(typeof m.reason === 'string' ? m.reason : null)})`;
+    case 'follow_up.bounced':
+      return 'recibió un rebote del email automático: la dirección no existe o lo rechaza';
+    case 'automation.enabled':
+      return 'activó el envío automático de emails';
+    case 'automation.disabled':
+      return 'desactivó el envío automático de emails';
+    case 'automation.test_email':
+      return 'envió un email de prueba';
+    case 'template.updated':
+      return `editó la plantilla del email ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
     case 'follow_up.updated':
       return 'modificó un seguimiento';
     case 'contact.created':
@@ -159,6 +220,8 @@ export function describeActivity(entry: ActivityEntry): string {
     case 'contact.updated':
       return 'actualizó un contacto';
     case 'exclusion.created':
+      if (m.via === 'unsubscribe_link') return 'registró la baja del cliente desde el enlace del email';
+      if (m.via === 'provider_webhook') return 'registró una exclusión comunicada por el proveedor de email';
       return 'registró una exclusión de contacto';
     case 'exclusion.lifted':
       return 'levantó una exclusión de contacto';

@@ -59,7 +59,7 @@ export async function publicRoutes(app: FastifyInstance) {
         .selectFrom('messageDeliveries as d')
         .innerJoin('contacts as c', (j) => j.onRef('c.id', '=', 'd.contactId').onRef('c.companyId', '=', 'd.companyId'))
         .innerJoin('companies as co', 'co.id', 'd.companyId')
-        .select(['co.name as companyName', 'c.id as contactId', 'c.email'])
+        .select(['co.name as companyName', 'c.id as contactId', 'c.email', 'd.quoteId'])
         .where('d.id', '=', found.deliveryId)
         .executeTakeFirstOrThrow();
       // Idempotente: repetir la baja no crea exclusiones duplicadas.
@@ -73,6 +73,7 @@ export async function publicRoutes(app: FastifyInstance) {
             reason: 'opt_out_request',
             notes: body['List-Unsubscribe'] === 'One-Click' ? 'Baja de un clic desde el cliente de correo' : 'Baja desde el enlace del email',
             via: 'unsubscribe_link',
+            quoteId: d.quoteId,
           },
         );
       }

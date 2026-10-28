@@ -17,7 +17,7 @@ PostgreSQL
    └─ rol de aplicación (presupio_app): solo opera con datos y está sujeto a RLS
 ```
 
-Es un monolito modular. Para un MVP con 3–5 empresas piloto es lo más fiable y barato de operar. Los módulos están separados para poder extraer piezas más adelante; en la fase 3, por ejemplo, el motor de seguimiento como proceso trabajador.
+Es un monolito modular. Para un MVP con 3–5 empresas piloto es lo más fiable y barato de operar. Los módulos están separados para poder extraer piezas: desde la fase 3, el motor de seguimiento se ejecuta como un proceso trabajador aparte (`src/worker.ts`), con todo su estado en PostgreSQL. Ver [`automatizacion.md`](automatizacion.md).
 
 ## Multiempresa: tres barreras independientes
 

@@ -320,6 +320,9 @@ describe('motor de seguimiento', () => {
 
     const steps = await ruleSteps(acc, q.id);
     expect(steps[1]).toMatchObject({ status: 'cancelled', cancelReason: 'contact_excluded' });
+    // La baja queda en el historial del presupuesto que originó el email.
+    const history = (await acc.client.get(`/quotes/${q.id}/activity`)).body.items;
+    expect(history.find((a: any) => a.action === 'exclusion.created')?.metadata).toMatchObject({ via: 'unsubscribe_link', reason: 'opt_out_request' });
 
     // La página de baja ve que ya está dada de baja; repetir es idempotente.
     const token = msg!.text.match(/baja\?token=([A-Za-z0-9_-]{43})/)![1];

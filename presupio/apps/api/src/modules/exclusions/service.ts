@@ -27,6 +27,8 @@ export interface ExclusionInput {
   notes?: string | null | undefined;
   /** Origen para el historial: pantalla, enlace de baja, webhook del proveedor. */
   via?: 'app' | 'unsubscribe_link' | 'provider_webhook';
+  /** Presupuesto del email que originó la baja (para que aparezca en su historial). */
+  quoteId?: string | undefined;
 }
 
 /**
@@ -87,6 +89,7 @@ export async function registerExclusion(trx: Trx, ctx: { companyId: string; user
     action: 'exclusion.created',
     entityType: 'exclusion',
     entityId: exclusion.id,
+    quoteId: input.quoteId ?? null,
     metadata: { reason: input.reason, channel: input.channel, cancelledFollowUps: cancelled.length, via: input.via ?? 'app' },
   });
   return { exclusion, cancelledFollowUps: cancelled.length };

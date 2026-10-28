@@ -92,7 +92,7 @@ export async function webhookRoutes(app: FastifyInstance) {
             .execute();
           await logActivity(trx, ctx, { action: 'follow_up.bounced', entityType: 'follow_up', entityId: d.followUpId, quoteId: d.quoteId, metadata: { channel: 'email' } });
           if (!(await hasEmailExclusion(trx, found.companyId, contact))) {
-            await registerExclusion(trx, ctx, { contactId: contact.id, channel: 'email', reason: 'bounced', notes: 'Rebote permanente comunicado por el proveedor', via: 'provider_webhook' });
+            await registerExclusion(trx, ctx, { contactId: contact.id, channel: 'email', reason: 'bounced', notes: 'Rebote permanente comunicado por el proveedor', via: 'provider_webhook', quoteId: d.quoteId });
           }
           break;
         case 'complained':
@@ -104,6 +104,7 @@ export async function webhookRoutes(app: FastifyInstance) {
               reason: 'opt_out_request',
               notes: event.event === 'complained' ? 'El destinatario marcó el correo como spam' : 'Baja comunicada por el proveedor',
               via: 'provider_webhook',
+              quoteId: d.quoteId,
             });
           }
           break;

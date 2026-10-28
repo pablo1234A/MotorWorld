@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Copy, Lock, MailPlus, Trash2, UserMinus } from 'lucide-react';
+import { Copy, Lock, MailPlus, Plus, Trash2, UserMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { api } from '../../api/client';
@@ -18,6 +18,7 @@ import { compact, required, validateEmail, validatePassword, validatePhone } fro
 const TABS = [
   { to: '/configuracion', label: 'Empresa', end: true },
   { to: '/configuracion/seguimiento', label: 'Reglas de seguimiento' },
+  { to: '/configuracion/automatico', label: 'Envío automático' },
   { to: '/configuracion/equipo', label: 'Equipo' },
   { to: '/configuracion/plan', label: 'Plan' },
   { to: '/configuracion/perfil', label: 'Mi perfil' },
@@ -26,7 +27,7 @@ const TABS = [
 export function SettingsLayout() {
   return (
     <div className="page page--narrow">
-      <PageHeader title="Configuración" description="Datos de tu empresa, reglas de seguimiento, equipo y cuenta." />
+      <PageHeader title="Configuración" description="Datos de tu empresa, reglas de seguimiento, envío automático, equipo y cuenta." />
       <nav className="tabs" aria-label="Secciones de configuración">
         {TABS.map((t) => (
           <NavLink key={t.to} to={t.to} end={t.end} className="tab">
@@ -39,7 +40,7 @@ export function SettingsLayout() {
   );
 }
 
-function ReadOnlyNotice() {
+export function ReadOnlyNotice() {
   return (
     <Alert tone="info">
       <span className="cluster" style={{ gap: '0.4rem' }}>
@@ -167,60 +168,79 @@ export function CompanySettingsPage() {
 // Reglas de seguimiento
 // ---------------------------------------------------------------------------
 
+const MAX_STEPS = 6;
+
+/** Valida la secuencia de días (1–180, de menor a mayor, sin repetir). Devuelve el error de cada fila. */
+export function scheduleErrors(days: string[]): Record<number, string> {
+  const out: Record<number, string> = {};
+  days.forEach((v, i) => {
+    if (!/^\d+$/.test(v.trim()) || Number(v) < 1 || Number(v) > 180) out[i] = 'Entre 1 y 180 días';
+    else if (i > 0 && /^\d+$/.test(days[i - 1]!.trim()) && Number(v) <= Number(days[i - 1])) out[i] = 'Debe ser mayor que el anterior';
+  });
+  return out;
+}
+
 function RulesForm({ settings, canEdit }: { settings: CompanySettings; canEdit: boolean }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [f, setF] = useState({
-    firstFollowUpAfterDays: String(settings.firstFollowUpAfterDays),
-    followUpIntervalDays: String(settings.followUpIntervalDays),
-    maxFollowUps: String(settings.maxFollowUps),
+    scheduleDays: settings.followUpScheduleDays.map(String),
     allowedWeekdays: settings.allowedWeekdays,
     contactWindowStart: settings.contactWindowStart,
     contactWindowEnd: settings.contactWindowEnd,
     defaultChannel: settings.defaultChannel,
-    requireManualApproval: settings.requireManualApproval,
-    legalBasisNote: settings.legalBasisNote ?? '',
   });
+  const [stepErrors, setStepErrors] = useState<Record<number, string>>({});
   const { errors, setErrors, formError, setFormError, handleError, formRef } = useFormErrors();
   const mutation = useMutation({
     mutationFn: (body: object) => api<{ settings: CompanySettings }>('/company/settings', { method: 'PATCH', body }),
     onSuccess: (res) => {
       queryClient.setQueryData(keys.settings, res);
+      void queryClient.invalidateQueries({ queryKey: keys.automation });
       toast.success('Reglas de seguimiento guardadas.');
     },
     onError: (e) => handleError(e),
   });
-  const int = (v: string, min: number, max: number) => (/^\d+$/.test(v) && Number(v) >= min && Number(v) <= max ? undefined : `Entre ${min} y ${max}`);
+  const setDay = (i: number, value: string) => {
+    setF((p) => ({ ...p, scheduleDays: p.scheduleDays.map((d, j) => (j === i ? value : d)) }));
+    setStepErrors((e) => {
+      const { [i]: _removed, ...rest } = e;
+      return rest;
+    });
+  };
+  const addStep = () =>
+    setF((p) => {
+      const last = Number(p.scheduleDays[p.scheduleDays.length - 1]) || 0;
+      return { ...p, scheduleDays: [...p.scheduleDays, String(Math.min(last + 7, 180))] };
+    });
+  const removeStep = (i: number) => {
+    setF((p) => ({ ...p, scheduleDays: p.scheduleDays.filter((_, j) => j !== i) }));
+    setStepErrors({});
+  };
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    const steps = scheduleErrors(f.scheduleDays);
+    setStepErrors(steps);
     const errs = compact({
-      firstFollowUpAfterDays: int(f.firstFollowUpAfterDays, 1, 90),
-      followUpIntervalDays: int(f.followUpIntervalDays, 1, 90),
-      maxFollowUps: int(f.maxFollowUps, 0, 10),
       allowedWeekdays: f.allowedWeekdays.length ? undefined : 'Elige al menos un día',
       contactWindowEnd: f.contactWindowStart < f.contactWindowEnd ? undefined : 'Debe ser posterior a la hora de inicio',
     });
     setErrors(errs);
+    if (Object.keys(steps).length) {
+      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('.schedule [aria-invalid="true"]')?.focus());
+      return;
+    }
     if (Object.keys(errs).length) return;
     mutation.mutate({
-      firstFollowUpAfterDays: Number(f.firstFollowUpAfterDays),
-      followUpIntervalDays: Number(f.followUpIntervalDays),
-      maxFollowUps: Number(f.maxFollowUps),
+      followUpScheduleDays: f.scheduleDays.map(Number),
       allowedWeekdays: f.allowedWeekdays,
       contactWindowStart: f.contactWindowStart,
       contactWindowEnd: f.contactWindowEnd,
       defaultChannel: f.defaultChannel,
-      requireManualApproval: f.requireManualApproval,
-      legalBasisNote: f.legalBasisNote.trim(),
     });
   };
-  const num = (k: 'firstFollowUpAfterDays' | 'followUpIntervalDays' | 'maxFollowUps') => ({
-    value: f[k],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setF((p) => ({ ...p, [k]: e.target.value })),
-    inputMode: 'numeric' as const,
-    className: 'input num',
-  });
+  const serverScheduleError = Object.entries(errors).find(([k]) => k.startsWith('followUpScheduleDays'))?.[1];
 
   return (
     <form ref={formRef} className="panel" onSubmit={submit} noValidate aria-labelledby="rules-title">
@@ -228,25 +248,61 @@ function RulesForm({ settings, canEdit }: { settings: CompanySettings; canEdit: 
         <div>
           <h2 id="rules-title">Reglas de seguimiento</h2>
           <p>
-            Definen cuándo un presupuesto «toca seguimiento» en el plano de tu cartera. En esta versión Presupio no envía mensajes
-            automáticamente.
+            Marcan cuándo toca cada seguimiento en el plano de tu cartera y, si activas el{' '}
+            <NavLink to="/configuracion/automatico">envío automático</NavLink>, cuándo sale cada email.
           </p>
         </div>
       </div>
       <fieldset className="panel__body form" disabled={!canEdit} style={{ border: 0, margin: 0, minWidth: 0 }}>
         {!canEdit && <ReadOnlyNotice />}
         {formError != null && <ErrorAlert error={formError} />}
-        <div className="form-row">
-          <Field label="Primer seguimiento a los" error={errors.firstFollowUpAfterDays} hint="Días desde el envío">
-            <input {...num('firstFollowUpAfterDays')} />
-          </Field>
-          <Field label="Días entre seguimientos" error={errors.followUpIntervalDays}>
-            <input {...num('followUpIntervalDays')} />
-          </Field>
-          <Field label="Máximo de seguimientos" error={errors.maxFollowUps} hint="Por presupuesto">
-            <input {...num('maxFollowUps')} />
-          </Field>
-        </div>
+        <fieldset className="schedule">
+          <legend className="field__label">Seguimientos tras enviar el presupuesto</legend>
+          <p className="field__hint">Días naturales desde el envío, contados en la zona horaria de tu empresa. Por defecto: 3, 7 y 14.</p>
+          <ol className="schedule__list">
+            {f.scheduleDays.map((d, i) => (
+              <li key={i} className="schedule__row">
+                <label className="schedule__label" htmlFor={`step-${i}`}>
+                  Seguimiento {i + 1}
+                </label>
+                <span className="schedule__input">
+                  <span aria-hidden="true">a los</span>
+                  <input
+                    id={`step-${i}`}
+                    className="input num"
+                    inputMode="numeric"
+                    value={d}
+                    onChange={(e) => setDay(i, e.target.value)}
+                    aria-invalid={stepErrors[i] ? true : undefined}
+                    aria-describedby={stepErrors[i] ? `step-${i}-error` : undefined}
+                    aria-label={`Seguimiento ${i + 1}: días tras el envío`}
+                  />
+                  <span aria-hidden="true">días</span>
+                </span>
+                {f.scheduleDays.length > 1 && canEdit && (
+                  <Button size="sm" variant="ghost" iconOnly icon={Trash2} aria-label={`Quitar el seguimiento ${i + 1}`} onClick={() => removeStep(i)} />
+                )}
+                {stepErrors[i] && (
+                  <p className="field__error schedule__error" id={`step-${i}-error`}>
+                    {stepErrors[i]}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+          {serverScheduleError && <p className="field__error">{serverScheduleError}</p>}
+          {canEdit && f.scheduleDays.length < MAX_STEPS && (
+            <Button size="sm" icon={Plus} onClick={addStep}>
+              Añadir seguimiento
+            </Button>
+          )}
+          {settings.automationEnabled && (
+            <p className="small muted">
+              El envío automático está activo: los emails pendientes que aún no se han aprobado se reprograman con las nuevas fechas, y los pasos que
+              eliminas se cancelan.
+            </p>
+          )}
+        </fieldset>
         <fieldset className="choice-group" aria-describedby={errors.allowedWeekdays ? 'weekdays-error' : undefined}>
           <legend className="field__label" style={{ width: '100%', marginBottom: 'var(--s-1)' }}>
             Días en los que se puede contactar
@@ -289,16 +345,6 @@ function RulesForm({ settings, canEdit }: { settings: CompanySettings; canEdit: 
             </select>
           </Field>
         </div>
-        <label className="check">
-          <input type="checkbox" checked={f.requireManualApproval} onChange={(e) => setF((p) => ({ ...p, requireManualApproval: e.target.checked }))} />
-          <span>
-            <span className="strong">Revisión humana obligatoria</span>
-            <span className="cell-sub">Ningún mensaje saldrá sin que alguien de tu equipo lo apruebe. Recomendado mientras no se valide la base legal.</span>
-          </span>
-        </label>
-        <Field label="Base legal para contactar" optional hint="Documenta por qué puedes contactar a tus clientes tras enviar un presupuesto (RGPD/LSSI).">
-          <textarea className="textarea" rows={3} maxLength={2000} value={f.legalBasisNote} onChange={(e) => setF((p) => ({ ...p, legalBasisNote: e.target.value }))} />
-        </Field>
       </fieldset>
       {canEdit && (
         <div className="panel__footer">

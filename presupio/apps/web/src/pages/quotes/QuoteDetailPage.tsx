@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CalendarPlus,
   Check,
+  Eye,
   CircleSlash,
   FileQuestion,
   History,
@@ -17,7 +18,7 @@ import {
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, isApiError } from '../../api/client';
-import { useContact, useMembers, useQuote, useQuoteActivity, useQuoteFollowUps } from '../../api/queries';
+import { useAutomation, useContact, useMembers, useQuote, useQuoteActivity, useQuoteFollowUps } from '../../api/queries';
 import type { FollowUp, Quote, QuoteStatus } from '../../api/types';
 import { useSession } from '../../auth/session';
 import { Dialog } from '../../components/Dialog';
@@ -39,6 +40,7 @@ import {
 import { centsToInput, parseEuroInput } from '../../lib/money';
 import { usePageTitle } from '../../lib/usePageTitle';
 import { compact, required } from '../../lib/validation';
+import { AutomaticEmailDialog, needsApproval, ruleStatus } from './AutomaticEmail';
 import { blockedChannels, CancelFollowUpDialog, CHANNEL_ICON, CompleteFollowUpDialog, NewFollowUpDialog } from './FollowUpDialogs';
 import { useRefreshQuoteData } from './quoteMutations';
 import { StatusDialog } from './StatusDialogs';
@@ -214,46 +216,111 @@ function ArchiveDialog({ quote, onClose }: { quote: Quote; onClose: () => void }
 function FollowUpItem({
   f,
   canWrite,
+  requireApproval,
   onComplete,
   onCancel,
+  onReview,
 }: {
   f: FollowUp;
   canWrite: boolean;
+  requireApproval: boolean | undefined;
   onComplete: (f: FollowUp) => void;
   onCancel: (f: FollowUp) => void;
+  onReview: (f: FollowUp) => void;
 }) {
   const Icon = CHANNEL_ICON[f.channel];
+  const automatic = f.source === 'rule';
   const overdue = f.status === 'pending' && f.dueAt && new Date(f.dueAt).getTime() < Date.now();
+  const rule = automatic ? ruleStatus(f, requireApproval) : null;
+  const iconState = f.status === 'sent' ? 'completed' : f.status === 'failed' ? 'failed' : f.status === 'sending' ? 'pending' : f.status;
   return (
     <li className="fu">
-      <span className={`fu__icon fu__icon--${f.status}`} aria-hidden="true">
+      <span className={`fu__icon fu__icon--${iconState}`} aria-hidden="true">
         <Icon />
       </span>
       <div className="fu__main">
-        <p className="fu__title">{f.title}</p>
+        <p className="fu__title">
+          {f.title}
+          {automatic && <span className="pill pill--neutral fu__badge">Automático</span>}
+        </p>
         <p className="row__meta">
-          <span>{FOLLOW_UP_CHANNEL_LABEL[f.channel]}</span>
-          {f.status === 'pending' && (
-            <span className={overdue ? 'fu__overdue' : undefined}>
-              {f.dueAt ? `${overdue ? 'Vencido · ' : ''}${formatDateTime(f.dueAt)}` : 'Sin fecha'}
-            </span>
+          {rule ? (
+            <span className={rule.tone === 'danger' ? 'fu__overdue' : undefined}>{rule.text}</span>
+          ) : (
+            <>
+              <span>{FOLLOW_UP_CHANNEL_LABEL[f.channel]}</span>
+              {f.status === 'pending' && (
+                <span className={overdue ? 'fu__overdue' : undefined}>
+                  {f.dueAt ? `${overdue ? 'Vencido · ' : ''}${formatDateTime(f.dueAt)}` : 'Sin fecha'}
+                </span>
+              )}
+              {f.status === 'completed' && <span>Hecho el {formatDate(f.completedAt)}</span>}
+              {f.status === 'completed' && f.outcome && <span>{OUTCOME_LABEL[f.outcome]}</span>}
+              {f.status === 'cancelled' && <span>Cancelado: {cancelReasonLabel(f.cancelReason)}</span>}
+            </>
           )}
-          {f.status === 'completed' && <span>Hecho el {formatDate(f.completedAt)}</span>}
-          {f.status === 'completed' && f.outcome && <span>{OUTCOME_LABEL[f.outcome]}</span>}
-          {f.status === 'cancelled' && <span>Cancelado: {cancelReasonLabel(f.cancelReason)}</span>}
           {f.assignedUser && f.status === 'pending' && <span>{f.assignedUser.fullName}</span>}
         </p>
         {f.notes && <p className="fu__notes">{f.notes}</p>}
       </div>
-      {canWrite && f.status === 'pending' && (
-        <div className="fu__actions">
-          <Button size="sm" icon={Check} onClick={() => onComplete(f)}>
-            Hecho
-          </Button>
-          <Button size="sm" variant="ghost" iconOnly icon={X} aria-label={`Cancelar «${f.title}»`} onClick={() => onCancel(f)} />
-        </div>
+      {automatic ? (
+        f.status !== 'cancelled' && (
+          <div className="fu__actions">
+            <Button size="sm" variant={canWrite && needsApproval(f, requireApproval) ? 'primary' : 'secondary'} icon={Eye} onClick={() => onReview(f)}>
+              {canWrite && needsApproval(f, requireApproval) ? 'Revisar' : f.status === 'pending' ? 'Ver' : 'Ver envío'}
+            </Button>
+          </div>
+        )
+      ) : (
+        canWrite &&
+        f.status === 'pending' && (
+          <div className="fu__actions">
+            <Button size="sm" icon={Check} onClick={() => onComplete(f)}>
+              Hecho
+            </Button>
+            <Button size="sm" variant="ghost" iconOnly icon={X} aria-label={`Cancelar «${f.title}»`} onClick={() => onCancel(f)} />
+          </div>
+        )
       )}
     </li>
+  );
+}
+
+/** Interruptor de los emails automáticos de un presupuesto concreto. */
+function AutoFollowUpToggle({ quote, excluded }: { quote: Quote; excluded: boolean }) {
+  const refresh = useRefreshQuoteData();
+  const toast = useToast();
+  const mutation = useMutation({
+    mutationFn: (enabled: boolean) => api(`/quotes/${quote.id}`, { method: 'PATCH', body: { autoFollowUpEnabled: enabled } }),
+    onSuccess: (_res, enabled) => {
+      refresh(quote.contact.id);
+      toast.success(enabled ? 'Emails automáticos activados para este presupuesto.' : 'Emails automáticos desactivados; los pendientes se han cancelado.');
+    },
+    onError: () => toast.error('No se ha podido cambiar. Inténtalo de nuevo.'),
+  });
+  return (
+    <div className="auto-toggle">
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={quote.autoFollowUpEnabled}
+          disabled={mutation.isPending}
+          onChange={(e) => mutation.mutate(e.target.checked)}
+        />
+        <span>
+          <span className="strong">Emails automáticos de seguimiento</span>
+          <span className="cell-sub">
+            {!quote.contact.email
+              ? 'El cliente no tiene email: no se le enviará ninguno.'
+              : excluded
+                ? 'El cliente no quiere recibir emails (lista de exclusión): no se le enviará ninguno.'
+              : quote.autoFollowUpEnabled
+                ? 'Se programan según tus reglas mientras el presupuesto siga sin respuesta.'
+                : 'Desactivados para este presupuesto.'}
+          </span>
+        </span>
+      </label>
+    </div>
   );
 }
 
@@ -271,16 +338,19 @@ export function QuoteDetailPage() {
   const [followUpMode, setFollowUpMode] = useState<'logged' | 'scheduled' | null>(null);
   const [completing, setCompleting] = useState<FollowUp | null>(null);
   const [cancelling, setCancelling] = useState<FollowUp | null>(null);
+  const [reviewing, setReviewing] = useState<FollowUp | null>(null);
   const [editing, setEditing] = useState(false);
+  const automation = useAutomation();
+  const requireApproval = automation.data?.automation.requireApproval;
   const [archiving, setArchiving] = useState(false);
 
   const blocked = useMemo(() => blockedChannels(contact.data?.activeExclusions ?? []), [contact.data]);
   const groups = useMemo(() => {
     const items = followUps.data?.items ?? [];
     const pending = items
-      .filter((f) => f.status === 'pending')
+      .filter((f) => f.status === 'pending' || f.status === 'sending')
       .sort((a, b) => (a.dueAt ? Date.parse(a.dueAt) : Infinity) - (b.dueAt ? Date.parse(b.dueAt) : Infinity));
-    const done = items.filter((f) => f.status !== 'pending');
+    const done = items.filter((f) => f.status !== 'pending' && f.status !== 'sending');
     return { pending, done };
   }, [followUps.data]);
 
@@ -446,6 +516,7 @@ export function QuoteDetailPage() {
                 </div>
               )}
             </div>
+            {automation.data?.automation.enabled && q.status === 'sent' && !q.archivedAt && canWrite && <AutoFollowUpToggle quote={q} excluded={blocked.has('email')} />}
             {followUps.isPending ? (
               <SkeletonRows rows={2} />
             ) : followUps.isError ? (
@@ -469,7 +540,15 @@ export function QuoteDetailPage() {
                   ) : (
                     <ul className="fu-list">
                       {groups.pending.map((f) => (
-                        <FollowUpItem key={f.id} f={f} canWrite={session.can('follow_ups:write')} onComplete={setCompleting} onCancel={setCancelling} />
+                        <FollowUpItem
+                          key={f.id}
+                          f={f}
+                          canWrite={session.can('follow_ups:write')}
+                          requireApproval={requireApproval}
+                          onComplete={setCompleting}
+                          onCancel={setCancelling}
+                          onReview={setReviewing}
+                        />
                       ))}
                     </ul>
                   )}
@@ -483,7 +562,15 @@ export function QuoteDetailPage() {
                   ) : (
                     <ul className="fu-list">
                       {groups.done.map((f) => (
-                        <FollowUpItem key={f.id} f={f} canWrite={false} onComplete={setCompleting} onCancel={setCancelling} />
+                        <FollowUpItem
+                          key={f.id}
+                          f={f}
+                          canWrite={false}
+                          requireApproval={requireApproval}
+                          onComplete={setCompleting}
+                          onCancel={setCancelling}
+                          onReview={setReviewing}
+                        />
                       ))}
                     </ul>
                   )}
@@ -613,6 +700,17 @@ export function QuoteDetailPage() {
       {followUpMode && <NewFollowUpDialog quote={q} mode={followUpMode} blocked={blocked} onClose={() => setFollowUpMode(null)} />}
       {completing && <CompleteFollowUpDialog followUp={completing} contactId={q.contact.id} onClose={() => setCompleting(null)} />}
       {cancelling && <CancelFollowUpDialog followUp={cancelling} contactId={q.contact.id} onClose={() => setCancelling(null)} />}
+      {reviewing && (
+        <AutomaticEmailDialog
+          followUp={reviewing}
+          contactId={q.contact.id}
+          onClose={() => setReviewing(null)}
+          onCancelRequest={(f) => {
+            setReviewing(null);
+            setCancelling(f);
+          }}
+        />
+      )}
       {editing && <EditQuoteDialog quote={q} onClose={() => setEditing(false)} />}
       {archiving && <ArchiveDialog quote={q} onClose={() => setArchiving(false)} />}
     </div>

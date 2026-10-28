@@ -4,6 +4,7 @@ import './styles/base.css';
 import './styles/components.css';
 import './styles/layout.css';
 import './styles/pages.css';
+import './styles/automation.css';
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';

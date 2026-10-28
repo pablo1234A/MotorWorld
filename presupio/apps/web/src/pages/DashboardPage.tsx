@@ -21,7 +21,7 @@ function Ledger() {
     {
       label: 'Seguimientos realizados',
       value: s ? formatNumber(s.followUps.completed) : null,
-      note: 'Contactos con clientes registrados',
+      note: 'Contactos registrados y emails enviados',
       to: '/seguimientos?estado=completed',
     },
     {
@@ -248,7 +248,7 @@ function FirstSteps() {
         </li>
         <li>
           <p className="strong">Programa o registra el seguimiento</p>
-          <p className="muted">Una llamada, un email o una visita. Presupio no envía mensajes: anota los contactos que haces tú.</p>
+          <p className="muted">Una llamada, un email o una visita: anota los contactos que haces tú. Si activas el envío automático, Presupio también escribe a quien no responde.</p>
         </li>
         <li>
           <p className="strong">Anota la respuesta y el resultado</p>
@@ -299,6 +299,23 @@ export function DashboardPage() {
             ? `Te hemos enviado un email a ${session.user.email} para confirmar tu dirección.`
             : 'No hemos podido enviarte el email de confirmación porque el envío de correo aún no está configurado en este entorno. Podrás pedirlo de nuevo desde tu perfil.'}
         </Alert>
+      )}
+
+      {s && s.followUps.awaitingApproval > 0 && (
+        <Alert
+          tone="warning"
+          title={s.followUps.awaitingApproval === 1 ? '1 email automático espera tu aprobación' : `${s.followUps.awaitingApproval} emails automáticos esperan tu aprobación`}
+          action={<Link to="/seguimientos?estado=aprobar">Revisar ahora</Link>}
+        >
+          Si no se aprueban en 72 horas desde su fecha prevista, se cancelan sin enviarse.
+        </Alert>
+      )}
+      {s && s.followUps.failed > 0 && (
+        <Alert
+          tone="warning"
+          title={s.followUps.failed === 1 ? '1 email automático no se pudo enviar' : `${s.followUps.failed} emails automáticos no se pudieron enviar`}
+          action={<Link to="/seguimientos?estado=failed">Ver el motivo</Link>}
+        />
       )}
 
       <Ledger />

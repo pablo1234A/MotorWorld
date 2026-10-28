@@ -1,11 +1,13 @@
-// Tipos de las respuestas de la API (fase 1). Fuente: apps/api/src/modules/** y docs/api.md.
+// Tipos de las respuestas de la API (fases 1 y 3). Fuente: apps/api/src/modules/** y docs/api.md.
 // Las fechas llegan como cadenas ISO 8601.
 
 export type Role = 'owner' | 'admin' | 'member' | 'viewer';
 export type QuoteStatus = 'draft' | 'sent' | 'responded' | 'accepted' | 'rejected';
 export type ContactChannel = 'email' | 'phone' | 'whatsapp' | 'sms';
 export type FollowUpChannel = 'task' | 'email' | 'phone' | 'whatsapp' | 'sms' | 'in_person';
-export type FollowUpStatus = 'pending' | 'completed' | 'cancelled';
+/** sending/sent/failed solo existen en los emails automáticos (source = 'rule'). */
+export type FollowUpStatus = 'pending' | 'sending' | 'sent' | 'completed' | 'failed' | 'cancelled';
+export type DeliveryStatus = 'sending' | 'sent' | 'delivered' | 'failed' | 'unknown';
 export type FollowUpOutcome = 'no_answer' | 'left_message' | 'contacted' | 'responded' | 'wrong_contact' | 'other';
 export type ExclusionReason = 'opt_out_request' | 'rejected' | 'legal' | 'bounced' | 'manual';
 export type SubscriptionPlan = 'starter' | 'pro' | 'business';
@@ -78,15 +80,18 @@ export interface Company {
 }
 
 export interface CompanySettings {
-  firstFollowUpAfterDays: number;
-  followUpIntervalDays: number;
-  maxFollowUps: number;
+  /** Días tras el envío en que toca cada seguimiento, de menor a mayor (por defecto 3, 7 y 14). */
+  followUpScheduleDays: number[];
   allowedWeekdays: number[];
   contactWindowStart: string;
   contactWindowEnd: string;
   defaultChannel: ContactChannel;
   requireManualApproval: boolean;
   legalBasisNote: string | null;
+  senderName: string | null;
+  replyToEmail: string | null;
+  automationEnabled: boolean;
+  automationEnabledAt: string | null;
   updatedAt: string;
 }
 
@@ -185,6 +190,7 @@ export interface Quote {
   archivedAt: string | null;
   externalSource: string | null;
   externalId: string | null;
+  autoFollowUpEnabled: boolean;
   contact: { id: string; fullName: string; email: string | null; phone: string | null; organization: string | null };
   owner: { id: string; fullName: string | null } | null;
   outcome: { responded: boolean; reactivated: boolean; recoveredSale: boolean };
@@ -205,7 +211,7 @@ export interface QuoteSummary {
   recoveredSales: number;
   recoveredAmountCents: number;
   recoveredAmountSource: 'declared_by_company';
-  followUps: { pending: number; overdue: number; completed: number };
+  followUps: { pending: number; overdue: number; completed: number; failed: number; awaitingApproval: number };
 }
 
 export interface FollowUp {
@@ -223,6 +229,13 @@ export interface FollowUp {
   outcome: FollowUpOutcome | null;
   cancelledAt: string | null;
   cancelReason: string | null;
+  /** Solo emails automáticos: paso de la secuencia, aprobación e intentos. */
+  sequenceStep: number | null;
+  approvedAt: string | null;
+  approvedByUserId: string | null;
+  attemptCount: number;
+  sentAt: string | null;
+  failureReason: string | null;
   createdByUserId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -255,4 +268,80 @@ export interface ContactDetail {
     sentAt: string | null;
     archivedAt: string | null;
   }>;
+}
+
+// ---------------------------------------------------------------------------
+// Envío automático (fase 3)
+// ---------------------------------------------------------------------------
+
+export interface AutomationStatus {
+  automation: {
+    enabled: boolean;
+    enabledAt: string | null;
+    enabledBy: string | null;
+    requireApproval: boolean;
+    schedule: number[];
+    requirements: { providerConfigured: boolean; replyToEmail: boolean; legalBasisNote: boolean; activePlan: boolean };
+  };
+  provider: { name: string; configured: boolean; tracksDelivery: boolean; fromDomain: string | null };
+  counts: { scheduled: number; awaitingApproval: number; sending: number; sent30d: number; delivered30d: number; failed: number };
+  worker: { healthy: boolean; lastRuns: Array<{ job: string; status: string; startedAt: string; finishedAt: string | null }> };
+}
+
+export interface MessageTemplate {
+  step: number;
+  offsetDays: number;
+  version: number;
+  subject: string;
+  body: string;
+  updatedAt: string;
+}
+
+export interface TemplateVersion {
+  id: string;
+  version: number;
+  subject: string;
+  body: string;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+export interface TemplatePreview {
+  subject: string;
+  text: string;
+  html: string;
+  sample: boolean;
+}
+
+export interface AutomaticEmailPreview {
+  to: string | null;
+  replyTo: string | null;
+  subject: string;
+  body: string;
+  text: string;
+  approved: boolean;
+  templateStep: number;
+  templateVersion: number | null;
+}
+
+/** Un intento de envío de un email automático (trazabilidad). */
+export interface MessageDelivery {
+  id: string;
+  attemptNumber: number;
+  status: DeliveryStatus;
+  channel: 'email';
+  provider: string;
+  providerMessageId: string | null;
+  recipient: string;
+  subject: string | null;
+  bodyText: string | null;
+  contentPurgedAt: string | null;
+  templateStep: number;
+  templateVersion: number;
+  errorCode: string | null;
+  errorDetail: string | null;
+  createdAt: string;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  failedAt: string | null;
 }

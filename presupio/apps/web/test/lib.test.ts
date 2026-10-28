@@ -5,6 +5,8 @@ import { bandOf, bandRules } from '../src/components/PortfolioMap';
 import { dateInputToIso, dateInputToIsoAfter, daysSince, formatMoney, toDateInput } from '../src/lib/format';
 import {
   CONTACT_CHANNEL_LABEL,
+  DELIVERY_STATUS_LABEL,
+  FOLLOW_UP_STATUS_LABEL,
   EXCLUSION_REASON_LABEL,
   FOLLOW_UP_CHANNEL_LABEL,
   OUTCOME_LABEL,
@@ -132,14 +134,14 @@ describe('plano de la cartera', () => {
   });
 
   it('los tramos salen de las reglas de seguimiento de la empresa', () => {
-    const rules = bandRules({ firstFollowUpAfterDays: 3, followUpIntervalDays: 4, maxFollowUps: 3 });
+    const rules = bandRules({ followUpScheduleDays: [3, 7, 14] });
     expect(rules).toEqual({ dueFrom: 3, coldFrom: 15 });
     expect(bandOf(0, rules)).toBe('fresh');
     expect(bandOf(2, rules)).toBe('fresh');
     expect(bandOf(3, rules)).toBe('due');
     expect(bandOf(14, rules)).toBe('due');
     expect(bandOf(15, rules)).toBe('cold');
-    expect(bandRules({ firstFollowUpAfterDays: 5, followUpIntervalDays: 7, maxFollowUps: 0 })).toEqual({ dueFrom: 5, coldFrom: 12 });
+    expect(bandRules({ followUpScheduleDays: [5] })).toEqual({ dueFrom: 5, coldFrom: 6 });
   });
 });
 
@@ -159,6 +161,8 @@ describe('coherencia con el modelo de datos del backend', () => {
     ['FollowUpOutcome', OUTCOME_LABEL],
     ['ExclusionReason', EXCLUSION_REASON_LABEL],
     ['SubscriptionStatus', SUBSCRIPTION_STATUS_LABEL],
+    ['FollowUpStatus', FOLLOW_UP_STATUS_LABEL],
+    ['DeliveryStatus', DELIVERY_STATUS_LABEL],
   ] as const)('%s tiene exactamente una etiqueta en español por valor', (name, labels) => {
     expect(Object.keys(labels).sort()).toEqual(union(name));
   });

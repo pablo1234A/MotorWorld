@@ -87,8 +87,19 @@ export function legalFooter(sender: Sender, unsubscribeUrl: string): string {
 export function renderBody(input: TemplateInput, values: TemplateValues): { subject: string; body: string } {
   return {
     subject: fill(input.subject, values).replace(/[\r\n]+/g, ' ').trim().slice(0, 250),
-    body: fill(input.body, values).trim(),
+    body: dropRepeatedLines(fill(input.body, values)).trim(),
   };
+}
+
+/**
+ * Quita una línea idéntica a la anterior: si no hay remitente configurado, {{remitente}} y
+ * {{empresa}} dan el mismo nombre y la firma lo repetiría.
+ */
+function dropRepeatedLines(text: string): string {
+  return text
+    .split('\n')
+    .filter((line, i, lines) => i === 0 || !line.trim() || line.trim() !== lines[i - 1]!.trim())
+    .join('\n');
 }
 
 export function composeMessage(subject: string, body: string, sender: Sender, unsubscribeUrl: string): RenderedMessage {

@@ -1,0 +1,403 @@
+/*
+ * Presupio · Envío automático (fase 3): secuencia de seguimientos, revisión de emails,
+ * intentos de envío, plantillas y página pública de baja.
+ * Mismo lenguaje catastral: linderos de 1px, tintas de parcela, sin sombras salvo capas.
+ */
+
+/* Diálogo ancho y acciones secundarias del pie */
+.dialog--lg {
+  width: min(46rem, calc(100vw - 2rem));
+}
+.dialog__footer-extra {
+  margin-right: auto;
+  display: flex;
+  gap: var(--s-2);
+}
+@media (max-width: 30rem) {
+  .dialog--lg {
+    width: 100vw;
+  }
+  .dialog__footer-extra {
+    width: 100%;
+  }
+}
+
+.section-title {
+  font-size: var(--text-md);
+  font-weight: 650;
+  margin-bottom: var(--s-2);
+}
+.inline-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+}
+.plain-list {
+  display: grid;
+  gap: var(--s-2);
+  padding-left: var(--s-5);
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------------------------------
+   Secuencia de seguimientos (3, 7, 14 días): una fila por paso, como hitos
+   -------------------------------------------------------------------------- */
+.schedule {
+  display: grid;
+  gap: var(--s-3);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.schedule .field__hint {
+  margin-top: calc(var(--s-1) * -2);
+}
+.schedule__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.schedule__row {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, max-content) 1fr auto;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
+  position: relative;
+}
+.schedule__row + .schedule__row {
+  border-top: 1px solid var(--line);
+}
+/* Mojón: marca del paso en el lindero izquierdo */
+.schedule__row::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 3px;
+  background: var(--due-line);
+}
+.schedule__label {
+  font-weight: 600;
+  font-size: var(--text-md);
+}
+.schedule__input {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--ink-2);
+  font-size: var(--text-md);
+}
+.schedule__input .input {
+  width: 4.5rem;
+  text-align: right;
+}
+.schedule__error {
+  grid-column: 1 / -1;
+  margin-top: calc(var(--s-1) * -1);
+}
+@media (max-width: 30rem) {
+  .schedule__row {
+    grid-template-columns: 1fr auto;
+  }
+  .schedule__input {
+    grid-column: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Seguimientos automáticos en las listas
+   -------------------------------------------------------------------------- */
+.fu__badge {
+  margin-left: var(--s-2);
+  vertical-align: 0.1em;
+  font-weight: 600;
+}
+.fu__icon--failed {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.auto-toggle {
+  padding: var(--s-3) var(--s-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+/* --------------------------------------------------------------------------
+   Vista previa del email y texto enviado
+   -------------------------------------------------------------------------- */
+.email-preview {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.email-preview__meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-1) var(--s-4);
+  margin: 0;
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-md);
+}
+.email-preview__meta dt {
+  color: var(--ink-3);
+}
+.email-preview__meta dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.email-text {
+  margin: 0;
+  padding: var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: var(--text-md);
+  line-height: var(--leading);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 22rem;
+  overflow: auto;
+}
+
+/* Intentos de envío */
+.attempts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+.attempt {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.attempt__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.attempt__content summary,
+.history summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--text-md);
+}
+.attempt__content[open] summary,
+.history[open] summary {
+  margin-bottom: var(--s-3);
+}
+.kv--compact {
+  gap: var(--s-1) var(--s-4);
+  font-size: var(--text-md);
+}
+.ref-id {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Estado del envío automático
+   -------------------------------------------------------------------------- */
+.reqs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--s-2);
+}
+.req {
+  display: flex;
+  gap: var(--s-2);
+  align-items: flex-start;
+  font-size: var(--text-md);
+}
+.req svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  margin-top: 0.1rem;
+}
+.req--ok svg {
+  color: var(--accepted-ink);
+}
+.req--missing {
+  color: var(--ink-2);
+}
+.req--missing svg {
+  color: var(--due-ink);
+}
+.ledger--compact {
+  border-radius: var(--radius);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 40rem) {
+  .ledger--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.ledger--compact .ledger__cell {
+  padding: var(--s-3) var(--s-4);
+}
+.ledger--compact .ledger__value {
+  font-size: var(--text-2xl);
+}
+
+/* --------------------------------------------------------------------------
+   Plantillas
+   -------------------------------------------------------------------------- */
+.templates {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.template {
+  display: flex;
+  gap: var(--s-4);
+  align-items: flex-start;
+  padding: var(--s-4) var(--s-5);
+}
+.template + .template {
+  border-top: 1px solid var(--line);
+}
+.template__step {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border: 1px solid var(--due-line);
+  background: var(--due-fill);
+  color: var(--due-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.template__main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.125rem;
+}
+.template__main > .strong {
+  overflow-wrap: anywhere;
+}
+.template__excerpt {
+  margin-top: var(--s-1);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.var-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+}
+.var-chip {
+  min-height: 2rem;
+  padding: 0 var(--s-3);
+  border: 1px dashed var(--line-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.var-chip::before {
+  content: '+ ';
+  color: var(--accent);
+  font-weight: 700;
+}
+.var-chip:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.var-chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.history__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.history__list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  min-width: 0;
+}
+.history__list li > div {
+  min-width: 0;
+}
+.history__list li + li {
+  border-top: 1px solid var(--line);
+}
+
+/* --------------------------------------------------------------------------
+   Página pública de baja (la ve el cliente de la empresa)
+   -------------------------------------------------------------------------- */
+.public-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-8) var(--s-4);
+  background: var(--paper);
+}
+.public-page__card {
+  width: min(100%, 32rem);
+  display: grid;
+  gap: var(--s-5);
+  padding: var(--s-8) var(--s-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.public-page__card h1 {
+  font-size: var(--text-2xl);
+}
+.public-page__foot {
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 30rem) {
+  .public-page__card {
+    padding: var(--s-6) var(--s-4);
+  }
+}
+
+/* Variables de plantilla mostradas como datos legibles, no como código */
+.var-token {
+  padding: 0 0.25rem;
+  border-bottom: 1px dashed var(--line-input);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-weight: inherit;
+  white-space: nowrap;
+}

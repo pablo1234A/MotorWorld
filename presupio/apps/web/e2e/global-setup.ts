@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, openSync, writeFileSync } from 'node:fs';
+import { mkdirSync, openSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 import { fileURLToPath as toPath } from 'node:url';
@@ -9,8 +9,40 @@ const HERE = path.dirname(toPath(import.meta.url));
 export const E2E_DIR = path.resolve(HERE);
 export const API_LOG = path.join(E2E_DIR, '.output', 'api.log');
 const PID_FILE = path.join(E2E_DIR, '.output', 'api.pid');
+const SINK_PID_FILE = path.join(E2E_DIR, '.output', 'sink.pid');
+export const SINK_FILE = path.join(E2E_DIR, '.output', 'mailgun-sink.jsonl');
 const API_PORT = 3100;
+const SINK_PORT = 3101;
 const WEB_ORIGIN = 'http://localhost:4174';
+
+/**
+ * Entorno de la API y del proceso de envío en las pruebas. El proveedor «mailgun» apunta a
+ * un SIMULADOR LOCAL (e2e/mailgun-sink.mjs): se ejecuta el adaptador HTTP real, pero ningún
+ * mensaje sale a Internet. No equivale a una prueba con Mailgun.
+ */
+export function apiEnv(appUrl: string): NodeJS.ProcessEnv {
+  return {
+    PATH: process.env.PATH,
+    HOME: process.env.HOME,
+    NODE_ENV: 'test',
+    PORT: String(API_PORT),
+    HOST: '127.0.0.1',
+    LOG_LEVEL: 'warn',
+    DATABASE_URL: appUrl,
+    APP_WEB_URL: WEB_ORIGIN,
+    MAIL_TRANSPORT: 'log',
+    TRIAL_DAYS: '14',
+    // Las pruebas recorren muchas pantallas desde una sola IP en pocos segundos.
+    RATE_LIMIT_PER_MINUTE: '20000',
+    FOLLOWUP_EMAIL_PROVIDER: 'mailgun',
+    FOLLOWUP_FROM_EMAIL: 'seguimiento@mg.e2e.test',
+    MAILGUN_API_KEY: 'clave-del-simulador',
+    MAILGUN_DOMAIN: 'mg.e2e.test',
+    MAILGUN_API_BASE: `http://127.0.0.1:${SINK_PORT}`,
+    MAILGUN_WEBHOOK_SIGNING_KEY: 'firma-del-simulador',
+    PUBLIC_API_URL: WEB_ORIGIN,
+  };
+}
 
 /**
  * 1) Recrea el esquema de la base de datos de pruebas y aplica las migraciones reales.
@@ -39,25 +71,17 @@ export default async function globalSetup() {
   if (migrate.status !== 0) throw new Error(`Migración fallida: ${migrate.stderr || migrate.stdout}`);
 
   mkdirSync(path.dirname(API_LOG), { recursive: true });
+  rmSync(SINK_FILE, { force: true });
+  const sink = spawn(process.execPath, [path.join(E2E_DIR, 'mailgun-sink.mjs'), String(SINK_PORT), SINK_FILE], { detached: true, stdio: 'ignore' });
+  sink.unref();
+  writeFileSync(SINK_PID_FILE, String(sink.pid));
+
   const out = openSync(API_LOG, 'w');
   const api = spawn('npx', ['tsx', 'src/server.ts'], {
     cwd: apiDir,
     detached: true,
     stdio: ['ignore', out, out],
-    env: {
-      PATH: process.env.PATH,
-      HOME: process.env.HOME,
-      NODE_ENV: 'test',
-      PORT: String(API_PORT),
-      HOST: '127.0.0.1',
-      LOG_LEVEL: 'warn',
-      DATABASE_URL: appUrl,
-      APP_WEB_URL: WEB_ORIGIN,
-      MAIL_TRANSPORT: 'log',
-      TRIAL_DAYS: '14',
-      // Las pruebas recorren muchas pantallas desde una sola IP en pocos segundos.
-      RATE_LIMIT_PER_MINUTE: '20000',
-    },
+    env: apiEnv(appUrl),
   });
   api.unref();
   writeFileSync(PID_FILE, String(api.pid));

@@ -1,9 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath as toPath } from 'node:url';
+import { apiEnv, SINK_FILE } from './global-setup';
 
 const HERE = path.dirname(toPath(import.meta.url));
 
@@ -77,4 +79,25 @@ export async function expectAccessible(page: Page, context: string) {
 export async function expectNoHorizontalOverflow(page: Page, context: string) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow, `Desbordamiento horizontal en ${context}`).toBeLessThanOrEqual(0);
+}
+
+/** Un ciclo del proceso de envío (npm run worker -- --once), con el mismo entorno que la API de pruebas. */
+export function runWorkerOnce() {
+  const result = spawnSync('npx', ['tsx', 'src/worker.ts', '--once'], {
+    cwd: path.resolve(HERE, '../../api'),
+    env: apiEnv(process.env.TEST_DATABASE_URL!),
+    encoding: 'utf8',
+    timeout: 60_000,
+  });
+  if (result.status !== 0) throw new Error(`El proceso de envío falló: ${result.stderr || result.stdout}`);
+}
+
+/** Mensajes que ha recibido el simulador local del proveedor (no se envía nada real). */
+export function simulatedEmails(to: string): Array<Record<string, string>> {
+  if (!existsSync(SINK_FILE)) return [];
+  return readFileSync(SINK_FILE, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, string>)
+    .filter((m) => m.to === to);
 }

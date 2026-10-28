@@ -101,7 +101,7 @@ export function NewFollowUpDialog({ quote, mode, blocked, onClose }: NewFollowUp
       title={mode === 'logged' ? 'Registrar un contacto realizado' : 'Programar un seguimiento'}
       description={
         mode === 'logged'
-          ? 'Anota una llamada, un mensaje o una visita que ya has hecho. Presupio no envía mensajes: solo registra lo que haces tú.'
+          ? 'Anota una llamada, un mensaje o una visita que ya has hecho. Aquí se registra lo que haces tú; los emails automáticos van aparte.'
           : 'Deja anotado el próximo paso para no olvidarlo. Aparecerá en Seguimientos.'
       }
       onSubmit={submit}

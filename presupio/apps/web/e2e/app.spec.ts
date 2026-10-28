@@ -6,6 +6,8 @@ import {
   loginViaUi,
   PASSWORD,
   registerViaUi,
+  runWorkerOnce,
+  simulatedEmails,
   uniqueEmail,
   watchConsole,
 } from './support';
@@ -14,6 +16,7 @@ test.describe.configure({ mode: 'serial' });
 
 let owner: { context: BrowserContext; page: Page; email: string; problems: string[] };
 let firstQuoteUrl = '';
+let automaticQuoteUrl = '';
 
 test.beforeAll(async ({ browser }: { browser: Browser }) => {
   const context = await browser.newContext();
@@ -266,7 +269,119 @@ test('errores de la API: la interfaz los muestra sin inventar datos', async () =
   owner.problems.length = 0; // los errores provocados en esta prueba son intencionados
 });
 
-const PAGES = ['/', '/presupuestos', '/presupuestos/nuevo', '/seguimientos', '/contactos', '/configuracion', '/configuracion/seguimiento', '/configuracion/equipo', '/configuracion/plan', '/configuracion/perfil'];
+const PAGES = [
+  '/',
+  '/presupuestos',
+  '/presupuestos/nuevo',
+  '/seguimientos',
+  '/seguimientos?estado=sent',
+  '/contactos',
+  '/configuracion',
+  '/configuracion/seguimiento',
+  '/configuracion/automatico',
+  '/configuracion/equipo',
+  '/configuracion/plan',
+  '/configuracion/perfil',
+];
+
+test('envío automático: requisitos, activación, aprobación, envío y baja del cliente', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const { page } = owner;
+  const clientEmail = uniqueEmail('cliente.auto');
+
+  // Reglas: todos los días y todo el día, para que la prueba no dependa de la hora en que se ejecute.
+  await page.goto('/configuracion/seguimiento');
+  await expect(page.getByLabel('Seguimiento 1: días tras el envío')).toHaveValue('3');
+  await expect(page.getByLabel('Seguimiento 3: días tras el envío')).toHaveValue('14');
+  await page.getByLabel('Sábado').check();
+  await page.getByLabel('Domingo').check();
+  await page.getByLabel('Desde las').fill('00:00');
+  await page.getByLabel('Hasta las').fill('23:59');
+  await page.getByRole('button', { name: 'Guardar reglas' }).click();
+  await expect(page.getByText('Reglas de seguimiento guardadas.')).toBeVisible();
+
+  // Sin dirección de respuesta ni base legal no se puede activar.
+  await page.getByRole('link', { name: 'Envío automático' }).first().click();
+  await expect(page.getByRole('heading', { name: /Envío automático de emails/ })).toContainText('Desactivado');
+  await expect(page.getByRole('button', { name: 'Activar envío automático' })).toBeDisabled();
+  await page.getByLabel('Las respuestas llegan a').fill('oficina@ensayo.test');
+  await page.getByLabel('Base legal para contactar').fill('Solo escribimos a clientes que nos han pedido un presupuesto (interés legítimo).');
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await expect(page.getByText('Datos de envío guardados.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Activar envío automático' }).click();
+  const enable = page.getByRole('dialog', { name: 'Activar el envío automático' });
+  await enable.getByRole('button', { name: 'Activar' }).click();
+  await expect(enable.getByText('Marca la casilla para confirmar la base jurídica.')).toBeVisible();
+  await enable.getByRole('checkbox').check();
+  await enable.getByRole('button', { name: 'Activar' }).click();
+  await expect(page.getByText('Envío automático activado.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Envío automático de emails/ })).toContainText('Activo');
+  await expect(page.getByText('Mailgun (región UE)')).toBeVisible();
+
+  // Presupuesto enviado hace 3 días y sin respuesta.
+  const sent = new Date(Date.now() - 3 * 86_400_000);
+  const sentDate = `${sent.getFullYear()}-${String(sent.getMonth() + 1).padStart(2, '0')}-${String(sent.getDate()).padStart(2, '0')}`;
+  await page.goto('/presupuestos/nuevo');
+  await page.getByLabel('Nombre del cliente').fill('Cliente Automático');
+  await page.getByLabel('Email', { exact: false }).first().fill(clientEmail);
+  await page.getByLabel('Título').fill('Reforma de baño automática');
+  await page.getByLabel('Fecha de envío').fill(sentDate);
+  await page.getByRole('button', { name: 'Registrar presupuesto' }).click();
+  await expect(page.getByRole('heading', { name: 'Reforma de baño automática' })).toBeVisible();
+  automaticQuoteUrl = new URL(page.url()).pathname;
+
+  // El proceso de envío programa el primer email; con revisión obligatoria, espera aprobación.
+  runWorkerOnce();
+  await page.reload();
+  const item = page.locator('.fu').filter({ hasText: 'Email automático 1 de 3' });
+  await expect(item).toContainText('Pendiente de aprobación');
+  await expect(item.getByText('Automático', { exact: true })).toBeVisible();
+  expect(simulatedEmails(clientEmail)).toHaveLength(0);
+
+  await item.getByRole('button', { name: 'Revisar' }).click();
+  const review = page.getByRole('dialog', { name: 'Email automático 1 de 3' });
+  await expect(review.getByText('Tu presupuesto de Reforma de baño automática')).toBeVisible();
+  await expect(review.getByText(clientEmail)).toBeVisible();
+  await expect(review.locator('.email-text')).toContainText('Hola, Cliente Automático:');
+  await expect(review.locator('.email-text')).toContainText('puedes darte de baja aquí');
+  await expectAccessible(page, 'revisión de un email automático');
+  await review.getByRole('button', { name: 'Aprobar envío' }).click();
+  await expect(page.getByText(/Email aprobado/)).toBeVisible();
+
+  // Siguiente ciclo: se envía por el adaptador HTTP real, contra el simulador local.
+  runWorkerOnce();
+  const mails = simulatedEmails(clientEmail);
+  expect(mails).toHaveLength(1);
+  expect(mails[0]).toMatchObject({ subject: 'Tu presupuesto de Reforma de baño automática', 'h:Reply-To': 'oficina@ensayo.test', 'o:tracking': 'no' });
+  await page.reload();
+  await expect(item).toContainText('Enviado el');
+  await item.getByRole('button', { name: 'Ver envío' }).click();
+  const sentDialog = page.getByRole('dialog', { name: 'Email automático 1 de 3' });
+  await expect(sentDialog.getByText('Intento 1')).toBeVisible();
+  await expect(sentDialog.getByText('Aceptado por el proveedor')).toBeVisible();
+  await sentDialog.getByRole('button', { name: 'Cerrar' }).first().click();
+
+  await page.goto('/seguimientos?estado=sent');
+  await expect(page.getByRole('link', { name: 'Email automático 1 de 3' })).toBeVisible();
+
+  // El cliente se da de baja desde el enlace del email (sin sesión).
+  const link = mails[0]!.text!.match(/https?:\/\/[^\s]+\/baja\?token=[A-Za-z0-9_-]{43}/)![0];
+  const anonContext = await browser.newContext();
+  const anon = await anonContext.newPage();
+  await anon.goto(new URL(link).pathname + new URL(link).search);
+  await expect(anon.getByText(/Reformas Ensayo SL/)).toBeVisible();
+  await expectAccessible(anon, 'página de baja');
+  await anon.getByRole('button', { name: 'No quiero recibir más correos' }).click();
+  await expect(anon.getByText('Baja registrada')).toBeVisible();
+  await anonContext.close();
+
+  await page.goto(automaticQuoteUrl);
+  await expect(page.getByText('Contacto en la lista de exclusión')).toBeVisible();
+  await expect(page.locator('.timeline')).toContainText('registró la baja del cliente desde el enlace del email');
+  runWorkerOnce();
+  expect(simulatedEmails(clientEmail)).toHaveLength(1);
+});
 
 test('enlaces internos: ninguno lleva a una página inexistente', async () => {
   const { page } = owner;
@@ -287,7 +402,7 @@ test('enlaces internos: ninguno lleva a una página inexistente', async () => {
 });
 
 test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
-  test.setTimeout(240_000); // 11 pantallas × 3 tamaños con análisis axe
+  test.setTimeout(300_000); // 14 pantallas × 3 tamaños con análisis axe
   const { page } = owner;
   for (const viewport of [
     { width: 1440, height: 900 },
@@ -295,7 +410,7 @@ test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
     { width: 390, height: 844 },
   ]) {
     await page.setViewportSize(viewport);
-    for (const path of [...PAGES, firstQuoteUrl]) {
+    for (const path of [...PAGES, firstQuoteUrl, automaticQuoteUrl]) {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       await expectNoHorizontalOverflow(page, `${path} @${viewport.width}px`);
@@ -305,7 +420,7 @@ test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
   // Pantallas públicas.
   const context = await page.context().browser()!.newContext({ viewport: { width: 390, height: 844 } });
   const anon = await context.newPage();
-  for (const path of ['/iniciar-sesion', '/registro', '/recuperar-contrasena']) {
+  for (const path of ['/iniciar-sesion', '/registro', '/recuperar-contrasena', '/baja?token=enlace-roto']) {
     await anon.goto(path);
     await anon.waitForLoadState('networkidle');
     await expectNoHorizontalOverflow(anon, path);

@@ -2,6 +2,8 @@ import { keepPreviousData, QueryCache, MutationCache, QueryClient, useInfiniteQu
 import { api, ApiError, isApiError, qs } from './client';
 import type {
   ActivityEntry,
+  AutomaticEmailPreview,
+  AutomationStatus,
   Company,
   CompanySettings,
   ContactDetail,
@@ -11,11 +13,14 @@ import type {
   Invitation,
   Me,
   Member,
+  MessageDelivery,
+  MessageTemplate,
   Page,
   QuoteDetail,
   Quote,
   QuoteSummary,
   SubscriptionInfo,
+  TemplateVersion,
 } from './types';
 
 export const keys = {
@@ -36,6 +41,11 @@ export const keys = {
   subscription: ['company', 'subscription'] as const,
   members: ['members'] as const,
   invitations: ['members', 'invitations'] as const,
+  automation: ['automation'] as const,
+  templates: ['automation', 'templates'] as const,
+  templateVersions: (step: number) => ['automation', 'templates', step, 'versions'] as const,
+  followUpPreview: (id: string) => ['follow-ups', 'detail', id, 'preview'] as const,
+  followUpDeliveries: (id: string) => ['follow-ups', 'detail', id, 'deliveries'] as const,
 };
 
 export function createQueryClient(): QueryClient {
@@ -125,6 +135,8 @@ export function useQuoteFollowUps(id: string) {
   return useQuery({
     queryKey: keys.quoteFollowUps(id),
     queryFn: ({ signal }) => api<{ items: FollowUp[] }>(`/quotes/${id}/follow-ups`, { signal }),
+    // Mientras un email automático se está enviando, se consulta de nuevo hasta conocer el resultado.
+    refetchInterval: (query) => (query.state.data?.items.some((f) => f.status === 'sending') ? 5_000 : false),
   });
 }
 
@@ -133,8 +145,10 @@ export function useQuoteFollowUps(id: string) {
 // ---------------------------------------------------------------------------
 
 export interface FollowUpFilters {
-  status: 'pending' | 'completed' | 'cancelled' | 'all';
+  status: 'pending' | 'sent' | 'failed' | 'completed' | 'cancelled' | 'all';
   assignedTo?: 'me';
+  /** Emails automáticos pendientes que esperan aprobación. */
+  approval?: 'awaiting';
 }
 
 export function useFollowUps(filters: FollowUpFilters) {
@@ -207,6 +221,49 @@ export function useInvitations(enabled: boolean) {
   return useQuery({
     queryKey: keys.invitations,
     queryFn: ({ signal }) => api<{ items: Invitation[] }>('/members/invitations', { signal }),
+    enabled,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Envío automático
+// ---------------------------------------------------------------------------
+
+export function useAutomation(enabled = true) {
+  return useQuery({
+    queryKey: keys.automation,
+    queryFn: ({ signal }) => api<AutomationStatus>('/automation', { signal }),
+    enabled,
+  });
+}
+
+export function useTemplates() {
+  return useQuery({
+    queryKey: keys.templates,
+    queryFn: ({ signal }) => api<{ items: MessageTemplate[]; variables: Record<string, string> }>('/automation/templates', { signal }),
+  });
+}
+
+export function useTemplateVersions(step: number, enabled: boolean) {
+  return useQuery({
+    queryKey: keys.templateVersions(step),
+    queryFn: ({ signal }) => api<{ items: TemplateVersion[] }>(`/automation/templates/${step}/versions`, { signal }),
+    enabled,
+  });
+}
+
+export function useFollowUpPreview(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: keys.followUpPreview(id),
+    queryFn: ({ signal }) => api<{ preview: AutomaticEmailPreview }>(`/follow-ups/${id}/preview`, { signal }),
+    enabled,
+  });
+}
+
+export function useFollowUpDeliveries(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: keys.followUpDeliveries(id),
+    queryFn: ({ signal }) => api<{ items: MessageDelivery[] }>(`/follow-ups/${id}/deliveries`, { signal }),
     enabled,
   });
 }

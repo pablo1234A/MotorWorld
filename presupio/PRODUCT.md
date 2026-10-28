@@ -29,7 +29,7 @@ Especializado en reformas integrales (su vocabulario y estados), se integra con 
 
 - Presupuestos de importe relevante (miles a decenas de miles de euros), con referencia propia de la empresa.
 - Contacto con el cliente por teléfono, email, WhatsApp, SMS o visita.
-- Revisión humana obligatoria al principio; la automatización llegará en la fase 3 solo con integración, reglas y base legal verificadas.
+- Revisión humana obligatoria por defecto. El envío automático (fase 3) solo se activa con proveedor configurado, dirección de respuesta, base legal documentada y confirmación expresa de la empresa; siempre con enlace de baja.
 - RGPD/LSSI: lista de exclusión que siempre se respeta.
 
 ## Capabilities and Constraints

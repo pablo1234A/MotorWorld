@@ -65,7 +65,7 @@ X-Content-Type-Options: nosniff · Referrer-Policy: no-referrer · X-Frame-Optio
 
 ## Pendiente para otras fases
 
-- **Envío real de mensajes, automatización e integración con herramientas de presupuestos o CRM:** fase 3.
+- **Integración con herramientas de presupuestos o CRM:** no incluida. El envío automático de emails (fase 3) tiene sus pantallas en *Configuración → Envío automático*, en la ficha de cada presupuesto, en *Seguimientos* y en la página pública `/baja`; ver [`automatizacion.md`](automatizacion.md).
 - **Métricas con periodos, límites de plan y monitorización de errores del frontend:** fase 4.
 - **Contratación y gestión de la suscripción:** fase 5. La pantalla «Plan» es hoy solo informativa.
 - **Textos legales** (términos del servicio, política de privacidad y cookies): no existen todavía. La casilla de aceptación los menciona, pero no hay páginas que enlazar; deben redactarse con asesoramiento antes de abrir el registro al público.
