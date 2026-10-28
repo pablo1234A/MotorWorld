@@ -5,7 +5,8 @@ import { decodeCursor, pageOf } from '../../lib/pagination.js';
 import { email, idParams, optionalText, pagination, parseWith, phone, requiredText, uuid } from '../../lib/validation.js';
 import { inTenant } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
-import { contactChannel, getContact } from '../contacts/service.js';
+import { contactChannel } from '../contacts/service.js';
+import { registerExclusion } from './service.js';
 
 const createBody = z
   .strictObject({
@@ -72,64 +73,7 @@ export async function exclusionRoutes(app: FastifyInstance) {
    */
   app.post('/', { config: { permission: 'exclusions:create' } }, async (req, reply) => {
     const body = parseWith(createBody, req.body);
-    const result = await inTenant(app, req, async (trx, auth) => {
-      let targetEmail = body.email ?? null;
-      let targetPhone = body.phone ?? null;
-      if (body.contactId) {
-        const contact = await getContact(trx, auth.companyId, body.contactId);
-        targetEmail ??= contact.email;
-        targetPhone ??= contact.phone;
-      }
-      const exclusion = await trx
-        .insertInto('contactExclusions')
-        .values({
-          companyId: auth.companyId,
-          contactId: body.contactId ?? null,
-          email: targetEmail,
-          phone: targetPhone,
-          channel: body.channel,
-          reason: body.reason,
-          notes: body.notes ?? null,
-          createdByUserId: auth.userId,
-          liftedAt: null,
-          liftedByUserId: null,
-          liftReason: null,
-        })
-        .returning(FIELDS)
-        .executeTakeFirstOrThrow();
-
-      // Contactos afectados (por id, email o teléfono).
-      const affectedContacts = trx
-        .selectFrom('contacts')
-        .select('id')
-        .where('companyId', '=', auth.companyId)
-        .where((eb) => {
-          const t = [];
-          if (body.contactId) t.push(eb('id', '=', body.contactId));
-          if (targetEmail) t.push(eb('email', '=', targetEmail));
-          if (targetPhone) t.push(eb('phone', '=', targetPhone));
-          return eb.or(t);
-        });
-      const blockedChannels = body.channel ? [body.channel] : (['email', 'phone', 'whatsapp', 'sms', 'in_person'] as const);
-
-      const cancelled = await trx
-        .updateTable('followUps')
-        .set({ status: 'cancelled', cancelledAt: new Date(), cancelReason: 'contact_excluded' })
-        .where('companyId', '=', auth.companyId)
-        .where('status', '=', 'pending')
-        .where('channel', 'in', [...blockedChannels])
-        .where('quoteId', 'in', trx.selectFrom('quotes').select('id').where('companyId', '=', auth.companyId).where('contactId', 'in', affectedContacts))
-        .returning('id')
-        .execute();
-
-      await logActivity(trx, auth, {
-        action: 'exclusion.created',
-        entityType: 'exclusion',
-        entityId: exclusion.id,
-        metadata: { reason: body.reason, channel: body.channel, cancelledFollowUps: cancelled.length },
-      });
-      return { exclusion, cancelledFollowUps: cancelled.length };
-    });
+    const result = await inTenant(app, req, (trx, auth) => registerExclusion(trx, auth, { ...body, via: 'app' }));
     return reply.status(201).send(result);
   });
 

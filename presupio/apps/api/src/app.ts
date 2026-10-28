@@ -15,7 +15,11 @@ import { authRoutes } from './modules/auth/routes.js';
 import { companyRoutes } from './modules/company/routes.js';
 import { contactRoutes } from './modules/contacts/routes.js';
 import { exclusionRoutes } from './modules/exclusions/routes.js';
-import { followUpRoutes } from './modules/follow-ups/routes.js';
+import { automaticFollowUpRoutes, followUpRoutes } from './modules/follow-ups/routes.js';
+import { automationRoutes } from './modules/automation/routes.js';
+import { publicRoutes } from './modules/public/routes.js';
+import { webhookRoutes } from './modules/webhooks/routes.js';
+import { createFollowUpProvider, type FollowUpEmailProvider } from './automation/providers.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { meRoutes } from './modules/me/routes.js';
 import { memberRoutes } from './modules/members/routes.js';
@@ -25,6 +29,8 @@ export interface AppDeps {
   config: AppConfig;
   db: Db;
   mailer?: Mailer;
+  /** Proveedor de los emails de seguimiento. En pruebas se inyecta uno simulado. */
+  followUpProvider?: FollowUpEmailProvider;
 }
 
 export interface AppLimiters {
@@ -37,6 +43,7 @@ declare module 'fastify' {
     config: AppConfig;
     db: Db;
     mailer: Mailer;
+    followUpProvider: FollowUpEmailProvider;
     limiters: AppLimiters;
     /** Ejecuta trabajo después de responder (p. ej. envío de emails) sin filtrar tiempos de respuesta. */
     runInBackground(name: string, task: () => Promise<unknown>): void;
@@ -66,12 +73,19 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
               paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'],
               censor: '[redactado]',
             },
+            serializers: {
+              // Los enlaces de baja llevan un token en la URL: nunca se escribe en los logs.
+              req(req: { method: string; url: string; ip?: string }) {
+                return { method: req.method, url: req.url.replace(/([?&]token=)[^&]+/g, '$1[redactado]') };
+              },
+            },
           },
   });
 
   app.decorate('config', config);
   app.decorate('db', deps.db);
   app.decorate('mailer', deps.mailer ?? createMailer(config, app.log));
+  app.decorate('followUpProvider', deps.followUpProvider ?? createFollowUpProvider(config));
   app.decorate('limiters', {
     loginPerEmail: createMemoryLimiter(config.rateLimits.loginPerEmail),
     passwordForgotPerEmail: createMemoryLimiter(config.rateLimits.passwordForgotPerEmail),
@@ -197,6 +211,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(followUpRoutes, { prefix: `${API_PREFIX}/follow-ups` });
   await app.register(exclusionRoutes, { prefix: `${API_PREFIX}/exclusions` });
   await app.register(activityRoutes, { prefix: `${API_PREFIX}/activity` });
+  await app.register(automationRoutes, { prefix: `${API_PREFIX}/automation` });
+  await app.register(automaticFollowUpRoutes, { prefix: `${API_PREFIX}/follow-ups` });
+  await app.register(publicRoutes, { prefix: `${API_PREFIX}/public` });
+  await app.register(webhookRoutes, { prefix: `${API_PREFIX}/webhooks` });
 
   return app;
 }

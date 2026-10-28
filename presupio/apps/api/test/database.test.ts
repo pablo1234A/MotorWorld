@@ -143,13 +143,40 @@ describe('restricciones de integridad', () => {
           [company, contact],
         )
       ).rows[0]!.id;
-      const insert = () =>
+      const insert = (step: number, key: string) =>
         owner.query(
-          "INSERT INTO follow_ups (company_id, quote_id, channel, source, title, dedupe_key) VALUES ($1, $2, 'email', 'rule', 'Paso 1', 'rule:1:step:1')",
-          [company, quote],
+          "INSERT INTO follow_ups (company_id, quote_id, channel, source, title, dedupe_key, sequence_step, sequence_key) VALUES ($1, $2, 'email', 'rule', 'Paso', $3, $4, 'k')",
+          [company, quote, key, step],
         );
-      await insert();
-      await expect(insert()).rejects.toThrow(/follow_ups_dedupe_key/);
+      await insert(1, 'auto:1');
+      await expectViolation(
+        "INSERT INTO follow_ups (company_id, quote_id, channel, source, title, dedupe_key, sequence_step, sequence_key) VALUES ($1, $2, 'email', 'rule', 'Paso', 'auto:1', 1, 'k')",
+        [company, quote],
+        /follow_ups_dedupe_key/,
+      );
+      // Nunca dos pasos automáticos en curso a la vez para el mismo presupuesto.
+      await expectViolation(
+        "INSERT INTO follow_ups (company_id, quote_id, channel, source, title, dedupe_key, sequence_step, sequence_key) VALUES ($1, $2, 'email', 'rule', 'Paso', 'auto:2', 2, 'k')",
+        [company, quote],
+        /follow_ups_one_active_rule_step/,
+      );
+      // Un paso automático sin secuencia o "enviado" sin confirmación no son posibles.
+      await owner.query("UPDATE follow_ups SET status = 'cancelled', cancelled_at = now() WHERE company_id = $1", [company]);
+      await expectViolation(
+        "INSERT INTO follow_ups (company_id, quote_id, channel, source, title) VALUES ($1, $2, 'email', 'rule', 'Sin secuencia')",
+        [company, quote],
+        /follow_ups_rule_sequence/,
+      );
+      await expectViolation(
+        "INSERT INTO follow_ups (company_id, quote_id, channel, source, title, dedupe_key, sequence_step, sequence_key, status) VALUES ($1, $2, 'email', 'rule', 'Paso', 'auto:3', 3, 'k', 'sent')",
+        [company, quote],
+        /follow_ups_sent_consistency/,
+      );
+      await expectViolation(
+        "INSERT INTO follow_ups (company_id, quote_id, channel, source, title, status, sent_at) VALUES ($1, $2, 'phone', 'manual', 'Manual', 'sent', now())",
+        [company, quote],
+        /follow_ups_automatic_statuses/,
+      );
     });
   });
 

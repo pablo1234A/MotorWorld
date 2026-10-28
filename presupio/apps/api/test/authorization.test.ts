@@ -20,7 +20,7 @@ describe('roles', () => {
       await viewer.client.post('/contacts', { fullName: 'X', email: uniqueEmail() }),
       await viewer.client.post('/exclusions', { email: uniqueEmail(), reason: 'manual' }),
       await viewer.client.patch('/company', { name: 'X' }),
-      await viewer.client.patch('/company/settings', { maxFollowUps: 1 }),
+      await viewer.client.patch('/company/settings', { followUpScheduleDays: [2, 5] }),
       await viewer.client.post('/members/invitations', { email: uniqueEmail(), role: 'member' }),
     ];
     for (const res of denied) {
@@ -33,7 +33,7 @@ describe('roles', () => {
     expect((await member.client.post(`/quotes/${quote.id}/follow-ups`, { channel: 'task' })).status).toBe(201);
     expect((await member.client.post('/exclusions', { email: uniqueEmail(), reason: 'opt_out_request' })).status).toBe(201);
     expect((await member.client.patch('/company', { name: 'X' })).status).toBe(403);
-    expect((await member.client.patch('/company/settings', { maxFollowUps: 1 })).status).toBe(403);
+    expect((await member.client.patch('/company/settings', { followUpScheduleDays: [2, 5] })).status).toBe(403);
     expect((await member.client.get('/members/invitations')).status).toBe(403);
     expect((await member.client.patch(`/members/${viewer.userId}`, { role: 'admin' })).status).toBe(403);
 

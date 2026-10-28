@@ -182,7 +182,7 @@ describe('presupuestos: estados', () => {
     const s = (await own.client.get('/quotes/summary')).body.summary;
     expect(s.byStatus).toEqual({ draft: 0, sent: 1, responded: 0, accepted: 1, rejected: 0 });
     expect(s).toMatchObject({ reactivated: 1, recoveredSales: 1, recoveredAmountCents: 1_850_000, recoveredAmountSource: 'declared_by_company' });
-    expect(s.followUps).toEqual({ pending: 0, overdue: 0, completed: 1 });
+    expect(s.followUps).toEqual({ pending: 0, overdue: 0, completed: 1, failed: 0, awaitingApproval: 0 });
   });
 });
 

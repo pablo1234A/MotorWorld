@@ -31,6 +31,18 @@ const envSchema = z.object({
   SMTP_SECURE: booleanFromEnv.optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
+
+  // Motor de seguimiento (fase 3)
+  FOLLOWUP_EMAIL_PROVIDER: z.enum(['disabled', 'mailgun', 'smtp']).default('disabled'),
+  FOLLOWUP_FROM_EMAIL: z.string().optional(),
+  MAILGUN_API_KEY: z.string().optional(),
+  MAILGUN_DOMAIN: z.string().optional(),
+  MAILGUN_API_BASE: z.url({ protocol: /^https?$/ }).default('https://api.eu.mailgun.net'),
+  MAILGUN_WEBHOOK_SIGNING_KEY: z.string().optional(),
+  PUBLIC_API_URL: z.url({ protocol: /^https?$/ }).optional(),
+  WORKER_INTERVAL_SECONDS: z.coerce.number().int().min(5).max(3600).default(60),
+  FOLLOWUP_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(3),
+  MESSAGE_CONTENT_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
 });
 
 export type RateLimitRule = { max: number; windowMs: number };
@@ -54,6 +66,24 @@ export interface AppConfig {
     smtp?: { host: string; port: number; secure: boolean; user?: string; password?: string };
   };
   tokens: { passwordResetTtlMs: number; emailVerificationTtlMs: number; invitationTtlMs: number };
+  automation: {
+    provider: 'disabled' | 'mailgun' | 'smtp';
+    fromEmail?: string;
+    mailgun?: { apiKey: string; domain: string; apiBase: string; webhookSigningKey?: string };
+    /** URL pública de la API (enlace de baja de un clic en la cabecera List-Unsubscribe). */
+    publicApiUrl: string;
+    workerIntervalMs: number;
+    maxAttempts: number;
+    /** Esperas entre reintentos de un mismo mensaje (ms). */
+    retryBackoffMs: number[];
+    /** Un envío "en curso" más antiguo que esto se considera de resultado desconocido. */
+    stuckAfterMs: number;
+    /** Un paso que no pudo enviarse en este plazo tras su fecha prevista se cancela (evita ráfagas tras una parada). */
+    expireAfterMs: number;
+    /** Separación mínima entre dos contactos con el mismo cliente. */
+    minGapBetweenContactsMs: number;
+    contentRetentionDays: number;
+  };
   rateLimits: {
     global: RateLimitRule;
     login: RateLimitRule;
@@ -106,6 +136,25 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     };
   }
 
+  let mailgun: AppConfig['automation']['mailgun'];
+  if (e.FOLLOWUP_EMAIL_PROVIDER !== 'disabled' && !e.FOLLOWUP_FROM_EMAIL) {
+    throw new Error('FOLLOWUP_EMAIL_PROVIDER requiere FOLLOWUP_FROM_EMAIL (dirección del dominio verificado)');
+  }
+  if (e.FOLLOWUP_EMAIL_PROVIDER === 'mailgun') {
+    if (!e.MAILGUN_API_KEY || !e.MAILGUN_DOMAIN) throw new Error('FOLLOWUP_EMAIL_PROVIDER=mailgun requiere MAILGUN_API_KEY y MAILGUN_DOMAIN');
+    if (isProd && !e.MAILGUN_API_BASE.startsWith('https://')) throw new Error('MAILGUN_API_BASE debe usar https en producción');
+    if (isProd && !e.MAILGUN_WEBHOOK_SIGNING_KEY) throw new Error('MAILGUN_WEBHOOK_SIGNING_KEY es obligatoria en producción');
+    mailgun = {
+      apiKey: e.MAILGUN_API_KEY,
+      domain: e.MAILGUN_DOMAIN,
+      apiBase: e.MAILGUN_API_BASE.replace(/\/$/, ''),
+      webhookSigningKey: e.MAILGUN_WEBHOOK_SIGNING_KEY,
+    };
+  }
+  if (e.FOLLOWUP_EMAIL_PROVIDER === 'smtp' && !smtp) {
+    throw new Error('FOLLOWUP_EMAIL_PROVIDER=smtp requiere MAIL_TRANSPORT=smtp y los datos SMTP_*');
+  }
+
   const corsOrigins = (e.CORS_ORIGINS ?? e.APP_WEB_URL)
     .split(',')
     .map((o) => o.trim().replace(/\/$/, ''))
@@ -134,6 +183,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     },
     trialDays: e.TRIAL_DAYS,
     mail: { transport: e.MAIL_TRANSPORT, from: e.MAIL_FROM, smtp },
+    automation: {
+      provider: e.FOLLOWUP_EMAIL_PROVIDER,
+      fromEmail: e.FOLLOWUP_FROM_EMAIL,
+      mailgun,
+      publicApiUrl: (e.PUBLIC_API_URL ?? e.APP_WEB_URL).replace(/\/$/, ''),
+      workerIntervalMs: e.WORKER_INTERVAL_SECONDS * 1000,
+      maxAttempts: e.FOLLOWUP_MAX_ATTEMPTS,
+      retryBackoffMs: [5 * MINUTE, 30 * MINUTE, 2 * HOUR, 6 * HOUR],
+      stuckAfterMs: 15 * MINUTE,
+      expireAfterMs: 72 * HOUR,
+      minGapBetweenContactsMs: 48 * HOUR,
+      contentRetentionDays: e.MESSAGE_CONTENT_RETENTION_DAYS,
+    },
     tokens: {
       passwordResetTtlMs: 30 * MINUTE,
       emailVerificationTtlMs: 48 * HOUR,

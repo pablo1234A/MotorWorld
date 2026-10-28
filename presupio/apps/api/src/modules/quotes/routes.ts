@@ -15,6 +15,7 @@ import {
   requiredText,
   uuid,
 } from '../../lib/validation.js';
+import { cancelPendingRuleSteps } from '../../automation/engine.js';
 import { inTenant } from '../../plugins/auth.js';
 import { listActivity, logActivity } from '../activity/service.js';
 import { contactInput, findOrCreateContact, getContact } from '../contacts/service.js';
@@ -72,6 +73,7 @@ const updateBody = z
     sentAt: isoDateTime,
     validUntil: isoDate.nullable(),
     ownerUserId: uuid.nullable(),
+    autoFollowUpEnabled: z.boolean(),
   })
   .partial()
   .refine((b) => Object.keys(b).length > 0, 'No hay cambios');
@@ -99,7 +101,7 @@ const listQuery = z.strictObject({
 });
 
 const activityQuery = z.strictObject({ ...pagination });
-const followUpListQuery = z.strictObject({ status: z.enum(['pending', 'completed', 'cancelled', 'all']).default('all') });
+const followUpListQuery = z.strictObject({ status: z.enum(['pending', 'sending', 'sent', 'completed', 'failed', 'cancelled', 'all']).default('all') });
 
 function assertValidity(sentAt: Date | null, validUntil: string | null | undefined) {
   if (sentAt && validUntil && validUntil < sentAt.toISOString().slice(0, 10)) {
@@ -241,6 +243,8 @@ export async function quoteRoutes(app: FastifyInstance) {
         .where('id', '=', id)
         .execute()
         .catch(translateQuoteConflict);
+      // Excluir el presupuesto del seguimiento automático detiene sus pasos pendientes.
+      if (body.autoFollowUpEnabled === false) await cancelPendingRuleSteps(trx, auth.companyId, 'quote_auto_disabled', id);
       await logActivity(trx, auth, {
         action: 'quote.updated',
         entityType: 'quote',

@@ -14,6 +14,10 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/email/verify',
   'POST /api/v1/auth/invitations/preview',
   'POST /api/v1/auth/invitations/accept',
+  // Fase 3: baja de los correos (token personal) y webhook firmado del proveedor.
+  'POST /api/v1/public/unsubscribe/preview',
+  'POST /api/v1/public/unsubscribe',
+  'POST /api/v1/webhooks/mailgun',
 ]);
 
 const FAKE_ID = '00000000-0000-4000-8000-000000000000';

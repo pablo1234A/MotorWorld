@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { PLANS, hasActiveAccess } from '../../domain/plans.js';
 import { errors } from '../../lib/errors.js';
-import { optionalText, parseWith, phone, requiredText } from '../../lib/validation.js';
+import { email, optionalText, parseWith, phone, requiredText } from '../../lib/validation.js';
 import { inTenant } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
 
@@ -37,9 +37,12 @@ const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Hora no válida (HH:
 
 const updateSettingsBody = z
   .strictObject({
-    firstFollowUpAfterDays: z.number().int().min(1).max(90),
-    followUpIntervalDays: z.number().int().min(1).max(90),
-    maxFollowUps: z.number().int().min(0).max(10),
+    // Días tras el envío del presupuesto en que toca cada seguimiento (por defecto 3, 7 y 14).
+    followUpScheduleDays: z
+      .array(z.number().int().min(1, 'Mínimo 1 día').max(180, 'Máximo 180 días'))
+      .min(1, 'Indica al menos un seguimiento')
+      .max(6, 'Como máximo 6 seguimientos')
+      .refine((d) => d.every((v, i) => i === 0 || v > d[i - 1]!), 'Los días deben ir de menor a mayor, sin repetir'),
     allowedWeekdays: z
       .array(z.number().int().min(1).max(7))
       .min(1, 'Elige al menos un día')
@@ -50,32 +53,38 @@ const updateSettingsBody = z
     defaultChannel: z.enum(['email', 'phone', 'whatsapp', 'sms']),
     requireManualApproval: z.boolean(),
     legalBasisNote: optionalText(2000),
+    senderName: optionalText(80),
+    replyToEmail: email.nullable(),
   })
   .partial()
   .refine((b) => Object.keys(b).length > 0, 'No hay cambios');
 
 function settingsDto(s: {
-  firstFollowUpAfterDays: number;
-  followUpIntervalDays: number;
-  maxFollowUps: number;
+  followUpScheduleDays: number[];
   allowedWeekdays: number[];
   contactWindowStart: string;
   contactWindowEnd: string;
   defaultChannel: string;
   requireManualApproval: boolean;
   legalBasisNote: string | null;
+  senderName: string | null;
+  replyToEmail: string | null;
+  automationEnabled: boolean;
+  automationEnabledAt: Date | null;
   updatedAt: Date;
 }) {
   return {
-    firstFollowUpAfterDays: s.firstFollowUpAfterDays,
-    followUpIntervalDays: s.followUpIntervalDays,
-    maxFollowUps: s.maxFollowUps,
+    followUpScheduleDays: s.followUpScheduleDays,
     allowedWeekdays: [...s.allowedWeekdays].sort(),
     contactWindowStart: s.contactWindowStart.slice(0, 5),
     contactWindowEnd: s.contactWindowEnd.slice(0, 5),
     defaultChannel: s.defaultChannel,
     requireManualApproval: s.requireManualApproval,
     legalBasisNote: s.legalBasisNote,
+    senderName: s.senderName,
+    replyToEmail: s.replyToEmail,
+    automationEnabled: s.automationEnabled,
+    automationEnabledAt: s.automationEnabledAt,
     updatedAt: s.updatedAt,
   };
 }
@@ -133,10 +142,20 @@ export async function companyRoutes(app: FastifyInstance) {
     return inTenant(app, req, async (trx, auth) => {
       const current = await trx
         .selectFrom('companySettings')
-        .select(['contactWindowStart', 'contactWindowEnd'])
+        .select(['contactWindowStart', 'contactWindowEnd', 'automationEnabled', 'legalBasisNote', 'replyToEmail'])
         .where('companyId', '=', auth.companyId)
         .forUpdate()
         .executeTakeFirstOrThrow();
+      // Con el envío automático activo no se pueden quitar sus requisitos.
+      if (current.automationEnabled) {
+        const note = body.legalBasisNote !== undefined ? body.legalBasisNote : current.legalBasisNote;
+        const reply = body.replyToEmail !== undefined ? body.replyToEmail : current.replyToEmail;
+        const details = [
+          ...(!note || note.trim().length < 20 ? [{ path: 'legalBasisNote', message: 'Obligatoria mientras el envío automático esté activo' }] : []),
+          ...(!reply ? [{ path: 'replyToEmail', message: 'Obligatoria mientras el envío automático esté activo' }] : []),
+        ];
+        if (details.length) throw errors.validation('Desactiva antes el envío automático.', details);
+      }
       const start = body.contactWindowStart ?? current.contactWindowStart.slice(0, 5);
       const end = body.contactWindowEnd ?? current.contactWindowEnd.slice(0, 5);
       if (start >= end) {

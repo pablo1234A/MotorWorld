@@ -33,7 +33,12 @@ describe('registro', () => {
     expect(me.body.subscription).toMatchObject({ plan: 'starter', status: 'trialing', hasActiveAccess: true });
 
     const settings = await client.get('/company/settings');
-    expect(settings.body.settings).toMatchObject({ requireManualApproval: true, maxFollowUps: 3, allowedWeekdays: [1, 2, 3, 4, 5] });
+    expect(settings.body.settings).toMatchObject({
+      requireManualApproval: true,
+      followUpScheduleDays: [3, 7, 14],
+      allowedWeekdays: [1, 2, 3, 4, 5],
+      automationEnabled: false,
+    });
   });
 
   it('la contraseña se guarda con Argon2id, nunca en claro', async () => {

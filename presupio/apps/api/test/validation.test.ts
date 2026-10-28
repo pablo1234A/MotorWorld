@@ -64,7 +64,11 @@ describe('validación de entradas', () => {
     expectValidationError(await acc.client.patch('/company/settings', { contactWindowStart: '20:00', contactWindowEnd: '09:00' }), 'contactWindowEnd');
     expectValidationError(await acc.client.patch('/company/settings', { allowedWeekdays: [1, 1, 2] }), 'allowedWeekdays');
     expectValidationError(await acc.client.patch('/company/settings', { allowedWeekdays: [0, 8] }));
-    expectValidationError(await acc.client.patch('/company/settings', { maxFollowUps: 50 }), 'maxFollowUps');
+    expectValidationError(await acc.client.patch('/company/settings', { followUpScheduleDays: [7, 3] }), 'followUpScheduleDays');
+    expectValidationError(await acc.client.patch('/company/settings', { followUpScheduleDays: [3, 3] }), 'followUpScheduleDays');
+    expectValidationError(await acc.client.patch('/company/settings', { followUpScheduleDays: [200] }), 'followUpScheduleDays.0');
+    expectValidationError(await acc.client.patch('/company/settings', { followUpScheduleDays: [] }), 'followUpScheduleDays');
+    expectValidationError(await acc.client.patch('/company/settings', { followUpScheduleDays: [1, 2, 3, 4, 5, 6, 7] }), 'followUpScheduleDays');
     expectValidationError(await acc.client.patch('/company', { timezone: 'Marte/Olympus' }), 'timezone');
     expectValidationError(await acc.client.patch('/company', {}));
     const ok = await acc.client.patch('/company/settings', { contactWindowStart: '08:30', allowedWeekdays: [5, 1, 3] });

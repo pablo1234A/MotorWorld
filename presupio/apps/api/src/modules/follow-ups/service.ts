@@ -62,6 +62,12 @@ export const FOLLOW_UP_FIELDS = [
   'f.createdByUserId',
   'f.createdAt',
   'f.updatedAt',
+  'f.sequenceStep',
+  'f.approvedAt',
+  'f.approvedByUserId',
+  'f.attemptCount',
+  'f.sentAt',
+  'f.failureReason',
 ] as const;
 
 export function followUpQuery(trx: Trx, companyId: string) {
@@ -178,10 +184,14 @@ export async function createFollowUp(trx: Trx, auth: AuthContext, quoteId: strin
   return getFollowUp(trx, auth.companyId, followUp.id);
 }
 
-async function lockPendingFollowUp(trx: Trx, companyId: string, id: string) {
+async function lockPendingFollowUp(trx: Trx, companyId: string, id: string, options: { allowRule?: boolean } = {}) {
   const f = await trx.selectFrom('followUps').selectAll().where('companyId', '=', companyId).where('id', '=', id).forUpdate().executeTakeFirst();
   if (!f) throw errors.notFound('Seguimiento no encontrado.');
-  if (f.status !== 'pending') throw errors.invalidTransition('El seguimiento ya está completado o cancelado.');
+  if (f.status !== 'pending') throw errors.invalidTransition('El seguimiento ya no está pendiente.');
+  // Un email automático lo envía Presupio: no se marca como hecho a mano ni se edita; se aprueba o se cancela.
+  if (f.source === 'rule' && !options.allowRule) {
+    throw errors.invalidTransition('Este es un email automático: apruébalo o cancélalo desde su ficha.');
+  }
   return f;
 }
 
@@ -224,7 +234,7 @@ export async function completeFollowUp(
 }
 
 export async function cancelFollowUp(trx: Trx, auth: AuthContext, id: string, reason: string | null) {
-  const f = await lockPendingFollowUp(trx, auth.companyId, id);
+  const f = await lockPendingFollowUp(trx, auth.companyId, id, { allowRule: true });
   await trx
     .updateTable('followUps')
     .set({ status: 'cancelled', cancelledAt: new Date(), cancelReason: reason ?? 'manual' })

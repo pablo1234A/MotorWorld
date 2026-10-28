@@ -65,6 +65,7 @@ export function quoteDto(q: QuoteRow) {
     archivedAt: q.archivedAt,
     externalSource: q.externalSource,
     externalId: q.externalId,
+    autoFollowUpEnabled: q.autoFollowUpEnabled,
     contact: {
       id: q.contactId,
       fullName: q.contactFullName,
@@ -142,9 +143,14 @@ async function hadFollowUpBefore(trx: Trx, companyId: string, quoteId: string, a
     .select('id')
     .where('companyId', '=', companyId)
     .where('quoteId', '=', quoteId)
-    .where('status', '=', 'completed')
     .where('channel', '<>', 'task')
-    .where('completedAt', '<=', at)
+    // Contactos registrados a mano o emails automáticos confirmados por el proveedor.
+    .where((eb) =>
+      eb.or([
+        eb.and([eb('status', '=', 'completed'), eb('completedAt', '<=', at)]),
+        eb.and([eb('status', '=', 'sent'), eb('sentAt', '<=', at)]),
+      ]),
+    )
     .limit(1)
     .executeTakeFirst();
   return !!row;
@@ -280,7 +286,9 @@ export async function quoteSummary(trx: Trx, companyId: string) {
       sql<string>`count(*) filter (where status = 'pending')`.as('pending'),
       sql<string>`count(*) filter (where status = 'pending' and due_at < now())`.as('overdue'),
       // Contactos con clientes registrados como realizados (las tareas internas no cuentan).
-      sql<string>`count(*) filter (where status = 'completed' and channel <> 'task')`.as('completed'),
+      sql<string>`count(*) filter (where status in ('completed', 'sent') and channel <> 'task')`.as('completed'),
+      sql<string>`count(*) filter (where status = 'failed')`.as('failed'),
+      sql<string>`count(*) filter (where status = 'pending' and source = 'rule' and approved_at is null)`.as('awaitingApproval'),
     ])
     .where('companyId', '=', companyId)
     .executeTakeFirstOrThrow();
@@ -294,6 +302,12 @@ export async function quoteSummary(trx: Trx, companyId: string) {
     recoveredSales: Number(outcomes.recoveredSales),
     recoveredAmountCents: Number(outcomes.recoveredAmountCents ?? 0),
     recoveredAmountSource: 'declared_by_company' as const,
-    followUps: { pending: Number(followUps.pending), overdue: Number(followUps.overdue), completed: Number(followUps.completed) },
+    followUps: {
+      pending: Number(followUps.pending),
+      overdue: Number(followUps.overdue),
+      completed: Number(followUps.completed),
+      failed: Number(followUps.failed),
+      awaitingApproval: Number(followUps.awaitingApproval),
+    },
   };
 }

@@ -129,7 +129,8 @@ async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
     await client.query(`REVOKE UPDATE, DELETE ON activity_log FROM ${role}`);
     // La tabla de migraciones no es asunto de la aplicación.
     await client.query(`REVOKE ALL ON schema_migrations FROM ${role}`);
-    await client.query(`GRANT EXECUTE ON FUNCTION app_find_open_invitation(text) TO ${role}`);
+    // Funciones auxiliares, incluidas las SECURITY DEFINER acotadas (revocadas a PUBLIC en su migración).
+    await client.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${role}`);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

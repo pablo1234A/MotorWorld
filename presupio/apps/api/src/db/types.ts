@@ -8,7 +8,8 @@ export type UserTokenPurpose = 'password_reset' | 'email_verification';
 export type QuoteStatus = 'draft' | 'sent' | 'responded' | 'accepted' | 'rejected';
 export type ContactChannel = 'email' | 'phone' | 'whatsapp' | 'sms';
 export type FollowUpChannel = 'task' | 'email' | 'phone' | 'whatsapp' | 'sms' | 'in_person';
-export type FollowUpStatus = 'pending' | 'completed' | 'cancelled';
+export type FollowUpStatus = 'pending' | 'sending' | 'sent' | 'completed' | 'failed' | 'cancelled';
+export type DeliveryStatus = 'sending' | 'sent' | 'delivered' | 'failed' | 'unknown';
 export type FollowUpOutcome = 'no_answer' | 'left_message' | 'contacted' | 'responded' | 'wrong_contact' | 'other';
 export type FollowUpSource = 'manual' | 'rule';
 export type ExclusionReason = 'opt_out_request' | 'rejected' | 'legal' | 'bounced' | 'manual';
@@ -92,15 +93,18 @@ export interface SessionsTable {
 
 export interface CompanySettingsTable {
   companyId: string;
-  firstFollowUpAfterDays: Generated<number>;
-  followUpIntervalDays: Generated<number>;
-  maxFollowUps: Generated<number>;
+  followUpScheduleDays: Generated<number[]>;
   allowedWeekdays: Generated<number[]>;
   contactWindowStart: Generated<string>;
   contactWindowEnd: Generated<string>;
   defaultChannel: Generated<ContactChannel>;
   requireManualApproval: Generated<boolean>;
   legalBasisNote: string | null;
+  automationEnabled: Generated<boolean>;
+  automationEnabledAt: Timestamp | null;
+  automationEnabledByUserId: string | null;
+  senderName: string | null;
+  replyToEmail: string | null;
   updatedByUserId: string | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
@@ -177,6 +181,7 @@ export interface QuotesTable {
   archivedAt: Timestamp | null;
   externalSource: string | null;
   externalId: string | null;
+  autoFollowUpEnabled: Generated<boolean>;
   createdByUserId: string | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
@@ -199,9 +204,77 @@ export interface FollowUpsTable {
   cancelledAt: Timestamp | null;
   cancelReason: string | null;
   dedupeKey: string | null;
+  sequenceStep: number | null;
+  sequenceKey: string | null;
+  approvedAt: Timestamp | null;
+  approvedByUserId: string | null;
+  approvedTemplateVersionId: string | null;
+  approvedSubject: string | null;
+  approvedBody: string | null;
+  attemptCount: Generated<number>;
+  sentAt: Timestamp | null;
+  failureReason: string | null;
   createdByUserId: string | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
+}
+
+export interface MessageTemplateVersionsTable {
+  id: Generated<string>;
+  companyId: string;
+  step: number;
+  version: number;
+  subject: string;
+  body: string;
+  createdByUserId: string | null;
+  createdAt: CreatedAt;
+}
+
+export interface MessageDeliveriesTable {
+  id: Generated<string>;
+  companyId: string;
+  followUpId: string;
+  quoteId: string;
+  contactId: string;
+  channel: ContactChannel;
+  provider: string;
+  templateVersionId: string | null;
+  templateStep: number | null;
+  templateVersion: number | null;
+  attemptNumber: number;
+  status: Generated<DeliveryStatus>;
+  recipient: string;
+  subject: string | null;
+  bodyText: string | null;
+  contentPurgedAt: Timestamp | null;
+  providerMessageId: string | null;
+  errorCode: string | null;
+  errorDetail: string | null;
+  unsubscribeTokenHash: string | null;
+  createdAt: CreatedAt;
+  sentAt: Timestamp | null;
+  deliveredAt: Timestamp | null;
+  failedAt: Timestamp | null;
+  updatedAt: UpdatedAt;
+}
+
+export interface WebhookEventsTable {
+  id: Generated<string>;
+  provider: string;
+  tokenHash: string;
+  eventType: string;
+  deliveryId: string | null;
+  receivedAt: CreatedAt;
+}
+
+export interface JobRunsTable {
+  id: Generated<string>;
+  job: string;
+  status: Generated<string>;
+  startedAt: CreatedAt;
+  finishedAt: Timestamp | null;
+  stats: ColumnType<Record<string, unknown>, string | undefined, string>;
+  error: string | null;
 }
 
 export interface ActivityLogTable {
@@ -230,6 +303,10 @@ export interface Database {
   quotes: QuotesTable;
   followUps: FollowUpsTable;
   activityLog: ActivityLogTable;
+  messageTemplateVersions: MessageTemplateVersionsTable;
+  messageDeliveries: MessageDeliveriesTable;
+  webhookEvents: WebhookEventsTable;
+  jobRuns: JobRunsTable;
 }
 
 export type User = Selectable<UsersTable>;
@@ -243,3 +320,5 @@ export type ContactExclusion = Selectable<ContactExclusionsTable>;
 export type CompanySettings = Selectable<CompanySettingsTable>;
 export type Subscription = Selectable<SubscriptionsTable>;
 export type ActivityEntry = Selectable<ActivityLogTable>;
+export type MessageDelivery = Selectable<MessageDeliveriesTable>;
+export type TemplateVersion = Selectable<MessageTemplateVersionsTable>;
