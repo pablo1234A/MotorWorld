@@ -22,6 +22,7 @@ const envSchema = z.object({
   SESSION_IDLE_TIMEOUT_HOURS: z.coerce.number().int().min(1).max(24 * 30).default(24 * 7),
 
   TRIAL_DAYS: z.coerce.number().int().min(0).max(60).default(14),
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(10).max(100_000).default(600),
 
   MAIL_TRANSPORT: z.enum(['disabled', 'log', 'smtp']).default('disabled'),
   MAIL_FROM: z.string().optional(),
@@ -139,7 +140,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       invitationTtlMs: 7 * 24 * HOUR,
     },
     rateLimits: {
-      global: { max: 300, windowMs: MINUTE },
+      // Peticiones por IP y minuto. Una oficina entera puede compartir IP: no conviene un valor bajo.
+      global: { max: e.RATE_LIMIT_PER_MINUTE, windowMs: MINUTE },
       login: { max: 20, windowMs: 15 * MINUTE },
       loginPerEmail: { max: 5, windowMs: 15 * MINUTE },
       register: { max: 10, windowMs: HOUR },

@@ -10,10 +10,12 @@
   },
   "scripts": {
     "dev": "npm run dev -w @presupio/api",
-    "build": "npm run build -w @presupio/api",
+    "dev:web": "npm run dev -w @presupio/web",
+    "build": "npm run build -w @presupio/api && npm run build -w @presupio/web",
     "start": "npm run start -w @presupio/api",
-    "typecheck": "npm run typecheck -w @presupio/api",
-    "test": "npm run test -w @presupio/api",
+    "typecheck": "npm run typecheck -w @presupio/api && npm run typecheck -w @presupio/web",
+    "test": "npm run test -w @presupio/api && npm run test -w @presupio/web",
+    "test:e2e": "npm run test:e2e -w @presupio/web",
     "db:bootstrap": "npm run db:bootstrap -w @presupio/api",
     "db:migrate": "npm run db:migrate -w @presupio/api",
     "db:seed": "npm run db:seed -w @presupio/api"

@@ -2,12 +2,12 @@
 
 SaaS B2B para que las empresas de reformas integrales recuperen presupuestos enviados que se han quedado sin respuesta: detectar, hacer seguimiento ordenado y medir qué se reactiva y qué termina en venta, **sin inflar resultados**.
 
-> Estado: **Fase 1 de 5 — backend y base de datos.** Aún no hay frontend, motor automático de seguimiento, integraciones externas ni pagos.
+> Estado: **Fase 2 de 5 — frontend conectado al backend.** Aún no hay motor automático de seguimiento, integraciones externas ni pagos.
 
 | Fase | Contenido | Estado |
 |---|---|---|
 | 1 | Backend, base de datos, autenticación, multiempresa, API, seguridad y pruebas | ✅ |
-| 2 | Frontend y experiencia de usuario | Pendiente |
+| 2 | Frontend y experiencia de usuario | ✅ |
 | 3 | Motor de seguimiento e integración con un sistema externo | Pendiente |
 | 4 | Métricas, límites de planes y preparación para producción | Pendiente |
 | 5 | Pasarela de pago y suscripciones | Pendiente |
@@ -22,7 +22,9 @@ SaaS B2B para que las empresas de reformas integrales recuperen presupuestos env
 - **Argon2id**: contraseñas
 - **Vitest**: pruebas contra una base de datos real
 
-Arquitectura y decisiones: [`docs/arquitectura.md`](docs/arquitectura.md). Referencia de la API: [`docs/api.md`](docs/api.md).
+**Frontend (`apps/web`):** React 19 + Vite + TypeScript, React Router y TanStack Query. Sistema de diseño propio en CSS ([`apps/web/DESIGN.md`](apps/web/DESIGN.md)), sin frameworks de UI.
+
+Arquitectura y decisiones: [`docs/arquitectura.md`](docs/arquitectura.md). Referencia de la API: [`docs/api.md`](docs/api.md). Frontend: [`docs/frontend.md`](docs/frontend.md).
 
 ## Puesta en marcha (desarrollo)
 
@@ -64,6 +66,14 @@ Arranca la API en modo desarrollo (recarga automática) en http://localhost:3000
 npm run dev
 ```
 
+En otra terminal, arranca el frontend en http://localhost:5173. Vite reenvía `/api` a la API, así que la cookie de sesión funciona sin configurar CORS:
+
+```bash
+npm run dev:web
+```
+
+Abre http://localhost:5173 y crea una cuenta, o entra con la cuenta de demostración que imprimió `npm run db:seed`.
+
 Comprobación rápida:
 
 ```bash
@@ -93,7 +103,17 @@ En producción la configuración se valida al arrancar y el proceso se niega a i
 
 ## Pruebas
 
-Necesitan una base de datos cuyo nombre termine en `_test`, configurada en `TEST_DATABASE_URL` y `TEST_MIGRATION_DATABASE_URL`. Cada ejecución **borra y recrea** su esquema y aplica las migraciones.
+```bash
+npm test             # API (84) + frontend (65): unitarias y de componentes
+```
+
+```bash
+npm run test:e2e     # extremo a extremo en Chromium contra la API y la base de datos reales
+```
+
+Las pruebas E2E recrean la base de datos de pruebas, arrancan la API real (puerto 3100) y sirven la compilación de producción del frontend (puerto 4174) con las mismas cabeceras de seguridad (CSP) que producción. Recorren registro, presupuestos, seguimientos, venta con evidencia, exclusiones, recuperación de contraseña, aislamiento entre empresas, invitaciones, errores de la API, enlaces, accesibilidad (axe) y diseño adaptable a 1440, 768 y 390 px. Necesitan Chromium de Playwright (`npx playwright install chromium` si no está instalado).
+
+Las pruebas de la API necesitan una base de datos cuyo nombre termine en `_test`, configurada en `TEST_DATABASE_URL` y `TEST_MIGRATION_DATABASE_URL`. Cada ejecución **borra y recrea** su esquema y aplica las migraciones.
 
 ```bash
 npm test
@@ -135,6 +155,8 @@ Todas están documentadas en [`.env.example`](.env.example). Las principales:
 | `MAIL_FROM`, `SMTP_*` | Con `smtp` | Proveedor de correo |
 | `DATABASE_ADMIN_URL` | Solo `db:bootstrap` | Superusuario local para crear roles y bases de datos |
 | `TEST_DATABASE_URL`, `TEST_MIGRATION_DATABASE_URL` | Solo pruebas | Base de datos `*_test` |
+| `RATE_LIMIT_PER_MINUTE` | No | Peticiones a la API por IP y minuto (por defecto 600) |
+| `VITE_API_BASE_URL` | No (frontend) | Ruta de la API desde el navegador. Por defecto `/api/v1`, mismo origen. Ver [`apps/web/.env.example`](apps/web/.env.example) |
 
 ## Servicios externos no configurados
 
@@ -160,7 +182,16 @@ presupio/
 │   │   ├── plugins/auth.ts  sesiones, rutas privadas por defecto y permisos
 │   │   └── modules/         auth, me, company, members, contacts, quotes, follow-ups, exclusions, activity, health
 │   └── test/                pruebas de integración
-├── docs/                    arquitectura y API
+├── apps/web/
+│   ├── src/api/             cliente HTTP único, tipos de la API y consultas (TanStack Query)
+│   ├── src/auth/            sesión, rutas privadas y cierre de sesión
+│   ├── src/components/      componentes base, diálogo, menú, avisos y plano de cartera
+│   ├── src/layout/          estructura de la app (raíl, barra superior, navegación inferior)
+│   ├── src/pages/           pantallas
+│   ├── src/styles/          tokens y estilos del sistema de diseño
+│   ├── test/                pruebas unitarias y de componentes (Vitest)
+│   └── e2e/                 pruebas de extremo a extremo (Playwright)
+├── docs/                    arquitectura, API y frontend
 ├── docker-compose.yml       PostgreSQL local
 └── .env.example
 ```

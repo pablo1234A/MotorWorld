@@ -1,10 +1,10 @@
-name: Presupio API
+name: Presupio
 
 on:
   push:
-    paths: ["presupio/**", ".github/workflows/presupio-api.yml"]
+    paths: ["presupio/**", ".github/workflows/presupio.yml"]
   pull_request:
-    paths: ["presupio/**", ".github/workflows/presupio-api.yml"]
+    paths: ["presupio/**", ".github/workflows/presupio.yml"]
 
 permissions:
   contents: read
@@ -41,3 +41,12 @@ jobs:
       - run: npm run build
       - run: npm run db:bootstrap
       - run: npm test
+      - run: npx playwright install --with-deps chromium
+        working-directory: presupio/apps/web
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: presupio/apps/web/test-results
+          retention-days: 7

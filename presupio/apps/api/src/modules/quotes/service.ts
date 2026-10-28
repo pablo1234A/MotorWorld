@@ -277,11 +277,12 @@ export async function quoteSummary(trx: Trx, companyId: string) {
   const followUps = await trx
     .selectFrom('followUps')
     .select([
-      sql<string>`count(*)`.as('pending'),
-      sql<string>`count(*) filter (where due_at < now())`.as('overdue'),
+      sql<string>`count(*) filter (where status = 'pending')`.as('pending'),
+      sql<string>`count(*) filter (where status = 'pending' and due_at < now())`.as('overdue'),
+      // Contactos con clientes registrados como realizados (las tareas internas no cuentan).
+      sql<string>`count(*) filter (where status = 'completed' and channel <> 'task')`.as('completed'),
     ])
     .where('companyId', '=', companyId)
-    .where('status', '=', 'pending')
     .executeTakeFirstOrThrow();
 
   const counts = { draft: 0, sent: 0, responded: 0, accepted: 0, rejected: 0 } satisfies Record<QuoteStatus, number>;
@@ -293,6 +294,6 @@ export async function quoteSummary(trx: Trx, companyId: string) {
     recoveredSales: Number(outcomes.recoveredSales),
     recoveredAmountCents: Number(outcomes.recoveredAmountCents ?? 0),
     recoveredAmountSource: 'declared_by_company' as const,
-    followUps: { pending: Number(followUps.pending), overdue: Number(followUps.overdue) },
+    followUps: { pending: Number(followUps.pending), overdue: Number(followUps.overdue), completed: Number(followUps.completed) },
   };
 }

@@ -110,7 +110,7 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
 | GET | `/quotes` | Lectura | Filtros: `status=sent,responded`, `q`, `ownerUserId`, `contactId`, `archived=false\|true\|all` |
-| GET | `/quotes/summary` | Lectura | Recuento por estado, `responded`, `reactivated`, `recoveredSales`, `recoveredAmountCents` (declarado por la empresa) y seguimientos `pending` y `overdue` |
+| GET | `/quotes/summary` | Lectura | Recuento por estado, `responded`, `reactivated`, `recoveredSales`, `recoveredAmountCents` (declarado por la empresa) y seguimientos `pending`, `overdue` y `completed` (contactos realizados; las tareas internas no cuentan) |
 | POST | `/quotes` | Escritura | Ver los campos debajo |
 | GET | `/quotes/:id` | Lectura | `{ quote, pendingFollowUps, allowedTransitions[] }` |
 | PATCH | `/quotes/:id` | Escritura | `title, contactId, reference, description, amountCents, currency, sentAt, validUntil, ownerUserId`. **No** acepta el estado |
@@ -162,4 +162,4 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
-| GET | `/activity?entityType=` | Lectura | Historial de la empresa. Cada entrada tiene `action` (p. ej. `quote.status_changed`), `entityType`, `entityId`, `quoteId`, `metadata`, `actor` y `createdAt` |
+| GET | `/activity?entityType=` | Lectura | Historial de la empresa. Cada entrada tiene `action` (p. ej. `quote.status_changed`), `entityType`, `entityId`, `quoteId`, `quote` (`id`, `title`, `reference`), `metadata`, `actor` y `createdAt` |

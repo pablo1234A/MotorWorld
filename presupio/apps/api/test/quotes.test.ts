@@ -144,6 +144,7 @@ describe('presupuestos: estados', () => {
     const history = await c.get(`/quotes/${q.id}/activity`);
     const actions = history.body.items.map((e: { action: string }) => e.action);
     expect(actions).toEqual(expect.arrayContaining(['quote.created', 'follow_up.logged', 'quote.status_changed']));
+    expect(history.body.items[0].quote).toEqual({ id: q.id, title: q.title, reference: q.reference });
   });
 
   it('un rechazo tras seguimiento cuenta como respuesta pero no como reactivación', async () => {
@@ -175,10 +176,13 @@ describe('presupuestos: estados', () => {
     const q = await createQuote(own.client);
     await own.client.post(`/quotes/${q.id}/follow-ups`, { channel: 'phone', status: 'completed' });
     await own.client.post(`/quotes/${q.id}/status`, { status: 'accepted', evidence: 'Pedido confirmado' });
-    await createQuote(own.client);
+    const pending = await createQuote(own.client);
+    // Una tarea interna realizada no cuenta como seguimiento al cliente.
+    await own.client.post(`/quotes/${pending.id}/follow-ups`, { channel: 'task', title: 'Revisar planos', status: 'completed' });
     const s = (await own.client.get('/quotes/summary')).body.summary;
     expect(s.byStatus).toEqual({ draft: 0, sent: 1, responded: 0, accepted: 1, rejected: 0 });
     expect(s).toMatchObject({ reactivated: 1, recoveredSales: 1, recoveredAmountCents: 1_850_000, recoveredAmountSource: 'declared_by_company' });
+    expect(s.followUps).toEqual({ pending: 0, overdue: 0, completed: 1 });
   });
 });
 

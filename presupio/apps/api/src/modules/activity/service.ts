@@ -49,7 +49,10 @@ export async function listActivity(
   let query = trx
     .selectFrom('activityLog as a')
     .leftJoin('users as u', 'u.id', 'a.actorUserId')
+    .leftJoin('quotes as q', (join) => join.onRef('q.id', '=', 'a.quoteId').onRef('q.companyId', '=', 'a.companyId'))
     .select([
+      'q.title as quoteTitle',
+      'q.reference as quoteReference',
       'a.id',
       'a.action',
       'a.entityType',
@@ -83,6 +86,7 @@ export async function listActivity(
       entityType: r.entityType,
       entityId: r.entityId,
       quoteId: r.quoteId,
+      quote: r.quoteId ? { id: r.quoteId, title: r.quoteTitle, reference: r.quoteReference } : null,
       metadata: r.metadata,
       actor: r.actorUserId ? { id: r.actorUserId, fullName: r.actorName } : null,
       createdAt: r.createdAt,
