@@ -5,6 +5,7 @@ import { buildApp } from '../src/app.js';
 import { loadConfig, type AppConfig } from '../src/config.js';
 import { createDb, type Db } from '../src/db/database.js';
 import { MemoryMailer } from '../src/mail/mailer.js';
+import type { FollowUpEmailProvider } from '../src/automation/providers.js';
 
 export const API = '/api/v1';
 export const TEST_PASSWORD = 'Contraseña-de-prueba-1';
@@ -18,7 +19,10 @@ export interface TestContext {
 }
 
 /** App con base de datos de pruebas, correo en memoria y límites amplios (salvo que se indiquen). */
-export async function createTestApp(customize?: (config: AppConfig) => void): Promise<TestContext> {
+export async function createTestApp(
+  customize?: (config: AppConfig) => void,
+  deps: { followUpProvider?: FollowUpEmailProvider } = {},
+): Promise<TestContext> {
   const config = loadConfig({
     NODE_ENV: 'test',
     LOG_LEVEL: 'silent',
@@ -39,7 +43,7 @@ export async function createTestApp(customize?: (config: AppConfig) => void): Pr
   customize?.(config);
   const db = createDb(config.databaseUrl, config.dbPoolMax);
   const mailer = new MemoryMailer();
-  const app = await buildApp({ config, db, mailer });
+  const app = await buildApp({ config, db, mailer, ...deps });
   await app.ready();
   afterAll(async () => {
     await app.close();
