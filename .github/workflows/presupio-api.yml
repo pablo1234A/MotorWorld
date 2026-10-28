@@ -1,0 +1,43 @@
+name: Presupio API
+
+on:
+  push:
+    paths: ["presupio/**", ".github/workflows/presupio-api.yml"]
+  pull_request:
+    paths: ["presupio/**", ".github/workflows/presupio-api.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: presupio
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      # Credenciales efímeras del contenedor de CI (no pertenecen a ningún entorno real).
+      DATABASE_ADMIN_URL: postgres://postgres:postgres@localhost:5432/postgres
+      TEST_DATABASE_URL: postgres://presupio_app:ci_app@localhost:5432/presupio_test
+      TEST_MIGRATION_DATABASE_URL: postgres://presupio_owner:ci_owner@localhost:5432/presupio_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: presupio/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run db:bootstrap
+      - run: npm test

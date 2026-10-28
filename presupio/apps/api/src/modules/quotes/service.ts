@@ -1,0 +1,298 @@
+import { sql } from 'kysely';
+import type { Trx } from '../../db/database.js';
+import type { Quote, QuoteStatus, QuoteUpdate } from '../../db/types.js';
+import { allowedTransitions, transitionKind } from '../../domain/quote-status.js';
+import { errors, pgConstraint, pgErrorCode, PG_UNIQUE_VIOLATION } from '../../lib/errors.js';
+import type { AuthContext } from '../../plugins/auth.js';
+import { can } from '../../domain/permissions.js';
+import { logActivity } from '../activity/service.js';
+
+/** Margen para relojes ligeramente desincronizados del cliente. */
+const CLOCK_SKEW_MS = 2 * 60_000;
+
+export function quoteQuery(trx: Trx, companyId: string) {
+  return trx
+    .selectFrom('quotes as q')
+    .innerJoin('contacts as c', (join) => join.onRef('c.id', '=', 'q.contactId').onRef('c.companyId', '=', 'q.companyId'))
+    .leftJoin('users as o', 'o.id', 'q.ownerUserId')
+    .selectAll('q')
+    .select([
+      'c.fullName as contactFullName',
+      'c.email as contactEmail',
+      'c.phone as contactPhone',
+      'c.organization as contactOrganization',
+      'o.fullName as ownerFullName',
+    ])
+    .where('q.companyId', '=', companyId);
+}
+
+type QuoteRow = Quote & {
+  contactFullName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  contactOrganization: string | null;
+  ownerFullName: string | null;
+};
+
+export function quoteDto(q: QuoteRow) {
+  return {
+    id: q.id,
+    reference: q.reference,
+    title: q.title,
+    description: q.description,
+    amountCents: q.amountCents,
+    currency: q.currency,
+    status: q.status,
+    statusChangedAt: q.statusChangedAt,
+    sentAt: q.sentAt,
+    validUntil: q.validUntil,
+    lastFollowUpAt: q.lastFollowUpAt,
+    respondedAt: q.respondedAt,
+    reactivatedAt: q.reactivatedAt,
+    acceptedAt: q.acceptedAt,
+    acceptance:
+      q.status === 'accepted'
+        ? {
+            confirmedByUserId: q.acceptanceConfirmedByUserId,
+            evidence: q.acceptanceEvidence,
+            amountCents: q.acceptedAmountCents,
+            // El importe lo declara la empresa; Presupio no puede verificarlo automáticamente.
+            amountSource: 'declared_by_company' as const,
+          }
+        : null,
+    rejectedAt: q.rejectedAt,
+    rejectionReason: q.rejectionReason,
+    archivedAt: q.archivedAt,
+    externalSource: q.externalSource,
+    externalId: q.externalId,
+    contact: {
+      id: q.contactId,
+      fullName: q.contactFullName,
+      email: q.contactEmail,
+      phone: q.contactPhone,
+      organization: q.contactOrganization,
+    },
+    owner: q.ownerUserId ? { id: q.ownerUserId, fullName: q.ownerFullName } : null,
+    // Etapas separadas: responder ≠ reactivar ≠ vender (plan maestro, sección 4).
+    outcome: {
+      responded: q.respondedAt !== null,
+      reactivated: q.reactivatedAt !== null,
+      recoveredSale: q.status === 'accepted' && q.reactivatedAt !== null,
+    },
+    createdAt: q.createdAt,
+    updatedAt: q.updatedAt,
+  };
+}
+
+export async function getQuoteRow(trx: Trx, companyId: string, id: string): Promise<QuoteRow> {
+  const row = await quoteQuery(trx, companyId).where('q.id', '=', id).executeTakeFirst();
+  if (!row) throw errors.notFound('Presupuesto no encontrado.');
+  return row;
+}
+
+/** Bloquea la fila del presupuesto para modificarla sin condiciones de carrera. */
+export async function lockQuote(trx: Trx, companyId: string, id: string): Promise<Quote> {
+  const quote = await trx.selectFrom('quotes').selectAll().where('companyId', '=', companyId).where('id', '=', id).forUpdate().executeTakeFirst();
+  if (!quote) throw errors.notFound('Presupuesto no encontrado.');
+  return quote;
+}
+
+export function translateQuoteConflict(error: unknown): never {
+  if (pgErrorCode(error) === PG_UNIQUE_VIOLATION) {
+    const c = pgConstraint(error);
+    if (c === 'quotes_company_reference_key') throw errors.conflict('Ya existe un presupuesto con esa referencia.');
+    if (c === 'quotes_company_external_key') throw errors.conflict('Ese presupuesto externo ya está importado.');
+  }
+  throw error;
+}
+
+export async function assertMember(trx: Trx, companyId: string, userId: string, field: string): Promise<void> {
+  const m = await trx.selectFrom('memberships').select('id').where('companyId', '=', companyId).where('userId', '=', userId).executeTakeFirst();
+  if (!m) throw errors.validation('El usuario indicado no pertenece a la empresa.', [{ path: field, message: 'Usuario no válido' }]);
+}
+
+export function assertNotFuture(date: Date, field: string): void {
+  if (date.getTime() > Date.now() + CLOCK_SKEW_MS) {
+    throw errors.validation('La fecha no puede estar en el futuro.', [{ path: field, message: 'No puede ser una fecha futura' }]);
+  }
+}
+
+/** Cancela los seguimientos pendientes de un presupuesto (p. ej. porque el cliente ha respondido). */
+export async function cancelPendingFollowUps(
+  trx: Trx,
+  companyId: string,
+  quoteId: string,
+  reason: string,
+  options: { onlyContact: boolean },
+): Promise<number> {
+  let q = trx
+    .updateTable('followUps')
+    .set({ status: 'cancelled', cancelledAt: new Date(), cancelReason: reason })
+    .where('companyId', '=', companyId)
+    .where('quoteId', '=', quoteId)
+    .where('status', '=', 'pending');
+  if (options.onlyContact) q = q.where('channel', '<>', 'task');
+  return (await q.returning('id').execute()).length;
+}
+
+/** ¿Hubo un seguimiento de contacto completado antes de la respuesta del cliente? */
+async function hadFollowUpBefore(trx: Trx, companyId: string, quoteId: string, at: Date): Promise<boolean> {
+  const row = await trx
+    .selectFrom('followUps')
+    .select('id')
+    .where('companyId', '=', companyId)
+    .where('quoteId', '=', quoteId)
+    .where('status', '=', 'completed')
+    .where('channel', '<>', 'task')
+    .where('completedAt', '<=', at)
+    .limit(1)
+    .executeTakeFirst();
+  return !!row;
+}
+
+export interface StatusChangeInput {
+  status: QuoteStatus;
+  occurredAt?: Date | undefined;
+  note?: string | null | undefined;
+  evidence?: string | undefined;
+  acceptedAmountCents?: number | undefined;
+  rejectionReason?: string | null | undefined;
+}
+
+export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: string, input: StatusChangeInput) {
+  const quote = await lockQuote(trx, auth.companyId, quoteId);
+  if (quote.archivedAt) throw errors.invalidTransition('El presupuesto está archivado. Desarchívalo antes de cambiar su estado.');
+
+  const from = quote.status;
+  const to = input.status;
+  const kind = transitionKind(from, to);
+  const canCorrect = can(auth.role, 'quotes:reopen');
+  if (!kind || (kind === 'correction' && !canCorrect)) {
+    const allowed = allowedTransitions(from, canCorrect);
+    throw errors.invalidTransition(
+      allowed.length
+        ? `No se puede pasar de "${from}" a "${to}". Estados permitidos: ${allowed.join(', ')}.`
+        : `El estado "${from}" es definitivo y no admite cambios con tu rol.`,
+    );
+  }
+
+  const now = new Date();
+  const occurredAt = input.occurredAt ?? now;
+  assertNotFuture(occurredAt, 'occurredAt');
+  if (quote.sentAt && to !== 'sent' && occurredAt < quote.sentAt) {
+    throw errors.validation('La fecha no puede ser anterior al envío del presupuesto.', [
+      { path: 'occurredAt', message: 'Anterior a la fecha de envío' },
+    ]);
+  }
+
+  const patch: QuoteUpdate = { status: to, statusChangedAt: now };
+  let reactivated = false;
+
+  // Al salir de un estado final por corrección, se limpian sus datos.
+  if (from === 'accepted') Object.assign(patch, { acceptedAt: null, acceptanceEvidence: null, acceptedAmountCents: null, acceptanceConfirmedByUserId: null });
+  if (from === 'rejected') Object.assign(patch, { rejectedAt: null, rejectionReason: null });
+
+  switch (to) {
+    case 'sent':
+      if (from === 'draft') patch.sentAt = occurredAt;
+      break;
+    case 'responded':
+    case 'accepted':
+      patch.respondedAt = quote.respondedAt ?? occurredAt;
+      if (!quote.reactivatedAt && (await hadFollowUpBefore(trx, auth.companyId, quoteId, occurredAt))) {
+        patch.reactivatedAt = occurredAt;
+        reactivated = true;
+      }
+      if (to === 'accepted') {
+        if (!input.evidence || input.evidence.trim().length < 3) {
+          throw errors.validation('Para confirmar una venta, documenta la evidencia (contrato, pedido, señal…).', [
+            { path: 'evidence', message: 'Obligatorio al aceptar' },
+          ]);
+        }
+        Object.assign(patch, {
+          acceptedAt: occurredAt,
+          acceptanceEvidence: input.evidence.trim(),
+          acceptedAmountCents: input.acceptedAmountCents ?? quote.amountCents,
+          acceptanceConfirmedByUserId: auth.userId,
+        });
+      }
+      break;
+    case 'rejected':
+      patch.respondedAt = quote.respondedAt ?? occurredAt;
+      patch.rejectedAt = occurredAt;
+      patch.rejectionReason = input.rejectionReason ?? null;
+      break;
+    case 'draft':
+      break;
+  }
+
+  await trx.updateTable('quotes').set(patch).where('companyId', '=', auth.companyId).where('id', '=', quoteId).execute();
+
+  // El cliente ha contestado: se detiene la secuencia de seguimiento.
+  let cancelledFollowUps = 0;
+  if (to === 'responded') {
+    cancelledFollowUps = await cancelPendingFollowUps(trx, auth.companyId, quoteId, 'quote_responded', { onlyContact: true });
+  } else if (to === 'accepted' || to === 'rejected') {
+    cancelledFollowUps = await cancelPendingFollowUps(trx, auth.companyId, quoteId, `quote_${to}`, { onlyContact: false });
+  }
+
+  await logActivity(trx, auth, {
+    action: 'quote.status_changed',
+    entityType: 'quote',
+    entityId: quoteId,
+    quoteId,
+    metadata: {
+      from,
+      to,
+      correction: kind === 'correction',
+      occurredAt,
+      reactivated,
+      cancelledFollowUps,
+      note: input.note ?? undefined,
+    },
+  });
+
+  return { reactivated, cancelledFollowUps };
+}
+
+export async function quoteSummary(trx: Trx, companyId: string) {
+  const byStatus = await trx
+    .selectFrom('quotes')
+    .select(['status', (eb) => eb.fn.countAll<string>().as('count')])
+    .where('companyId', '=', companyId)
+    .where('archivedAt', 'is', null)
+    .groupBy('status')
+    .execute();
+  const outcomes = await trx
+    .selectFrom('quotes')
+    .select([
+      sql<string>`count(*) filter (where responded_at is not null)`.as('responded'),
+      sql<string>`count(*) filter (where reactivated_at is not null)`.as('reactivated'),
+      sql<string>`count(*) filter (where status = 'accepted' and reactivated_at is not null)`.as('recoveredSales'),
+      sql<string | null>`sum(accepted_amount_cents) filter (where status = 'accepted' and reactivated_at is not null)`.as('recoveredAmountCents'),
+    ])
+    .where('companyId', '=', companyId)
+    .where('archivedAt', 'is', null)
+    .executeTakeFirstOrThrow();
+  const followUps = await trx
+    .selectFrom('followUps')
+    .select([
+      sql<string>`count(*)`.as('pending'),
+      sql<string>`count(*) filter (where due_at < now())`.as('overdue'),
+    ])
+    .where('companyId', '=', companyId)
+    .where('status', '=', 'pending')
+    .executeTakeFirstOrThrow();
+
+  const counts = { draft: 0, sent: 0, responded: 0, accepted: 0, rejected: 0 } satisfies Record<QuoteStatus, number>;
+  for (const row of byStatus) counts[row.status] = Number(row.count);
+  return {
+    byStatus: counts,
+    responded: Number(outcomes.responded),
+    reactivated: Number(outcomes.reactivated),
+    recoveredSales: Number(outcomes.recoveredSales),
+    recoveredAmountCents: Number(outcomes.recoveredAmountCents ?? 0),
+    recoveredAmountSource: 'declared_by_company' as const,
+    followUps: { pending: Number(followUps.pending), overdue: Number(followUps.overdue) },
+  };
+}

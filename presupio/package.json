@@ -1,0 +1,21 @@
+{
+  "name": "presupio",
+  "private": true,
+  "description": "Presupio — SaaS de recuperación de presupuestos sin respuesta",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @presupio/api",
+    "build": "npm run build -w @presupio/api",
+    "start": "npm run start -w @presupio/api",
+    "typecheck": "npm run typecheck -w @presupio/api",
+    "test": "npm run test -w @presupio/api",
+    "db:bootstrap": "npm run db:bootstrap -w @presupio/api",
+    "db:migrate": "npm run db:migrate -w @presupio/api",
+    "db:seed": "npm run db:seed -w @presupio/api"
+  }
+}

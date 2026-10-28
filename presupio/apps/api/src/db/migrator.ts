@@ -1,0 +1,138 @@
+import { createHash } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import pg from 'pg';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+// src/db → apps/api ; dist/src/db → apps/api
+const apiRoot = here.includes(`${path.sep}dist${path.sep}`) ? path.resolve(here, '../../..') : path.resolve(here, '../..');
+export const MIGRATIONS_DIR = path.join(apiRoot, 'migrations');
+
+// Clave arbitraria para el bloqueo consultivo que evita migraciones concurrentes.
+const LOCK_KEY = 4_815_162_342;
+
+export interface MigrationResult {
+  applied: string[];
+  alreadyApplied: string[];
+}
+
+interface MigrationFile {
+  version: string;
+  sql: string;
+  checksum: string;
+}
+
+async function loadMigrations(dir: string): Promise<MigrationFile[]> {
+  const files = (await readdir(dir)).filter((f) => /^\d{4}_[a-z0-9_]+\.sql$/.test(f)).sort();
+  return Promise.all(
+    files.map(async (file) => {
+      const content = await readFile(path.join(dir, file), 'utf8');
+      return {
+        version: file.replace(/\.sql$/, ''),
+        sql: content,
+        checksum: createHash('sha256').update(content).digest('hex'),
+      };
+    }),
+  );
+}
+
+function quoteIdent(name: string): string {
+  if (!/^[a-z_][a-z0-9_]{0,62}$/.test(name)) throw new Error(`Nombre de rol inválido: ${name}`);
+  return `"${name}"`;
+}
+
+/**
+ * Aplica las migraciones pendientes con el rol propietario del esquema y concede al rol
+ * de la aplicación únicamente los permisos de datos que necesita (sin DDL, sin BYPASSRLS).
+ */
+export async function migrate(options: {
+  connectionString: string;
+  appRole: string;
+  dir?: string;
+  log?: (msg: string) => void;
+}): Promise<MigrationResult> {
+  const log = options.log ?? (() => {});
+  const migrations = await loadMigrations(options.dir ?? MIGRATIONS_DIR);
+  const client = new pg.Client({ connectionString: options.connectionString });
+  await client.connect();
+  try {
+    await client.query('SELECT pg_advisory_lock($1)', [LOCK_KEY]);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version text PRIMARY KEY,
+        checksum text NOT NULL,
+        applied_at timestamptz NOT NULL DEFAULT now()
+      )`);
+    const { rows } = await client.query<{ version: string; checksum: string }>(
+      'SELECT version, checksum FROM schema_migrations ORDER BY version',
+    );
+    const done = new Map(rows.map((r) => [r.version, r.checksum]));
+    const known = new Set(migrations.map((m) => m.version));
+    for (const version of done.keys()) {
+      if (!known.has(version)) throw new Error(`La base de datos tiene la migración ${version}, que no existe en el código`);
+    }
+
+    const result: MigrationResult = { applied: [], alreadyApplied: [] };
+    for (const m of migrations) {
+      const existing = done.get(m.version);
+      if (existing) {
+        if (existing !== m.checksum) {
+          throw new Error(`La migración ${m.version} ya aplicada ha sido modificada. Crea una migración nueva en su lugar.`);
+        }
+        result.alreadyApplied.push(m.version);
+        continue;
+      }
+      log(`Aplicando ${m.version}…`);
+      await client.query('BEGIN');
+      try {
+        await client.query(m.sql);
+        await client.query('INSERT INTO schema_migrations (version, checksum) VALUES ($1, $2)', [m.version, m.checksum]);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(`Error en la migración ${m.version}: ${(error as Error).message}`);
+      }
+      result.applied.push(m.version);
+    }
+
+    await applyGrants(client, options.appRole);
+    return result;
+  } finally {
+    await client.query('SELECT pg_advisory_unlock($1)', [LOCK_KEY]).catch(() => {});
+    await client.end();
+  }
+}
+
+async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
+  const role = quoteIdent(appRole);
+  const { rows } = await client.query<{ rolsuper: boolean; rolbypassrls: boolean }>(
+    'SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = $1',
+    [appRole],
+  );
+  const info = rows[0];
+  if (!info) throw new Error(`El rol de aplicación "${appRole}" no existe. Ejecuta npm run db:bootstrap o créalo manualmente.`);
+  if (info.rolsuper || info.rolbypassrls) {
+    throw new Error(`El rol de aplicación "${appRole}" no puede ser superusuario ni tener BYPASSRLS`);
+  }
+  const { rows: owner } = await client.query<{ current_user: string }>('SELECT current_user');
+  if (owner[0]?.current_user === appRole) {
+    throw new Error('Las migraciones deben ejecutarse con un rol distinto del rol de la aplicación');
+  }
+
+  await client.query('BEGIN');
+  try {
+    await client.query(`GRANT USAGE ON SCHEMA public TO ${role}`);
+    await client.query(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM ${role}`);
+    await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${role}`);
+    // El historial de actividad es de solo inserción.
+    await client.query(`REVOKE UPDATE, DELETE ON activity_log FROM ${role}`);
+    // La tabla de migraciones no es asunto de la aplicación.
+    await client.query(`REVOKE ALL ON schema_migrations FROM ${role}`);
+    await client.query(`GRANT EXECUTE ON FUNCTION app_find_open_invitation(text) TO ${role}`);
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  }
+}
