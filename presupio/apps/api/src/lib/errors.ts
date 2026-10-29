@@ -12,6 +12,7 @@ export type ErrorCode =
   | 'CONTACT_EXCLUDED'
   | 'INVALID_TOKEN'
   | 'RATE_LIMITED'
+  | 'SERVICE_UNAVAILABLE'
   | 'INTERNAL_ERROR';
 
 export interface ErrorDetail {
@@ -65,3 +66,33 @@ export function pgConstraint(error: unknown): string | undefined {
 export const PG_UNIQUE_VIOLATION = '23505';
 export const PG_FOREIGN_KEY_VIOLATION = '23503';
 export const PG_CHECK_VIOLATION = '23514';
+
+/**
+ * Errores de disponibilidad de la base de datos (caída, reinicio, conexiones agotadas,
+ * tiempo de espera). Se responden con 503 y sin detalles: el cliente puede reintentar.
+ */
+const DB_UNAVAILABLE_CODES = new Set([
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ENOTFOUND',
+  'ETIMEDOUT',
+  'EAI_AGAIN',
+  '57P01', // admin_shutdown
+  '57P02', // crash_shutdown
+  '57P03', // cannot_connect_now
+  '53300', // too_many_connections
+  '08000',
+  '08001',
+  '08003',
+  '08006',
+  '28P01', // credenciales de la base de datos rechazadas (configuración)
+  '28000',
+  '3D000', // la base de datos no existe (configuración)
+]);
+
+export function isDatabaseUnavailable(error: unknown): boolean {
+  const code = pgErrorCode(error);
+  if (code && DB_UNAVAILABLE_CODES.has(code)) return true;
+  const message = error instanceof Error ? error.message : '';
+  return /timeout exceeded when trying to connect|Connection terminated|connect ECONNREFUSED/i.test(message);
+}

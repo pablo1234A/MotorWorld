@@ -120,17 +120,36 @@ async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
     throw new Error('Las migraciones deben ejecutarse con un rol distinto del rol de la aplicación');
   }
 
+  // Esquema que se está migrando (el primero del search_path: «public» en una instalación normal).
+  const { rows: current } = await client.query<{ schema: string }>('SELECT current_schema() AS schema');
+  const schemaName = current[0]?.schema;
+  if (!schemaName) throw new Error('No hay ningún esquema en el search_path');
+  const schema = quoteIdent(schemaName);
+
   await client.query('BEGIN');
   try {
-    await client.query(`GRANT USAGE ON SCHEMA public TO ${role}`);
-    await client.query(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM ${role}`);
-    await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${role}`);
+    await client.query(`GRANT USAGE ON SCHEMA ${schema} TO ${role}`);
+    await client.query(`REVOKE ALL ON ALL TABLES IN SCHEMA ${schema} FROM ${role}`);
+    await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ${schema} TO ${role}`);
+    // Restricciones por tabla (solo si la tabla existe: así se puede migrar paso a paso).
+    const restrict = async (table: string, privileges: string) => {
+      const qualified = `${schema}.${quoteIdent(table)}`;
+      const { rows: found } = await client.query<{ exists: boolean }>('SELECT to_regclass($1) IS NOT NULL AS exists', [qualified]);
+      if (found[0]?.exists) await client.query(`REVOKE ${privileges} ON ${qualified} FROM ${role}`);
+    };
     // El historial de actividad es de solo inserción.
-    await client.query(`REVOKE UPDATE, DELETE ON activity_log FROM ${role}`);
+    await restrict('activity_log', 'UPDATE, DELETE');
+    // El plan y su estado no se modifican desde la aplicación: solo los crea el alta (prueba
+    // gratuita) y los cambia un proceso de operación o, en la fase 5, el proveedor de pagos
+    // (con otro rol). Aunque un endpoint tuviera un fallo, la base de datos lo impide.
+    await restrict('subscriptions', 'UPDATE, DELETE');
+    // Las recuperaciones y los periodos de uso no se borran ni se reescriben desde la aplicación.
+    await restrict('recovery_events', 'UPDATE, DELETE');
+    await restrict('usage_periods', 'DELETE');
     // La tabla de migraciones no es asunto de la aplicación.
-    await client.query(`REVOKE ALL ON schema_migrations FROM ${role}`);
+    await client.query(`REVOKE ALL ON ${schema}.schema_migrations FROM ${role}`);
     // Funciones auxiliares, incluidas las SECURITY DEFINER acotadas (revocadas a PUBLIC en su migración).
-    await client.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${role}`);
+    await client.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schema} TO ${role}`);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

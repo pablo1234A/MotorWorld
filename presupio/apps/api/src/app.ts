@@ -6,7 +6,8 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
 import type { AppConfig } from './config.js';
 import type { Db } from './db/database.js';
-import { AppError, errors, pgErrorCode, PG_CHECK_VIOLATION, PG_FOREIGN_KEY_VIOLATION } from './lib/errors.js';
+import { safeErrorSerializer } from './lib/log.js';
+import { AppError, errors, isDatabaseUnavailable, pgErrorCode, PG_CHECK_VIOLATION, PG_FOREIGN_KEY_VIOLATION } from './lib/errors.js';
 import { createMemoryLimiter, type KeyedLimiter } from './lib/rate-limiter.js';
 import { createMailer, type Mailer } from './mail/mailer.js';
 import { authPlugin } from './plugins/auth.js';
@@ -19,6 +20,9 @@ import { automaticFollowUpRoutes, followUpRoutes } from './modules/follow-ups/ro
 import { automationRoutes } from './modules/automation/routes.js';
 import { publicRoutes } from './modules/public/routes.js';
 import { webhookRoutes } from './modules/webhooks/routes.js';
+import { usageRoutes } from './modules/usage/routes.js';
+import { metricsRoutes } from './modules/metrics/routes.js';
+import { opsRoutes } from './modules/ops/routes.js';
 import { createFollowUpProvider, type FollowUpEmailProvider } from './automation/providers.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { meRoutes } from './modules/me/routes.js';
@@ -74,6 +78,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
               censor: '[redactado]',
             },
             serializers: {
+              err: safeErrorSerializer,
               // Los enlaces de baja llevan un token en la URL: nunca se escribe en los logs.
               req(req: { method: string; url: string; ip?: string }) {
                 return { method: req.method, url: req.url.replace(/([?&]token=)[^&]+/g, '$1[redactado]') };
@@ -178,6 +183,13 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     if (fe.statusCode && fe.statusCode >= 400 && fe.statusCode < 500) {
       return reply.status(fe.statusCode).send({ error: { code: 'VALIDATION_ERROR', message: 'Petición no válida.', requestId: req.id } });
     }
+    if (isDatabaseUnavailable(error)) {
+      req.log.error({ errCode: pgErrorCode(error) ?? 'connection' }, 'Base de datos no disponible');
+      reply.header('retry-after', '30');
+      return reply
+        .status(503)
+        .send({ error: { code: 'SERVICE_UNAVAILABLE', message: 'El servicio no está disponible en este momento. Inténtalo de nuevo en unos minutos.', requestId: req.id } });
+    }
     req.log.error({ err: error }, 'Error no controlado');
     return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Error interno. Inténtalo de nuevo.', requestId: req.id } });
   });
@@ -215,6 +227,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(automaticFollowUpRoutes, { prefix: `${API_PREFIX}/follow-ups` });
   await app.register(publicRoutes, { prefix: `${API_PREFIX}/public` });
   await app.register(webhookRoutes, { prefix: `${API_PREFIX}/webhooks` });
+  await app.register(usageRoutes, { prefix: `${API_PREFIX}/usage` });
+  await app.register(metricsRoutes, { prefix: `${API_PREFIX}/metrics` });
+  await app.register(opsRoutes, { prefix: `${API_PREFIX}/ops` });
 
   return app;
 }

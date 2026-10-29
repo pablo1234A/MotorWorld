@@ -6,6 +6,7 @@ import { hasActiveAccess } from '../domain/plans.js';
 import { generateToken, hashToken } from '../lib/crypto.js';
 import { logActivity } from '../modules/activity/service.js';
 import { hasEmailExclusion } from '../modules/exclusions/service.js';
+import { automaticEmailsToday, loadPlanContext, recoveryLimitReached } from '../modules/usage/service.js';
 import type { FollowUpEmailProvider } from './providers.js';
 import { localDaysBetween, nextAllowedSlot, stepDueAt, type ContactRules } from './schedule.js';
 import { composeMessage, defaultTemplate, renderBody, type Sender, type TemplateValues } from './templates.js';
@@ -35,6 +36,10 @@ export interface CompanyContext {
   senderName: string | null;
   sender: Sender;
   hasAccess: boolean;
+  /** Se alcanzó el límite de recuperaciones del plan en el periodo vigente. */
+  recoveryLimitReached: boolean;
+  /** Límite técnico de emails automáticos por día (zona horaria de la empresa). */
+  dailyEmailLimit: number;
 }
 
 export async function loadCompanyContext(trx: Trx, companyId: string, now: Date): Promise<CompanyContext> {
@@ -75,6 +80,15 @@ export async function loadCompanyContext(trx: Trx, companyId: string, now: Date)
     senderName: row.senderName,
     sender: { companyName: row.name, legalName: row.legalName, taxId: row.taxId },
     hasAccess: hasActiveAccess({ status: row.status, trialEndsAt: row.trialEndsAt }, now),
+    ...(await planLimits(trx, companyId, now)),
+  };
+}
+
+async function planLimits(trx: Trx, companyId: string, now: Date) {
+  const plan = await loadPlanContext(trx, companyId, now);
+  return {
+    recoveryLimitReached: await recoveryLimitReached(trx, plan, now),
+    dailyEmailLimit: plan.plan?.dailyAutomaticEmailLimit ?? 0,
   };
 }
 
@@ -142,6 +156,8 @@ export async function baseEligibility(
   if (!ctx.automationEnabled) return { ok: false, action: 'cancel', reason: 'automation_disabled' };
   if (!provider.configured) return { ok: false, action: 'wait', reason: 'provider_not_configured' };
   if (!ctx.hasAccess) return { ok: false, action: 'wait', reason: 'no_active_plan' };
+  // Límite de recuperaciones del plan alcanzado: no sale nada más hasta el periodo siguiente.
+  if (ctx.recoveryLimitReached) return { ok: false, action: 'cancel', reason: 'plan_limit_reached' };
   if (quote.archivedAt) return { ok: false, action: 'cancel', reason: 'quote_archived' };
   if (quote.status !== 'sent' || !quote.sentAt) return { ok: false, action: 'cancel', reason: `quote_${quote.status}` };
   if (!quote.autoFollowUpEnabled) return { ok: false, action: 'cancel', reason: 'quote_auto_disabled' };
@@ -167,6 +183,12 @@ export async function planCompany(deps: EngineDeps, companyId: string): Promise<
   await withTenant(deps.db, SYSTEM(companyId), async (trx) => {
     const ctx = await loadCompanyContext(trx, companyId, now);
     if (!ctx.automationEnabled || !deps.provider.configured || !ctx.hasAccess) return;
+    if (ctx.recoveryLimitReached) {
+      // Límite del plan alcanzado: se cancelan los emails automáticos pendientes y no se
+      // programan nuevos hasta el periodo siguiente (docs/limites-y-metricas.md).
+      stats.cancelled += await cancelPendingRuleSteps(trx, companyId, 'plan_limit_reached');
+      return;
+    }
 
     // 1) Revisar los pasos pendientes (no aprobados) frente a las reglas actuales.
     const pending = await trx
@@ -356,7 +378,27 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
   if (!deps.provider.configured) return stats;
 
   const claimed: Claimed[] = await withTenant(deps.db, SYSTEM(companyId), async (trx) => {
+    // Un solo proceso a la vez reclama envíos de esta empresa: así el límite diario es exacto.
+    await sql`select pg_advisory_xact_lock(hashtextextended(${`dispatch:${companyId}`}, 0))`.execute(trx);
     const ctx = await loadCompanyContext(trx, companyId, now);
+    const sentToday = await automaticEmailsToday(trx, companyId, ctx.rules.timezone, now);
+    const available = Math.max(ctx.dailyEmailLimit - sentToday, 0);
+    if (available === 0) {
+      // Límite técnico diario alcanzado: lo vencido espera al día siguiente.
+      stats.waiting += Number(
+        (
+          await trx
+            .selectFrom('followUps')
+            .select((eb) => eb.fn.countAll<string>().as('n'))
+            .where('companyId', '=', companyId)
+            .where('source', '=', 'rule')
+            .where('status', '=', 'pending')
+            .where('dueAt', '<=', now)
+            .executeTakeFirstOrThrow()
+        ).n,
+      );
+      return [];
+    }
     // FOR UPDATE SKIP LOCKED: otro proceso que ejecute lo mismo a la vez se salta estas filas.
     const due = await trx
       .selectFrom('followUps')
@@ -366,7 +408,7 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
       .where('status', '=', 'pending')
       .where('dueAt', '<=', now)
       .orderBy('dueAt')
-      .limit(25)
+      .limit(Math.min(25, available))
       .forUpdate()
       .skipLocked()
       .execute();

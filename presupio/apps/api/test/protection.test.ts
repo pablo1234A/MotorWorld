@@ -18,6 +18,8 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/public/unsubscribe/preview',
   'POST /api/v1/public/unsubscribe',
   'POST /api/v1/webhooks/mailgun',
+  // Fase 4: supervisión externa, protegida por token (404 sin él).
+  'GET /api/v1/ops/status',
 ]);
 
 const FAKE_ID = '00000000-0000-4000-8000-000000000000';

@@ -5,6 +5,8 @@ import { allowedTransitions, transitionKind } from '../../domain/quote-status.js
 import { errors, pgConstraint, pgErrorCode, PG_UNIQUE_VIOLATION } from '../../lib/errors.js';
 import type { AuthContext } from '../../plugins/auth.js';
 import { can } from '../../domain/permissions.js';
+import { RECOVERY_ATTRIBUTION_MS } from '../../domain/recovery.js';
+import { recordRecovery } from '../usage/service.js';
 import { logActivity } from '../activity/service.js';
 
 /** Margen para relojes ligeramente desincronizados del cliente. */
@@ -136,24 +138,29 @@ export async function cancelPendingFollowUps(
   return (await q.returning('id').execute()).length;
 }
 
-/** ¿Hubo un seguimiento de contacto completado antes de la respuesta del cliente? */
-async function hadFollowUpBefore(trx: Trx, companyId: string, quoteId: string, at: Date): Promise<boolean> {
+/**
+ * Último seguimiento realizado y verificable antes de la respuesta del cliente, dentro de la
+ * ventana de atribución (domain/recovery.ts): un contacto manual registrado como hecho o un
+ * email automático aceptado por el proveedor. Las tareas internas no cuentan.
+ */
+async function followUpBeforeResponse(trx: Trx, companyId: string, quoteId: string, at: Date) {
+  const from = new Date(at.getTime() - RECOVERY_ATTRIBUTION_MS);
   const row = await trx
     .selectFrom('followUps')
-    .select('id')
+    .select(['id', 'source', 'channel', sql<Date>`coalesce(completed_at, sent_at)`.as('doneAt')])
     .where('companyId', '=', companyId)
     .where('quoteId', '=', quoteId)
     .where('channel', '<>', 'task')
-    // Contactos registrados a mano o emails automáticos confirmados por el proveedor.
     .where((eb) =>
       eb.or([
-        eb.and([eb('status', '=', 'completed'), eb('completedAt', '<=', at)]),
-        eb.and([eb('status', '=', 'sent'), eb('sentAt', '<=', at)]),
+        eb.and([eb('status', '=', 'completed'), eb('completedAt', '<=', at), eb('completedAt', '>=', from)]),
+        eb.and([eb('status', '=', 'sent'), eb('sentAt', '<=', at), eb('sentAt', '>=', from)]),
       ]),
     )
+    .orderBy(sql`coalesce(completed_at, sent_at)`, 'desc')
     .limit(1)
     .executeTakeFirst();
-  return !!row;
+  return row ? { id: row.id, source: row.source, channel: row.channel, at: row.doneAt } : null;
 }
 
 export interface StatusChangeInput {
@@ -193,6 +200,7 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
 
   const patch: QuoteUpdate = { status: to, statusChangedAt: now };
   let reactivated = false;
+  let attributedFollowUp: Awaited<ReturnType<typeof followUpBeforeResponse>> = null;
 
   // Al salir de un estado final por corrección, se limpian sus datos.
   if (from === 'accepted') Object.assign(patch, { acceptedAt: null, acceptanceEvidence: null, acceptedAmountCents: null, acceptanceConfirmedByUserId: null });
@@ -205,9 +213,12 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
     case 'responded':
     case 'accepted':
       patch.respondedAt = quote.respondedAt ?? occurredAt;
-      if (!quote.reactivatedAt && (await hadFollowUpBefore(trx, auth.companyId, quoteId, occurredAt))) {
-        patch.reactivatedAt = occurredAt;
-        reactivated = true;
+      if (!quote.reactivatedAt) {
+        attributedFollowUp = await followUpBeforeResponse(trx, auth.companyId, quoteId, occurredAt);
+        if (attributedFollowUp) {
+          patch.reactivatedAt = occurredAt;
+          reactivated = true;
+        }
       }
       if (to === 'accepted') {
         if (!input.evidence || input.evidence.trim().length < 3) {
@@ -234,6 +245,17 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
 
   await trx.updateTable('quotes').set(patch).where('companyId', '=', auth.companyId).where('id', '=', quoteId).execute();
 
+  // Recuperación: se registra (y descuenta del plan) en la misma transacción que la respuesta.
+  let recovery: Awaited<ReturnType<typeof recordRecovery>> = null;
+  if (reactivated && attributedFollowUp) {
+    recovery = await recordRecovery(trx, auth, {
+      quoteId,
+      respondedAt: occurredAt,
+      responseStatus: to === 'accepted' ? 'accepted' : 'responded',
+      followUp: attributedFollowUp,
+    });
+  }
+
   // El cliente ha contestado: se detiene la secuencia de seguimiento.
   let cancelledFollowUps = 0;
   if (to === 'responded') {
@@ -258,7 +280,7 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
     },
   });
 
-  return { reactivated, cancelledFollowUps };
+  return { reactivated, cancelledFollowUps, recovery: recovery && { status: recovery.status, used: recovery.used, limit: recovery.limit } };
 }
 
 export async function quoteSummary(trx: Trx, companyId: string) {

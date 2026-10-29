@@ -43,6 +43,8 @@ const envSchema = z.object({
   WORKER_INTERVAL_SECONDS: z.coerce.number().int().min(5).max(3600).default(60),
   FOLLOWUP_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(3),
   MESSAGE_CONTENT_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
+  // Token de la supervisión externa (GET /api/v1/ops/status). Sin él, la ruta no existe.
+  OPS_STATUS_TOKEN: z.string().min(32, 'OPS_STATUS_TOKEN debe tener al menos 32 caracteres').optional(),
 });
 
 export type RateLimitRule = { max: number; windowMs: number };
@@ -60,6 +62,8 @@ export interface AppConfig {
   cookie: { name: string; secure: boolean };
   session: { ttlMs: number; idleTimeoutMs: number; touchIntervalMs: number };
   trialDays: number;
+  /** Token de la supervisión externa; sin él, /ops/status responde 404. */
+  opsStatusToken?: string;
   mail: {
     transport: 'disabled' | 'log' | 'smtp';
     from?: string;
@@ -182,6 +186,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       touchIntervalMs: 5 * MINUTE,
     },
     trialDays: e.TRIAL_DAYS,
+    ...(e.OPS_STATUS_TOKEN ? { opsStatusToken: e.OPS_STATUS_TOKEN } : {}),
     mail: { transport: e.MAIL_TRANSPORT, from: e.MAIL_FROM, smtp },
     automation: {
       provider: e.FOLLOWUP_EMAIL_PROVIDER,

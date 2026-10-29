@@ -1,13 +1,18 @@
 import type { SubscriptionPlan, SubscriptionStatus } from '../db/types.js';
 
 /**
- * Catálogo de planes según el plan maestro. Fuente de verdad en el servidor:
- * el cliente nunca envía precios ni límites.
+ * Catálogo de planes. Fuente de verdad en el servidor: el cliente nunca envía precios ni
+ * límites, y la API no tiene ningún endpoint para cambiar de plan.
  *
- * Pendiente de decisión de negocio (fase 4/5):
- *  - Si los precios incluyen IVA (vatIncluded = null hasta confirmarlo).
- *  - Definición exacta de "recuperación", reinicio del cupo y qué ocurre al superarlo.
- *  - Límite técnico publicado del plan Business (uso razonable).
+ * Límites (docs/limites-y-metricas.md):
+ *  - monthlyRecoveryLimit: recuperaciones contabilizadas por periodo de facturación. Al
+ *    alcanzarlo se pausa el envío automático hasta el periodo siguiente; registrar respuestas,
+ *    consultar datos e historial y trabajar a mano siguen disponibles.
+ *  - dailyAutomaticEmailLimit: límite técnico de emails automáticos por empresa y día (en su
+ *    zona horaria), para proteger la reputación de envío.
+ *  - Business no es «ilimitado»: tiene un límite amplio y publicado (uso razonable).
+ *
+ * Pendiente de decisión de negocio (fase 5): si los precios incluyen IVA (vatIncluded = null).
  */
 export interface PlanDefinition {
   id: SubscriptionPlan;
@@ -15,7 +20,8 @@ export interface PlanDefinition {
   priceCents: number;
   currency: 'EUR';
   interval: 'month';
-  monthlyRecoveryLimit: number | null;
+  monthlyRecoveryLimit: number;
+  dailyAutomaticEmailLimit: number;
   fairUse: boolean;
   vatIncluded: boolean | null;
 }
@@ -28,6 +34,7 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
     currency: 'EUR',
     interval: 'month',
     monthlyRecoveryLimit: 25,
+    dailyAutomaticEmailLimit: 60,
     fairUse: false,
     vatIncluded: null,
   },
@@ -38,6 +45,7 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
     currency: 'EUR',
     interval: 'month',
     monthlyRecoveryLimit: 65,
+    dailyAutomaticEmailLimit: 150,
     fairUse: false,
     vatIncluded: null,
   },
@@ -47,11 +55,16 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
     priceCents: 12799,
     currency: 'EUR',
     interval: 'month',
-    monthlyRecoveryLimit: null,
+    // Límite amplio y publicado de uso razonable (no «ilimitado»).
+    monthlyRecoveryLimit: 300,
+    dailyAutomaticEmailLimit: 400,
     fairUse: true,
     vatIncluded: null,
   },
 };
+
+/** Se avisa al llegar a este porcentaje del límite de recuperaciones. */
+export const USAGE_WARNING_RATIO = 0.8;
 
 /** Plan asignado durante el periodo de prueba (sin cobro). */
 export const TRIAL_PLAN: SubscriptionPlan = 'starter';

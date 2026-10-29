@@ -12,9 +12,14 @@ import { runCycle } from './automation/runner.js';
 import { createFollowUpProvider } from './automation/providers.js';
 import { loadConfig } from './config.js';
 import { createDb } from './db/database.js';
+import { safeErrorSerializer } from './lib/log.js';
 
 const config = loadConfig();
-const logger = pino({ level: config.logLevel === 'silent' ? 'silent' : config.logLevel, base: { proc: 'worker' } });
+const logger = pino({
+  level: config.logLevel === 'silent' ? 'silent' : config.logLevel,
+  base: { proc: 'worker' },
+  serializers: { err: safeErrorSerializer },
+});
 const db = createDb(config.databaseUrl, Math.min(config.dbPoolMax, 5));
 const provider = createFollowUpProvider(config);
 const once = process.argv.includes('--once');

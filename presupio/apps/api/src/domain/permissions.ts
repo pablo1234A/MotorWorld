@@ -17,7 +17,8 @@ export type Permission =
   | 'follow_ups:write'
   | 'exclusions:create'
   | 'exclusions:lift'
-  | 'activity:read';
+  | 'activity:read'
+  | 'data:export';
 
 const READ: Permission[] = [
   'company:read',
@@ -39,6 +40,8 @@ const MANAGE: Permission[] = [
   'members:manage',
   'quotes:reopen',
   'exclusions:lift',
+  // Exportar todos los datos de la empresa (incluye datos personales de clientes).
+  'data:export',
 ];
 
 export const ROLE_PERMISSIONS: Record<MembershipRole, ReadonlySet<Permission>> = {

@@ -277,6 +277,38 @@ export interface JobRunsTable {
   error: string | null;
 }
 
+export type RecoveryEventStatus = 'counted' | 'over_limit' | 'no_active_plan' | 'historical';
+
+export interface UsagePeriodsTable {
+  companyId: string;
+  periodStart: Timestamp;
+  periodEnd: Timestamp;
+  periodSource: Generated<string>;
+  plan: SubscriptionPlan | null;
+  recoveryLimit: number;
+  recoveriesCounted: Generated<number>;
+  recoveriesOverLimit: Generated<number>;
+  limitReachedAt: Timestamp | null;
+  createdAt: CreatedAt;
+  updatedAt: UpdatedAt;
+}
+
+export interface RecoveryEventsTable {
+  id: Generated<string>;
+  companyId: string;
+  quoteId: string;
+  followUpId: string | null;
+  followUpSource: FollowUpSource | null;
+  followUpChannel: FollowUpChannel | null;
+  followUpAt: Timestamp | null;
+  respondedAt: Timestamp;
+  responseStatus: QuoteStatus;
+  registeredAt: CreatedAt;
+  registeredByUserId: string | null;
+  status: RecoveryEventStatus;
+  periodStart: Timestamp | null;
+}
+
 export interface ActivityLogTable {
   id: Generated<string>;
   companyId: string;
@@ -307,6 +339,8 @@ export interface Database {
   messageDeliveries: MessageDeliveriesTable;
   webhookEvents: WebhookEventsTable;
   jobRuns: JobRunsTable;
+  usagePeriods: UsagePeriodsTable;
+  recoveryEvents: RecoveryEventsTable;
 }
 
 export type User = Selectable<UsersTable>;
@@ -322,3 +356,5 @@ export type Subscription = Selectable<SubscriptionsTable>;
 export type ActivityEntry = Selectable<ActivityLogTable>;
 export type MessageDelivery = Selectable<MessageDeliveriesTable>;
 export type TemplateVersion = Selectable<MessageTemplateVersionsTable>;
+export type UsagePeriod = Selectable<UsagePeriodsTable>;
+export type RecoveryEvent = Selectable<RecoveryEventsTable>;

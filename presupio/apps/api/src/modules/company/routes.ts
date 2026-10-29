@@ -5,6 +5,7 @@ import { errors } from '../../lib/errors.js';
 import { email, optionalText, parseWith, phone, requiredText } from '../../lib/validation.js';
 import { inTenant } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
+import { exportCompanyData } from './export.js';
 
 const TIMEZONES = new Set(Intl.supportedValuesOf('timeZone'));
 
@@ -177,6 +178,18 @@ export async function companyRoutes(app: FastifyInstance) {
       });
       return { settings: settingsDto(s) };
     });
+  });
+
+  /** Exportación de todos los datos de la empresa (JSON). Propietarios y administradores. */
+  app.get('/export', { config: { permission: 'data:export', rateLimit: { max: 5, timeWindow: 60 * 60_000 } } }, async (req, reply) => {
+    const data = await inTenant(app, req, async (trx, auth) => {
+      const result = await exportCompanyData(trx, auth.companyId);
+      await logActivity(trx, auth, { action: 'company.exported', entityType: 'company', entityId: auth.companyId });
+      return result;
+    });
+    const date = new Date().toISOString().slice(0, 10);
+    reply.header('content-disposition', `attachment; filename="presupio-export-${date}.json"`);
+    return data;
   });
 
   /** Estado del plan: solo lectura. Lo modifica el servidor (alta) y, en la fase 5, el proveedor de pagos. */
