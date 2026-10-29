@@ -370,6 +370,31 @@ export interface RetentionNoticesTable {
   createdAt: CreatedAt;
 }
 
+export interface TrialNoticesTable {
+  id: Generated<string>;
+  companyId: string;
+  /** '3_days', '1_day'… (días configurados en TRIAL_REMINDER_DAYS). */
+  stage: string;
+  trialEndsAt: Timestamp;
+  delivery: 'sent' | 'not_configured' | 'failed' | 'no_recipients';
+  recipients: Generated<number>;
+  createdAt: CreatedAt;
+}
+
+export interface TrialClaimsTable {
+  id: Generated<string>;
+  kind: 'email' | 'domain';
+  valueHash: string;
+  companyId: string | null;
+  claimedAt: Generated<Date>;
+}
+
+export interface RateLimitCountersTable {
+  keyHash: string;
+  hits: number;
+  resetAt: Timestamp;
+}
+
 export interface RecoveryEventsTable {
   id: Generated<string>;
   companyId: string;
@@ -422,6 +447,9 @@ export interface Database {
   billingEvents: BillingEventsTable;
   inboundReplies: InboundRepliesTable;
   retentionNotices: RetentionNoticesTable;
+  trialNotices: TrialNoticesTable;
+  trialClaims: TrialClaimsTable;
+  rateLimitCounters: RateLimitCountersTable;
 }
 
 export type User = Selectable<UsersTable>;

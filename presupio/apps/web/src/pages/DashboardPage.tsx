@@ -292,7 +292,7 @@ export function DashboardPage() {
   const session = useSession();
   const location = useLocation();
   const summary = useSummary();
-  const state = location.state as { welcome?: boolean; verificationDelivery?: Delivery } | null;
+  const state = location.state as { welcome?: boolean; verificationDelivery?: Delivery; trialGranted?: boolean } | null;
   const s = summary.data?.summary;
   const isEmpty = s && Object.values(s.byStatus).reduce((a, b) => a + b, 0) === 0;
   const firstName = session.user.fullName.split(' ')[0];
@@ -321,6 +321,16 @@ export function DashboardPage() {
           {state.verificationDelivery === 'sent'
             ? `Te hemos enviado un email a ${session.user.email} para confirmar tu dirección.`
             : 'No hemos podido enviarte el email de confirmación porque el envío de correo aún no está configurado en este entorno. Podrás pedirlo de nuevo desde tu perfil.'}
+        </Alert>
+      )}
+      {state?.welcome && state.trialGranted === false && (
+        <Alert
+          tone="info"
+          title="Esta cuenta no incluye prueba gratuita"
+          action={session.can('billing:manage') ? <Link to="/configuracion/plan">Elegir un plan</Link> : undefined}
+        >
+          La prueba gratuita es una por persona y, en los dominios de empresa, una por empresa al año, y este email o tu empresa ya la
+          disfrutaron. Puedes consultar la cuenta y contratar un plan cuando quieras. Si crees que es un error, escríbenos.
         </Alert>
       )}
 

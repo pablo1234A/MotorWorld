@@ -8,7 +8,7 @@ import type { AppConfig } from './config.js';
 import type { Db } from './db/database.js';
 import { safeErrorSerializer } from './lib/log.js';
 import { AppError, errors, isDatabaseUnavailable, pgErrorCode, PG_CHECK_VIOLATION, PG_FOREIGN_KEY_VIOLATION } from './lib/errors.js';
-import { createMemoryLimiter, type KeyedLimiter } from './lib/rate-limiter.js';
+import { createSharedLimiter, postgresRateLimitStore, type KeyedLimiter } from './lib/rate-limiter.js';
 import { createMailer, type Mailer } from './mail/mailer.js';
 import { authPlugin } from './plugins/auth.js';
 import { activityRoutes } from './modules/activity/routes.js';
@@ -99,8 +99,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   app.decorate('followUpProvider', deps.followUpProvider ?? createFollowUpProvider(config));
   app.decorate('billingGateway', deps.billingGateway !== undefined ? deps.billingGateway : createBillingGateway(config));
   app.decorate('limiters', {
-    loginPerEmail: createMemoryLimiter(config.rateLimits.loginPerEmail),
-    passwordForgotPerEmail: createMemoryLimiter(config.rateLimits.passwordForgotPerEmail),
+    loginPerEmail: createSharedLimiter(deps.db, 'login-email', config.rateLimits.loginPerEmail),
+    passwordForgotPerEmail: createSharedLimiter(deps.db, 'forgot-email', config.rateLimits.passwordForgotPerEmail),
   });
 
   const pending = new Set<Promise<unknown>>();
@@ -145,6 +145,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     global: true,
     max: config.rateLimits.global.max,
     timeWindow: config.rateLimits.global.windowMs,
+    // Contadores compartidos en PostgreSQL (lib/rate-limiter.ts): valen para todas las
+    // instancias y sobreviven a los reinicios. Si el almacén falla, la petición falla (503):
+    // nunca se deja pasar sin límite.
+    store: postgresRateLimitStore(deps.db),
+    skipOnError: false,
     errorResponseBuilder: () => errors.rateLimited(),
   });
 

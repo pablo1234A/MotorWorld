@@ -22,7 +22,7 @@ export interface TestContext {
 /** App con base de datos de pruebas, correo en memoria y límites amplios (salvo que se indiquen). */
 export async function createTestApp(
   customize?: (config: AppConfig) => void,
-  deps: { followUpProvider?: FollowUpEmailProvider; billingGateway?: BillingGateway | null } = {},
+  deps: { followUpProvider?: FollowUpEmailProvider; billingGateway?: BillingGateway | null; keepRateLimitCounters?: boolean } = {},
 ): Promise<TestContext> {
   const config = loadConfig({
     NODE_ENV: 'test',
@@ -42,11 +42,19 @@ export async function createTestApp(
     tokenRedeem: generous,
     billing: generous,
   };
+  // La regla «una prueba por dominio de empresa» (auth/trial.ts) se prueba en limits-trials.test.ts;
+  // el resto de pruebas registran muchas cuentas del mismo dominio de ejemplo.
+  config.trialDomainRuleDays = 0;
   customize?.(config);
   const db = createDb(config.databaseUrl, config.dbPoolMax);
   const mailer = new MemoryMailer();
-  const app = await buildApp({ config, db, mailer, ...deps });
+  const { keepRateLimitCounters, ...appDeps } = deps;
+  const app = await buildApp({ config, db, mailer, ...appDeps });
   await app.ready();
+  // Los contadores de límites viven en la base de datos (compartidos y persistentes): cada
+  // aplicación de prueba empieza sin golpes previos de otros archivos o pruebas.
+  // (Algunas pruebas usan a propósito una base de datos inalcanzable.)
+  if (!keepRateLimitCounters) await db.deleteFrom('rateLimitCounters').execute().catch(() => undefined);
   afterAll(async () => {
     await app.close();
     await db.destroy();

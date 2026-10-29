@@ -130,3 +130,65 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
   - un evento sobre un envío desconocido lo reconcilia y lo cuenta una vez;
   - las pruebas previas de rebote permanente, queja, duplicados y firmas siguen en verde.
 - **Pendiente por dependencia externa:** webhooks reales de Mailgun. Para tener rebotes hay que usar Mailgun o un proveedor con webhooks; con SMTP no hay rebotes automáticos (documentado).
+
+## P2-02 · Límites de peticiones en memoria
+
+- **Causa:** los límites (global por IP, login y recuperación por email, registro…) estaban en la memoria de cada proceso. Con varias instancias cada una tenía los suyos, y un reinicio los borraba.
+- **Corrección** (migración 0010, `lib/rate-limiter.ts`):
+  - Tabla `rate_limit_counters` en PostgreSQL. Cada golpe es una sola sentencia atómica (`INSERT … ON CONFLICT DO UPDATE`).
+  - La usan tanto `@fastify/rate-limit` (almacén propio, un espacio de claves por ruta) como los límites por email.
+  - Claves resumidas con SHA-256: ni IPs ni emails en claro.
+  - Si el almacén falla, la petición responde 503 (`skipOnError: false`): nunca se deja pasar sin límite.
+  - `/health` (vivo) queda sin límite, para que una caída de la base de datos no haga reiniciar la API. `/health/ready` sí depende de ella.
+  - El trabajo de retención borra los contadores caducados.
+- **Coste:** una escritura en PostgreSQL por petición. Es asumible con el volumen previsto. Si crece, el almacén se puede cambiar por Redis sin tocar las rutas.
+- **Prueba:** `test/limits-trials.test.ts`.
+  - Dos instancias comparten el límite, y una instancia nueva («reinicio») lo mantiene.
+  - 20 peticiones simultáneas con límite 5 dan exactamente 5 aceptadas, y 50 golpes simultáneos dan exactamente 1…50.
+  - La ventana caduca y la retención limpia.
+  - Con la base de datos caída, la petición responde 503 y `/health` sigue en 200.
+
+## Fallo nuevo · Una conexión en uso cerrada por PostgreSQL terminaba el proceso
+
+- **Causa:** el manejador de P1-01 cubría las conexiones **inactivas** del pool. Si PostgreSQL cierra una conexión **prestada** a una consulta en curso, `pg` emite `error` sin oyentes. En producción, `server.ts` termina el proceso ante una excepción no capturada. Apareció al añadir los límites compartidos, que hacen una consulta en cada petición.
+- **Corrección:** `createDb` añade un oyente a cada conexión nueva. La consulta en curso ya falla con su error (503) y el pool descarta la conexión.
+- **Prueba:** `limits-trials.test.ts › si el almacén de límites falla…`. Una transacción con `pg_sleep` en curso cuando cae la base de datos se rechaza sin excepciones no capturadas. Se comprobó que la prueba **falla** sin la corrección.
+
+## P2-01 · Abuso de la prueba gratuita
+
+- **Causa:** cualquiera podía encadenar pruebas gratuitas registrándose con otra dirección.
+- **Corrección** (migración 0010, `modules/auth/trial.ts`):
+  - Una prueba por email normalizado (minúsculas, sin `+etiqueta`, Gmail sin puntos).
+  - Una por dominio de empresa al año (`TRIAL_DOMAIN_RULE_DAYS`).
+  - Ninguna con correo desechable conocido.
+  - Quien no cumple se registra igualmente, sin plan (solo lectura, puede contratar). El panel lo explica.
+  - Solo se guardan huellas SHA-256, que se borran a los 24 meses. La migración crea las de las cuentas existentes.
+  - Con RLS, cada empresa solo ve sus huellas. La comprobación entre empresas usa la función acotada `app_trial_claimed`, que solo responde sí o no.
+- **Cambio comercial documentado:** antes toda alta tenía prueba. Las reglas y sus falsos positivos están en `docs/facturacion.md`, junto con cómo conceder una prueba a mano.
+- **Prueba:** `limits-trials.test.ts`, 7 pruebas:
+  - normalización;
+  - misma bandeja (con puntos o `+etiqueta`): sin prueba, en solo lectura y anotado en el historial;
+  - dos usuarios de Gmail distintos sí obtienen su prueba;
+  - dominio de empresa con altas **simultáneas**: solo una prueba, y vuelve a haberla pasado el plazo;
+  - correo desechable;
+  - huellas sin datos en claro, reconocimiento de las huellas de la migración, borrado a los 24 meses, y la aplicación no puede borrarlas;
+  - aislamiento entre empresas.
+
+  `apps/web/test/app.test.tsx`: el aviso del panel.
+- **Pendiente:** la lista de dominios gratuitos y desechables no es exhaustiva.
+
+## P2-05 · Aviso antes del fin de la prueba
+
+- **Causa:** solo había avisos de conservación **después** de perder el acceso.
+- **Corrección** (migración 0010, `modules/billing/trial-reminders.ts`):
+  - Avisos a los propietarios N días antes del fin (`TRIAL_REMINDER_DAYS`, por defecto 3 y 1).
+  - Una vez por etapa (`trial_notices`). Si el worker estuvo parado, solo se envía la etapa vigente.
+  - No se avisa a quien ya contrató ni a una prueba terminada.
+  - La fecha va en la zona horaria de la empresa.
+  - El texto explica qué pasa al terminar: solo lectura, automatización detenida, exportación disponible y 90 días de conservación.
+- **Además:** los avisos de conservación usaban siempre la hora de Madrid. Ahora usan la zona de la empresa.
+- **Prueba:** `limits-trials.test.ts`, 4 pruebas:
+  - etapas;
+  - una vez por etapa y sin duplicar al repetir el trabajo, con la zona horaria de la empresa y la plantilla distinta de la de conservación;
+  - sin aviso a quien pagó o ya terminó, y sin avisos si no hay días configurados;
+  - zona horaria del aviso de conservación.

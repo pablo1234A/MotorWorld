@@ -78,3 +78,21 @@ export function retentionNoticeEmail(to: string, companyName: string, deletionDa
     html: layout(title, lines, { label: 'Entrar en Presupio', url }, footer),
   };
 }
+
+export function trialReminderEmail(to: string, companyName: string, daysLeft: number, endDate: string, url: string): MailMessage {
+  const when = daysLeft <= 1 ? 'mañana' : `en ${daysLeft} días`;
+  const title = `Tu prueba gratuita termina ${when}`;
+  const lines = [
+    `La prueba gratuita de Presupio de ${companyName} termina el ${endDate}.`,
+    'Si quieres seguir enviando los seguimientos automáticos, elige un plan antes de esa fecha. No se cobra nada hasta que lo contrates.',
+    'Si no eliges plan, la cuenta pasa a solo lectura: los emails automáticos se detienen, puedes seguir consultando y exportando tus datos, y los conservamos 90 días.',
+  ];
+  const footer = 'Recibes este aviso porque figuras como propietario de la cuenta.';
+  return {
+    template: 'trial_reminder',
+    to,
+    subject: `Presupio · Tu prueba gratuita termina ${when}`,
+    text: `${lines.join('\n\n')}\n\n${url}\n\n${footer}`,
+    html: layout(title, lines, { label: 'Elegir un plan', url }, footer),
+  };
+}

@@ -12,8 +12,10 @@ const HERE = path.dirname(toPath(import.meta.url));
 export const PASSWORD = 'Contraseña-de-prueba-1';
 const API_LOG = path.join(HERE, '.output', 'api.log');
 
+// Un dominio distinto por cuenta: la regla «una prueba gratuita por dominio de empresa y año»
+// sigue activa en las pruebas de extremo a extremo (como en producción).
 export function uniqueEmail(prefix = 'e2e'): string {
-  return `${prefix}.${randomUUID().slice(0, 8)}@ejemplo.test`;
+  return `${prefix}@${randomUUID().slice(0, 8)}.ejemplo.test`;
 }
 
 /**

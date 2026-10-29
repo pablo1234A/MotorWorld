@@ -73,6 +73,8 @@ export async function authRoutes(app: FastifyInstance) {
         userId: user.id,
         companyName: body.companyName,
         trialDays: app.config.trialDays,
+        ownerEmail: body.email,
+        trialDomainRuleDays: app.config.trialDomainRuleDays,
       });
       await logActivity(trx, { companyId: company.id, userId: user.id }, {
         action: 'member.joined',
@@ -94,8 +96,10 @@ export async function authRoutes(app: FastifyInstance) {
     const delivery = await sendVerificationEmail(app, result.user, result.verificationToken);
     return reply.status(201).send({
       user: publicUser(result.user),
-      company: result.company,
+      company: { id: result.company.id, name: result.company.name },
       role: 'owner',
+      // Si no se concede la prueba (ya disfrutada), la cuenta queda sin plan: puede contratar uno.
+      trial: { granted: result.company.trial.granted, endsAt: result.company.trial.endsAt },
       emailVerification: { delivery: delivery.status },
     });
   });
@@ -106,7 +110,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/login', { config: { auth: 'none', rateLimit: rule(limits.login) } }, async (req, reply) => {
     const body = parseWith(loginBody, req.body);
     const limiter = app.limiters.loginPerEmail;
-    if (limiter.isBlocked(body.email)) throw errors.rateLimited();
+    if (await limiter.isBlocked(body.email)) throw errors.rateLimited();
 
     const user = await app.db
       .selectFrom('users')
@@ -116,15 +120,15 @@ export async function authRoutes(app: FastifyInstance) {
 
     if (!user) {
       await verifyAgainstDummy(body.password);
-      limiter.hit(body.email);
+      await limiter.hit(body.email);
       throw errors.invalidCredentials();
     }
     if (!(await verifyPassword(user.passwordHash, body.password))) {
-      limiter.hit(body.email);
+      await limiter.hit(body.email);
       req.log.info({ userId: user.id }, 'Inicio de sesión fallido');
       throw errors.invalidCredentials();
     }
-    limiter.reset(body.email);
+    await limiter.reset(body.email);
 
     const memberships = await listMemberships(app, user.id);
     const active = (body.companyId && memberships.find((m) => m.companyId === body.companyId)) || memberships[0];
@@ -171,7 +175,7 @@ export async function authRoutes(app: FastifyInstance) {
   // -------------------------------------------------------------------------
   app.post('/password/forgot', { config: { auth: 'none', rateLimit: rule(limits.passwordForgot) } }, async (req, reply) => {
     const body = parseWith(forgotBody, req.body);
-    if (app.limiters.passwordForgotPerEmail.hit(body.email)) {
+    if (await app.limiters.passwordForgotPerEmail.hit(body.email)) {
       // El trabajo real ocurre después de responder: el tiempo de respuesta no revela nada.
       app.runInBackground('password_reset_request', async () => {
         const user = await app.db

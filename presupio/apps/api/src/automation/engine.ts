@@ -1,6 +1,8 @@
 import { sql } from 'kysely';
 import type { AppConfig } from '../config.js';
 import { setTenant, withTenant, type Db, type Trx } from '../db/database.js';
+import { purgeExpiredCounters } from '../lib/rate-limiter.js';
+import { TRIAL_CLAIM_RETENTION_DAYS } from '../modules/auth/trial.js';
 import type { Contact, FollowUp, Quote, TemplateVersion } from '../db/types.js';
 import { hasActiveAccess } from '../domain/plans.js';
 import { generateToken, hashToken } from '../lib/crypto.js';
@@ -747,14 +749,26 @@ export async function recoverStuckDeliveries(deps: EngineDeps): Promise<number> 
   return recovered;
 }
 
-export async function applyRetention(deps: EngineDeps): Promise<{ purgedContent: number; webhookEvents: number; jobRuns: number }> {
+export async function applyRetention(
+  deps: EngineDeps,
+): Promise<{ purgedContent: number; webhookEvents: number; jobRuns: number; rateLimitCounters: number; trialClaims: number }> {
   const now = deps.now?.() ?? new Date();
   const contentCutoff = new Date(now.getTime() - deps.config.automation.contentRetentionDays * 86_400_000);
   const { rows } = await sql<{ n: number }>`select app_purge_delivery_content(${contentCutoff}) as n`.execute(deps.db);
   const monthAgo = new Date(now.getTime() - 30 * 86_400_000);
   const events = await deps.db.deleteFrom('webhookEvents').where('receivedAt', '<', monthAgo).executeTakeFirst();
   const runs = await deps.db.deleteFrom('jobRuns').where('startedAt', '<', monthAgo).executeTakeFirst();
-  return { purgedContent: rows[0]?.n ?? 0, webhookEvents: Number(events.numDeletedRows), jobRuns: Number(runs.numDeletedRows) };
+  // Contadores de límites caducados y huellas de prueba de más de 24 meses (auth/trial.ts).
+  const counters = await purgeExpiredCounters(deps.db);
+  const claimsCutoff = new Date(now.getTime() - TRIAL_CLAIM_RETENTION_DAYS * 86_400_000);
+  const claims = await sql<{ n: number }>`select app_purge_trial_claims(${claimsCutoff}) as n`.execute(deps.db);
+  return {
+    purgedContent: rows[0]?.n ?? 0,
+    webhookEvents: Number(events.numDeletedRows),
+    jobRuns: Number(runs.numDeletedRows),
+    rateLimitCounters: counters,
+    trialClaims: claims.rows[0]?.n ?? 0,
+  };
 }
 
 export async function automationCompanyIds(db: Db): Promise<string[]> {

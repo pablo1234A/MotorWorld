@@ -36,6 +36,11 @@ export function createDb(connectionString: string, poolMax = 10, onPoolError: Po
   // red, mantenimiento: código 57P01) emite un evento 'error' que termina el proceso. El pool
   // ya descarta esa conexión; las consultas en curso fallan con su propio error (→ 503).
   pool.on('error', (error) => onPoolError(error as Error & { code?: string }));
+  // Una conexión EN USO (prestada a una consulta o transacción) no tiene el manejador del
+  // pool: si PostgreSQL la cierra, pg emite 'error' sin oyentes y el proceso termina. Su
+  // consulta ya falla con ese error (→ 503) y el pool la descarta al devolverla; aquí solo
+  // se evita la excepción no capturada. (Fallo encontrado con los límites compartidos.)
+  pool.on('connect', (client) => client.on('error', () => {}));
   return new Kysely<Database>({
     dialect: new PostgresDialect({ pool }),
     plugins: [new CamelCasePlugin()],

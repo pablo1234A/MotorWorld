@@ -160,6 +160,35 @@ describe('registro', () => {
     expect(await screen.findByText(/Ya existe una cuenta con este email/)).toBeInTheDocument();
     expect(calls.find((c) => c.path === '/auth/register')?.body).toMatchObject({ acceptTerms: true, email: 'ana@ejemplo.test' });
   });
+
+  it('si la prueba gratuita ya se disfrutó, lo explica al entrar y ofrece elegir un plan (P2-01)', async () => {
+    let registered = false;
+    const me = fakeMe();
+    const basics = loggedInBasics(
+      fakeMe({
+        permissions: [...me.permissions, 'billing:manage'],
+        subscription: { plan: null, status: 'none', trialEndsAt: null, currentPeriodEnd: null, hasActiveAccess: false },
+      }),
+    );
+    mockApi({
+      ...basics,
+      'GET /me': () => (registered ? basics['GET /me']() : unauthenticated['GET /me']()),
+      'POST /auth/register': () => {
+        registered = true;
+        return { status: 201, body: { emailVerification: { delivery: 'sent' }, trial: { granted: false, endsAt: null } } };
+      },
+    });
+    renderApp('/registro');
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText('Tu nombre y apellidos'), 'Ana Prueba');
+    await user.type(screen.getByLabelText('Nombre de la empresa'), 'Reformas Ana');
+    await user.type(screen.getByLabelText('Email de trabajo'), 'ana@ejemplo.test');
+    await user.type(screen.getByLabelText('Contraseña'), 'una-frase-larga');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+    expect(await screen.findByText('Esta cuenta no incluye prueba gratuita')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Elegir un plan' })).toHaveAttribute('href', '/configuracion/plan');
+  });
 });
 
 describe('panel', () => {

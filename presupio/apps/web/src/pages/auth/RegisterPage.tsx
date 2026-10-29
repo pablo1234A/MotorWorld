@@ -23,7 +23,7 @@ export function RegisterPage() {
 
   const register = useMutation({
     mutationFn: () =>
-      api<{ emailVerification: { delivery: Delivery } }>('/auth/register', {
+      api<{ emailVerification: { delivery: Delivery }; trial: { granted: boolean } }>('/auth/register', {
         method: 'POST',
         body: {
           fullName: form.fullName.trim(),
@@ -35,7 +35,7 @@ export function RegisterPage() {
       }),
     onSuccess: async (res) => {
       await startSession();
-      navigate('/', { replace: true, state: { welcome: true, verificationDelivery: res.emailVerification.delivery } });
+      navigate('/', { replace: true, state: { welcome: true, verificationDelivery: res.emailVerification.delivery, trialGranted: res.trial.granted } });
     },
     onError: (error) => handleError(error),
   });

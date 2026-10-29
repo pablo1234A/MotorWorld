@@ -151,6 +151,9 @@ async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
     await restrict('attempt_events', 'DELETE');
     await restrict('billing_events', 'INSERT, UPDATE, DELETE');
     await restrict('retention_notices', 'UPDATE, DELETE');
+    await restrict('trial_notices', 'UPDATE, DELETE');
+    // Las huellas de prueba no se modifican ni se borran desde la aplicación (solo la retención).
+    await restrict('trial_claims', 'UPDATE, DELETE');
     // La tabla de migraciones no es asunto de la aplicación.
     await client.query(`REVOKE ALL ON ${schema}.schema_migrations FROM ${role}`);
     // Funciones auxiliares, incluidas las SECURITY DEFINER acotadas (revocadas a PUBLIC en su migración).

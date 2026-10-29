@@ -22,6 +22,13 @@ const envSchema = z.object({
   SESSION_IDLE_TIMEOUT_HOURS: z.coerce.number().int().min(1).max(24 * 30).default(24 * 7),
 
   TRIAL_DAYS: z.coerce.number().int().min(0).max(60).default(14),
+  // Un dominio de empresa solo abre una prueba en este plazo (0 = sin regla de dominio).
+  TRIAL_DOMAIN_RULE_DAYS: z.coerce.number().int().min(0).max(3650).default(365),
+  // Días antes del fin de la prueba en que se avisa a los propietarios (vacío = sin avisos).
+  TRIAL_REMINDER_DAYS: z
+    .string()
+    .default('3,1')
+    .refine((v) => v.trim() === '' || v.split(',').every((d) => /^\s*\d{1,2}\s*$/.test(d) && Number(d) >= 1 && Number(d) <= 30), 'Lista de días entre 1 y 30 separados por comas'),
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(10).max(100_000).default(600),
 
   MAIL_TRANSPORT: z.enum(['disabled', 'log', 'smtp']).default('disabled'),
@@ -80,6 +87,9 @@ export interface AppConfig {
   cookie: { name: string; secure: boolean };
   session: { ttlMs: number; idleTimeoutMs: number; touchIntervalMs: number };
   trialDays: number;
+  trialDomainRuleDays: number;
+  /** Días antes del fin de la prueba con aviso, de mayor a menor (p. ej. [3, 1]). */
+  trialReminderDays: number[];
   /** Token de la supervisión externa; sin él, /ops/status responde 404. */
   opsStatusToken?: string;
   billing: {
@@ -275,6 +285,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       touchIntervalMs: 5 * MINUTE,
     },
     trialDays: e.TRIAL_DAYS,
+    trialDomainRuleDays: e.TRIAL_DOMAIN_RULE_DAYS,
+    trialReminderDays: [...new Set(e.TRIAL_REMINDER_DAYS.split(',').map((d) => d.trim()).filter(Boolean).map(Number))].sort((a, b) => b - a),
     ...(e.OPS_STATUS_TOKEN ? { opsStatusToken: e.OPS_STATUS_TOKEN } : {}),
     billing,
     mail: { transport: e.MAIL_TRANSPORT, from: e.MAIL_FROM, smtp },

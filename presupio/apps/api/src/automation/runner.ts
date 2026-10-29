@@ -10,6 +10,7 @@ import {
 import type { Mailer } from '../mail/mailer.js';
 import { reconcileUnknownDeliveries } from './unknown.js';
 import { sendRetentionNotices } from '../modules/billing/retention.js';
+import { sendTrialReminders } from '../modules/billing/trial-reminders.js';
 
 // Claves de bloqueo consultivo de PostgreSQL (una por trabajo exclusivo).
 const LOCKS = { planner: 72_001, retention: 72_002, recovery: 72_003 } as const;
@@ -114,7 +115,13 @@ export async function runCycle(deps: EngineDeps, options: { retention?: boolean;
         const purged = await applyRetention(deps);
         // Avisos de conservación de datos a cuentas sin plan activo (no borra nada).
         const notices = options.mailer ? await sendRetentionNotices({ db: deps.db, config: deps.config, mailer: options.mailer, now: deps.now }) : null;
-        return { ...purged, ...(notices ? { retentionNoticesSent: notices.sent, retentionNoticesNotConfigured: notices.notConfigured, retentionPastDeadline: notices.pastDeadline } : {}) };
+        // Avisos antes del fin de la prueba gratuita (distintos de los de conservación).
+        const trial = options.mailer ? await sendTrialReminders({ db: deps.db, config: deps.config, mailer: options.mailer, now: deps.now }) : null;
+        return {
+          ...purged,
+          ...(notices ? { retentionNoticesSent: notices.sent, retentionNoticesNotConfigured: notices.notConfigured, retentionPastDeadline: notices.pastDeadline } : {}),
+          ...(trial ? { trialRemindersSent: trial.sent, trialRemindersNotSent: trial.notConfigured + trial.failed } : {}),
+        };
       }))!,
     );
   }

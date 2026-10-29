@@ -5,6 +5,7 @@ import type { RetentionStage, SubscriptionStatus } from '../../db/types.js';
 import { accessEndedAt, dataRetentionUntil } from '../../domain/plans.js';
 import type { Mailer } from '../../mail/mailer.js';
 import { retentionNoticeEmail } from '../../mail/templates.js';
+import { safeTimeZone } from './trial-reminders.js';
 
 const DAY_MS = 86_400_000;
 
@@ -27,6 +28,7 @@ export interface RetentionCandidate {
   endedAt: Date | null;
   createdAt: Date;
   ownerEmails: string[];
+  timezone: string;
   accessEndedAt: Date;
   deletionDueAt: Date;
 }
@@ -35,7 +37,7 @@ export interface RetentionCandidate {
 export async function retentionCandidates(db: Db, now = new Date()): Promise<RetentionCandidate[]> {
   const { rows } = await sql<Omit<RetentionCandidate, 'accessEndedAt' | 'deletionDueAt'>>`
     select company_id as "companyId", company_name as "companyName", status, trial_ends_at as "trialEndsAt",
-           past_due_since as "pastDueSince", ended_at as "endedAt", created_at as "createdAt", owner_emails as "ownerEmails"
+           past_due_since as "pastDueSince", ended_at as "endedAt", created_at as "createdAt", owner_emails as "ownerEmails", timezone
     from app_retention_candidates()`.execute(db);
   const out: RetentionCandidate[] = [];
   for (const r of rows) {
@@ -55,7 +57,6 @@ export async function retentionCandidates(db: Db, now = new Date()): Promise<Ret
 export async function sendRetentionNotices(deps: { db: Db; config: AppConfig; mailer: Mailer; now?: () => Date }) {
   const now = deps.now?.() ?? new Date();
   const stats = { candidates: 0, sent: 0, notConfigured: 0, failed: 0, pastDeadline: 0 };
-  const dateFormat = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Madrid' });
   for (const c of await retentionCandidates(deps.db, now)) {
     stats.candidates++;
     if (c.deletionDueAt <= now) {
@@ -64,6 +65,8 @@ export async function sendRetentionNotices(deps: { db: Db; config: AppConfig; ma
     }
     const stage = retentionStage(c.deletionDueAt, now);
     if (!stage) continue;
+    // La fecha se escribe en la zona horaria de la empresa (antes: siempre Madrid).
+    const dateFormat = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: safeTimeZone(c.timezone) });
     await withTenant(deps.db, { companyId: c.companyId, userId: null }, async (trx) => {
       const already = await trx
         .selectFrom('retentionNotices')

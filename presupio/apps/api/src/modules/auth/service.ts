@@ -8,6 +8,7 @@ import { errors, pgConstraint, pgErrorCode, PG_UNIQUE_VIOLATION } from '../../li
 import type { DeliveryResult } from '../../mail/mailer.js';
 import { emailVerificationEmail } from '../../mail/templates.js';
 import { logActivity } from '../activity/service.js';
+import { recordTrialClaim, trialEligibility, type TrialDenial } from './trial.js';
 
 export function publicUser(u: { id: string; email: string; fullName: string; emailVerifiedAt: Date | null }) {
   return { id: u.id, email: u.email, fullName: u.fullName, emailVerified: u.emailVerifiedAt !== null };
@@ -16,8 +17,8 @@ export function publicUser(u: { id: string; email: string; fullName: string; ema
 /** Crea la empresa con su configuración, suscripción inicial y el usuario como propietario. */
 export async function createCompanyForOwner(
   trx: Trx,
-  input: { userId: string; companyName: string; trialDays: number },
-): Promise<{ id: string; name: string }> {
+  input: { userId: string; companyName: string; trialDays: number; ownerEmail: string; trialDomainRuleDays: number },
+): Promise<{ id: string; name: string; trial: { granted: boolean; endsAt: Date | null; denied: TrialDenial | null } }> {
   const companyId = randomUUID();
   await setTenant(trx, { companyId, userId: input.userId });
   const company = await trx
@@ -30,7 +31,10 @@ export async function createCompanyForOwner(
 
   // Prueba gratuita sin cobro con los límites de Starter. Nunca se activa un plan de pago aquí:
   // el estado 'active' solo lo establecerá un webhook verificado del proveedor de pagos (fase 5).
-  const trialEndsAt = input.trialDays > 0 ? new Date(Date.now() + input.trialDays * 86_400_000) : null;
+  // Una prueba por persona y, para dominios de empresa, una por dominio y año (auth/trial.ts).
+  const denied = input.trialDays > 0 ? await trialEligibility(trx, input.ownerEmail, input.trialDomainRuleDays) : null;
+  const trialEndsAt = input.trialDays > 0 && !denied ? new Date(Date.now() + input.trialDays * 86_400_000) : null;
+  if (trialEndsAt) await recordTrialClaim(trx, companyId, input.ownerEmail);
   await trx
     .insertInto('subscriptions')
     .values({
@@ -50,9 +54,9 @@ export async function createCompanyForOwner(
     action: 'company.created',
     entityType: 'company',
     entityId: companyId,
-    metadata: { trialDays: input.trialDays },
+    metadata: { trialDays: trialEndsAt ? input.trialDays : 0, ...(denied ? { trialDenied: denied } : {}) },
   });
-  return company;
+  return { ...company, trial: { granted: !!trialEndsAt, endsAt: trialEndsAt, denied } };
 }
 
 export async function createUser(

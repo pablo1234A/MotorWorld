@@ -175,6 +175,38 @@ Se aplica la decisión **D1**.
   - no se crean recuperaciones porque responder a un presupuesto es una escritura.
 - **Interfaz.** Aviso permanente con el motivo, la fecha de conservación y el enlace a planes. Es solo información: el bloqueo es del servidor.
 
+### Una prueba gratuita por persona y empresa (abuso de la prueba)
+
+Al registrar una empresa nueva (`modules/auth/trial.ts`):
+
+- **Una prueba por email.** Se normaliza: minúsculas, sin `+etiqueta` y, en Gmail, sin puntos (`ana.p+x@gmail.com` = `anap@gmail.com`).
+- **Una prueba por dominio de empresa cada `TRIAL_DOMAIN_RULE_DAYS` días** (365 por defecto; `0` desactiva esta regla). No se aplica a los proveedores de correo gratuito (Gmail, Outlook, Yahoo, iCloud, Telefónica…).
+- **Correo desechable** conocido (lista corta, no exhaustiva): sin prueba.
+- Quien no cumple **se registra igualmente**: la cuenta queda sin plan (`none`, solo lectura) y puede contratar. El panel lo explica al entrar.
+- Dos altas simultáneas del mismo dominio no obtienen ambas la prueba (bloqueo por dominio).
+- **Privacidad:** solo se guardan huellas SHA-256 (`trial_claims`), sin el email ni el dominio en claro. Se borran a los 24 meses (trabajo de retención). La migración 0010 crea las huellas de las cuentas que ya tuvieron prueba.
+
+**Falsos positivos conocidos** y cómo se resuelven:
+
+| Caso | Qué pasa | Solución |
+|---|---|---|
+| Dos personas de la misma empresa (o de dos empresas que comparten dominio, p. ej. un grupo) se registran por separado en menos de un año | La segunda no tiene prueba | Invitar a la segunda persona a la primera cuenta, o conceder la prueba: `npm run ops -- plan --company <id> --plan starter --status trialing --trial-days 14` |
+| Alguien borra su cuenta y vuelve a registrarse | Sin prueba | Lo mismo, si procede |
+| Un dominio de empresa pequeño que no está en la lista de gratuitos (p. ej. un proveedor local) | Se trata como dominio de empresa | Añadirlo a la lista de `trial.ts` |
+| Dos personas distintas comparten una bandeja de Gmail con puntos distintos | Gmail las trata como la misma bandeja: es correcto | — |
+
+No se usan IP ni huellas del navegador: serían más intrusivas y darían más falsos positivos (oficinas o redes móviles compartidas).
+
+### Aviso antes del fin de la prueba
+
+Distinto de los avisos de conservación: llega **antes** de perder el acceso, para elegir un plan.
+
+- Días configurables con `TRIAL_REMINDER_DAYS` (por defecto `3,1`; vacío = sin avisos).
+- Una vez por etapa y fecha de fin (`trial_notices`). Si el worker estuvo parado, solo se envía la etapa vigente.
+- No se avisa a quien ya contrató ni a una prueba ya terminada.
+- La fecha se escribe en la zona horaria de la empresa (también en los avisos de conservación).
+- Lo envía el trabajo de retención del worker, que es exclusivo entre workers.
+
 ### Conservación de datos (90 días)
 
 - **Plazo:** 90 días desde el fin del acceso (`DATA_RETENTION_DAYS`):

@@ -2,8 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 
 export async function healthRoutes(app: FastifyInstance) {
-  // Vivo: el proceso responde.
-  app.get('/health', { config: { auth: 'none' } }, async () => ({ status: 'ok' }));
+  // Vivo: el proceso responde. Sin límite de peticiones: sus contadores están en PostgreSQL y
+  // una caída de la base de datos no debe hacer que el orquestador reinicie la API.
+  app.get('/health', { config: { auth: 'none', rateLimit: false } }, async () => ({ status: 'ok' }));
 
   // Listo: la base de datos responde. No expone versiones ni detalles internos.
   app.get('/health/ready', { config: { auth: 'none' } }, async (req, reply) => {

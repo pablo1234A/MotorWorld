@@ -222,6 +222,8 @@ describe('límites de intentos', async () => {
   });
 
   it('limita los registros por IP', async () => {
+    // Los contadores son compartidos por todas las instancias (también las de otras pruebas).
+    await perIp.db.deleteFrom('rateLimitCounters').execute();
     const attempt = () =>
       new Client(perIp.app).post('/auth/register', {
         fullName: 'Spam',
