@@ -168,3 +168,11 @@ export function tokenFromMail(text: string): string {
   if (!match?.[1]) throw new Error('No se encontró token en el email');
   return match[1];
 }
+
+/** Confirma el email de la cuenta con el enlace que recibió al registrarse (correo en memoria). */
+export async function verifyEmail(app: FastifyInstance, mailer: MemoryMailer, acc: RegisteredAccount): Promise<void> {
+  const mail = mailer.lastTo(acc.email);
+  if (!mail) throw new Error(`No hay email de verificación para ${acc.email}`);
+  const res = await new Client(app).post('/auth/email/verify', { token: tokenFromMail(mail.text) });
+  if (res.status !== 200) throw new Error(`Verificación fallida: ${res.status} ${JSON.stringify(res.body)}`);
+}

@@ -7,6 +7,8 @@ export function useRefreshQuoteData() {
     void queryClient.invalidateQueries({ queryKey: ['quotes'] });
     void queryClient.invalidateQueries({ queryKey: ['follow-ups'] });
     void queryClient.invalidateQueries({ queryKey: ['activity'] });
+    void queryClient.invalidateQueries({ queryKey: ['usage'] });
+    void queryClient.invalidateQueries({ queryKey: ['metrics'] });
     if (contactId) void queryClient.invalidateQueries({ queryKey: ['contacts', 'detail', contactId] });
   };
 }

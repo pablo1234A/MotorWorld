@@ -14,7 +14,7 @@ import { runCycle } from '../src/automation/runner.js';
 import { localParts, stepDueAt, zonedTimeToUtc } from '../src/automation/schedule.js';
 import { createDb, type Db } from '../src/db/database.js';
 import { FakeProvider } from './fake-provider.js';
-import { API, addMember, createQuote, createTestApp, registerAccount, type RegisteredAccount } from './helpers.js';
+import { API, addMember, createQuote, createTestApp, registerAccount, type RegisteredAccount, verifyEmail, type TestContext } from './helpers.js';
 
 /*
  * Pruebas del motor de seguimiento contra PostgreSQL real.
@@ -42,7 +42,7 @@ const T0 = lastNoon();
 const at = (offsetMs: number) => new Date(T0.getTime() + offsetMs);
 
 const fake = new FakeProvider();
-const { app, db, config } = await createTestApp(
+const { app, db, config, mailer } = await createTestApp(
   (c) => {
     c.automation.fromEmail = 'seguimiento@envios.ejemplo.test';
     c.dbPoolMax = 10;
@@ -70,8 +70,9 @@ async function configure(acc: RegisteredAccount, opts: { approval?: boolean; sch
 }
 
 /** Empresa con el envío automático activado (requisitos completos y confirmación legal). */
-async function automatedCompany(opts: Parameters<typeof configure>[1] = {}, application = app) {
-  const acc = await registerAccount(application);
+async function automatedCompany(opts: Parameters<typeof configure>[1] = {}, target: Pick<TestContext, 'app' | 'mailer'> = { app, mailer }) {
+  const acc = await registerAccount(target.app);
+  await verifyEmail(target.app, target.mailer, acc);
   await configure(acc, opts);
   const res = await acc.client.post('/automation/enable', { confirmLegalBasis: true });
   expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -516,9 +517,13 @@ describe('aprobación manual y reglas de contacto', () => {
     expect((await acc.client.post('/automation/enable', {})).status).toBe(400);
     const missing = await acc.client.post('/automation/enable', { confirmLegalBasis: true });
     expect(missing.status).toBe(400);
-    expect(missing.body.error.details.map((d: any) => d.path).sort()).toEqual(['legalBasisNote', 'replyToEmail']);
+    expect(missing.body.error.details.map((d: any) => d.path).sort()).toEqual(['emailVerified', 'legalBasisNote', 'replyToEmail']);
 
     await configure(acc);
+    // Sin email confirmado no se puede activar (evita cuentas falsas para enviar spam).
+    expect((await acc.client.post('/automation/enable', { confirmLegalBasis: true })).body.error.details.map((d: any) => d.path)).toEqual(['emailVerified']);
+    expect((await acc.client.get('/automation')).body.automation.requirements.emailVerified).toBe(false);
+    await verifyEmail(app, mailer, acc);
     expect((await acc.client.post('/automation/enable', { confirmLegalBasis: true })).status).toBe(200);
     const status = (await acc.client.get('/automation')).body;
     expect(status.automation).toMatchObject({ enabled: true, requireApproval: false, schedule: [3, 7, 14] });
@@ -647,7 +652,7 @@ describe('Mailgun: envío y webhooks firmados (contra un servidor local, no cont
   const post = (payload: unknown) => mg.app.inject({ method: 'POST', url: `${API}/webhooks/mailgun`, payload: payload as object });
 
   async function sentViaMailgun() {
-    const acc = await automatedCompany({}, mg.app);
+    const acc = await automatedCompany({}, mg);
     const q = await sentQuote(acc, 3);
     await planCompany(mgDeps(T0), acc.companyId);
     expect(await dispatchCompany(mgDeps(T0), acc.companyId)).toMatchObject({ sent: 1 });

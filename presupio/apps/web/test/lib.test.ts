@@ -7,6 +7,7 @@ import {
   CONTACT_CHANNEL_LABEL,
   DELIVERY_STATUS_LABEL,
   FOLLOW_UP_STATUS_LABEL,
+  RECOVERY_STATUS_LABEL,
   EXCLUSION_REASON_LABEL,
   FOLLOW_UP_CHANNEL_LABEL,
   OUTCOME_LABEL,
@@ -163,6 +164,7 @@ describe('coherencia con el modelo de datos del backend', () => {
     ['SubscriptionStatus', SUBSCRIPTION_STATUS_LABEL],
     ['FollowUpStatus', FOLLOW_UP_STATUS_LABEL],
     ['DeliveryStatus', DELIVERY_STATUS_LABEL],
+    ['RecoveryEventStatus', RECOVERY_STATUS_LABEL],
   ] as const)('%s tiene exactamente una etiqueta en español por valor', (name, labels) => {
     expect(Object.keys(labels).sort()).toEqual(union(name));
   });

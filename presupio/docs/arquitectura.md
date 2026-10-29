@@ -122,7 +122,8 @@ Un rechazo cuenta como respuesta, pero no como reactivación. Las restricciones 
 ### Suscripción
 
 - Al registrarse: `trialing` con los límites de Starter durante `TRIAL_DAYS` (14 por defecto), **sin cobro**.
-- **Ningún endpoint escribe en `subscriptions`.** En la fase 5 solo lo hará un webhook verificado del proveedor de pagos.
+- **Ningún endpoint escribe en `subscriptions`**, y desde la fase 4 el rol de la aplicación ni siquiera tiene permiso `UPDATE`/`DELETE` sobre la tabla. En la fase 5 solo la cambiará un webhook verificado del proveedor de pagos (ver [`pagos-fase5.md`](pagos-fase5.md)); hasta entonces, la herramienta de operación.
+- Consumo por empresa y periodo en `usage_periods` (contador atómico con `CHECK`) y `recovery_events` (una por presupuesto). Ver [`limites-y-metricas.md`](limites-y-metricas.md).
 - El catálogo (27,99 €, 57,99 € y 127,99 €; 25 y 65 recuperaciones al mes; Business con uso razonable) vive en `src/domain/plans.ts`.
 
 ## Migraciones
@@ -138,8 +139,9 @@ Un rechazo cuenta como respuesta, pero no como reactivación. Las restricciones 
 |---|---|---|
 | Prueba gratuita de 14 días con límites de Starter | Práctica habitual en SaaS; el plan maestro no la define | `TRIAL_DAYS` |
 | Los precios no indican si incluyen IVA (`vatIncluded: null`) | Pendiente según el plan maestro | `src/domain/plans.ts` |
-| Límite de Business sin cifra | El plan maestro pide publicar límites técnicos | Fase 4 |
+| Business: 300 recuperaciones al mes (uso razonable) y 400 emails automáticos al día | Límite amplio, publicado y sin restricciones ocultas (fase 4) | `src/domain/plans.ts` |
+| Recuperación = respuesta registrada en los 30 días siguientes a un seguimiento verificable | Resultado medible y temprano; la venta se mide aparte (fase 4) | `src/domain/recovery.ts` |
 | El registro revela si un email ya existe (409) | Mejor experiencia en B2B; mitigado con límite por IP | `auth/routes.ts` |
-| Login permitido sin email verificado | No bloquea el piloto; se podrá exigir antes de envíos automáticos | Fase 3/4 |
+| Login permitido sin email verificado | No bloquea el piloto. Desde la fase 4, activar el envío automático sí exige el email confirmado | `automation/routes.ts` |
 | Las invitaciones devuelven el enlace a quien invita | Funciona sin proveedor de correo; la cuenta queda sin verificar | `members/routes.ts` |
 | Importes en céntimos (enteros) y moneda EUR por defecto | Evita errores de coma flotante | — |

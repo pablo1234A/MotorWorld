@@ -58,7 +58,7 @@ export async function loginViaUi(page: Page, email: string, password = PASSWORD)
 /** Último enlace con token enviado a un email, leído de la salida de la API (MAIL_TRANSPORT=log, solo pruebas). */
 export function lastMailLink(to: string, pathPart: string): string {
   const log = readFileSync(API_LOG, 'utf8');
-  const blocks = log.split('[MAIL DEV · no enviado]').filter((b) => b.includes(`Para: ${to}`));
+  const blocks = log.split('[MAIL DEV · no enviado]').filter((b) => b.includes(`Para: ${to}`) && b.includes(`${pathPart}?token=`));
   const block = blocks.at(-1);
   const match = block?.match(new RegExp(`https?://[^\\s]*${pathPart}\\?token=[A-Za-z0-9_-]{43}`));
   if (!match) throw new Error(`No se encontró el enlace ${pathPart} para ${to}`);

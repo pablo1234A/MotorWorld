@@ -32,6 +32,7 @@ Códigos posibles:
 | `PAYLOAD_TOO_LARGE` | 413 |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 |
 | `RATE_LIMITED` | 429 |
+| `SERVICE_UNAVAILABLE` | 503 |
 | `INTERNAL_ERROR` | 500 |
 
 **Formatos y paginación**
@@ -83,7 +84,8 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 | PATCH | `/company` | owner/admin | Opcionales: `name, legalName, taxId, phone, website, timezone` |
 | GET | `/company/settings` | Lectura | Reglas de seguimiento y datos de envío (incluye `automationEnabled`, `automationEnabledAt`) |
 | PATCH | `/company/settings` | owner/admin | Opcionales: `followUpScheduleDays` (1–6 días entre 1 y 180, de menor a mayor; por defecto `[3, 7, 14]`), `allowedWeekdays[1-7]`, `contactWindowStart "HH:MM"`, `contactWindowEnd`, `defaultChannel`, `requireManualApproval`, `legalBasisNote`, `senderName`, `replyToEmail`. Con el envío automático activo no se puede vaciar `replyToEmail` ni `legalBasisNote` |
-| GET | `/company/subscription` | Lectura | `{ subscription: { plan, status, trialEndsAt, hasActiveAccess, planDetails, paymentsEnabled }, plans[] }`. Solo lectura |
+| GET | `/company/subscription` | Lectura | `{ subscription: { plan, status, trialEndsAt, hasActiveAccess, planDetails, paymentsEnabled }, plans[] }`. Cada plan: `priceCents, monthlyRecoveryLimit, dailyAutomaticEmailLimit, fairUse, vatIncluded`. Solo lectura |
+| GET | `/company/export` | owner/admin (`data:export`) | Exportación JSON de todos los datos de la empresa (adjunto). Máx. 5 por hora |
 
 ## Miembros — `/members`
 
@@ -126,10 +128,11 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 - Opcionales: `reference`, `description`, `amountCents`, `currency`, `status: draft|sent` (por defecto `sent`), `sentAt`, `validUntil`, `ownerUserId` (por defecto, quien lo crea).
 
 **Cambiar el estado** (`POST /quotes/:id/status`):
+- Si la respuesta llega en los 30 días siguientes a un seguimiento realizado, se registra una **recuperación** en la misma transacción (ver [`limites-y-metricas.md`](limites-y-metricas.md)).
 - Obligatorio: `status`.
 - Opcionales: `occurredAt` (no puede ser futura ni anterior al envío), `note`, `rejectionReason`.
 - Para `accepted`: **`evidence` es obligatoria**; `acceptedAmountCents` es opcional.
-- Responde `{ quote, reactivated, cancelledFollowUps }`.
+- Responde `{ quote, reactivated, cancelledFollowUps, recovery }`. `recovery` es `null` o `{ status: counted|over_limit|no_active_plan, used, limit }`.
 
 **Crear un seguimiento** (`POST /quotes/:id/follow-ups`):
 - Obligatorio: `channel` (`task|email|phone|whatsapp|sms|in_person`).
@@ -162,13 +165,28 @@ Funcionamiento completo en [`automatizacion.md`](automatizacion.md).
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
 | GET | `/automation` | Lectura | `{ automation: { enabled, enabledAt, enabledBy, requireApproval, schedule, requirements }, provider: { name, configured, tracksDelivery, fromDomain }, counts: { scheduled, awaitingApproval, sending, sent30d, delivered30d, failed }, worker: { healthy, lastRuns[] } }` |
-| POST | `/automation/enable` | owner/admin | `confirmLegalBasis: true`. 409 sin proveedor configurado; 400 con `details` si falta `replyToEmail`, `legalBasisNote` o un plan activo |
+| POST | `/automation/enable` | owner/admin | `confirmLegalBasis: true`. 409 sin proveedor configurado; 400 con `details` si falta `replyToEmail`, `legalBasisNote`, un plan activo o el **email confirmado** de quien lo activa (`emailVerified`) |
 | POST | `/automation/disable` | owner/admin | `{ enabled: false, cancelledFollowUps }` |
 | GET | `/automation/templates` | Lectura | `{ items: [{ step, offsetDays, version, subject, body, updatedAt }], variables }` |
 | GET | `/automation/templates/:step/versions` | Lectura | Historial de versiones del paso |
 | PUT | `/automation/templates/:step` | owner/admin | `subject, body` → versión nueva (400 si hay variables desconocidas o llaves mal cerradas) |
 | POST | `/automation/templates/preview` | Lectura | `subject, body, quoteId?` → `{ preview: { subject, text, html, sample } }`. No envía nada |
 | POST | `/automation/test-email` | owner/admin | Envía el primer email con datos de ejemplo **solo a quien lo pide**. Máx. 5 por hora. `{ delivery: "sent", to, providerMessageId }` o `{ delivery: "failed", error }` |
+
+## Consumo del plan y métricas
+
+| Método | Ruta | Permiso | Descripción |
+|---|---|---|---|
+| GET | `/usage` | Lectura | `{ usage: { plan, status, trialEndsAt, hasActiveAccess, period: { start, end, source, timezone }, recoveries: { used, limit, remaining, overLimit, warningAt, limitReachedAt, level: ok\|warning\|reached\|no_plan }, automaticEmails: { today, dailyLimit }, events[] } }`. No hay ninguna ruta para cambiar el plan ni el consumo |
+| GET | `/metrics?month=AAAA-MM` | Lectura | Mes natural (por defecto, el actual) en la zona horaria de la empresa: `{ metrics: { period, quotes, followUps, outcomes, recoveries, responseRate }, history: [6 meses] }`. 400 si el mes es futuro o no válido. `responseRate.rate` es `null` con menos de 10 casos |
+
+## Supervisión (monitor externo)
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/ops/status` | `Authorization: Bearer <OPS_STATUS_TOKEN>` | Cifras agregadas: `status (ok\|degraded), alerts[], worker, followUps, deliveries, jobs`. Sin datos de empresas ni personas. 404 sin token válido o sin token configurado |
+
+Si la base de datos no está disponible, cualquier ruta responde `503 SERVICE_UNAVAILABLE` con `Retry-After`.
 
 ## Públicas: baja y webhooks
 

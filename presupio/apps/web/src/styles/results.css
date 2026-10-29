@@ -1,0 +1,121 @@
+/*
+ * Presupio · Consumo del plan y resultados (fase 4).
+ * Mismo lenguaje catastral: el medidor es un lindero que se rellena con la tinta del tramo.
+ */
+
+/* Consumo de recuperaciones */
+.usage-figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.usage-figure__value {
+  font-size: var(--text-3xl);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.usage-figure__of {
+  color: var(--ink-2);
+  font-size: var(--text-md);
+}
+.meter__track {
+  position: relative;
+  height: 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.meter__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  transition: width var(--dur) var(--ease-out);
+}
+/* Marca del aviso (80 %): mojón fijo sobre el lindero */
+.meter__track::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 80%;
+  width: 1px;
+  background: var(--ink-3);
+}
+.meter[data-level='warning'] .meter__fill {
+  background: var(--due-line);
+}
+.meter[data-level='reached'] .meter__fill {
+  background: var(--cold-line);
+}
+
+.explainer summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--text-md);
+}
+.explainer[open] summary {
+  margin-bottom: var(--s-2);
+}
+.explainer p {
+  color: var(--ink-2);
+  font-size: var(--text-md);
+}
+.explainer p + p {
+  margin-top: var(--s-2);
+}
+
+/* Resultados */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.month-nav__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--text-lg);
+  font-weight: 650;
+  text-align: center;
+}
+.section-heading {
+  font-size: var(--text-lg);
+  font-weight: 650;
+}
+.ledger-section__more {
+  margin-top: var(--s-2);
+  text-align: right;
+  font-size: var(--text-md);
+}
+.ledger-section__more a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-weight: 600;
+}
+.ledger-section__more svg {
+  width: 1rem;
+  height: 1rem;
+}
+.table tr[aria-current='true'] th,
+.table tr[aria-current='true'] td {
+  background: var(--accent-soft);
+}
+@media (max-width: 30rem) {
+  .month-nav__label {
+    font-size: var(--text-md);
+    white-space: nowrap;
+  }
+  .month-nav__text {
+    display: none;
+  }
+}

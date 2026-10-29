@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import {
   expectAccessible,
@@ -275,6 +276,7 @@ const PAGES = [
   '/presupuestos/nuevo',
   '/seguimientos',
   '/seguimientos?estado=sent',
+  '/resultados',
   '/contactos',
   '/configuracion',
   '/configuracion/seguimiento',
@@ -300,8 +302,13 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
   await page.getByRole('button', { name: 'Guardar reglas' }).click();
   await expect(page.getByText('Reglas de seguimiento guardadas.')).toBeVisible();
 
-  // Sin dirección de respuesta ni base legal no se puede activar.
+  // Sin email confirmado, dirección de respuesta ni base legal no se puede activar.
   await page.getByRole('link', { name: 'Envío automático' }).first().click();
+  await expect(page.locator('.req--missing')).toContainText(['Una dirección donde recibir las respuestas', 'La base legal', 'Tu email confirmado']);
+  await page.goto(lastMailLink(owner.email, '/verificar-email'));
+  await page.getByRole('button', { name: 'Confirmar mi email' }).click();
+  await expect(page.getByRole('heading', { name: 'Email confirmado' })).toBeVisible();
+  await page.goto('/configuracion/automatico');
   await expect(page.getByRole('heading', { name: /Envío automático de emails/ })).toContainText('Desactivado');
   await expect(page.getByRole('button', { name: 'Activar envío automático' })).toBeDisabled();
   await page.getByLabel('Las respuestas llegan a').fill('oficina@ensayo.test');
@@ -383,6 +390,42 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
   expect(simulatedEmails(clientEmail)).toHaveLength(1);
 });
 
+test('plan y resultados: consumo real, sin cambios de plan desde el navegador y exportación', async () => {
+  const { page } = owner;
+  // La venta de «Reforma integral de cocina» (respuesta tras una llamada) es una recuperación.
+  await page.goto('/configuracion/plan');
+  await expect(page.getByRole('heading', { name: 'Consumo de este periodo' })).toBeVisible();
+  await expect(page.locator('.usage-figure')).toHaveText('1 de 25 recuperaciones');
+  await expect(page.getByRole('meter', { name: 'Recuperaciones usadas en este periodo' })).toHaveAttribute('aria-valuenow', '1');
+  const recoveries = page.getByRole('region', { name: 'Recuperaciones de este periodo (desplazable)' });
+  await expect(recoveries.getByRole('link', { name: 'Reforma integral de cocina' })).toBeVisible();
+  await expect(recoveries.getByText('Contabilizada')).toBeVisible();
+  // No hay ningún control para cambiar de plan.
+  await expect(page.getByRole('button', { name: /cambiar|contratar|mejorar/i })).toHaveCount(0);
+  await expect(page.getByRole('row', { name: /Business.*127,99/ })).toContainText('300');
+
+  await page.goto('/resultados');
+  await expect(page.getByRole('heading', { name: 'Resultados', level: 1 })).toBeVisible();
+  const recoveriesLedger = page.getByRole('region', { name: 'Recuperaciones' }).or(page.locator('section', { has: page.getByRole('heading', { name: 'Recuperaciones' }) }));
+  await expect(recoveriesLedger.first().locator('.ledger__value').first()).toHaveText('1');
+  await expect(page.getByText(/sin datos suficientes/)).toBeVisible();
+  await expect(page.getByText(/coincidencia en el tiempo, no una prueba/)).toBeVisible();
+  await page.getByRole('button', { name: 'Mes anterior' }).click();
+  await expect(page).toHaveURL(/mes=\d{4}-\d{2}/);
+  await expect(page.locator('.month-nav__label')).not.toContainText('En curso');
+
+  // Exportación de datos (propietario).
+  await page.goto('/configuracion');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^presupio-export-\d{4}-\d{2}-\d{2}\.json$/);
+  const exported = JSON.parse(readFileSync((await file.path())!, 'utf8'));
+  expect(exported.format).toBe('presupio-export');
+  expect(exported.quotes.items.length).toBeGreaterThan(0);
+  expect(JSON.stringify(exported)).not.toMatch(/argon2|passwordHash/);
+});
+
 test('enlaces internos: ninguno lleva a una página inexistente', async () => {
   const { page } = owner;
   const found = new Set<string>([firstQuoteUrl]);
@@ -402,7 +445,7 @@ test('enlaces internos: ninguno lleva a una página inexistente', async () => {
 });
 
 test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
-  test.setTimeout(300_000); // 14 pantallas × 3 tamaños con análisis axe
+  test.setTimeout(360_000); // 15 pantallas × 3 tamaños con análisis axe
   const { page } = owner;
   for (const viewport of [
     { width: 1440, height: 900 },

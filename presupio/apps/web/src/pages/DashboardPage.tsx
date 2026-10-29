@@ -1,7 +1,7 @@
 import { ArrowRight, CalendarClock, ClipboardList, FilePlus2, FileText, History } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useFollowUps, usePendingQuotes, useRecentActivity, useSettings, useSummary } from '../api/queries';
+import { useFollowUps, usePendingQuotes, useRecentActivity, useSettings, useSummary, useUsage } from '../api/queries';
 import type { Delivery } from '../api/types';
 import { useSession } from '../auth/session';
 import { BAND_LABEL, bandDescription, bandOf, bandRules, PortfolioMap, type Band } from '../components/PortfolioMap';
@@ -25,9 +25,9 @@ function Ledger() {
       to: '/seguimientos?estado=completed',
     },
     {
-      label: 'Oportunidades reactivadas',
+      label: 'Recuperaciones',
       value: s ? formatNumber(s.reactivated) : null,
-      note: 'Respondieron después de un seguimiento',
+      note: 'Respondieron en los 30 días siguientes a un seguimiento',
     },
     {
       label: 'Ventas tras seguimiento',
@@ -49,7 +49,30 @@ function Ledger() {
           </div>
         ))}
       </dl>
+      <p className="ledger-section__more">
+        <Link to="/resultados">
+          Resultados mes a mes <ArrowRight aria-hidden="true" />
+        </Link>
+      </p>
     </section>
+  );
+}
+
+/** Aviso del límite de recuperaciones del plan (desde el 80 %). */
+function UsageNotice() {
+  const usage = useUsage();
+  const r = usage.data?.usage.recoveries;
+  if (!r || (r.level !== 'warning' && r.level !== 'reached')) return null;
+  return (
+    <Alert
+      tone="warning"
+      title={r.level === 'reached' ? 'Has alcanzado el límite de recuperaciones de tu plan' : `Llevas ${r.used} de ${r.limit} recuperaciones este periodo`}
+      action={<Link to="/configuracion/plan">Ver consumo</Link>}
+    >
+      {r.level === 'reached'
+        ? 'El envío automático está en pausa hasta el próximo periodo. Puedes seguir registrando respuestas y trabajando a mano.'
+        : `Al llegar a ${r.limit}, el envío automático se pondrá en pausa hasta el próximo periodo.`}
+    </Alert>
   );
 }
 
@@ -301,6 +324,7 @@ export function DashboardPage() {
         </Alert>
       )}
 
+      <UsageNotice />
       {s && s.followUps.awaitingApproval > 0 && (
         <Alert
           tone="warning"

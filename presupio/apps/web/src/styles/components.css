@@ -1026,6 +1026,8 @@ a.row:hover {
 /* Utilidades */
 .stack {
   display: grid;
+  /* Una columna que nunca crece más que su contenedor (tablas anchas y textos largos). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
 }
 .stack--lg {

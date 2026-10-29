@@ -57,6 +57,7 @@ export const routes: RouteObject[] = [
               { path: '/presupuestos/nuevo', lazy: lazyPage(() => import('./pages/quotes/NewQuotePage'), 'NewQuotePage') },
               { path: '/presupuestos/:id', lazy: lazyPage(() => import('./pages/quotes/QuoteDetailPage'), 'QuoteDetailPage') },
               { path: '/seguimientos', lazy: lazyPage(() => import('./pages/FollowUpsPage'), 'FollowUpsPage') },
+              { path: '/resultados', lazy: lazyPage(() => import('./pages/ResultsPage'), 'ResultsPage') },
               { path: '/contactos', lazy: lazyPage(() => import('./pages/contacts/ContactsPages'), 'ContactsListPage') },
               { path: '/contactos/:id', lazy: lazyPage(() => import('./pages/contacts/ContactsPages'), 'ContactDetailPage') },
               {

@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Check, ChevronsUpDown, ClipboardList, FileText, LayoutDashboard, LogOut, Settings, UserRound, Users } from 'lucide-react';
+import { ArrowLeftRight, ChartNoAxesColumn, Check, ChevronsUpDown, ClipboardList, FileText, LayoutDashboard, LogOut, Settings, UserRound, Users } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useSummary } from '../api/queries';
@@ -14,6 +14,8 @@ const NAV = [
   { to: '/presupuestos', label: 'Presupuestos', icon: FileText },
   { to: '/seguimientos', label: 'Seguimientos', icon: ClipboardList },
   { to: '/contactos', label: 'Contactos', icon: Users },
+  // En móvil se llega desde el panel: la barra inferior mantiene cinco destinos.
+  { to: '/resultados', label: 'Resultados', icon: ChartNoAxesColumn, desktopOnly: true },
 ] as const;
 
 function AccountMenu({ placement }: { placement: 'up' | 'down' }) {
@@ -179,7 +181,7 @@ export function AppShell() {
       </main>
 
       <nav className="bottomnav" aria-label="Navegación principal">
-        {[...NAV, { to: '/configuracion', label: 'Ajustes', icon: Settings }].map(({ to, label, icon: Icon, ...rest }) => (
+        {[...NAV.filter((n) => !('desktopOnly' in n)), { to: '/configuracion', label: 'Ajustes', icon: Settings }].map(({ to, label, icon: Icon, ...rest }) => (
           <NavLink key={to} to={to} end={'end' in rest}>
             <Icon aria-hidden="true" />
             {label}

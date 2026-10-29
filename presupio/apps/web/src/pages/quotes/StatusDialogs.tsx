@@ -41,11 +41,17 @@ export function StatusDialog({ quote, target, correction, onClose }: Props) {
 
   const mutation = useMutation({
     mutationFn: (body: object) =>
-      api<{ reactivated: boolean; cancelledFollowUps: number }>(`/quotes/${quote.id}/status`, { method: 'POST', body }),
+      api<{
+        reactivated: boolean;
+        cancelledFollowUps: number;
+        recovery: { status: 'counted' | 'over_limit' | 'no_active_plan'; used: number | null; limit: number | null } | null;
+      }>(`/quotes/${quote.id}/status`, { method: 'POST', body }),
     onSuccess: (res) => {
       refresh(quote.contact.id);
       const parts = [`Estado actualizado: ${QUOTE_STATUS_LABEL[target!].toLowerCase()}.`];
-      if (res.reactivated) parts.push('Oportunidad reactivada tras el seguimiento.');
+      if (res.recovery?.status === 'counted') parts.push(`Recuperación registrada (${res.recovery.used} de ${res.recovery.limit} este periodo).`);
+      else if (res.recovery?.status === 'over_limit') parts.push('Recuperación registrada; el plan ya había alcanzado su límite, así que no se descuenta.');
+      else if (res.reactivated) parts.push('Oportunidad reactivada tras el seguimiento.');
       if (res.cancelledFollowUps > 0) parts.push(`${res.cancelledFollowUps} seguimiento(s) pendiente(s) detenido(s).`);
       toast.success(parts.join(' '));
       onClose();

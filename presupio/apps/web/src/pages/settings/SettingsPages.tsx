@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Copy, Lock, MailPlus, Plus, Trash2, UserMinus } from 'lucide-react';
+import { Copy, Download, Lock, MailPlus, Plus, Trash2, UserMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router';
+import { Link, NavLink, Outlet } from 'react-router';
 import { api } from '../../api/client';
-import { keys, useCompany, useInvitations, useMembers, useSettings, useSubscription } from '../../api/queries';
+import { keys, useCompany, useInvitations, useMembers, useSettings, useSubscription, useUsage } from '../../api/queries';
 import type { Company, CompanySettings, ContactChannel, Delivery, Invitation, Member, Role } from '../../api/types';
 import { useSession } from '../../auth/session';
 import { Dialog } from '../../components/Dialog';
@@ -11,7 +11,15 @@ import { useToast } from '../../components/Toasts';
 import { Alert, Button, ErrorAlert, Field, PageHeader, Skeleton, SkeletonRows } from '../../components/ui';
 import { formatDate, formatMoney } from '../../lib/format';
 import { useFormErrors } from '../../lib/forms';
-import { CONTACT_CHANNEL_LABEL, ROLE_DESCRIPTION, ROLE_LABEL, SUBSCRIPTION_STATUS_LABEL, WEEKDAYS } from '../../lib/labels';
+import {
+  CONTACT_CHANNEL_LABEL,
+  FOLLOW_UP_CHANNEL_LABEL,
+  RECOVERY_STATUS_LABEL,
+  ROLE_DESCRIPTION,
+  ROLE_LABEL,
+  SUBSCRIPTION_STATUS_LABEL,
+  WEEKDAYS,
+} from '../../lib/labels';
 import { usePageTitle } from '../../lib/usePageTitle';
 import { compact, required, validateEmail, validatePassword, validatePhone } from '../../lib/validation';
 
@@ -155,13 +163,57 @@ function CompanyForm({ company, canEdit }: { company: Company; canEdit: boolean 
   );
 }
 
+/** Descarga de todos los datos de la empresa (portabilidad). Solo propietarios y administradores. */
+function ExportPanel() {
+  const toast = useToast();
+  const exporting = useMutation({
+    mutationFn: async () => {
+      const data = await api<object>('/company/export');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `presupio-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onSuccess: () => toast.success('Exportación descargada.'),
+  });
+  return (
+    <section className="panel" aria-labelledby="export-title">
+      <div className="panel__header">
+        <div>
+          <h2 id="export-title">Exportar datos</h2>
+          <p>
+            Descarga en un archivo JSON todos los datos de tu empresa: presupuestos, contactos, seguimientos, emails, exclusiones e historial. Contiene datos
+            personales de tus clientes: guárdalo de forma segura.
+          </p>
+        </div>
+        <Button icon={Download} loading={exporting.isPending} onClick={() => exporting.mutate()}>
+          Exportar
+        </Button>
+      </div>
+      {exporting.isError && (
+        <div className="panel__body">
+          <ErrorAlert error={exporting.error} />
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function CompanySettingsPage() {
   usePageTitle('Empresa');
   const session = useSession();
   const company = useCompany();
   if (company.isPending) return <Skeleton height="20rem" />;
   if (company.isError) return <ErrorAlert error={company.error} onRetry={() => void company.refetch()} />;
-  return <CompanyForm key={company.data.company.updatedAt} company={company.data.company} canEdit={session.can('company:update')} />;
+  return (
+    <div className="stack stack--lg">
+      <CompanyForm key={company.data.company.updatedAt} company={company.data.company} canEdit={session.can('company:update')} />
+      {session.can('data:export') && <ExportPanel />}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -635,6 +687,136 @@ export function TeamPage() {
 // Plan (solo lectura: los pagos llegan en una fase posterior)
 // ---------------------------------------------------------------------------
 
+const PERIOD_SOURCE_LABEL = { calendar_month: 'mes natural', provider: 'periodo de facturación' } as const;
+
+function UsageMeter({ used, limit, level }: { used: number; limit: number; level: string }) {
+  const pct = limit > 0 ? Math.min(used / limit, 1) : 0;
+  return (
+    <div className="meter" data-level={level}>
+      <div
+        className="meter__track"
+        role="meter"
+        aria-label="Recuperaciones usadas en este periodo"
+        aria-valuemin={0}
+        aria-valuemax={limit}
+        aria-valuenow={used}
+        aria-valuetext={`${used} de ${limit}`}
+      >
+        <span className="meter__fill" style={{ width: `${pct * 100}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function UsagePanel() {
+  const usage = useUsage();
+  if (usage.isPending) return <Skeleton height="14rem" />;
+  if (usage.isError) return <ErrorAlert error={usage.error} onRetry={() => void usage.refetch()} />;
+  const u = usage.data.usage;
+  const r = u.recoveries;
+  const periodLabel = `${formatDate(u.period.start)} – ${formatDate(new Date(new Date(u.period.end).getTime() - 1).toISOString())}`;
+  return (
+    <section className="panel" aria-labelledby="usage-title">
+      <div className="panel__header">
+        <div>
+          <h2 id="usage-title">Consumo de este periodo</h2>
+          <p>
+            {periodLabel} · {PERIOD_SOURCE_LABEL[u.period.source]}, hora de {u.period.timezone === 'Europe/Madrid' ? 'la península' : u.period.timezone}
+          </p>
+        </div>
+      </div>
+      <div className="panel__body stack">
+        {r.level === 'no_plan' ? (
+          <Alert tone="warning" title="Sin plan activo">
+            Las respuestas de tus clientes se siguen registrando, pero el envío automático está detenido y las recuperaciones no se descuentan de ningún
+            plan.
+          </Alert>
+        ) : (
+          <>
+            <p className="usage-figure">
+              <span className="usage-figure__value num">{r.used}</span>
+              <span className="usage-figure__of"> de {r.limit} recuperaciones</span>
+            </p>
+            <UsageMeter used={r.used} limit={r.limit} level={r.level} />
+            <p className="small muted">
+              {r.remaining > 0 ? `Te quedan ${r.remaining}.` : 'No quedan recuperaciones en este periodo.'} El contador se reinicia el{' '}
+              {formatDate(u.period.end)}.
+            </p>
+            {r.level === 'warning' && (
+              <Alert tone="warning" title={`Has usado el ${Math.round((r.used / r.limit) * 100)} % de tus recuperaciones`}>
+                Al llegar a {r.limit}, el envío automático de emails se pondrá en pausa hasta el próximo periodo.
+              </Alert>
+            )}
+            {r.level === 'reached' && (
+              <Alert tone="warning" title="Has alcanzado el límite de tu plan">
+                El envío automático está en pausa hasta el {formatDate(u.period.end)}: se cancelaron los emails pendientes y no se programan nuevos. Puedes
+                seguir registrando respuestas, trabajando a mano y consultando todo tu historial.
+                {r.overLimit > 0 && ` Desde entonces se han registrado ${r.overLimit} recuperación(es) más, que no se descuentan.`}
+              </Alert>
+            )}
+          </>
+        )}
+        <dl className="kv">
+          <dt>Emails automáticos hoy</dt>
+          <dd>
+            <span className="num">
+              {u.automaticEmails.today} de {u.automaticEmails.dailyLimit}
+            </span>
+            <span className="cell-sub">Límite técnico diario del plan, para proteger la entrega de tus correos.</span>
+          </dd>
+        </dl>
+        <details className="explainer">
+          <summary>¿Qué cuenta como recuperación?</summary>
+          <p>
+            Un presupuesto enviado y sin respuesta cuyo cliente responde (o acepta) después de un seguimiento realizado: una llamada, mensaje o visita que
+            registraste como hecha, o un email automático que el proveedor aceptó. La respuesta debe llegar en los 30 días siguientes a ese seguimiento.
+          </p>
+          <p>
+            No cuentan los emails enviados sin respuesta, los seguimientos programados ni las respuestas sin seguimiento previo. Cada presupuesto cuenta una
+            sola vez, en el periodo en que registras la respuesta. Es una coincidencia en el tiempo registrada por tu equipo: no demuestra que el cliente
+            respondiera por el seguimiento.
+          </p>
+        </details>
+      </div>
+      {u.events.length > 0 && (
+        <div className="table-wrap" tabIndex={0} role="region" aria-label="Recuperaciones de este periodo (desplazable)">
+          <table className="table">
+            <caption className="visually-hidden">Recuperaciones de este periodo</caption>
+            <thead>
+              <tr>
+                <th scope="col">Registrada</th>
+                <th scope="col">Presupuesto</th>
+                <th scope="col">Seguimiento previo</th>
+                <th scope="col">Plan</th>
+              </tr>
+            </thead>
+            <tbody>
+              {u.events.map((e) => (
+                <tr key={e.id}>
+                  <td className="nowrap">{formatDate(e.registeredAt)}</td>
+                  <td>
+                    <Link to={`/presupuestos/${e.quoteId}`}>{e.quoteTitle}</Link>
+                    <span className="cell-sub">
+                      {e.contactName} · {e.responseStatus === 'accepted' ? 'aceptó' : 'respondió'} el {formatDate(e.respondedAt)}
+                    </span>
+                  </td>
+                  <td>
+                    {e.followUpSource === 'rule' ? 'Email automático' : e.followUpChannel ? FOLLOW_UP_CHANNEL_LABEL[e.followUpChannel] : '—'}
+                    {e.followUpAt && <span className="cell-sub">{formatDate(e.followUpAt)}</span>}
+                  </td>
+                  <td>
+                    <span className={`pill ${e.status === 'counted' ? 'pill--accepted' : 'pill--neutral'}`}>{RECOVERY_STATUS_LABEL[e.status]}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function PlanPage() {
   usePageTitle('Plan');
   const sub = useSubscription();
@@ -667,11 +849,13 @@ export function PlanPage() {
           </dl>
           {!s.paymentsEnabled && (
             <Alert tone="info" title="Los pagos todavía no están activos">
-              Durante la prueba no se te cobrará nada y no necesitas tarjeta. La contratación de planes se habilitará más adelante.
+              Durante la prueba no se te cobrará nada y no necesitas tarjeta. La contratación y el cambio de plan se habilitarán más adelante; el plan no se
+              puede cambiar desde aquí.
             </Alert>
           )}
         </div>
       </section>
+      <UsagePanel />
       <section className="panel" aria-labelledby="plans-title">
         <div className="panel__header">
           <div>
@@ -688,7 +872,12 @@ export function PlanPage() {
                 <th scope="col" className="num">
                   Precio
                 </th>
-                <th scope="col">Recuperaciones al mes</th>
+                <th scope="col" className="num">
+                  Recuperaciones al mes
+                </th>
+                <th scope="col" className="num">
+                  Emails automáticos al día
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -698,11 +887,21 @@ export function PlanPage() {
                     {p.name} {p.id === s.plan && <span className="pill pill--neutral">Actual</span>}
                   </td>
                   <td className="num">{formatMoney(p.priceCents, p.currency)}/mes</td>
-                  <td>{p.monthlyRecoveryLimit !== null ? `Hasta ${p.monthlyRecoveryLimit}` : 'Uso amplio, con política de uso razonable'}</td>
+                  <td className="num">
+                    Hasta {p.monthlyRecoveryLimit}
+                    {p.fairUse && <span className="cell-sub">Uso razonable</span>}
+                  </td>
+                  <td className="num">{p.dailyAutomaticEmailLimit}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="panel__footer">
+          <p className="small muted">
+            Business no es ilimitado: su límite de uso razonable está publicado aquí y no hay restricciones ocultas. Si una empresa necesitara más, se acordaría
+            aparte.
+          </p>
         </div>
       </section>
     </div>

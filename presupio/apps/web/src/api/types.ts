@@ -29,7 +29,8 @@ export type Permission =
   | 'follow_ups:write'
   | 'exclusions:create'
   | 'exclusions:lift'
-  | 'activity:read';
+  | 'activity:read'
+  | 'data:export';
 
 export interface Page<T> {
   items: T[];
@@ -101,7 +102,8 @@ export interface PlanDefinition {
   priceCents: number;
   currency: 'EUR';
   interval: 'month';
-  monthlyRecoveryLimit: number | null;
+  monthlyRecoveryLimit: number;
+  dailyAutomaticEmailLimit: number;
   fairUse: boolean;
   vatIncluded: boolean | null;
 }
@@ -281,7 +283,7 @@ export interface AutomationStatus {
     enabledBy: string | null;
     requireApproval: boolean;
     schedule: number[];
-    requirements: { providerConfigured: boolean; replyToEmail: boolean; legalBasisNote: boolean; activePlan: boolean };
+    requirements: { providerConfigured: boolean; replyToEmail: boolean; legalBasisNote: boolean; activePlan: boolean; emailVerified: boolean };
   };
   provider: { name: string; configured: boolean; tracksDelivery: boolean; fromDomain: string | null };
   counts: { scheduled: number; awaitingApproval: number; sending: number; sent30d: number; delivered30d: number; failed: number };
@@ -344,4 +346,88 @@ export interface MessageDelivery {
   sentAt: string | null;
   deliveredAt: string | null;
   failedAt: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Consumo del plan y métricas (fase 4)
+// ---------------------------------------------------------------------------
+
+export type RecoveryStatus = 'counted' | 'over_limit' | 'no_active_plan' | 'historical';
+export type UsageLevel = 'ok' | 'warning' | 'reached' | 'no_plan';
+
+export interface RecoveryEvent {
+  id: string;
+  quoteId: string;
+  quoteTitle: string;
+  quoteReference: string | null;
+  contactName: string;
+  status: RecoveryStatus;
+  responseStatus: 'responded' | 'accepted';
+  respondedAt: string;
+  registeredAt: string;
+  followUpChannel: FollowUpChannel | null;
+  followUpSource: 'manual' | 'rule' | null;
+  followUpAt: string | null;
+}
+
+export interface Usage {
+  plan: PlanDefinition | null;
+  status: SubscriptionStatus;
+  trialEndsAt: string | null;
+  hasActiveAccess: boolean;
+  period: { start: string; end: string; source: 'calendar_month' | 'provider'; timezone: string };
+  recoveries: {
+    used: number;
+    limit: number;
+    remaining: number;
+    overLimit: number;
+    warningAt: number | null;
+    limitReachedAt: string | null;
+    level: UsageLevel;
+  };
+  automaticEmails: { today: number; dailyLimit: number };
+  events: RecoveryEvent[];
+}
+
+export interface Metrics {
+  period: { month: string; start: string; end: string; timezone: string; inProgress: boolean; beforeAccountCreated: boolean };
+  quotes: { registered: number; sent: number; pendingNow: number };
+  followUps: {
+    automaticScheduledNow: number;
+    automaticAwaitingApprovalNow: number;
+    automaticSent: number;
+    automaticDelivered: number;
+    automaticFailed: number;
+    failedAttempts: number;
+    manualContacts: number;
+    manualPendingNow: number;
+  };
+  outcomes: {
+    responded: number;
+    respondedAfterFollowUp: number;
+    respondedAfterAutomaticEmail: number;
+    respondedWithoutFollowUp: number;
+    accepted: number;
+    acceptedAfterFollowUp: number;
+    acceptedAfterFollowUpAmountCents: number;
+    amountSource: 'declared_by_company';
+  };
+  recoveries: { counted: number; overLimit: number; noActivePlan: number };
+  responseRate: {
+    quotesWithFollowUp: number;
+    respondedAfterFollowUp: number;
+    rate: number | null;
+    minSample: number;
+    finalAfter: string;
+    final: boolean;
+  };
+}
+
+export interface MetricsMonth {
+  month: string;
+  quotesSent: number;
+  followUpsDone: number;
+  respondedAfterFollowUp: number;
+  acceptedAfterFollowUp: number;
+  recoveriesCounted: number;
 }

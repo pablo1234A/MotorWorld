@@ -224,6 +224,7 @@ Hay tres niveles, y los tres deben permitirlo para que salga un email.
      - una dirección donde recibir las respuestas;
      - la base legal documentada (mínimo 20 caracteres);
      - un plan activo;
+     - el **email confirmado** de quien lo activa (desde la fase 4: evita cuentas falsas usadas para enviar spam);
      - **confirmar expresamente** que hay base jurídica y que no se usan listas compradas.
    - La activación queda registrada: quién la activó y cuándo, también en el historial.
    - **Desactivar cancela en el acto** todos los emails pendientes.
@@ -303,7 +304,7 @@ El proveedor simulado (`apps/api/test/fake-provider.ts`) y el simulador de las p
   - cuenta como contacto realizado para la métrica de reactivación.
 - **Un paso fallido no bloquea los siguientes:** si falla, el siguiente paso se programa con normalidad. Si el motivo es la dirección, el rebote la excluye y se detiene la secuencia.
 - **Sin confirmación de entrega en SMTP:** con SMTP no hay confirmación de entrega ni gestión de rebotes.
-- **Límites de plan:** no se aplican al envío (fase 4).
+- **Límites de plan:** desde la fase 4 se aplican al envío: límite de recuperaciones por periodo (al alcanzarlo se cancelan los pendientes y no se programan nuevos) y límite técnico diario de emails. Ver [`limites-y-metricas.md`](limites-y-metricas.md).
 
 ## Puesta en producción
 

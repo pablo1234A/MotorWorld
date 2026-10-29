@@ -12,7 +12,7 @@ import { PLANS } from '../src/domain/plans.js';
 import { safeErrorSerializer } from '../src/lib/log.js';
 import { billingPeriodFor, recordRecovery } from '../src/modules/usage/service.js';
 import { FakeProvider } from './fake-provider.js';
-import { addMember, API, createQuote, createTestApp, registerAccount, type RegisteredAccount } from './helpers.js';
+import { addMember, API, createQuote, createTestApp, registerAccount, verifyEmail, type RegisteredAccount } from './helpers.js';
 
 /*
  * Fase 4: límites de los planes, recuperaciones, métricas, aislamiento, errores y migraciones.
@@ -22,7 +22,7 @@ import { addMember, API, createQuote, createTestApp, registerAccount, type Regis
 
 const OPS_TOKEN = 'token-de-supervision-de-pruebas-0123456789abcdef';
 const fake = new FakeProvider();
-const { app, db, config } = await createTestApp(
+const { app, db, config, mailer } = await createTestApp(
   (c) => {
     c.automation.fromEmail = 'seguimiento@envios.ejemplo.test';
     c.dbPoolMax = 10;
@@ -493,6 +493,7 @@ describe('migraciones', () => {
 
 describe('motor de seguimiento con límites', () => {
   async function automated(acc: RegisteredAccount) {
+    await verifyEmail(app, mailer, acc);
     const s = await acc.client.patch('/company/settings', {
       allowedWeekdays: [1, 2, 3, 4, 5, 6, 7],
       contactWindowStart: '00:00',

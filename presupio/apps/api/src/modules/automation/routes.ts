@@ -73,6 +73,8 @@ export async function automationRoutes(app: FastifyInstance) {
             replyToEmail: !!ctx.replyTo,
             legalBasisNote: !!s.legalBasisNote && s.legalBasisNote.trim().length >= 20,
             activePlan: ctx.hasAccess,
+            // Quien activa el envío debe haber confirmado su email (evita cuentas falsas usadas para spam).
+            emailVerified: auth.emailVerified,
           },
         },
         provider: {
@@ -112,6 +114,9 @@ export async function automationRoutes(app: FastifyInstance) {
           ? [{ path: 'legalBasisNote', message: 'Documenta la base legal para contactar (mínimo 20 caracteres)' }]
           : []),
         ...(!ctx.hasAccess ? [{ path: 'plan', message: 'Tu cuenta no tiene un plan activo' }] : []),
+        ...(!auth.emailVerified
+          ? [{ path: 'emailVerified', message: 'Confirma tu email antes de activar el envío (puedes pedir el enlace de nuevo en Mi perfil)' }]
+          : []),
       ];
       if (details.length) throw errors.validation('Faltan requisitos para activar el envío automático.', details);
       if (ctx.automationEnabled) return { enabled: true };

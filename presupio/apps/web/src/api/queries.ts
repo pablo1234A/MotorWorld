@@ -14,6 +14,8 @@ import type {
   Me,
   Member,
   MessageDelivery,
+  Metrics,
+  MetricsMonth,
   MessageTemplate,
   Page,
   QuoteDetail,
@@ -21,6 +23,7 @@ import type {
   QuoteSummary,
   SubscriptionInfo,
   TemplateVersion,
+  Usage,
 } from './types';
 
 export const keys = {
@@ -42,6 +45,8 @@ export const keys = {
   members: ['members'] as const,
   invitations: ['members', 'invitations'] as const,
   automation: ['automation'] as const,
+  usage: ['usage'] as const,
+  metrics: (month: string) => ['metrics', month] as const,
   templates: ['automation', 'templates'] as const,
   templateVersions: (step: number) => ['automation', 'templates', step, 'versions'] as const,
   followUpPreview: (id: string) => ['follow-ups', 'detail', id, 'preview'] as const,
@@ -265,5 +270,22 @@ export function useFollowUpDeliveries(id: string, enabled: boolean) {
     queryKey: keys.followUpDeliveries(id),
     queryFn: ({ signal }) => api<{ items: MessageDelivery[] }>(`/follow-ups/${id}/deliveries`, { signal }),
     enabled,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Consumo del plan y métricas
+// ---------------------------------------------------------------------------
+
+export function useUsage(enabled = true) {
+  return useQuery({ queryKey: keys.usage, queryFn: ({ signal }) => api<{ usage: Usage }>('/usage', { signal }), enabled });
+}
+
+/** Métricas de un mes (AAAA-MM; vacío = mes actual en la zona horaria de la empresa). */
+export function useMetrics(month: string) {
+  return useQuery({
+    queryKey: keys.metrics(month),
+    queryFn: ({ signal }) => api<{ metrics: Metrics; history: MetricsMonth[] }>(`/metrics${qs({ month })}`, { signal }),
+    placeholderData: keepPreviousData,
   });
 }

@@ -155,7 +155,7 @@ function StatusPanel({ status, canEdit }: { status: AutomationStatus; canEdit: b
   const [dialog, setDialog] = useState<'enable' | 'disable' | null>(null);
   const { automation: a, provider, counts, worker } = status;
   const r = a.requirements;
-  const ready = r.providerConfigured && r.replyToEmail && r.legalBasisNote && r.activePlan;
+  const ready = r.providerConfigured && r.replyToEmail && r.legalBasisNote && r.activePlan && r.emailVerified;
   const lastRun = worker.lastRuns.find((run) => run.job === 'dispatcher');
 
   return (
@@ -193,6 +193,9 @@ function StatusPanel({ status, canEdit }: { status: AutomationStatus; canEdit: b
               <Requirement ok={r.replyToEmail}>Una dirección donde recibir las respuestas (más abajo)</Requirement>
               <Requirement ok={r.legalBasisNote}>La base legal para contactar, documentada (más abajo)</Requirement>
               <Requirement ok={r.activePlan}>Un plan activo o el periodo de prueba</Requirement>
+              <Requirement ok={r.emailVerified}>
+                Tu email confirmado (si no te llegó el enlace, pídelo de nuevo en <Link to="/configuracion/perfil">Mi perfil</Link>)
+              </Requirement>
             </ul>
           </div>
         )}

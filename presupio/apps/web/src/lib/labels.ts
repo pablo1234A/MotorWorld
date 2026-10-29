@@ -7,6 +7,7 @@ import type {
   FollowUpOutcome,
   FollowUpStatus,
   QuoteStatus,
+  RecoveryStatus,
   Role,
   SubscriptionStatus,
 } from '../api/types';
@@ -122,6 +123,13 @@ export const DELIVERY_STATUS_LABEL: Record<DeliveryStatus, string> = {
   unknown: 'Resultado desconocido',
 };
 
+export const RECOVERY_STATUS_LABEL: Record<RecoveryStatus, string> = {
+  counted: 'Contabilizada',
+  over_limit: 'Por encima del límite',
+  no_active_plan: 'Sin plan activo',
+  historical: 'Anterior a la medición',
+};
+
 const CANCEL_REASON_LABEL: Record<string, string> = {
   quote_responded: 'el cliente respondió',
   quote_accepted: 'el presupuesto se aceptó',
@@ -137,6 +145,7 @@ const CANCEL_REASON_LABEL: Record<string, string> = {
   quote_resent: 'cambió la fecha de envío del presupuesto',
   approval_expired: 'nadie lo aprobó a tiempo (72 h)',
   expired: 'no pudo enviarse a tiempo',
+  plan_limit_reached: 'se alcanzó el límite de recuperaciones del plan',
 };
 
 export function cancelReasonLabel(reason: string | null): string {
@@ -211,6 +220,18 @@ export function describeActivity(entry: ActivityEntry): string {
       return 'desactivó el envío automático de emails';
     case 'automation.test_email':
       return 'envió un email de prueba';
+    case 'recovery.registered':
+      return m.status === 'counted'
+        ? `registró una recuperación${typeof m.used === 'number' && typeof m.limit === 'number' ? ` (${m.used} de ${m.limit} del plan)` : ''}`
+        : m.status === 'over_limit'
+          ? 'registró una recuperación por encima del límite del plan (no se descuenta)'
+          : 'registró una recuperación sin plan activo (no se descuenta)';
+    case 'usage.limit_reached':
+      return 'alcanzó el límite de recuperaciones del plan: el envío automático queda en pausa hasta el próximo periodo';
+    case 'company.exported':
+      return 'exportó los datos de la empresa';
+    case 'subscription.changed':
+      return 'cambió el plan de la cuenta';
     case 'template.updated':
       return `editó la plantilla del email ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
     case 'follow_up.updated':
