@@ -278,6 +278,26 @@ function StatusPanel({ status, canEdit }: { status: AutomationStatus; canEdit: b
 // Remitente, revisión y base legal
 // ---------------------------------------------------------------------------
 
+/** Estado de la detección automática de respuestas: nunca se presenta como activa si no lo está. */
+function ReplyDetection({ status }: { status: AutomationStatus }) {
+  const d = status.replyDetection;
+  if (!d.configured || !d.address) {
+    return (
+      <Alert tone="info" title="Detección automática de respuestas: no activada">
+        Presupio no lee tu buzón. Cuando un cliente responda, registra la respuesta en el presupuesto: así se detienen sus seguimientos. Hasta
+        entonces pueden seguir saliendo los emails programados (con al menos 48 horas entre uno y otro).
+      </Alert>
+    );
+  }
+  return (
+    <Alert tone="success" title="Detección automática de respuestas disponible">
+      Crea en tu buzón una regla que reenvíe a <span className="strong ref-id">{d.address}</span> los correos que te respondan los clientes. Presupio
+      reconocerá las respuestas a sus emails automáticos, las registrará y detendrá los seguimientos. Las respuestas automáticas (fuera de la oficina) no
+      cuentan. También puedes seguir registrándolas a mano.
+    </Alert>
+  );
+}
+
 function SenderForm({ settings, status, companyName, canEdit }: { settings: CompanySettings; status: AutomationStatus; companyName: string; canEdit: boolean }) {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -351,6 +371,7 @@ function SenderForm({ settings, status, companyName, canEdit }: { settings: Comp
         <p className="small muted">
           El cliente verá: <span className="strong">{fromName}</span> &lt;…@{status.provider.fromDomain ?? 'dominio del servidor'}&gt;
         </p>
+        <ReplyDetection status={status} />
         <label className="check">
           <input type="checkbox" checked={f.requireManualApproval} onChange={(e) => setF((p) => ({ ...p, requireManualApproval: e.target.checked }))} />
           <span>

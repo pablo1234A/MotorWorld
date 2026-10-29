@@ -95,9 +95,13 @@ Para cada empresa con el envío activado y cada presupuesto en estado **enviado*
   - Esperas: 5 min, 30 min y 2 h.
   - Máximo `FOLLOWUP_MAX_ATTEMPTS` intentos en total (3 por defecto, 5 como tope).
 - **No se reintentan:** credenciales rechazadas, dirección rechazada (4xx de la API, SMTP 5xx) y rebotes.
-- **Un intento que se queda en `sending` más de 15 min** (el proceso murió entre el envío y su registro) pasa a `unknown`, y el seguimiento a `failed` con el motivo `unknown_outcome`.
-  - **No se reenvía:** preferimos no duplicar un email a un cliente antes que arriesgarnos.
-  - Queda visible en «Fallidos» para que alguien lo revise.
+- **Un intento que se queda en `sending` más de 15 min** (el proceso o la base de datos fallaron entre el envío y su registro) se trata según la marca `provider_call_started_at`, que se guarda justo antes de llamar al proveedor:
+  - **Sin marca:** el proveedor nunca se llamó y el email no salió. El seguimiento vuelve a la cola (`interrupted_before_send`) y el intento se libera.
+  - **Con marca:** puede haber salido. El seguimiento pasa a **«Por revisar» (`unknown`)** y el intento a `unverified`: **no se cobra ni se reenvía**, para no duplicarlo.
+    - Se **reconcilia** con el proveedor: Mailgun mediante su registro de eventos y sus webhooks.
+    - Si no, lo resuelve una persona («Sí se envió» o «No se envió»), con historial.
+    - La supervisión avisa con `deliveries_unknown_review`.
+  - Si la llamada colgada vuelve más tarde con su resultado, ese resultado resuelve el caso. Nunca se cuenta dos veces.
 
 ### Concurrencia y reinicios
 
@@ -122,8 +126,23 @@ Con **«Revisión humana obligatoria»** (activada por defecto) ningún email sa
 
 ### Respuestas del cliente
 
-- Los emails llevan `Reply-To` con la dirección de la empresa, así que **las respuestas llegan a su buzón**, no a Presupio.
-- Presupio **no lee el buzón**. La respuesta se registra en la ficha con «Registrar respuesta del cliente», lo que cancela los emails pendientes. Leer las respuestas automáticamente (*inbound*) se deja para más adelante.
+- Los emails llevan `Reply-To` con la dirección de la empresa, así que **las respuestas llegan a su buzón**. Presupio nunca se interpone en esa entrega.
+- **Registro manual** (siempre disponible): «Registrar respuesta del cliente» en la ficha. Cancela los emails pendientes.
+- **Detección automática** (opcional; necesita Mailgun con correo entrante):
+  1. Cada empresa tiene una dirección de entrada propia: `respuestas+<token>@<INBOUND_EMAIL_DOMAIN>`. Aparece en «Envío automático».
+  2. La empresa crea en su buzón una regla que **reenvía** a esa dirección las respuestas de sus clientes.
+  3. Una ruta de recepción de Mailgun entrega el mensaje firmado en `POST /api/v1/webhooks/inbound/mailgun`.
+  4. Presupio comprueba la firma (la misma clave que los webhooks de eventos y la misma tolerancia de tiempo) y descarta las entregas y los mensajes repetidos (token y `Message-Id`).
+  5. **Empareja la respuesta solo dentro de la empresa del token:**
+     - por `In-Reply-To`/`References`, que citan el id de nuestro email (el de Mailgun o `<id-del-envío@dominio>` con SMTP);
+     - si no, por el remitente (un contacto al que se envió un email automático en los últimos 60 días).
+  6. Las **respuestas automáticas** (`Auto-Submitted`, `Precedence`, «Fuera de la oficina»…) y los **rebotes** no cuentan.
+  7. Con una respuesta válida, el presupuesto pasa a «respondido», se cancelan sus seguimientos y queda en el historial (`quote.reply_detected`). **No se guarda el contenido del mensaje.**
+- **Configuración** (pendiente de probar con una cuenta real de Mailgun):
+  - registros **MX** del dominio de entrada (p. ej. `respuestas.tudominio.es`) hacia Mailgun;
+  - ruta `match_recipient("respuestas\+.*@respuestas.tudominio.es")` con la acción `forward("https://<api>/api/v1/webhooks/inbound/mailgun")` y `stop()`;
+  - `INBOUND_EMAIL_DOMAIN=respuestas.tudominio.es` (exige `FOLLOWUP_EMAIL_PROVIDER=mailgun` y `MAILGUN_WEBHOOK_SIGNING_KEY`).
+- **Limitación:** si la empresa no configura el reenvío, Presupio no se entera de la respuesta. La interfaz lo indica y no presenta la detección como activa sin estar configurada.
 
 ## 3. Plantillas
 
@@ -297,7 +316,8 @@ El proveedor simulado (`apps/api/test/fake-provider.ts`) y el simulador de las p
 ## 10. Limitaciones conocidas
 
 - **No se ha probado con Mailgun real ni con ningún SMTP real** (ver el estado de verificación al principio).
-- **Las respuestas del cliente no se detectan solas:** llegan al buzón de la empresa y se registran a mano.
+- **Detección de respuestas:** necesita Mailgun con correo entrante y que cada empresa reenvíe las respuestas a su dirección de entrada. Sin eso, se registran a mano. Probada con mensajes construidos en las pruebas (formato de formulario de Mailgun), **no con Mailgun real**.
+- **Fallos temporales de entrega** (Mailgun `failed` temporal): quedan anotados en el historial (`follow_up.delivery_delayed`); el proveedor sigue reintentando.
 - **Rebote tras «enviado»:** si un email rebota después de aceptarse:
   - el intento pasa a fallido y el contacto queda excluido;
   - el seguimiento sigue como «enviado», porque el proveedor lo aceptó;
@@ -315,7 +335,8 @@ Pendiente de cuentas, credenciales e infraestructura:
    - **SPF** y **DKIM** (registros que da Mailgun);
    - **DMARC** en el dominio principal.
 3. Variables `FOLLOWUP_*` y `MAILGUN_*` en el gestor de secretos del alojamiento.
-4. Webhook de Mailgun hacia `https://<api>/api/v1/webhooks/mailgun` con la clave de firma.
+4. Webhook de Mailgun hacia `https://<api>/api/v1/webhooks/mailgun` con la clave de firma (eventos: `delivered`, `failed`, `complained`, `unsubscribed`).
+4b. Opcional: correo entrante para detectar respuestas (apartado «Respuestas del cliente»).
 5. Desplegar el proceso de envío (persistente o con `--once` en un cron cada minuto).
 6. **Prueba real controlada:**
    1. el email de prueba a una dirección propia;

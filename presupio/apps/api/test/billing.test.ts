@@ -406,6 +406,9 @@ describe('fin de la prueba y modo de solo lectura', () => {
         'POST /api/v1/auth/invitations/accept',
         'PATCH /api/v1/me',
         'POST /api/v1/exclusions',
+        // Supresión de datos (RGPD): debe poder atenderse sin plan activo.
+        'POST /api/v1/contacts/:id/anonymize',
+        'POST /api/v1/quotes/:id/erase',
         'POST /api/v1/automation/disable',
         'POST /api/v1/automation/templates/preview',
         'PATCH /api/v1/members/:userId',

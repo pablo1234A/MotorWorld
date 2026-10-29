@@ -93,3 +93,40 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
 - **Pendiente de revisión legal:**
   - si la conservación de la exclusión activa y de la fila anonimizada es adecuada;
   - si alguna obligación exige conservar algún dato concreto (`docs/legal/README.md`).
+
+## P1-04 · Detección de respuestas de clientes
+
+- **Causa:** Presupio no lee el buzón. Si la empresa no registraba la respuesta, el cliente podía seguir recibiendo seguimientos.
+- **Corrección** (migración 0009, `modules/inbound/`):
+  - Una **dirección de entrada por empresa** (`respuestas+<token>@INBOUND_EMAIL_DOMAIN`).
+  - Un **adaptador de Mailgun** (`POST /webhooks/inbound/mailgun`, formulario multipart o urlencoded) con verificación de firma y antirrepetición por token y por `Message-Id`.
+  - **Emparejamiento solo dentro de la empresa del token**: primero por `In-Reply-To`/`References` y, si no, por remitente.
+  - Las respuestas automáticas y los rebotes se descartan.
+  - Si el presupuesto seguía pendiente, se registra la respuesta (cancela los seguimientos y anota la recuperación).
+  - No se guarda el contenido. El registro manual se mantiene.
+  - La interfaz solo presenta la detección como disponible si está configurada.
+- **Fallo nuevo descubierto:** la fecha `Date` del email la pone el reloj del cliente; si iba retrasada, la respuesta quedaba como «anterior al seguimiento» y no contaba como recuperación. Si la respuesta cita nuestro email, la fecha se acota para que sea posterior a ese envío.
+- **Prueba:** `test/inbound.test.ts`, 9 pruebas:
+  - respuesta auténtica: el presupuesto pasa a respondido, el paso pendiente se cancela y la recuperación queda registrada;
+  - firma no válida o caducada (401);
+  - entrega repetida y mensaje repetido (`duplicate`);
+  - otra empresa: no se empareja y no toca nada;
+  - token desconocido;
+  - respuestas automáticas y rebotes: los seguimientos continúan;
+  - emparejamiento por remitente, por id propio (SMTP) y formato urlencoded;
+  - presupuesto ya respondido a mano;
+  - configuración y unidades.
+- **Pendiente por dependencia externa:** comprobar el formato exacto de la ruta `forward()` con una cuenta real de Mailgun, los registros MX del dominio de entrada y la regla de reenvío del buzón de cada empresa. La documentación de Mailgun no era accesible desde este entorno.
+
+## P2-04 · Rebotes, quejas y bajas comunicados por el proveedor
+
+- **Estado previo:** con Mailgun ya se procesaban los rebotes permanentes (exclusión), las quejas, las bajas, los duplicados y las firmas no válidas. Con SMTP no hay forma estándar de recibir rebotes.
+- **Corrección:**
+  - Los fallos **temporales** quedan anotados (`follow_up.delivery_delayed`).
+  - Cualquier evento del proveedor sobre un envío «Por revisar» demuestra que salió y lo reconcilia (P2-07).
+- **Prueba** (`automation.test.ts`):
+  - la baja del proveedor excluye al contacto y no se programan más pasos;
+  - el fallo temporal queda anotado sin cambiar el estado;
+  - un evento sobre un envío desconocido lo reconcilia y lo cuenta una vez;
+  - las pruebas previas de rebote permanente, queja, duplicados y firmas siguen en verde.
+- **Pendiente por dependencia externa:** webhooks reales de Mailgun. Para tener rebotes hay que usar Mailgun o un proveedor con webhooks; con SMTP no hay rebotes automáticos (documentado).

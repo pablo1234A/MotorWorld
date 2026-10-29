@@ -39,6 +39,13 @@ const envSchema = z.object({
   MAILGUN_DOMAIN: z.string().optional(),
   MAILGUN_API_BASE: z.url({ protocol: /^https?$/ }).default('https://api.eu.mailgun.net'),
   MAILGUN_WEBHOOK_SIGNING_KEY: z.string().optional(),
+  // Dominio de entrada para detectar respuestas (respuestas+<token>@dominio). Ver docs/automatizacion.md.
+  INBOUND_EMAIL_DOMAIN: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/, 'INBOUND_EMAIL_DOMAIN no es un dominio válido')
+    .optional(),
   PUBLIC_API_URL: z.url({ protocol: /^https?$/ }).optional(),
   WORKER_INTERVAL_SECONDS: z.coerce.number().int().min(5).max(3600).default(60),
   FOLLOWUP_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(3),
@@ -97,6 +104,8 @@ export interface AppConfig {
     provider: 'disabled' | 'mailgun' | 'smtp';
     fromEmail?: string;
     mailgun?: { apiKey: string; domain: string; apiBase: string; webhookSigningKey?: string };
+    /** Dominio de entrada para la detección de respuestas (solo con Mailgun y clave de firma). */
+    inboundDomain?: string;
     /** URL pública de la API (enlace de baja de un clic en la cabecera List-Unsubscribe). */
     publicApiUrl: string;
     workerIntervalMs: number;
@@ -230,6 +239,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       webhookSigningKey: e.MAILGUN_WEBHOOK_SIGNING_KEY,
     };
   }
+  if (e.INBOUND_EMAIL_DOMAIN && (e.FOLLOWUP_EMAIL_PROVIDER !== 'mailgun' || !e.MAILGUN_WEBHOOK_SIGNING_KEY)) {
+    throw new Error('INBOUND_EMAIL_DOMAIN requiere FOLLOWUP_EMAIL_PROVIDER=mailgun y MAILGUN_WEBHOOK_SIGNING_KEY (los mensajes entrantes llegan firmados por Mailgun)');
+  }
   if (e.FOLLOWUP_EMAIL_PROVIDER === 'smtp' && !smtp) {
     throw new Error('FOLLOWUP_EMAIL_PROVIDER=smtp requiere MAIL_TRANSPORT=smtp y los datos SMTP_*');
   }
@@ -270,6 +282,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       provider: e.FOLLOWUP_EMAIL_PROVIDER,
       fromEmail: e.FOLLOWUP_FROM_EMAIL,
       mailgun,
+      ...(e.INBOUND_EMAIL_DOMAIN ? { inboundDomain: e.INBOUND_EMAIL_DOMAIN } : {}),
       publicApiUrl: (e.PUBLIC_API_URL ?? e.APP_WEB_URL).replace(/\/$/, ''),
       workerIntervalMs: e.WORKER_INTERVAL_SECONDS * 1000,
       maxAttempts: e.FOLLOWUP_MAX_ATTEMPTS,

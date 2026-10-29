@@ -107,6 +107,7 @@ export interface CompanySettingsTable {
   replyToEmail: string | null;
   updatedByUserId: string | null;
   createdAt: CreatedAt;
+  inboundToken: Generated<string>;
   updatedAt: UpdatedAt;
 }
 
@@ -344,6 +345,19 @@ export interface BillingEventsTable {
   updatedAt: UpdatedAt;
 }
 
+export interface InboundRepliesTable {
+  id: Generated<string>;
+  companyId: string;
+  quoteId: string | null;
+  deliveryId: string | null;
+  provider: string;
+  messageIdHash: string;
+  matchMethod: 'message_id' | 'sender' | 'none';
+  outcome: 'responded' | 'already_answered' | 'auto_reply' | 'bounce' | 'unmatched' | 'ignored';
+  senderDomain: string | null;
+  receivedAt: CreatedAt;
+}
+
 export type RetentionStage = '30_days' | '7_days' | '1_day';
 
 export interface RetentionNoticesTable {
@@ -406,6 +420,7 @@ export interface Database {
   recoveryEvents: RecoveryEventsTable;
   attemptEvents: AttemptEventsTable;
   billingEvents: BillingEventsTable;
+  inboundReplies: InboundRepliesTable;
   retentionNotices: RetentionNoticesTable;
 }
 

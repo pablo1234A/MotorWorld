@@ -247,6 +247,26 @@ export function describeActivity(entry: ActivityEntry): string {
       return 'pidió cancelar la suscripción al final del periodo';
     case 'subscription.resume_requested':
       return 'anuló la cancelación de la suscripción';
+    case 'quote.reply_detected':
+      return m.method === 'sender'
+        ? 'detectó una respuesta del cliente por email (por su dirección) y detuvo los seguimientos'
+        : 'detectó una respuesta del cliente a un email automático y detuvo los seguimientos';
+    case 'quote.deleted':
+      return 'eliminó el presupuesto y suprimió sus datos';
+    case 'contact.anonymized':
+      return 'suprimió los datos personales de un contacto';
+    case 'follow_up.unknown_outcome':
+      return 'no pudo confirmar si un email automático salió: queda pendiente de revisión';
+    case 'follow_up.unknown_resolved':
+      return m.outcome === 'sent' || m.outcome === 'provider_sent'
+        ? `confirmó que un email automático sí se envió${m.byProvider ? ' (según el proveedor)' : ''}`
+        : `confirmó que un email automático no llegó a salir${m.byProvider ? ' (según el proveedor)' : ''}`;
+    case 'follow_up.requeued':
+      return 'volvió a programar un email automático que no llegó a enviarse por una interrupción';
+    case 'follow_up.delivery_delayed':
+      return 'el servidor del cliente aplazó la entrega de un email automático (se reintenta)';
+    case 'usage.limit_adjusted':
+      return 'ajustó el límite de intentos del periodo (soporte)';
     case 'template.updated':
       return `editó la plantilla del email ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
     case 'follow_up.updated':

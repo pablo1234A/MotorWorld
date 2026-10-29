@@ -312,6 +312,8 @@ export interface AutomationStatus {
     requirements: { providerConfigured: boolean; replyToEmail: boolean; legalBasisNote: boolean; activePlan: boolean; emailVerified: boolean };
   };
   provider: { name: string; configured: boolean; tracksDelivery: boolean; fromDomain: string | null };
+  /** Detección automática de respuestas (correo entrante). Sin configurar, se registran a mano. */
+  replyDetection: { configured: boolean; address: string | null };
   counts: { scheduled: number; awaitingApproval: number; sending: number; sent30d: number; delivered30d: number; failed: number; unknown: number };
   worker: { healthy: boolean; lastRuns: Array<{ job: string; status: string; startedAt: string; finishedAt: string | null }> };
 }

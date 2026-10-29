@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { cancelPendingRuleSteps, currentTemplate, loadCompanyContext, templateValues } from '../../automation/engine.js';
 import { composeMessage, renderBody, SAMPLE_VALUES, TEMPLATE_VARIABLES, validateTemplate } from '../../automation/templates.js';
 import { errors } from '../../lib/errors.js';
+import { inboundAddress } from '../inbound/service.js';
 import { parseWith, uuid } from '../../lib/validation.js';
 import { inTenant } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
@@ -29,7 +30,7 @@ export async function automationRoutes(app: FastifyInstance) {
       const s = await trx
         .selectFrom('companySettings as s')
         .leftJoin('users as u', 'u.id', 's.automationEnabledByUserId')
-        .select(['s.automationEnabledAt', 's.legalBasisNote', 'u.fullName as enabledByName'])
+        .select(['s.automationEnabledAt', 's.legalBasisNote', 's.inboundToken', 'u.fullName as enabledByName'])
         .where('s.companyId', '=', auth.companyId)
         .executeTakeFirstOrThrow();
       const counts = await trx
@@ -77,6 +78,11 @@ export async function automationRoutes(app: FastifyInstance) {
             // Quien activa el envío debe haber confirmado su email (evita cuentas falsas usadas para spam).
             emailVerified: auth.emailVerified,
           },
+        },
+        // Detección automática de respuestas: solo con correo entrante configurado (Mailgun).
+        replyDetection: {
+          configured: !!app.config.automation.inboundDomain && provider.name === 'mailgun' && !!app.config.automation.mailgun?.webhookSigningKey,
+          address: app.config.automation.inboundDomain ? inboundAddress(s.inboundToken, app.config.automation.inboundDomain) : null,
         },
         provider: {
           name: provider.name,

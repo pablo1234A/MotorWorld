@@ -23,6 +23,7 @@ import { webhookRoutes } from './modules/webhooks/routes.js';
 import { usageRoutes } from './modules/usage/routes.js';
 import { metricsRoutes } from './modules/metrics/routes.js';
 import { billingRoutes, stripeWebhookRoutes } from './modules/billing/routes.js';
+import { inboundRoutes } from './modules/inbound/routes.js';
 import { createBillingGateway, type BillingGateway } from './modules/billing/gateway.js';
 import { opsRoutes } from './modules/ops/routes.js';
 import { createFollowUpProvider, type FollowUpEmailProvider } from './automation/providers.js';
@@ -239,6 +240,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(opsRoutes, { prefix: `${API_PREFIX}/ops` });
   await app.register(billingRoutes, { prefix: `${API_PREFIX}/billing` });
   await app.register(stripeWebhookRoutes, { prefix: `${API_PREFIX}/webhooks` });
+  await app.register(inboundRoutes, { prefix: `${API_PREFIX}/webhooks/inbound` });
 
   return app;
 }
