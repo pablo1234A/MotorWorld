@@ -30,10 +30,12 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {} } }],
   webServer: {
-    command: `npm run build && npx vite preview --port ${E2E_WEB_PORT} --strictPort`,
+    // Servidor de producción incluido (server/serve.mjs): las pruebas recorren la aplicación
+    // con las mismas cabeceras de seguridad que en producción.
+    command: `npm run build && node server/serve.mjs`,
     url: `http://localhost:${E2E_WEB_PORT}/iniciar-sesion`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { PRESUPIO_API_PROXY: `http://localhost:${E2E_API_PORT}`, PREVIEW_PORT: String(E2E_WEB_PORT) },
+    env: { API_URL: `http://127.0.0.1:${E2E_API_PORT}`, PORT: String(E2E_WEB_PORT), HOST: 'localhost' },
   },
 });

@@ -530,3 +530,29 @@ test('navegación por teclado: saltar al contenido y menú de cuenta', async () 
   await expect(page.getByRole('menu')).toHaveCount(0);
   await expect(account).toBeFocused();
 });
+
+test('cabeceras de seguridad del servidor de producción: presentes y efectivas en el navegador (P1-05)', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const res = await page.goto('/iniciar-sesion');
+  const headers = res!.headers();
+  expect(headers['content-security-policy']).toContain("script-src 'self'");
+  expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+  expect(headers['x-frame-options']).toBe('DENY');
+  expect(headers['referrer-policy']).toBe('no-referrer');
+  expect(headers['x-content-type-options']).toBe('nosniff');
+  // La CSP la aplica de verdad el navegador: un script en línea inyectado no se ejecuta.
+  const blocked = await page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        document.addEventListener('securitypolicyviolation', (e) => resolve(e.violatedDirective), { once: true });
+        const s = document.createElement('script');
+        s.textContent = 'window.__inyectado = true';
+        document.body.appendChild(s);
+        setTimeout(() => resolve('sin-bloqueo'), 2000);
+      }),
+  );
+  expect(blocked).toMatch(/^script-src/);
+  expect(await page.evaluate(() => (window as unknown as { __inyectado?: boolean }).__inyectado)).toBeUndefined();
+  await context.close();
+});

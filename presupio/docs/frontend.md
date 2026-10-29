@@ -19,29 +19,43 @@
 El navegador habla siempre con **el mismo origen** (`/api/v1`):
 
 - **Desarrollo:** el proxy de Vite (`vite.config.ts`) reenvía `/api` a `PRESUPIO_API_PROXY`, por defecto `http://localhost:3000`.
-- **Producción:** un proxy inverso sirve los estáticos de `apps/web/dist` y reenvía `/api/` a la API. Ejemplo con nginx:
+- **Producción:** los estáticos de `apps/web/dist` y `/api/` en el mismo origen, detrás de HTTPS. Tres opciones con **las mismas cabeceras**:
+  1. **Servidor incluido** (`npm run start -w apps/web`, que es `server/serve.mjs`). No tiene dependencias. Variables: `PORT` (8080), `HOST`, `API_URL` (la API) y `WEB_ROOT` (por defecto `dist/`). Pon delante un terminador TLS. Es el que usan las pruebas E2E.
+  2. **nginx:** `ops/nginx/presupio-web.conf`. Está generado; no lo edites a mano. Se regenera con `node apps/web/server/hosting-config.mjs --nginx > ops/nginx/presupio-web.conf`. Se ha comprobado con `nginx -t` (1.24) y sirviendo la compilación por HTTPS.
+  3. **Alojamiento estático** (Netlify, Cloudflare Pages): `npm run build` genera `dist/_headers`. La API debe quedar en el mismo origen (redirección o proxy de `/api/*` del alojamiento).
 
-  ```nginx
-  location /api/ { proxy_pass http://127.0.0.1:3000; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
-  location / { root /srv/presupio/web; try_files $uri /index.html; }
-  ```
-
-  Con esta configuración, en la API se usa `TRUST_PROXY=1` y `APP_WEB_URL=https://tu-dominio`.
+  En la API, usa `TRUST_PROXY=1` y `APP_WEB_URL=https://tu-dominio`.
 
 El mismo origen evita CORS y permite la cookie `__Host-`. Si la API vive en otro dominio, define `VITE_API_BASE_URL=https://api.dominio/api/v1` al compilar, `CORS_ORIGINS` con el origen del frontend y `COOKIE_SECURE=true`.
 
 **Nunca hay secretos en el frontend.** Las variables `VITE_*` se incrustan en el código del navegador. La sesión es una cookie `HttpOnly`: el JavaScript no puede leerla y no se guarda nada en `localStorage`.
 
-### Cabeceras de seguridad recomendadas
+### Cabeceras de seguridad
 
-Las define `securityHeaders` en `vite.config.ts`, y `vite preview` (usado en las pruebas E2E) ya las aplica. Configura las mismas en el servidor de producción:
+**Una sola fuente:** `apps/web/server/security-headers.mjs`. De ahí salen `vite preview`, el servidor incluido, `dist/_headers` y la configuración de nginx. Una prueba falla si la configuración de nginx se desincroniza.
 
-```
-Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
-X-Content-Type-Options: nosniff · Referrer-Policy: no-referrer · X-Frame-Options: DENY
-```
+| Cabecera | Valor y motivo |
+|---|---|
+| `Content-Security-Policy` | Solo recursos propios, sin scripts en línea, sin marcos (`frame-ancestors 'none'`) |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains`. Solo actúa por HTTPS. Sin `preload`: es una decisión del dominio. |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `no-referrer`: los tokens de los enlaces de los emails (`?token=`) no se filtran a terceros |
+| `Permissions-Policy` | Sin cámara, micrófono, ubicación ni Payment Request |
+| `Cross-Origin-Opener-Policy` / `Cross-Origin-Resource-Policy` | `same-origin` |
 
-`Referrer-Policy: no-referrer` impide que los tokens de los enlaces de los emails (`?token=`) se filtren a terceros.
+**Caché:** `/assets/*` (con huella) se marca como `immutable` durante un año, solo en respuestas correctas. El HTML va con `no-cache`.
+
+**Pruebas:**
+
+- `apps/web/test/production-server.test.ts` (7 pruebas) arranca el servidor real y comprueba:
+  - las cabeceras en la aplicación, las rutas, los archivos, los 404, los 405 y los 502;
+  - que nada se sirve fuera de `dist/` (`..` codificado);
+  - el reenvío de `/api` (método, cookie, cuerpo y `Set-Cookie`);
+  - que `_headers` y la configuración de nginx coinciden con la fuente.
+- La E2E comprueba en Chromium que las cabeceras llegan y que la CSP **bloquea** un script en línea inyectado.
+
+**Importante:** esto demuestra la configuración, **no el alojamiento real**. Tras desplegar, comprueba las cabeceras en el dominio de verdad (`curl -sI https://tu-dominio/`, o un analizador de cabeceras).
 
 ## Pantallas
 

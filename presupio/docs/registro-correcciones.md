@@ -192,3 +192,18 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
   - una vez por etapa y sin duplicar al repetir el trabajo, con la zona horaria de la empresa y la plantilla distinta de la de conservación;
   - sin aviso a quien pagó o ya terminó, y sin avisos si no hay días configurados;
   - zona horaria del aviso de conservación.
+
+## P1-05 · Cabeceras de seguridad del frontend en producción
+
+- **Causa:** las cabeceras solo las aplicaba `vite preview` (pruebas). Para producción había un ejemplo de nginx incompleto, sin las cabeceras, y nada comprobaba que el servidor real las enviara.
+- **Corrección:**
+  - Una sola fuente: `apps/web/server/security-headers.mjs`. Se añaden HSTS (sin `preload`), COOP y CORP.
+  - Servidor de producción sin dependencias (`server/serve.mjs`): estáticos, aplicación, proxy de `/api` y protección contra rutas fuera de `dist/`.
+  - Configuración generada para nginx (`ops/nginx/presupio-web.conf`) y para alojamientos estáticos (`dist/_headers`).
+  - La E2E se ejecuta ahora sobre el servidor de producción, no sobre `vite preview`.
+- **Fallo encontrado al probar con nginx real:** un 404 de `/assets/` quedaba en caché un año (`immutable` con `always`). Corregido.
+- **Prueba:**
+  - `apps/web/test/production-server.test.ts`, 7 pruebas.
+  - `nginx -t` y nginx 1.24 sirviendo la compilación por HTTPS con un certificado de prueba: cabeceras en `/`, en las rutas, en `/assets` y en los 404; caché solo en respuestas 200; redirección de HTTP a HTTPS.
+  - E2E: 15/15 sobre el servidor de producción, y la CSP bloquea un script en línea en Chromium.
+- **Pendiente por dependencia externa:** comprobar las cabeceras en el alojamiento y dominio reales tras desplegar. No se afirma que el alojamiento real esté protegido.
