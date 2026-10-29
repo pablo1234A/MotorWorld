@@ -6,7 +6,7 @@ export type QuoteStatus = 'draft' | 'sent' | 'responded' | 'accepted' | 'rejecte
 export type ContactChannel = 'email' | 'phone' | 'whatsapp' | 'sms';
 export type FollowUpChannel = 'task' | 'email' | 'phone' | 'whatsapp' | 'sms' | 'in_person';
 /** sending/sent/failed solo existen en los emails automáticos (source = 'rule'). */
-export type FollowUpStatus = 'pending' | 'sending' | 'sent' | 'completed' | 'failed' | 'cancelled';
+export type FollowUpStatus = 'pending' | 'sending' | 'sent' | 'completed' | 'failed' | 'cancelled' | 'unknown';
 export type DeliveryStatus = 'sending' | 'sent' | 'delivered' | 'failed' | 'unknown';
 export type FollowUpOutcome = 'no_answer' | 'left_message' | 'contacted' | 'responded' | 'wrong_contact' | 'other';
 export type ExclusionReason = 'opt_out_request' | 'rejected' | 'legal' | 'bounced' | 'manual';
@@ -311,7 +311,7 @@ export interface AutomationStatus {
     requirements: { providerConfigured: boolean; replyToEmail: boolean; legalBasisNote: boolean; activePlan: boolean; emailVerified: boolean };
   };
   provider: { name: string; configured: boolean; tracksDelivery: boolean; fromDomain: string | null };
-  counts: { scheduled: number; awaitingApproval: number; sending: number; sent30d: number; delivered30d: number; failed: number };
+  counts: { scheduled: number; awaitingApproval: number; sending: number; sent30d: number; delivered30d: number; failed: number; unknown: number };
   worker: { healthy: boolean; lastRuns: Array<{ job: string; status: string; startedAt: string; finishedAt: string | null }> };
 }
 

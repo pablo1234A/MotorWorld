@@ -152,7 +152,7 @@ export function useQuoteFollowUps(id: string) {
 // ---------------------------------------------------------------------------
 
 export interface FollowUpFilters {
-  status: 'pending' | 'sent' | 'failed' | 'completed' | 'cancelled' | 'all';
+  status: 'pending' | 'sent' | 'failed' | 'completed' | 'cancelled' | 'unknown' | 'all';
   assignedTo?: 'me';
   /** Emails automáticos pendientes que esperan aprobación. */
   approval?: 'awaiting';

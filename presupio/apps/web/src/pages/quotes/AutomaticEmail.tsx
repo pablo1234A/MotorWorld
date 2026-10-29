@@ -31,6 +31,8 @@ export function ruleStatus(f: FollowUp, requireApproval: boolean | undefined, no
       return { text: `No se pudo enviar: ${failureReasonLabel(f.failureReason)}`, tone: 'danger' };
     case 'cancelled':
       return { text: `Cancelado: ${cancelReasonLabel(f.cancelReason)}`, tone: 'neutral' };
+    case 'unknown':
+      return { text: 'Por revisar: el envío se interrumpió y no se sabe si salió', tone: 'due' };
     default:
       return { text: '', tone: 'neutral' };
   }
@@ -141,6 +143,24 @@ export function AutomaticEmailDialog({
   const status = ruleStatus(f, requireApproval);
   const canApprove = canWrite && needsApproval(f, requireApproval);
   const canCancel = canWrite && f.status === 'pending' && !!onCancelRequest;
+  const canResolve = f.status === 'unknown' && session.can('settings:update');
+  const resolve = useMutation({
+    mutationFn: (outcome: 'sent' | 'not_sent') =>
+      api<{ resolution: { outcome: string; attemptCounted: boolean } }>(`/follow-ups/${f.id}/resolve`, { method: 'POST', body: { outcome } }),
+    onSuccess: (res) => {
+      refresh(contactId);
+      void queryClient.invalidateQueries({ queryKey: keys.automation });
+      void queryClient.invalidateQueries({ queryKey: keys.usage });
+      toast.success(
+        res.resolution.outcome === 'sent'
+          ? res.resolution.attemptCounted
+            ? 'Marcado como enviado. Cuenta como un intento de tu plan.'
+            : 'Marcado como enviado. No se ha descontado: tu periodo ya no tenía intentos libres.'
+          : 'Marcado como no enviado. No consume intentos y no se reenvía solo.',
+      );
+      onClose();
+    },
+  });
 
   return (
     <Dialog
@@ -163,6 +183,23 @@ export function AutomaticEmailDialog({
     >
       <div className="stack">
         {approve.isError && <ErrorAlert error={approve.error} />}
+        {f.status === 'unknown' && (
+          <Alert tone="warning" title="Este email necesita revisión">
+            El envío se interrumpió después de entregarlo al proveedor de email, así que puede haber salido o no. Presupio no lo reenvía (para no
+            duplicarlo) ni lo cobra mientras no se confirme. Compruébalo en tu proveedor de email o con el cliente.
+            {canResolve && (
+              <span className="cluster" style={{ marginTop: 'var(--s-3)' }}>
+                <Button size="sm" loading={resolve.isPending && resolve.variables === 'sent'} onClick={() => resolve.mutate('sent')}>
+                  Sí se envió
+                </Button>
+                <Button size="sm" variant="ghost" loading={resolve.isPending && resolve.variables === 'not_sent'} onClick={() => resolve.mutate('not_sent')}>
+                  No se envió
+                </Button>
+              </span>
+            )}
+          </Alert>
+        )}
+        {resolve.isError && <ErrorAlert error={resolve.error} />}
         {showPreview &&
           (preview.isPending ? (
             <Skeleton height="14rem" />

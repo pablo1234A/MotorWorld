@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { cpSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -484,6 +485,26 @@ describe('consumo por empresa y por periodo', () => {
     expect(rows.map((r) => r.attempts_counted)).toEqual([1, 1]);
   });
 
+  it('un ajuste de soporte del límite se mantiene en los envíos siguientes y un cambio de plan lo recalcula (P2-08)', async () => {
+    const acc = await registerAccount(app);
+    await setPlan(acc.companyId, 'starter');
+    await presetAttempts(acc, 3);
+    const ops = (...args: string[]) =>
+      spawnSync('npx', ['tsx', 'scripts/ops.ts', ...args], { cwd: process.cwd(), encoding: 'utf8', env: { PATH: process.env.PATH, HOME: process.env.HOME, MIGRATION_DATABASE_URL: process.env.TEST_MIGRATION_DATABASE_URL } });
+    expect(ops('set-limit', '--company', acc.companyId, '--attempts', '2', '--reason', 'Prueba de límite').stderr).toMatch(/no puede ser menor/);
+    const ok = ops('set-limit', '--company', acc.companyId, '--attempts', '5', '--reason', 'Compensación acordada');
+    expect(ok.status, ok.stderr).toBe(0);
+    const capacity = () => inCompany(db, acc.companyId, async (trx) => (await attemptCapacity(trx, await loadPlanContext(trx, acc.companyId, new Date()), new Date())).available);
+    // Antes del arreglo, el siguiente envío lo devolvía a 25.
+    expect(await capacity()).toBe(2);
+    expect(await capacity()).toBe(2);
+    expect((await usageOf(acc)).attempts.limit).toBe(5);
+    const log = (await acc.client.get('/activity')).body.items.find((a: any) => a.action === 'usage.limit_adjusted');
+    expect(log.metadata).toMatchObject({ from: 25, to: 5, reason: 'Compensación acordada' });
+    await setPlan(acc.companyId, 'pro');
+    expect(await capacity()).toBe(62); // cambio de plan: límite del nuevo plan
+  });
+
   it('una subida de plan amplía el límite en el periodo en curso; una bajada se aplica en el siguiente', async () => {
     const acc = await registerAccount(app);
     await setPlan(acc.companyId, 'starter');
@@ -751,7 +772,8 @@ describe('migraciones', () => {
         );
 
         // 3) Migración de la fase 4 sobre esos datos.
-        expect((await migrate({ connectionString: url, appRole })).applied).toEqual(['0003_usage_limits', '0004_recovery_integrity', '0005_attempts_and_billing']);
+        // 0003 y las posteriores, en orden (las futuras se añaden al final).
+        expect((await migrate({ connectionString: url, appRole })).applied.slice(0, 3)).toEqual(['0003_usage_limits', '0004_recovery_integrity', '0005_attempts_and_billing']);
         const { rows: events } = await c.query('SELECT status, period_start, follow_up_id IS NOT NULL AS has_follow_up FROM recovery_events');
         expect(events).toEqual([{ status: 'historical', period_start: null, has_follow_up: true }]);
         // Sin emails automáticos previos no hay intentos históricos.
@@ -801,7 +823,7 @@ describe('migraciones', () => {
         );
         const before = (await c.query('SELECT recovery_limit, recoveries_counted, recoveries_over_limit FROM usage_periods')).rows;
 
-        expect((await migrate({ connectionString: url, appRole })).applied).toEqual(['0005_attempts_and_billing']);
+        expect((await migrate({ connectionString: url, appRole })).applied[0]).toBe('0005_attempts_and_billing');
         // Los contadores de recuperaciones se conservan tal cual (dato histórico de la regla anterior).
         expect((await c.query('SELECT recovery_limit, recoveries_counted, recoveries_over_limit FROM usage_periods')).rows).toEqual(before);
         // El periodo recibe el límite de intentos de su plan y empieza sin consumo.

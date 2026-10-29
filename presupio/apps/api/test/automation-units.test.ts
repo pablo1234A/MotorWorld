@@ -168,6 +168,27 @@ describe('adaptador de Mailgun contra un servidor HTTP local (no es Mailgun real
     expect(await offline.send(email())).toMatchObject({ ok: false, retryable: true, code: 'network_error' });
   });
 
+  it('consulta el registro de eventos para reconciliar un envío de resultado desconocido', async () => {
+    const id = '7b7f4c1e-3d55-4c39-9a51-0f0f3f9b2a10';
+    const calledAt = new Date('2026-10-29T10:00:00Z');
+    const lookup = () => provider().lookup({ deliveryId: id, recipient: 'cliente@ejemplo.test', calledAt });
+    reply = { status: 200, body: { items: [{ event: 'accepted', 'user-variables': { presupio_delivery_id: id } }] } };
+    expect(await lookup()).toBe('accepted');
+    const req = requests.at(-1)!;
+    expect(req.method).toBe('GET');
+    const url = new URL(req.url, 'http://x');
+    expect(url.pathname).toBe('/v3/mg.ejemplo.test/events');
+    expect(url.searchParams.get('recipient')).toBe('cliente@ejemplo.test');
+    expect(Number(url.searchParams.get('begin'))).toBe(calledAt.getTime() / 1000 - 120);
+    reply = { status: 200, body: { items: [{ event: 'rejected', 'user-variables': { presupio_delivery_id: id } }] } };
+    expect(await lookup()).toBe('rejected');
+    // Eventos de OTROS envíos al mismo destinatario no cuentan.
+    reply = { status: 200, body: { items: [{ event: 'delivered', 'user-variables': { presupio_delivery_id: 'otro' } }] } };
+    expect(await lookup()).toBe('not_found');
+    reply = { status: 500, body: {} };
+    expect(await lookup()).toBe('not_found');
+  });
+
   it('verifica la firma de los webhooks (HMAC-SHA256, tiempo y formato)', () => {
     const now = Date.now();
     const timestamp = String(Math.floor(now / 1000));

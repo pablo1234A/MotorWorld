@@ -14,7 +14,16 @@ pg.types.setTypeParser(pg.types.builtins.DATE, (value) => value);
 export type Db = Kysely<Database>;
 export type Trx = Transaction<Database>;
 
-export function createDb(connectionString: string, poolMax = 10): Db {
+export type PoolErrorHandler = (error: Error & { code?: string }) => void;
+
+/** Registro mínimo por defecto (sin URL, credenciales ni datos de la consulta). */
+const defaultPoolErrorHandler: PoolErrorHandler = (error) => {
+  process.stderr.write(
+    `${JSON.stringify({ level: 40, time: Date.now(), code: error.code ?? null, msg: 'Conexión inactiva con PostgreSQL cerrada; se abrirá otra al necesitarla' })}\n`,
+  );
+};
+
+export function createDb(connectionString: string, poolMax = 10, onPoolError: PoolErrorHandler = defaultPoolErrorHandler): Db {
   const pool = new pg.Pool({
     connectionString,
     max: poolMax,
@@ -23,6 +32,10 @@ export function createDb(connectionString: string, poolMax = 10): Db {
     statement_timeout: 15_000,
     application_name: 'presupio-api',
   });
+  // Sin este manejador, el cierre de una conexión INACTIVA por PostgreSQL (reinicio, corte de
+  // red, mantenimiento: código 57P01) emite un evento 'error' que termina el proceso. El pool
+  // ya descarta esa conexión; las consultas en curso fallan con su propio error (→ 503).
+  pool.on('error', (error) => onPoolError(error as Error & { code?: string }));
   return new Kysely<Database>({
     dialect: new PostgresDialect({ pool }),
     plugins: [new CamelCasePlugin()],

@@ -75,14 +75,16 @@ async function findPeriod(trx: Trx, companyId: string, at: Date): Promise<UsageP
 }
 
 /**
- * Fila del periodo vigente (la crea si no existe). Si el plan sube durante el periodo, el
- * límite de intentos sube en el acto; una bajada se aplica desde el periodo siguiente.
+ * Fila del periodo vigente (la crea si no existe). Si el plan CAMBIA a uno con más intentos
+ * durante el periodo, el límite sube en el acto; una bajada se aplica desde el periodo
+ * siguiente. Un límite ajustado por soporte (npm run ops -- set-limit) se respeta mientras el
+ * plan no cambie: antes se volvía a subir al del plan en el siguiente envío (auditoría P2-08).
  */
 export async function ensureUsagePeriod(trx: Trx, ctx: PlanContext, now: Date): Promise<UsagePeriod> {
   const limit = ctx.plan?.monthlyAttemptLimit ?? 0;
   const existing = await findPeriod(trx, ctx.companyId, now);
   if (existing) {
-    if (limit > existing.attemptLimit) {
+    if (ctx.plan && ctx.plan.id !== existing.plan && limit > existing.attemptLimit) {
       return trx
         .updateTable('usagePeriods')
         .set({ attemptLimit: limit, plan: ctx.plan?.id ?? null })
@@ -266,6 +268,49 @@ export async function releaseAttempt(
     .set({ attemptsReserved: sql`attempts_reserved - 1` })
     .where('companyId', '=', companyId)
     .where('periodStart', '=', attempt.periodStart)
+    .execute();
+}
+
+/**
+ * Un intento «sin verificar» (envío de resultado desconocido) del que ya se sabe que SALIÓ
+ * (lo confirma el proveedor o lo declara la empresa): pasa a contado en su periodo si cabe
+ * en el límite. Si el periodo ya no tiene cupo (otros envíos lo ocuparon mientras tanto), se
+ * deja sin contar: nunca se cobra por encima del límite. Devuelve si se ha contado.
+ */
+export async function countUnverifiedAttempt(trx: Trx, companyId: string, followUpId: string, deliveryId: string, sentAt: Date): Promise<boolean> {
+  const attempt = await trx
+    .selectFrom('attemptEvents')
+    .select(['id', 'periodStart'])
+    .where('companyId', '=', companyId)
+    .where('followUpId', '=', followUpId)
+    .where('status', '=', 'unverified')
+    .forUpdate()
+    .executeTakeFirst();
+  if (!attempt?.periodStart) return false;
+  const room = await trx
+    .updateTable('usagePeriods')
+    .set({
+      attemptsCounted: sql`attempts_counted + 1`,
+      attemptsLimitReachedAt: sql`CASE WHEN attempts_counted + 1 >= attempt_limit THEN coalesce(attempts_limit_reached_at, now()) ELSE attempts_limit_reached_at END`,
+    })
+    .where('companyId', '=', companyId)
+    .where('periodStart', '=', attempt.periodStart)
+    .where(sql<boolean>`attempts_counted + attempts_reserved < attempt_limit`)
+    .returning('periodStart')
+    .executeTakeFirst();
+  if (!room) return false;
+  await trx.updateTable('attemptEvents').set({ status: 'counted', sentAt, deliveryId, releasedAt: null, releaseReason: null }).where('id', '=', attempt.id).execute();
+  return true;
+}
+
+/** Un intento «sin verificar» del que se sabe que NO salió: se libera (no consume). */
+export async function releaseUnverifiedAttempt(trx: Trx, companyId: string, followUpId: string, reason: string, at: Date): Promise<void> {
+  await trx
+    .updateTable('attemptEvents')
+    .set({ status: 'released', releasedAt: at, releaseReason: reason.slice(0, 200) })
+    .where('companyId', '=', companyId)
+    .where('followUpId', '=', followUpId)
+    .where('status', '=', 'unverified')
     .execute();
 }
 

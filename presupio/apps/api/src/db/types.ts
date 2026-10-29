@@ -8,7 +8,7 @@ export type UserTokenPurpose = 'password_reset' | 'email_verification';
 export type QuoteStatus = 'draft' | 'sent' | 'responded' | 'accepted' | 'rejected';
 export type ContactChannel = 'email' | 'phone' | 'whatsapp' | 'sms';
 export type FollowUpChannel = 'task' | 'email' | 'phone' | 'whatsapp' | 'sms' | 'in_person';
-export type FollowUpStatus = 'pending' | 'sending' | 'sent' | 'completed' | 'failed' | 'cancelled';
+export type FollowUpStatus = 'pending' | 'sending' | 'sent' | 'completed' | 'failed' | 'cancelled' | 'unknown';
 export type DeliveryStatus = 'sending' | 'sent' | 'delivered' | 'failed' | 'unknown';
 export type FollowUpOutcome = 'no_answer' | 'left_message' | 'contacted' | 'responded' | 'wrong_contact' | 'other';
 export type FollowUpSource = 'manual' | 'rule';
@@ -260,6 +260,10 @@ export interface MessageDeliveriesTable {
   sentAt: Timestamp | null;
   deliveredAt: Timestamp | null;
   failedAt: Timestamp | null;
+  providerCallStartedAt: Timestamp | null;
+  reviewedAt: Timestamp | null;
+  reviewedByUserId: string | null;
+  reviewOutcome: 'sent' | 'not_sent' | 'provider_sent' | 'provider_not_sent' | null;
   updatedAt: UpdatedAt;
 }
 

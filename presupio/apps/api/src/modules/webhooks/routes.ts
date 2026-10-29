@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { verifyMailgunSignature, sanitizeErrorDetail } from '../../automation/providers.js';
 import { withTenant } from '../../db/database.js';
 import { hashToken } from '../../lib/crypto.js';
+import { resolveUnknownDelivery } from '../../automation/unknown.js';
 import { logActivity } from '../activity/service.js';
 import { hasEmailExclusion, registerExclusion } from '../exclusions/service.js';
 
@@ -71,6 +72,13 @@ export async function webhookRoutes(app: FastifyInstance) {
       const ctx = { companyId: found.companyId, userId: null };
       const now = new Date();
 
+      // Un envío de resultado desconocido del que el proveedor informa: está demostrado que
+      // salió (se aceptó). Se reconcilia antes de procesar el evento.
+      if (d.status === 'unknown' && ['delivered', 'failed', 'complained', 'unsubscribed'].includes(event.event)) {
+        await resolveUnknownDelivery(trx, ctx, d.followUpId, 'provider_sent', now);
+        d.status = 'sent';
+      }
+
       switch (event.event) {
         case 'delivered':
           if (d.status === 'sent') {
@@ -78,8 +86,11 @@ export async function webhookRoutes(app: FastifyInstance) {
           }
           break;
         case 'failed':
-          // Los fallos temporales los reintenta el propio proveedor: no cambian nada aquí.
-          if (event.severity !== 'permanent') break;
+          // Los fallos temporales los reintenta el propio proveedor: solo quedan anotados.
+          if (event.severity !== 'permanent') {
+            await logActivity(trx, ctx, { action: 'follow_up.delivery_delayed', entityType: 'follow_up', entityId: d.followUpId, quoteId: d.quoteId, metadata: { channel: 'email' } });
+            break;
+          }
           await trx
             .updateTable('messageDeliveries')
             .set({

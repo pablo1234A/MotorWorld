@@ -34,6 +34,8 @@ export async function opsRoutes(app: FastifyInstance) {
       const alerts: string[] = [];
       if (status.automationCompanies > 0 && !workerHealthy) alerts.push('worker_not_running');
       if (status.deliveries.stuckSending > 0) alerts.push('deliveries_stuck_sending');
+      // Emails que pueden haber salido o no: necesitan reconciliación o revisión manual.
+      if (status.deliveries.unknownPendingReview > 0) alerts.push('deliveries_unknown_review');
       if (status.followUps.dueApprovedOver15m > 0) alerts.push('approved_emails_delayed');
       if (status.jobErrorsLast24h > 0) alerts.push('job_errors_last_24h');
       // Intentos reservados que no se resuelven: el cupo de la empresa queda ocupado.

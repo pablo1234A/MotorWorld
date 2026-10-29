@@ -4,6 +4,7 @@ import { decodeCursor, pageOf } from '../../lib/pagination.js';
 import { idParams, isoDateTime, optionalText, pagination, parseWith, requiredText, uuid } from '../../lib/validation.js';
 import { currentTemplate, loadCompanyContext, templateValues } from '../../automation/engine.js';
 import { composeMessage, renderBody } from '../../automation/templates.js';
+import { resolveUnknownDelivery } from '../../automation/unknown.js';
 import type { Trx } from '../../db/database.js';
 import { errors } from '../../lib/errors.js';
 import { inTenant } from '../../plugins/auth.js';
@@ -19,7 +20,7 @@ import {
 } from './service.js';
 
 const listQuery = z.strictObject({
-  status: z.enum(['pending', 'sending', 'sent', 'completed', 'failed', 'cancelled', 'all']).default('pending'),
+  status: z.enum(['pending', 'sending', 'sent', 'completed', 'failed', 'cancelled', 'unknown', 'all']).default('pending'),
   approval: z.enum(['awaiting']).optional(),
   assignedTo: z.union([z.literal('me'), uuid]).optional(),
   quoteId: uuid.optional(),
@@ -38,6 +39,10 @@ const updateBody = z
   .refine((b) => Object.keys(b).length > 0, 'No hay cambios');
 
 const cancelBody = z.strictObject({ reason: optionalText(500).optional() });
+
+// Resolución de un email de resultado desconocido: lo decide quien puede comprobarlo (p. ej.
+// en la carpeta de enviados del proveedor o preguntando al cliente).
+const resolveBody = z.strictObject({ outcome: z.enum(['sent', 'not_sent']) });
 
 export async function followUpRoutes(app: FastifyInstance) {
   app.get('/', { config: { permission: 'quotes:read' } }, async (req) => {
@@ -152,6 +157,24 @@ export async function automaticFollowUpRoutes(app: FastifyInstance) {
         });
       }
       return { followUp: await getFollowUp(trx, auth.companyId, id) };
+    });
+  });
+
+  /**
+   * Resolver un email automático de resultado desconocido. «sent» lo da por enviado (y cuenta
+   * el intento si cabe en el límite); «not_sent» lo da por no enviado (no consume y no se
+   * reenvía solo). Queda en el historial con quién lo decidió.
+   */
+  app.post('/:id/resolve', { config: { permission: 'settings:update' } }, async (req) => {
+    const { id } = parseWith(idParams, req.params);
+    const { outcome } = parseWith(resolveBody, req.body);
+    return inTenant(app, req, async (trx, auth) => {
+      const f = await trx.selectFrom('followUps').select(['id', 'status']).where('companyId', '=', auth.companyId).where('id', '=', id).forUpdate().executeTakeFirst();
+      if (!f) throw errors.notFound('Seguimiento no encontrado.');
+      if (f.status !== 'unknown') throw errors.invalidTransition('Este email no está pendiente de revisión.');
+      const result = await resolveUnknownDelivery(trx, auth, id, outcome);
+      if (!result) throw errors.invalidTransition('Este email no está pendiente de revisión.');
+      return { resolution: result, followUp: await getFollowUp(trx, auth.companyId, id) };
     });
   });
 

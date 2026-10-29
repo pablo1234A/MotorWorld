@@ -8,6 +8,7 @@ import {
   type EngineDeps,
 } from './engine.js';
 import type { Mailer } from '../mail/mailer.js';
+import { reconcileUnknownDeliveries } from './unknown.js';
 import { sendRetentionNotices } from '../modules/billing/retention.js';
 
 // Claves de bloqueo consultivo de PostgreSQL (una por trabajo exclusivo).
@@ -62,7 +63,14 @@ export interface CycleResult {
 export async function runCycle(deps: EngineDeps, options: { retention?: boolean; logger?: Logger; mailer?: Mailer } = {}): Promise<CycleResult> {
   const result: CycleResult = { recovered: 0, planned: {}, dispatched: {} };
 
-  result.recovered = await exclusive(deps, LOCKS.recovery, async () => (await recordRun(deps, 'recovery', async () => ({ recovered: await recoverStuckDeliveries(deps) })))!.recovered);
+  result.recovered = await exclusive(deps, LOCKS.recovery, async () =>
+    (await recordRun(deps, 'recovery', async () => {
+      const recovered = await recoverStuckDeliveries(deps);
+      // Envíos de resultado desconocido: se consultan al proveedor si lo permite (Mailgun).
+      const reconciled = await reconcileUnknownDeliveries(deps);
+      return { recovered, unknownChecked: reconciled.checked, unknownConfirmedSent: reconciled.sent, unknownConfirmedNotSent: reconciled.notSent };
+    }))!.recovered,
+  );
 
   const companies = await automationCompanyIds(deps.db);
 

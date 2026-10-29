@@ -11,6 +11,7 @@
  *   npm run ops -- backdated [--days 30]   (respuestas fechadas antes del seguimiento: revisión manual, D4)
  *   npm run ops -- retention               (cuentas sin plan activo y fecha de conservación de sus datos)
  *   npm run ops -- billing-events [--days 7] (eventos de facturación con error, sin empresa o duplicados)
+ *   npm run ops -- set-limit --company <uuid> --attempts <n> --reason "<motivo>" (ajuste del periodo vigente)
  *
  * `plan` asigna un plan sin pasar por el proveedor de pagos (pruebas, pilotos o correcciones).
  * Con pagos activos, el plan de una empresa con suscripción de Stripe lo fijan los webhooks:
@@ -170,8 +171,35 @@ async function main() {
         console.table(rows);
         break;
       }
+      case 'set-limit': {
+        // Ajuste de soporte del límite de intentos del periodo vigente (p. ej. una compensación o
+        // una corrección acordada). Se mantiene hasta que cambie el plan o empiece otro periodo.
+        const id = companyArg();
+        const attempts = Number(arg('attempts'));
+        const reason = arg('reason')?.trim();
+        if (!Number.isInteger(attempts) || attempts < 0 || attempts > 10_000) fail('--attempts debe ser un entero entre 0 y 10000');
+        if (!reason || reason.length < 5) fail('Indica --reason "<motivo>" (queda en el historial de la empresa)');
+        await client.query('BEGIN');
+        const { rows } = await client.query(
+          `SELECT period_start, attempt_limit, attempts_counted, attempts_reserved FROM usage_periods
+           WHERE company_id = $1 AND period_start <= now() AND period_end > now() ORDER BY period_start DESC LIMIT 1 FOR UPDATE`,
+          [id],
+        );
+        const p = rows[0];
+        if (!p) fail('La empresa no tiene periodo de uso vigente (se crea con el primer envío del periodo).');
+        if (attempts < p.attempts_counted + p.attempts_reserved) fail(`El periodo ya tiene ${p.attempts_counted + p.attempts_reserved} intentos contados o en curso: el límite no puede ser menor.`);
+        await client.query('UPDATE usage_periods SET attempt_limit = $3 WHERE company_id = $1 AND period_start = $2', [id, p.period_start, attempts]);
+        await client.query(
+          `INSERT INTO activity_log (company_id, actor_user_id, action, entity_type, entity_id, metadata)
+           VALUES ($1, NULL, 'usage.limit_adjusted', 'company', $1, $2)`,
+          [id, JSON.stringify({ from: p.attempt_limit, to: attempts, periodStart: p.period_start, reason, by: 'operator' })],
+        );
+        await client.query('COMMIT');
+        console.log(`Límite de intentos del periodo ${new Date(p.period_start).toISOString().slice(0, 10)}: ${p.attempt_limit} → ${attempts}`);
+        break;
+      }
       default:
-        fail('Comando desconocido. Usa: companies | usage | plan | delete-company | backdated | retention | billing-events');
+        fail('Comando desconocido. Usa: companies | usage | plan | delete-company | backdated | retention | billing-events | set-limit');
     }
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});

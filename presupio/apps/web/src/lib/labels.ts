@@ -112,6 +112,7 @@ export const FOLLOW_UP_STATUS_LABEL: Record<FollowUpStatus, string> = {
   completed: 'Realizado',
   failed: 'No se pudo enviar',
   cancelled: 'Cancelado',
+  unknown: 'Por revisar',
 };
 
 /** Estado de cada intento de envío. Solo «Entregado» lo confirma el proveedor de email. */
@@ -156,6 +157,8 @@ export function cancelReasonLabel(reason: string | null): string {
 export function failureReasonLabel(code: string | null): string {
   if (!code) return 'motivo no indicado';
   if (code === 'unknown_outcome') return 'el envío se interrumpió y no se sabe si salió; no se reintenta para no duplicarlo';
+  if (code === 'interrupted_before_send') return 'el envío se interrumpió antes de llamar al proveedor (no salió); se volvió a programar';
+  if (code === 'not_sent_confirmed') return 'se confirmó que el email no llegó a salir';
   if (code === 'bounced') return 'la dirección rechazó el correo (rebote permanente)';
   if (code === 'provider_auth') return 'el proveedor de email rechazó las credenciales del servidor';
   if (code === 'provider_not_configured') return 'no hay proveedor de email configurado';

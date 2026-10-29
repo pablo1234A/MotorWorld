@@ -4,6 +4,7 @@ import { setTenant, withTenant, type Db, type Trx } from '../db/database.js';
 import type { Contact, FollowUp, Quote, TemplateVersion } from '../db/types.js';
 import { hasActiveAccess } from '../domain/plans.js';
 import { generateToken, hashToken } from '../lib/crypto.js';
+import { resolveUnknownDelivery } from './unknown.js';
 import { logActivity } from '../modules/activity/service.js';
 import { hasEmailExclusion } from '../modules/exclusions/service.js';
 import {
@@ -526,6 +527,17 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
 
   stats.claimed = claimed.length;
   for (const c of claimed) {
+    // Marca persistente JUSTO ANTES de llamar al proveedor (migración 0007). Si la base de datos
+    // no responde aquí, se lanza el error y no se envía nada más: lo reclamado y no llamado
+    // vuelve a la cola al recuperarse (recoverStuckDeliveries), sin riesgo de duplicados.
+    await withTenant(deps.db, SYSTEM(companyId), (trx) =>
+      trx
+        .updateTable('messageDeliveries')
+        .set({ providerCallStartedAt: deps.now?.() ?? new Date() })
+        .where('companyId', '=', companyId)
+        .where('id', '=', c.deliveryId)
+        .execute(),
+    );
     const result = await deps.provider.send(c.email).catch((error: unknown) => ({
       ok: false as const,
       retryable: true,
@@ -534,6 +546,21 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
     }));
     await withTenant(deps.db, SYSTEM(companyId), async (trx) => {
       const at = deps.now?.() ?? new Date();
+      // Si mientras tanto el envío se dio por interrumpido (resultado desconocido), el resultado
+      // que llega ahora del proveedor lo resuelve; si ya se resolvió, no se toca nada.
+      const current = await trx
+        .selectFrom('messageDeliveries')
+        .select('status')
+        .where('companyId', '=', companyId)
+        .where('id', '=', c.deliveryId)
+        .forUpdate()
+        .executeTakeFirstOrThrow();
+      if (current.status === 'unknown') {
+        await resolveUnknownDelivery(trx, SYSTEM(companyId), c.followUpId, result.ok ? 'provider_sent' : 'provider_not_sent', at);
+        if (result.ok) stats.sent++;
+        return;
+      }
+      if (current.status !== 'sending') return;
       if (result.ok) {
         await trx
           .updateTable('messageDeliveries')
@@ -644,9 +671,13 @@ async function sendTimeEligibility(
 // ---------------------------------------------------------------------------
 
 /**
- * Un intento que quedó "en curso" (el proceso se detuvo entre el envío y su registro) tiene
- * un resultado desconocido. Para no arriesgar un duplicado, NO se reenvía: queda como fallido
- * con motivo "unknown_outcome" para que alguien lo revise.
+ * Envíos que quedaron «en curso» porque el proceso o la base de datos fallaron entre reclamar
+ * el envío y registrar su resultado. Se distinguen dos casos (migración 0007):
+ *  - El proveedor nunca se llamó (sin `provider_call_started_at`): el email no salió. Se
+ *    devuelve el seguimiento a la cola y el intento se libera (no consume).
+ *  - El proveedor se llamó: el email puede haber salido. NO se reenvía (evita duplicados) ni
+ *    se da por fallido (no se puede demostrar): queda como «resultado desconocido», sin
+ *    cobrar, hasta reconciliarlo con el proveedor o revisarlo a mano (automation/unknown.ts).
  */
 export async function recoverStuckDeliveries(deps: EngineDeps): Promise<number> {
   const now = deps.now?.() ?? new Date();
@@ -655,26 +686,55 @@ export async function recoverStuckDeliveries(deps: EngineDeps): Promise<number> 
   let recovered = 0;
   for (const { id: companyId } of rows) {
     await withTenant(deps.db, SYSTEM(companyId), async (trx) => {
-      const stuck = await trx
+      const notCalled = await trx
         .updateTable('messageDeliveries')
-        .set({ status: 'unknown', errorCode: 'unknown_outcome', errorDetail: 'El proceso se detuvo durante el envío; no se reintenta para evitar duplicados' })
+        .set({ status: 'failed', failedAt: now, errorCode: 'interrupted_before_send', errorDetail: 'El proceso se detuvo antes de llamar al proveedor: el email no se envió' })
         .where('companyId', '=', companyId)
         .where('status', '=', 'sending')
         .where('createdAt', '<', cutoff)
+        .where('providerCallStartedAt', 'is', null)
         .returning(['id', 'followUpId', 'quoteId'])
         .execute();
-      for (const s of stuck) {
-        // Resultado desconocido: no se cobra (no se puede verificar) y tampoco se reintenta.
-        await releaseAttempt(trx, companyId, s.followUpId, 'unverified', 'unknown_outcome', s.id, now);
+      for (const s of notCalled) {
+        await releaseAttempt(trx, companyId, s.followUpId, 'released', 'interrupted_before_send', s.id, now);
         await trx
           .updateTable('followUps')
-          .set({ status: 'failed', failureReason: 'unknown_outcome' })
+          .set({ status: 'pending', failureReason: 'interrupted_before_send' })
           .where('companyId', '=', companyId)
           .where('id', '=', s.followUpId)
           .where('status', '=', 'sending')
           .execute();
         await logActivity(trx, SYSTEM(companyId), {
-          action: 'follow_up.failed',
+          action: 'follow_up.requeued',
+          entityType: 'follow_up',
+          entityId: s.followUpId,
+          quoteId: s.quoteId,
+          metadata: { channel: 'email', reason: 'interrupted_before_send' },
+        });
+        recovered++;
+      }
+
+      const maybeSent = await trx
+        .updateTable('messageDeliveries')
+        .set({ status: 'unknown', errorCode: 'unknown_outcome', errorDetail: 'El proceso se detuvo durante el envío: puede haber salido. No se reenvía para evitar duplicados' })
+        .where('companyId', '=', companyId)
+        .where('status', '=', 'sending')
+        .where('createdAt', '<', cutoff)
+        .where('providerCallStartedAt', 'is not', null)
+        .returning(['id', 'followUpId', 'quoteId'])
+        .execute();
+      for (const s of maybeSent) {
+        // Sin verificar: no se cobra mientras no se demuestre que salió.
+        await releaseAttempt(trx, companyId, s.followUpId, 'unverified', 'unknown_outcome', s.id, now);
+        await trx
+          .updateTable('followUps')
+          .set({ status: 'unknown', failureReason: 'unknown_outcome' })
+          .where('companyId', '=', companyId)
+          .where('id', '=', s.followUpId)
+          .where('status', '=', 'sending')
+          .execute();
+        await logActivity(trx, SYSTEM(companyId), {
+          action: 'follow_up.unknown_outcome',
           entityType: 'follow_up',
           entityId: s.followUpId,
           quoteId: s.quoteId,

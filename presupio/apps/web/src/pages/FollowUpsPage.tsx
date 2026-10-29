@@ -11,18 +11,19 @@ import { usePageTitle } from '../lib/usePageTitle';
 import { AutomaticEmailDialog, needsApproval, ruleStatus } from './quotes/AutomaticEmail';
 import { CancelFollowUpDialog, CHANNEL_ICON, CompleteFollowUpDialog } from './quotes/FollowUpDialogs';
 
-type Tab = 'pending' | 'approval' | 'sent' | 'failed' | 'completed' | 'cancelled';
+type Tab = 'pending' | 'approval' | 'sent' | 'failed' | 'unknown' | 'completed' | 'cancelled';
 
 const TABS: Array<{ value: Tab; label: string; automatic?: boolean }> = [
   { value: 'pending', label: 'Pendientes' },
   { value: 'approval', label: 'Por aprobar', automatic: true },
   { value: 'sent', label: 'Emails enviados', automatic: true },
   { value: 'failed', label: 'Fallidos', automatic: true },
+  { value: 'unknown', label: 'Por revisar', automatic: true },
   { value: 'completed', label: 'Realizados' },
   { value: 'cancelled', label: 'Cancelados' },
 ];
 
-const PARAM: Record<string, Tab> = { aprobar: 'approval', sent: 'sent', failed: 'failed', completed: 'completed', cancelled: 'cancelled' };
+const PARAM: Record<string, Tab> = { aprobar: 'approval', sent: 'sent', failed: 'failed', revisar: 'unknown', completed: 'completed', cancelled: 'cancelled' };
 
 function filtersFor(tab: Tab): Pick<FollowUpFilters, 'status' | 'approval'> {
   if (tab === 'approval') return { status: 'pending', approval: 'awaiting' };
@@ -34,6 +35,7 @@ const EMPTY: Record<Tab, { title: string; text: string }> = {
   approval: { title: 'Ningún email espera aprobación', text: 'Los emails automáticos que necesiten tu revisión aparecerán aquí.' },
   sent: { title: 'Aún no se ha enviado ningún email automático', text: 'Cuando salgan, verás aquí cada envío con su estado.' },
   failed: { title: 'Ningún envío ha fallado', text: 'Si un email no puede enviarse, aparecerá aquí con el motivo.' },
+  unknown: { title: 'Nada que revisar', text: 'Si un envío se interrumpe y no se sabe si salió, aparecerá aquí para que lo confirmes.' },
   completed: { title: 'Nada por aquí', text: 'Cuando se registren seguimientos, aparecerán en esta lista.' },
   cancelled: { title: 'Nada por aquí', text: 'Los seguimientos cancelados aparecerán en esta lista.' },
 };
@@ -91,6 +93,7 @@ export function FollowUpsPage() {
                 {t.label}
                 {t.value === 'approval' && !!counts?.awaitingApproval && <span className="tab__count">{counts.awaitingApproval}</span>}
                 {t.value === 'failed' && !!counts?.failed && <span className="tab__count">{counts.failed}</span>}
+                {t.value === 'unknown' && !!counts?.unknown && <span className="tab__count">{counts.unknown}</span>}
               </button>
             ))}
           </div>

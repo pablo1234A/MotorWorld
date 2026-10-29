@@ -40,6 +40,7 @@ export async function automationRoutes(app: FastifyInstance) {
           sql<string>`count(*) filter (where status = 'sending')`.as('sending'),
           sql<string>`count(*) filter (where status = 'sent' and sent_at > now() - interval '30 days')`.as('sent30d'),
           sql<string>`count(*) filter (where status = 'failed')`.as('failed'),
+          sql<string>`count(*) filter (where status = 'unknown')`.as('unknown'),
         ])
         .where('companyId', '=', auth.companyId)
         .where('source', '=', 'rule')
@@ -90,6 +91,7 @@ export async function automationRoutes(app: FastifyInstance) {
           sent30d: Number(counts.sent30d),
           delivered30d: Number(delivered.n),
           failed: Number(counts.failed),
+          unknown: Number(counts.unknown),
         },
         worker: {
           healthy: workerHealthy,

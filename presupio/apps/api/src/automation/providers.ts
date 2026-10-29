@@ -25,6 +25,19 @@ export interface FollowUpEmailProvider {
   /** Si el proveedor confirma la entrega (webhooks). Sin esto, el estado máximo es "enviado". */
   readonly tracksDelivery: boolean;
   send(email: OutgoingEmail): Promise<SendResult>;
+  /**
+   * Opcional: consulta al proveedor si aceptó un envío de resultado desconocido. Solo lo
+   * implementan los proveedores con registro de eventos consultable (Mailgun). `not_found` no
+   * prueba nada (los eventos pueden tardar o haber caducado): el envío sigue pendiente de revisión.
+   */
+  lookup?(query: DeliveryLookup): Promise<'accepted' | 'rejected' | 'not_found'>;
+}
+
+export interface DeliveryLookup {
+  deliveryId: string;
+  recipient: string;
+  /** Hora en que se llamó al proveedor (la búsqueda se acota alrededor de ella). */
+  calledAt: Date;
 }
 
 /** Quita direcciones de email y recorta: el detalle del error no debe guardar datos personales. */
@@ -115,6 +128,33 @@ export class MailgunProvider implements FollowUpEmailProvider {
     if (res.status >= 500) return { ok: false, retryable: true, code: `provider_${res.status}`, detail };
     if (res.status === 401 || res.status === 403) return { ok: false, retryable: false, code: 'provider_auth', detail };
     return { ok: false, retryable: false, code: `rejected_${res.status}`, detail };
+  }
+
+  /**
+   * Busca en el registro de eventos de Mailgun (Events API) los eventos del destinatario en
+   * torno a la hora de la llamada y comprueba la variable presupio_delivery_id. Cualquier
+   * evento posterior a la aceptación (accepted, delivered, failed tras aceptar…) prueba que el
+   * email se envió; solo «rejected» prueba que no. Cualquier error de red → not_found.
+   * NOTA: verificado con un servidor simulado; pendiente de comprobar con Mailgun real.
+   */
+  async lookup(query: DeliveryLookup): Promise<'accepted' | 'rejected' | 'not_found'> {
+    const begin = Math.floor(query.calledAt.getTime() / 1000) - 120;
+    const end = begin + 2 * 3600;
+    const params = new URLSearchParams({ begin: String(begin), end: String(end), ascending: 'yes', limit: '300', recipient: query.recipient });
+    try {
+      const res = await this.fetchImpl(`${this.options.apiBase}/v3/${encodeURIComponent(this.options.domain)}/events?${params}`, {
+        headers: { authorization: `Basic ${Buffer.from(`api:${this.options.apiKey}`).toString('base64')}`, accept: 'application/json' },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) return 'not_found';
+      const body = (await res.json()) as { items?: Array<{ event?: string; 'user-variables'?: Record<string, unknown> }> };
+      const ours = (body.items ?? []).filter((e) => e['user-variables']?.presupio_delivery_id === query.deliveryId);
+      if (ours.some((e) => e.event && e.event !== 'rejected')) return 'accepted';
+      if (ours.some((e) => e.event === 'rejected')) return 'rejected';
+      return 'not_found';
+    } catch {
+      return 'not_found';
+    }
   }
 }
 

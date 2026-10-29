@@ -21,7 +21,12 @@ const logger = pino({
   base: { proc: 'worker' },
   serializers: { err: safeErrorSerializer },
 });
-const db = createDb(config.databaseUrl, Math.min(config.dbPoolMax, 5));
+// Un corte de PostgreSQL no termina el proceso: el ciclo en curso falla, se registra y el
+// siguiente vuelve a intentarlo cuando la base de datos esté disponible.
+const db = createDb(config.databaseUrl, Math.min(config.dbPoolMax, 5), (error) =>
+  logger.warn({ errCode: error.code ?? 'connection' }, 'Conexión inactiva con PostgreSQL cerrada; se reabrirá en el siguiente ciclo'),
+);
+process.on('unhandledRejection', (reason) => logger.error({ err: reason }, 'Promesa rechazada sin capturar'));
 const provider = createFollowUpProvider(config);
 // Correo de la aplicación (avisos de conservación de datos). Sin configurar, no se envía nada.
 const mailer = createMailer(config, logger);

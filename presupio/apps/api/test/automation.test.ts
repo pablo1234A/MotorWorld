@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto';
+import pg from 'pg';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -158,7 +159,7 @@ describe('fiabilidad del proceso de trabajos', () => {
     await acc.client.post('/automation/disable');
   });
 
-  it('si el proceso muere a mitad de envío, el intento queda como "resultado desconocido" y no se reenvía', async () => {
+  it('si el proceso muere a mitad de envío, el email queda como "resultado desconocido" y no se reenvía', async () => {
     const acc = await automatedCompany();
     const q = await sentQuote(acc, 3);
     await planCompany(deps(T0), acc.companyId);
@@ -177,7 +178,8 @@ describe('fiabilidad del proceso de trabajos', () => {
     expect(await recoverStuckDeliveries(deps(new Date(Date.now() + 5 * MIN)))).toBe(0);
     expect(await recoverStuckDeliveries(deps(new Date(Date.now() + 20 * MIN)))).toBeGreaterThanOrEqual(1);
     [step] = await ruleSteps(acc, q.id);
-    expect(step).toMatchObject({ status: 'failed', failureReason: 'unknown_outcome' });
+    // Puede haber salido: ni fallido (no se puede demostrar) ni reenviado (evita duplicados).
+    expect(step).toMatchObject({ status: 'unknown', failureReason: 'unknown_outcome' });
     expect((await deliveries(acc, step.id))[0]).toMatchObject({ status: 'unknown', errorCode: 'unknown_outcome' });
 
     // Nuevos ciclos no lo reenvían (como mucho una vez: preferimos no duplicar).
@@ -712,6 +714,43 @@ describe('Mailgun: envío y webhooks firmados (contra un servidor local, no cont
     const exclusions = (await acc.client.get('/exclusions')).body.items.filter((e: any) => e.contactId === q.contact.id);
     expect(exclusions[0]).toMatchObject({ reason: 'opt_out_request', channel: 'email' });
     expect((await ruleSteps(acc, q.id))[1]).toMatchObject({ status: 'cancelled', cancelReason: 'contact_excluded' });
+  });
+
+  it('una baja comunicada por el proveedor excluye al contacto y un fallo temporal queda anotado', async () => {
+    const { acc, q, step, delivery } = await sentViaMailgun();
+    const ref = { 'user-variables': { presupio_delivery_id: delivery.id } };
+    await post(signed({ event: 'failed', severity: 'temporary', ...ref }));
+    const log = (await acc.client.get(`/quotes/${q.id}/activity`)).body.items.map((a: any) => a.action);
+    expect(log).toContain('follow_up.delivery_delayed');
+    expect((await deliveries(acc, step.id))[0].status).toBe('sent');
+    await post(signed({ event: 'unsubscribed', ...ref }));
+    const exclusions = (await acc.client.get('/exclusions')).body.items.filter((e: any) => e.contactId === q.contact.id);
+    expect(exclusions[0]).toMatchObject({ reason: 'opt_out_request', channel: 'email' });
+    expect((await planCompany(mgDeps(at(5 * DAY)), acc.companyId)).scheduled).toBe(0);
+  });
+
+  it('un evento del proveedor sobre un envío de resultado desconocido demuestra que salió: se reconcilia y cuenta una vez', async () => {
+    const { acc, q, step, delivery } = await sentViaMailgun();
+    // Estado de un envío interrumpido tras llamar al proveedor (lo que deja recoverStuckDeliveries).
+    const owner = new pg.Client({ connectionString: process.env.TEST_MIGRATION_DATABASE_URL });
+    await owner.connect();
+    try {
+      await owner.query("UPDATE message_deliveries SET status = 'unknown', sent_at = NULL WHERE id = $1", [delivery.id]);
+      await owner.query("UPDATE follow_ups SET status = 'unknown', sent_at = NULL, failure_reason = 'unknown_outcome' WHERE id = $1", [step.id]);
+      await owner.query("UPDATE attempt_events SET status = 'unverified', sent_at = NULL WHERE follow_up_id = $1", [step.id]);
+      await owner.query('UPDATE usage_periods SET attempts_counted = attempts_counted - 1 WHERE company_id = $1 AND attempts_counted > 0', [acc.companyId]);
+      expect((await acc.client.get('/usage')).body.usage.attempts.used).toBe(0);
+      const payload = signed({ event: 'delivered', 'user-variables': { presupio_delivery_id: delivery.id } });
+      expect((await post(payload)).json()).toEqual({ status: 'processed' });
+      expect((await post(payload)).json()).toEqual({ status: 'duplicate' });
+      expect((await ruleSteps(acc, q.id))[0].status).toBe('sent');
+      expect((await deliveries(acc, step.id))[0].status).toBe('delivered');
+      const { rows } = await owner.query('SELECT status FROM attempt_events WHERE follow_up_id = $1', [step.id]);
+      expect(rows).toEqual([{ status: 'counted' }]);
+      expect((await acc.client.get('/usage')).body.usage.attempts.used).toBe(1);
+    } finally {
+      await owner.end();
+    }
   });
 
   it('el webhook no existe si el proveedor no es Mailgun', async () => {
