@@ -18,6 +18,7 @@ import {
 import { cancelPendingRuleSteps } from '../../automation/engine.js';
 import { inTenant } from '../../plugins/auth.js';
 import { listActivity, logActivity } from '../activity/service.js';
+import { eraseQuote } from '../privacy/service.js';
 import { contactInput, findOrCreateContact, getContact } from '../contacts/service.js';
 import { escapeLike } from '../contacts/routes.js';
 import { createFollowUp, createFollowUpBody, followUpDto, followUpQuery } from '../follow-ups/service.js';
@@ -281,6 +282,17 @@ export async function quoteRoutes(app: FastifyInstance) {
       });
       return { quote: quoteDto(await getQuoteRow(trx, auth.companyId, id)), cancelledFollowUps: cancelled };
     });
+  });
+
+  /**
+   * Eliminación de un presupuesto: se suprimen sus datos (título, descripción, notas, emails)
+   * y deja de mostrarse; se conserva una fila sin datos personales para los intentos ya
+   * facturados y las métricas. Irreversible: exige confirmar escribiendo ELIMINAR.
+   */
+  app.post('/:id/erase', { config: { permission: 'data:erase', readOnlyAllowed: true } }, async (req) => {
+    const { id } = parseWith(idParams, req.params);
+    parseWith(z.strictObject({ confirm: z.literal('ELIMINAR', 'Escribe ELIMINAR para confirmar') }), req.body);
+    return inTenant(app, req, async (trx, auth) => ({ erased: await eraseQuote(trx, auth, id) }));
   });
 
   app.post('/:id/unarchive', { config: { permission: 'quotes:write' } }, async (req) => {

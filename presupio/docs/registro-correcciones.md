@@ -62,3 +62,34 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
   - Solo se sube cuando el plan del periodo cambia.
   - Nuevo comando auditado `npm run ops -- set-limit` (no admite un límite menor que lo ya consumido, exige un motivo y queda en el historial).
 - **Prueba:** `plans.test.ts › un ajuste de soporte del límite se mantiene…`. El ajuste se mantiene tras varios cálculos y un cambio de plan lo recalcula.
+
+## P1-03 · Supresión de un contacto o de un presupuesto
+
+- **Causa:** no había forma de borrar ni anonimizar un contacto o un presupuesto concreto; solo se podía borrar la empresa entera con `ops`.
+- **Corrección** (migración 0008, `modules/privacy/service.ts`):
+  - `POST /contacts/:id/anonymize` con `{ confirm: "ANONIMIZAR" }` y `POST /quotes/:id/erase` con `{ confirm: "ELIMINAR" }`.
+  - Nuevo permiso `data:erase`, solo para propietarios y administradores.
+  - Disponible en solo lectura: una petición de supresión debe atenderse aunque la cuenta no tenga plan activo.
+- **Qué se hace** (anonimización irreversible):
+  - Se borran:
+    - nombre, email, teléfono, organización y notas del contacto;
+    - destinatario, asunto y cuerpo de los emails;
+    - notas de los seguimientos y la instantánea de un email aprobado (sustituida por un marcador);
+    - evidencias de venta y motivos de rechazo;
+    - notas libres del historial (función acotada `app_scrub_activity_notes`);
+    - en un presupuesto: título, descripción y referencia.
+  - Se cancelan los seguimientos pendientes y se desactiva el envío automático de esos presupuestos.
+  - El presupuesto queda oculto y no se puede modificar: responde 404.
+- **Qué se conserva:**
+  - las filas sin datos personales, para los intentos ya facturados, las métricas y el historial;
+  - las exclusiones **activas**, con solo el dato de su canal, para seguir respetando una baja.
+- **Interfaz:** «Suprimir datos» en la ficha del contacto y «Eliminar definitivamente» en la del presupuesto, con confirmación escrita.
+- **Prueba:** `test/privacy.test.ts`, 4 pruebas.
+  - Permisos (un comercial recibe 403), aislamiento (otra empresa recibe 404) y confirmación obligatoria.
+  - Ningún dato personal queda en la exportación completa.
+  - El intento facturado y la exclusión activa minimizada se conservan.
+  - La API oculta lo suprimido y el motor no programa ni envía nada a esa persona.
+  - Funciona en solo lectura.
+- **Pendiente de revisión legal:**
+  - si la conservación de la exclusión activa y de la fila anonimizada es adecuada;
+  - si alguna obligación exige conservar algún dato concreto (`docs/legal/README.md`).

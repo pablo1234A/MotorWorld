@@ -5,6 +5,7 @@ import { decodeCursor, pageOf } from '../../lib/pagination.js';
 import { email, idParams, optionalText, pagination, parseWith, phone, requiredText } from '../../lib/validation.js';
 import { inTenant } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
+import { anonymizeContact } from '../privacy/service.js';
 import { CONTACT_FIELDS, contactChannel, contactInput, createContact, getContact, translateContactConflict } from './service.js';
 
 const listQuery = z.strictObject({ q: z.string().trim().max(100).optional(), ...pagination });
@@ -34,6 +35,7 @@ export async function contactRoutes(app: FastifyInstance) {
         .selectFrom('contacts')
         .select(CONTACT_FIELDS)
         .where('companyId', '=', auth.companyId)
+        .where('anonymizedAt', 'is', null)
         .orderBy('createdAt', 'desc')
         .orderBy('id', 'desc')
         .limit(q.limit + 1);
@@ -81,12 +83,24 @@ export async function contactRoutes(app: FastifyInstance) {
           .select(['id', 'title', 'reference', 'status', 'amountCents', 'sentAt', 'archivedAt'])
           .where('companyId', '=', auth.companyId)
           .where('contactId', '=', id)
+          .where('deletedAt', 'is', null)
           .orderBy('createdAt', 'desc')
           .limit(50)
           .execute(),
       ]);
       return { contact, activeExclusions: exclusions, quotes };
     });
+  });
+
+  /**
+   * Supresión de los datos personales del contacto (derecho de supresión). Irreversible:
+   * exige confirmar escribiendo ANONIMIZAR. Disponible también en solo lectura (una petición
+   * de supresión debe atenderse aunque la cuenta no tenga plan activo).
+   */
+  app.post('/:id/anonymize', { config: { permission: 'data:erase', readOnlyAllowed: true } }, async (req) => {
+    const { id } = parseWith(idParams, req.params);
+    parseWith(z.strictObject({ confirm: z.literal('ANONIMIZAR', 'Escribe ANONIMIZAR para confirmar') }), req.body);
+    return inTenant(app, req, async (trx, auth) => ({ anonymized: await anonymizeContact(trx, auth, id) }));
   });
 
   app.patch('/:id', { config: { permission: 'contacts:write' } }, async (req) => {

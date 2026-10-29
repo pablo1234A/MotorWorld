@@ -31,6 +31,7 @@ export type Permission =
   | 'exclusions:lift'
   | 'activity:read'
   | 'data:export'
+  | 'data:erase'
   | 'billing:manage';
 
 export interface Page<T> {

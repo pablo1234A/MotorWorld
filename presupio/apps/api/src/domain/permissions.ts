@@ -19,6 +19,7 @@ export type Permission =
   | 'exclusions:lift'
   | 'activity:read'
   | 'data:export'
+  | 'data:erase'
   | 'billing:manage';
 
 const READ: Permission[] = [
@@ -43,6 +44,8 @@ const MANAGE: Permission[] = [
   'exclusions:lift',
   // Exportar todos los datos de la empresa (incluye datos personales de clientes).
   'data:export',
+  // Suprimir (anonimizar) los datos de un contacto o un presupuesto: irreversible.
+  'data:erase',
 ];
 
 export const ROLE_PERMISSIONS: Record<MembershipRole, ReadonlySet<Permission>> = {

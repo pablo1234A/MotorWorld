@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Pencil, Search, ShieldBan, ShieldCheck, UserRoundSearch, Users } from 'lucide-react';
+import { ArrowLeft, Eraser, Pencil, Search, ShieldBan, ShieldCheck, UserRoundSearch, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, isApiError } from '../../api/client';
@@ -7,6 +7,7 @@ import { useContact, useContacts } from '../../api/queries';
 import type { Contact, ContactChannel, ContactDetail, ExclusionReason } from '../../api/types';
 import { useSession } from '../../auth/session';
 import { Dialog } from '../../components/Dialog';
+import { EraseDialog } from '../../components/EraseDialog';
 import { useToast } from '../../components/Toasts';
 import { Alert, Button, buttonClass, EmptyState, ErrorAlert, Field, PageHeader, Ref, Skeleton, SkeletonRows, StatusPill } from '../../components/ui';
 import { formatDate, formatMoney } from '../../lib/format';
@@ -296,6 +297,7 @@ export function ContactDetailPage() {
   const [editing, setEditing] = useState(false);
   const [excluding, setExcluding] = useState(false);
   const [lifting, setLifting] = useState<string | null>(null);
+  const [erasing, setErasing] = useState(false);
 
   if (contact.isPending) {
     return (
@@ -341,9 +343,25 @@ export function ContactDetailPage() {
                 Editar
               </Button>
             )}
+            {session.can('data:erase') && (
+              <Button variant="quiet-danger" icon={Eraser} onClick={() => setErasing(true)}>
+                Suprimir datos
+              </Button>
+            )}
           </>
         }
       />
+      {erasing && (
+        <EraseDialog
+          title="Suprimir los datos de este contacto"
+          description="Se borrarán su nombre, email, teléfono, notas y el contenido de los emails que se le enviaron, y se cancelarán sus seguimientos pendientes. Sus presupuestos se conservan sin datos personales, y si tiene una baja activa se mantiene para seguir respetándola. No se puede deshacer."
+          path={`/contacts/${c.id}/anonymize`}
+          word="ANONIMIZAR"
+          successMessage="Datos del contacto suprimidos."
+          redirectTo="/contactos"
+          onClose={() => setErasing(false)}
+        />
+      )}
 
       {activeExclusions.length > 0 && (
         <section className="panel" aria-labelledby="ex-title">

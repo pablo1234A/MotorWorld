@@ -78,7 +78,8 @@ export function followUpQuery(trx: Trx, companyId: string) {
     .leftJoin('users as a', 'a.id', 'f.assignedUserId')
     .select(FOLLOW_UP_FIELDS)
     .select(['q.title as quoteTitle', 'q.status as quoteStatus', 'c.fullName as contactFullName', 'a.fullName as assignedFullName'])
-    .where('f.companyId', '=', companyId);
+    .where('f.companyId', '=', companyId)
+    .where('q.deletedAt', 'is', null);
 }
 
 type FollowUpRow = Awaited<ReturnType<ReturnType<typeof followUpQuery>['executeTakeFirstOrThrow']>>;

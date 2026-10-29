@@ -140,6 +140,7 @@ export interface ContactsTable {
   preferredChannel: ContactChannel | null;
   notes: string | null;
   createdByUserId: string | null;
+  anonymizedAt: Timestamp | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
 }
@@ -188,6 +189,7 @@ export interface QuotesTable {
   externalId: string | null;
   autoFollowUpEnabled: Generated<boolean>;
   createdByUserId: string | null;
+  deletedAt: Timestamp | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
 }

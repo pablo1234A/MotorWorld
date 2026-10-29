@@ -25,7 +25,9 @@ export function quoteQuery(trx: Trx, companyId: string) {
       'c.organization as contactOrganization',
       'o.fullName as ownerFullName',
     ])
-    .where('q.companyId', '=', companyId);
+    .where('q.companyId', '=', companyId)
+    // Un presupuesto suprimido (anonimizado) ya no se muestra ni se puede modificar.
+    .where('q.deletedAt', 'is', null);
 }
 
 type QuoteRow = Quote & {
@@ -95,7 +97,7 @@ export async function getQuoteRow(trx: Trx, companyId: string, id: string): Prom
 
 /** Bloquea la fila del presupuesto para modificarla sin condiciones de carrera. */
 export async function lockQuote(trx: Trx, companyId: string, id: string): Promise<Quote> {
-  const quote = await trx.selectFrom('quotes').selectAll().where('companyId', '=', companyId).where('id', '=', id).forUpdate().executeTakeFirst();
+  const quote = await trx.selectFrom('quotes').selectAll().where('companyId', '=', companyId).where('id', '=', id).where('deletedAt', 'is', null).forUpdate().executeTakeFirst();
   if (!quote) throw errors.notFound('Presupuesto no encontrado.');
   return quote;
 }

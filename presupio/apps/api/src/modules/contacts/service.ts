@@ -36,7 +36,7 @@ export const CONTACT_FIELDS = [
 ] as const;
 
 export async function getContact(trx: Trx, companyId: string, id: string): Promise<Contact> {
-  const contact = await trx.selectFrom('contacts').selectAll().where('companyId', '=', companyId).where('id', '=', id).executeTakeFirst();
+  const contact = await trx.selectFrom('contacts').selectAll().where('companyId', '=', companyId).where('id', '=', id).where('anonymizedAt', 'is', null).executeTakeFirst();
   if (!contact) throw errors.notFound('Contacto no encontrado.');
   return contact;
 }

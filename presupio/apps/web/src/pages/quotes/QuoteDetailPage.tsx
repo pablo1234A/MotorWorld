@@ -13,6 +13,7 @@ import {
   NotebookPen,
   Pencil,
   ShieldBan,
+  Trash2,
   X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -22,6 +23,7 @@ import { useAutomation, useContact, useMembers, useQuote, useQuoteActivity, useQ
 import type { FollowUp, Quote, QuoteStatus } from '../../api/types';
 import { useSession } from '../../auth/session';
 import { Dialog } from '../../components/Dialog';
+import { EraseDialog } from '../../components/EraseDialog';
 import { Menu } from '../../components/Menu';
 import { useToast } from '../../components/Toasts';
 import { Alert, Button, buttonClass, EmptyState, ErrorAlert, Field, Ref, Skeleton, SkeletonRows, StatusPill } from '../../components/ui';
@@ -343,6 +345,7 @@ export function QuoteDetailPage() {
   const automation = useAutomation();
   const requireApproval = automation.data?.automation.requireApproval;
   const [archiving, setArchiving] = useState(false);
+  const [erasing, setErasing] = useState(false);
 
   const blocked = useMemo(() => blockedChannels(contact.data?.activeExclusions ?? []), [contact.data]);
   const groups = useMemo(() => {
@@ -459,6 +462,21 @@ export function QuoteDetailPage() {
                       {q.archivedAt ? 'Recuperar del archivo' : 'Archivar'}
                     </button>
                   </li>
+                  {session.can('data:erase') && (
+                    <li role="none">
+                      <button
+                        role="menuitem"
+                        type="button"
+                        className="menu__item"
+                        onClick={() => {
+                          close();
+                          setErasing(true);
+                        }}
+                      >
+                        <Trash2 aria-hidden="true" /> Eliminar definitivamente
+                      </button>
+                    </li>
+                  )}
                 </>
               )}
             </Menu>
@@ -713,6 +731,17 @@ export function QuoteDetailPage() {
       )}
       {editing && <EditQuoteDialog quote={q} onClose={() => setEditing(false)} />}
       {archiving && <ArchiveDialog quote={q} onClose={() => setArchiving(false)} />}
+      {erasing && (
+        <EraseDialog
+          title="Eliminar este presupuesto"
+          description="Se borrarán su título, descripción, referencia, notas y el contenido de sus emails, y se cancelarán sus seguimientos pendientes. Para no alterar tu consumo, se conserva un registro sin datos personales de los emails ya enviados. Si solo quieres quitarlo de la vista, usa «Archivar». No se puede deshacer."
+          path={`/quotes/${q.id}/erase`}
+          word="ELIMINAR"
+          successMessage="Presupuesto eliminado."
+          redirectTo="/presupuestos"
+          onClose={() => setErasing(false)}
+        />
+      )}
     </div>
   );
 }
