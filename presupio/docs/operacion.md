@@ -70,7 +70,7 @@
 | `GET /api/v1/health/ready` | 1 min | no responde `200` dos veces seguidas |
 | `GET /api/v1/ops/status` con `Authorization: Bearer $OPS_STATUS_TOKEN` | 5 min | `status` ≠ `ok`. Alertas posibles:<ul><li>`worker_not_running`;</li><li>`deliveries_stuck_sending`;</li><li>`approved_emails_delayed`;</li><li>`job_errors_last_24h`.</li></ul> |
 
-**Qué devuelve `/ops/status`:** solo cifras agregadas, sin empresas, personas ni emails. Sin token configurado, la ruta responde `404`.
+**Qué devuelve `/ops/status`:** solo cifras agregadas, sin empresas, personas ni emails. Sin token configurado, la ruta responde `404`. Además de `alerts`, devuelve `review` con avisos informativos que no degradan el estado: `recoveries_backdated_review` indica respuestas fechadas antes de un seguimiento (revisar con `npm run ops -- backdated`).
 
 **Indicadores de trabajos pendientes y fallos:**
 - emails vencidos;

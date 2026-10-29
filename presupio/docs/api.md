@@ -132,7 +132,7 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 - Obligatorio: `status`.
 - Opcionales: `occurredAt` (no puede ser futura ni anterior al envío), `note`, `rejectionReason`.
 - Para `accepted`: **`evidence` es obligatoria**; `acceptedAmountCents` es opcional.
-- Responde `{ quote, reactivated, cancelledFollowUps, recovery }`. `recovery` es `null` o `{ status: counted|over_limit|no_active_plan, used, limit }`.
+- Responde `{ quote, reactivated, cancelledFollowUps, recovery, recoveryNotCounted }`. `recovery` es `null` o `{ status: counted|over_limit|no_active_plan, used, limit }`. `recoveryNotCounted` explica por qué una respuesta con seguimiento registrado no cuenta (`response_dated_before_follow_up` o `follow_up_outside_window`) y queda en el historial como `recovery.not_counted`.
 
 **Crear un seguimiento** (`POST /quotes/:id/follow-ups`):
 - Obligatorio: `channel` (`task|email|phone|whatsapp|sms|in_person`).
@@ -184,7 +184,7 @@ Funcionamiento completo en [`automatizacion.md`](automatizacion.md).
 
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| GET | `/ops/status` | `Authorization: Bearer <OPS_STATUS_TOKEN>` | Cifras agregadas: `status (ok\|degraded), alerts[], worker, followUps, deliveries, jobs`. Sin datos de empresas ni personas. 404 sin token válido o sin token configurado |
+| GET | `/ops/status` | `Authorization: Bearer <OPS_STATUS_TOKEN>` | Cifras agregadas: `status (ok\|degraded), alerts[], review[], worker, followUps, deliveries, jobs, recoveries`. Sin datos de empresas ni personas. 404 sin token válido o sin token configurado |
 
 Si la base de datos no está disponible, cualquier ruta responde `503 SERVICE_UNAVAILABLE` con `Retry-After`.
 

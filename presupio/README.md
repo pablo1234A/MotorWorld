@@ -24,7 +24,7 @@ SaaS B2B para que las empresas de reformas integrales recuperen presupuestos env
 
 **Frontend (`apps/web`):** React 19 + Vite + TypeScript, React Router y TanStack Query. Sistema de diseño propio en CSS ([`apps/web/DESIGN.md`](apps/web/DESIGN.md)), sin frameworks de UI.
 
-Arquitectura y decisiones: [`docs/arquitectura.md`](docs/arquitectura.md). Referencia de la API: [`docs/api.md`](docs/api.md). Frontend: [`docs/frontend.md`](docs/frontend.md). Motor de seguimiento: [`docs/automatizacion.md`](docs/automatizacion.md). Recuperaciones, límites y métricas: [`docs/limites-y-metricas.md`](docs/limites-y-metricas.md). Operación, seguridad y privacidad: [`docs/operacion.md`](docs/operacion.md). Pagos (fase 5): [`docs/pagos-fase5.md`](docs/pagos-fase5.md).
+Arquitectura y decisiones: [`docs/arquitectura.md`](docs/arquitectura.md). Referencia de la API: [`docs/api.md`](docs/api.md). Frontend: [`docs/frontend.md`](docs/frontend.md). Motor de seguimiento: [`docs/automatizacion.md`](docs/automatizacion.md). Recuperaciones, límites y métricas: [`docs/limites-y-metricas.md`](docs/limites-y-metricas.md). Operación, seguridad y privacidad: [`docs/operacion.md`](docs/operacion.md). Pagos (fase 5): [`docs/pagos-fase5.md`](docs/pagos-fase5.md). Decisiones comerciales pendientes: [`docs/decisiones-comerciales.md`](docs/decisiones-comerciales.md).
 
 ## Puesta en marcha (desarrollo)
 
@@ -115,7 +115,7 @@ npm run worker -w @presupio/api -- --once    # o un ciclo por minuto desde un cr
 ## Pruebas
 
 ```bash
-npm test             # API (153) + frontend (68): unitarias, de integración y de componentes
+npm test             # API (161) + frontend (68): unitarias, de integración y de componentes
 ```
 
 ```bash
@@ -134,7 +134,7 @@ npm test
 npm run typecheck
 ```
 
-La suite (153 pruebas, 10 archivos en `apps/api/test/`) cubre:
+La suite (161 pruebas, 10 archivos en `apps/api/test/`) cubre:
 
 | Archivo | Qué verifica |
 |---|---|
@@ -186,7 +186,7 @@ Todas están documentadas en [`.env.example`](.env.example). Las principales:
 ```
 presupio/
 ├── apps/api/
-│   ├── migrations/          SQL versionado (0001_init.sql, 0002_follow_up_engine.sql, 0003_usage_limits.sql)
+│   ├── migrations/          SQL versionado (0001 a 0004)
 │   ├── scripts/             db-bootstrap, migrate, seed y ops (herramienta de operación)
 │   ├── src/
 │   │   ├── app.ts           montaje de Fastify: seguridad, errores y rutas

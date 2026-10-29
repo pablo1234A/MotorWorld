@@ -36,7 +36,9 @@ export async function opsRoutes(app: FastifyInstance) {
       if (status.deliveries.stuckSending > 0) alerts.push('deliveries_stuck_sending');
       if (status.followUps.dueApprovedOver15m > 0) alerts.push('approved_emails_delayed');
       if (status.jobErrorsLast24h > 0) alerts.push('job_errors_last_24h');
-      return { status: alerts.length ? 'degraded' : 'ok', database: 'ok', worker: { healthy: workerHealthy }, alerts, ...status };
+      // Informativa: respuestas fechadas antes de un seguimiento ya registrado (revisar con `npm run ops -- backdated`).
+      const review = status.recoveries?.notCountedBackdatedLast30d > 0 ? ['recoveries_backdated_review'] : [];
+      return { status: alerts.length ? 'degraded' : 'ok', database: 'ok', worker: { healthy: workerHealthy }, alerts, review, ...status };
     },
   );
 }

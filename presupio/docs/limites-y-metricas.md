@@ -37,6 +37,29 @@ Es la unidad que consumen los planes. Está definida en un solo sitio del códig
   Cada registro guarda quién y cuándo, para poder auditarlo.
 - **Es correlación, no causalidad.** Que un cliente responda después de un seguimiento no prueba que respondiera por el seguimiento. La interfaz lo dice expresamente y nunca habla de ventas «gracias a» Presupio.
 - **Datos anteriores a esta fase:** las reactivaciones de antes de la fase 4 se migraron como `historical`. Aparecen en las métricas, pero no consumen ningún plan.
+- **La fecha de la respuesta también la declara la empresa.** Una respuesta fechada antes del seguimiento registrado no cuenta: es lo correcto si el cliente de verdad respondió antes, pero también permite eludir el conteo. Presupio no puede distinguir los dos casos, porque no ve el correo del cliente. Ver el [apartado 1.1](#11-respuestas-con-fecha-anterior-al-seguimiento).
+
+### 1.1. Respuestas con fecha anterior al seguimiento
+
+**Lo que se aplica ya (sin cambiar la definición):**
+- **Constancia de cada respuesta que no cuenta,** si el presupuesto tiene un seguimiento verificable. Se registra en el historial del presupuesto (`recovery.not_counted`) con:
+  - el motivo (`response_dated_before_follow_up` o `follow_up_outside_window`);
+  - la fecha declarada y la del seguimiento;
+  - las horas de retroactividad;
+  - quién la registró.
+
+  La persona usuaria ve el motivo al guardar y en el historial.
+- **Revisión por el personal autorizado:**
+  - `GET /ops/status` cuenta los casos de los últimos 30 días y añade el aviso `recoveries_backdated_review`;
+  - `npm run ops -- backdated` lista las empresas con más casos.
+- **Lo contado no se deshace:**
+  - una recuperación contada no se borra ni se modifica (permisos de la base de datos);
+  - los contadores del periodo solo pueden subir (disparador `usage_periods_guard`); solo el rol propietario corrige, por ejemplo tras una reclamación;
+  - las respuestas posteriores, correcciones de estado o cambios de fecha no restan nada;
+  - la fecha de envío no puede moverse después de la respuesta.
+- **Las fechas internas no se pueden fijar:** `reactivatedAt`, `respondedAt`, el estado de la recuperación o su periodo no se aceptan desde la API (`400`), y la fecha de respuesta no puede ser futura ni anterior al envío.
+
+**Pendiente de una decisión de negocio:** si una respuesta fechada antes del seguimiento debe contar o no. Opciones y recomendación en [`decisiones-comerciales.md`](decisiones-comerciales.md#d4-respuestas-fechadas-antes-del-seguimiento).
 
 **Por qué la respuesta y no la venta:**
 - La respuesta es el resultado directo y verificable del seguimiento, y llega en días.

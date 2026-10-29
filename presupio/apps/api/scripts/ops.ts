@@ -8,6 +8,7 @@
  *   npm run ops -- plan    --company <uuid> --plan starter|pro|business --status active|trialing|past_due|canceled|none
  *                          [--trial-days 14] [--period-start ISO --period-end ISO]
  *   npm run ops -- delete-company --company <uuid> --confirm "<nombre exacto de la empresa>"
+ *   npm run ops -- backdated [--days 30]   (respuestas no contabilizadas por fecha anterior al seguimiento)
  *
  * Hasta la fase 5 (pagos), `plan` es la forma controlada por el backend de asignar un plan
  * para pruebas o pilotos. Cada cambio queda en el historial de la empresa.
@@ -100,8 +101,28 @@ async function main() {
         console.log(`Empresa ${id} y todos sus datos eliminados.`);
         break;
       }
+      case 'backdated': {
+        // Revisión de posibles evasiones del conteo: respuestas fechadas antes de un seguimiento
+        // que ya estaba registrado. No prueba mala fe (el cliente pudo responder antes), pero un
+        // patrón repetido merece revisarse con la empresa.
+        const days = Number(arg('days') ?? 30);
+        if (!Number.isInteger(days) || days < 1 || days > 365) fail('--days debe ser un número entre 1 y 365');
+        const { rows } = await client.query(
+          `SELECT c.id, c.name, count(*)::int AS respuestas_no_contadas,
+                  round(avg((a.metadata->>'backdatedHours')::numeric), 1) AS horas_retroactivas_media,
+                  (SELECT count(*)::int FROM recovery_events e WHERE e.company_id = c.id AND e.status = 'counted'
+                     AND e.registered_at > now() - make_interval(days => $1)) AS recuperaciones_contadas
+           FROM activity_log a JOIN companies c ON c.id = a.company_id
+           WHERE a.action = 'recovery.not_counted' AND a.metadata->>'reason' = 'response_dated_before_follow_up'
+             AND a.created_at > now() - make_interval(days => $1)
+           GROUP BY c.id, c.name ORDER BY respuestas_no_contadas DESC`,
+          [days],
+        );
+        console.table(rows);
+        break;
+      }
       default:
-        fail('Comando desconocido. Usa: companies | usage | plan | delete-company');
+        fail('Comando desconocido. Usa: companies | usage | plan | delete-company | backdated');
     }
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});

@@ -175,6 +175,151 @@ describe('límites de recuperaciones por plan', () => {
 // 5. Por empresa y por periodo
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Blindaje del conteo (auditoría): fechas retroactivas, duplicados y campos internos
+// ---------------------------------------------------------------------------
+
+describe('blindaje del conteo de recuperaciones', () => {
+  const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+
+  it('una respuesta fechada antes del seguimiento no cuenta, pero queda constancia y se puede revisar', async () => {
+    const acc = await registerAccount(app);
+    const q = await createQuote(acc.client, { sentAt: daysAgo(5) });
+    const fu = await acc.client.post(`/quotes/${q.id}/follow-ups`, { channel: 'phone', status: 'completed', completedAt: daysAgo(2) });
+    const res = await acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', occurredAt: daysAgo(3) });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ reactivated: false, recovery: null, recoveryNotCounted: 'response_dated_before_follow_up' });
+    expect((await acc.client.get('/usage')).body.usage.recoveries.used).toBe(0);
+
+    const entry = (await acc.client.get(`/quotes/${q.id}/activity`)).body.items.find((a: any) => a.action === 'recovery.not_counted');
+    expect(entry.metadata).toMatchObject({ reason: 'response_dated_before_follow_up', followUpId: fu.body.followUp.id, automatic: false });
+    expect(entry.metadata.backdatedHours).toBeGreaterThanOrEqual(71);
+    expect(entry.actor.id).toBe(acc.userId); // queda quién lo registró
+
+    // El personal autorizado lo ve en la supervisión agregada.
+    const ops = (await app.inject({ method: 'GET', url: `${API}/ops/status`, headers: { authorization: `Bearer ${OPS_TOKEN}` } })).json();
+    expect(ops.recoveries.notCountedBackdatedLast30d).toBeGreaterThanOrEqual(1);
+    expect(ops.review).toContain('recoveries_backdated_review');
+  });
+
+  it('la misma respuesta con su fecha real (posterior al seguimiento) sí cuenta', async () => {
+    const acc = await registerAccount(app);
+    const q = await createQuote(acc.client, { sentAt: daysAgo(5) });
+    await acc.client.post(`/quotes/${q.id}/follow-ups`, { channel: 'phone', status: 'completed', completedAt: daysAgo(2) });
+    const res = await acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', occurredAt: daysAgo(1) });
+    expect(res.body).toMatchObject({ reactivated: true, recovery: { status: 'counted', used: 1 }, recoveryNotCounted: null });
+  });
+
+  it('un seguimiento de hace más de 30 días se explica como fuera de ventana', async () => {
+    const acc = await registerAccount(app);
+    const q = await createQuote(acc.client, { sentAt: daysAgo(60) });
+    await acc.client.post(`/quotes/${q.id}/follow-ups`, { channel: 'phone', status: 'completed', completedAt: daysAgo(45) });
+    const res = await acc.client.post(`/quotes/${q.id}/status`, { status: 'responded' });
+    expect(res.body).toMatchObject({ recovery: null, recoveryNotCounted: 'follow_up_outside_window' });
+  });
+
+  it('sin seguimiento, o con presupuestos sin respuesta, no se cuenta ni se registra nada', async () => {
+    const acc = await registerAccount(app);
+    const plain = await createQuote(acc.client);
+    expect((await acc.client.post(`/quotes/${plain.id}/status`, { status: 'responded' })).body).toMatchObject({ recovery: null, recoveryNotCounted: null });
+    // Seguimientos hechos pero el cliente no responde: nada cuenta.
+    const silent = await createQuote(acc.client);
+    await acc.client.post(`/quotes/${silent.id}/follow-ups`, { channel: 'phone', status: 'completed' });
+    await acc.client.post(`/quotes/${silent.id}/follow-ups`, { channel: 'email', status: 'completed' });
+    expect((await acc.client.get('/usage')).body.usage.recoveries.used).toBe(0);
+    expect((await acc.client.get('/metrics')).body.metrics.recoveries.counted).toBe(0);
+    const activity = (await acc.client.get('/activity')).body.items.map((a: any) => a.action);
+    expect(activity).not.toContain('recovery.not_counted');
+  });
+
+  it('una recuperación contada no se deshace con cambios de estado ni respuestas posteriores', async () => {
+    const acc = await registerAccount(app);
+    const q = await quoteWithFollowUp(acc);
+    expect((await respond(acc, q.id)).recovery.status).toBe('counted');
+    // Venta, corrección de la venta, vuelta a «pendiente» y nueva respuesta retroactiva.
+    expect((await acc.client.post(`/quotes/${q.id}/status`, { status: 'accepted', evidence: 'Contrato firmado' })).status).toBe(200);
+    expect((await acc.client.post(`/quotes/${q.id}/status`, { status: 'responded' })).status).toBe(200); // corrección (propietario)
+    expect((await acc.client.post(`/quotes/${q.id}/status`, { status: 'sent' })).status).toBe(200);
+    const again = await acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', occurredAt: q.sentAt });
+    expect(again.body.recovery).toBeNull();
+    const usage = (await acc.client.get('/usage')).body.usage;
+    expect(usage.recoveries.used).toBe(1);
+    expect(usage.events).toHaveLength(1);
+    expect(usage.events[0]).toMatchObject({ quoteId: q.id, status: 'counted' });
+  });
+
+  it('respuestas duplicadas y simultáneas al mismo presupuesto cuentan una sola vez', async () => {
+    const acc = await registerAccount(app);
+    const q = await quoteWithFollowUp(acc);
+    const responses = await Promise.all(Array.from({ length: 6 }, () => acc.client.post(`/quotes/${q.id}/status`, { status: 'responded' })));
+    const ok = responses.filter((r) => r.status === 200);
+    expect(ok).toHaveLength(1);
+    expect(ok[0]!.body.recovery.status).toBe('counted');
+    expect(responses.filter((r) => r.status === 409)).toHaveLength(5); // «respondido → respondido» no es una transición
+    expect((await acc.client.get('/usage')).body.usage.recoveries.used).toBe(1);
+  });
+
+  it('las fechas y campos internos no se pueden fijar desde la API', async () => {
+    const acc = await registerAccount(app);
+    const q = await quoteWithFollowUp(acc);
+    const attempts = [
+      acc.client.patch(`/quotes/${q.id}`, { reactivatedAt: new Date().toISOString() }),
+      acc.client.patch(`/quotes/${q.id}`, { respondedAt: new Date().toISOString() }),
+      acc.client.patch(`/quotes/${q.id}`, { status: 'responded' }),
+      acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', reactivated: true }),
+      acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', recovery: { status: 'over_limit' } }),
+      acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', registeredAt: new Date().toISOString() }),
+      acc.client.post(`/quotes/${q.id}/status`, { status: 'responded', occurredAt: new Date(Date.now() + 86_400_000).toISOString() }),
+    ];
+    for (const r of await Promise.all(attempts)) expect(r.status).toBe(400);
+    // La fecha de envío no se puede mover después de la respuesta para reabrir la ventana.
+    await respond(acc, q.id);
+    const moved = await acc.client.patch(`/quotes/${q.id}`, { sentAt: new Date().toISOString() });
+    expect(moved.status).toBe(400);
+  });
+
+  it('el contador no puede bajar ni cambiar de periodo, y una empresa no toca el de otra', async () => {
+    const a = await registerAccount(app);
+    const b = await registerAccount(app);
+    await respond(a, (await quoteWithFollowUp(a)).id);
+    // Con el rol de la aplicación, ni siquiera dentro de su propia empresa.
+    await expect(
+      inCompany(db, a.companyId, (trx) => trx.updateTable('usagePeriods').set({ recoveriesCounted: 0 }).where('companyId', '=', a.companyId).execute()),
+    ).rejects.toThrow(/no pueden disminuir/);
+    await expect(
+      inCompany(db, a.companyId, (trx) =>
+        trx.updateTable('usagePeriods').set({ periodEnd: new Date(Date.now() - 1000) }).where('companyId', '=', a.companyId).execute(),
+      ),
+    ).rejects.toThrow(/fechas de un periodo/);
+    // Desde la empresa B, la fila de A no existe (RLS): no se modifica nada.
+    const touched = await inCompany(db, b.companyId, (trx) =>
+      trx.updateTable('usagePeriods').set({ recoveriesCounted: 999 }).where('companyId', '=', a.companyId).executeTakeFirst(),
+    );
+    expect(Number(touched.numUpdatedRows)).toBe(0);
+    await expect(
+      inCompany(db, b.companyId, (trx) =>
+        trx.insertInto('recoveryEvents').values({
+          companyId: a.companyId,
+          quoteId: '00000000-0000-4000-8000-000000000000',
+          followUpId: null,
+          followUpSource: null,
+          followUpChannel: null,
+          followUpAt: null,
+          respondedAt: new Date(),
+          responseStatus: 'responded',
+          registeredByUserId: null,
+          status: 'historical',
+          periodStart: null,
+        }).execute(),
+      ),
+    ).rejects.toThrow(/row-level security/);
+    expect((await a.client.get('/usage')).body.usage.recoveries.used).toBe(1);
+    // El personal autorizado (rol propietario) sí puede corregir, p. ej. tras una reclamación.
+    await owner.query('UPDATE usage_periods SET recoveries_counted = 0 WHERE company_id = $1', [a.companyId]);
+    expect((await a.client.get('/usage')).body.usage.recoveries.used).toBe(0);
+  });
+});
+
 describe('consumo por empresa y por periodo', () => {
   it('cada empresa tiene su propio contador', async () => {
     const a = await registerAccount(app);
@@ -471,7 +616,7 @@ describe('migraciones', () => {
         );
 
         // 3) Migración de la fase 4 sobre esos datos.
-        expect((await migrate({ connectionString: url, appRole })).applied).toEqual(['0003_usage_limits']);
+        expect((await migrate({ connectionString: url, appRole })).applied).toEqual(['0003_usage_limits', '0004_recovery_integrity']);
         const { rows: events } = await c.query('SELECT status, period_start, follow_up_id IS NOT NULL AS has_follow_up FROM recovery_events');
         expect(events).toEqual([{ status: 'historical', period_start: null, has_follow_up: true }]);
         expect((await c.query('SELECT count(*)::int AS n FROM quotes')).rows[0].n).toBe(1);

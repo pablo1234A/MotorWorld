@@ -163,6 +163,41 @@ async function followUpBeforeResponse(trx: Trx, companyId: string, quoteId: stri
   return row ? { id: row.id, source: row.source, channel: row.channel, at: row.doneAt } : null;
 }
 
+export type RecoveryNotCountedReason = 'response_dated_before_follow_up' | 'follow_up_outside_window';
+
+/**
+ * Si una respuesta no cuenta como recuperación pero el presupuesto SÍ tiene un seguimiento
+ * verificable registrado, explica por qué. Sirve para dejar constancia (historial y
+ * supervisión): la fecha de respuesta la declara la empresa y Presupio no puede comprobarla.
+ */
+async function whyRecoveryNotCounted(trx: Trx, companyId: string, quoteId: string, declaredAt: Date): Promise<{
+  reason: RecoveryNotCountedReason;
+  followUp: { id: string; source: 'manual' | 'rule'; at: Date };
+} | null> {
+  const done = sql<Date>`coalesce(completed_at, sent_at)`;
+  const verifiable = (qb: any) =>
+    qb
+      .where('companyId', '=', companyId)
+      .where('quoteId', '=', quoteId)
+      .where('channel', '<>', 'task')
+      .where((eb: any) => eb.or([eb('status', '=', 'completed'), eb('status', '=', 'sent')]));
+  // Seguimiento ya registrado con fecha POSTERIOR a la respuesta declarada.
+  const after = await verifiable(trx.selectFrom('followUps').select(['id', 'source', done.as('doneAt')]))
+    .where(done, '>', declaredAt)
+    .orderBy(done, 'asc')
+    .limit(1)
+    .executeTakeFirst();
+  if (after) return { reason: 'response_dated_before_follow_up', followUp: { id: after.id, source: after.source, at: after.doneAt } };
+  // Seguimiento anterior, pero fuera de la ventana de atribución.
+  const before = await verifiable(trx.selectFrom('followUps').select(['id', 'source', done.as('doneAt')]))
+    .where(done, '<=', declaredAt)
+    .orderBy(done, 'desc')
+    .limit(1)
+    .executeTakeFirst();
+  if (before) return { reason: 'follow_up_outside_window', followUp: { id: before.id, source: before.source, at: before.doneAt } };
+  return null;
+}
+
 export interface StatusChangeInput {
   status: QuoteStatus;
   occurredAt?: Date | undefined;
@@ -201,6 +236,7 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
   const patch: QuoteUpdate = { status: to, statusChangedAt: now };
   let reactivated = false;
   let attributedFollowUp: Awaited<ReturnType<typeof followUpBeforeResponse>> = null;
+  let notCounted: Awaited<ReturnType<typeof whyRecoveryNotCounted>> = null;
 
   // Al salir de un estado final por corrección, se limpian sus datos.
   if (from === 'accepted') Object.assign(patch, { acceptedAt: null, acceptanceEvidence: null, acceptedAmountCents: null, acceptanceConfirmedByUserId: null });
@@ -218,6 +254,8 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
         if (attributedFollowUp) {
           patch.reactivatedAt = occurredAt;
           reactivated = true;
+        } else {
+          notCounted = await whyRecoveryNotCounted(trx, auth.companyId, quoteId, occurredAt);
         }
       }
       if (to === 'accepted') {
@@ -256,6 +294,26 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
     });
   }
 
+  // Respuesta con seguimiento registrado que no cuenta: queda constancia de por qué (con la
+  // fecha declarada y la del seguimiento) en el historial del presupuesto.
+  if (notCounted) {
+    await logActivity(trx, auth, {
+      action: 'recovery.not_counted',
+      entityType: 'quote',
+      entityId: quoteId,
+      quoteId,
+      metadata: {
+        reason: notCounted.reason,
+        declaredResponseAt: occurredAt,
+        followUpId: notCounted.followUp.id,
+        followUpAt: notCounted.followUp.at,
+        automatic: notCounted.followUp.source === 'rule',
+        // Cuánto se ha retrasado la fecha declarada respecto al momento de registrarla.
+        backdatedHours: Math.round((now.getTime() - occurredAt.getTime()) / 3_600_000),
+      },
+    });
+  }
+
   // El cliente ha contestado: se detiene la secuencia de seguimiento.
   let cancelledFollowUps = 0;
   if (to === 'responded') {
@@ -280,7 +338,12 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
     },
   });
 
-  return { reactivated, cancelledFollowUps, recovery: recovery && { status: recovery.status, used: recovery.used, limit: recovery.limit } };
+  return {
+    reactivated,
+    cancelledFollowUps,
+    recovery: recovery && { status: recovery.status, used: recovery.used, limit: recovery.limit },
+    recoveryNotCounted: notCounted?.reason ?? null,
+  };
 }
 
 export async function quoteSummary(trx: Trx, companyId: string) {

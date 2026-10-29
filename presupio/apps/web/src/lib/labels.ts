@@ -226,6 +226,10 @@ export function describeActivity(entry: ActivityEntry): string {
         : m.status === 'over_limit'
           ? 'registró una recuperación por encima del límite del plan (no se descuenta)'
           : 'registró una recuperación sin plan activo (no se descuenta)';
+    case 'recovery.not_counted':
+      return m.reason === 'response_dated_before_follow_up'
+        ? 'registró una respuesta con fecha anterior al seguimiento: no cuenta como recuperación'
+        : 'registró una respuesta más de 30 días después del último seguimiento: no cuenta como recuperación';
     case 'usage.limit_reached':
       return 'alcanzó el límite de recuperaciones del plan: el envío automático queda en pausa hasta el próximo periodo';
     case 'company.exported':

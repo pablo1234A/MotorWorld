@@ -167,6 +167,9 @@ test('recuperación de contraseña de extremo a extremo', async ({ page }) => {
   const problems = watchConsole(page);
   await page.goto('/iniciar-sesion');
   await page.getByRole('link', { name: '¿Has olvidado tu contraseña?' }).click();
+  // La pantalla se carga bajo demanda y, mientras tanto, sigue visible el inicio de sesión,
+  // que también tiene un campo «Email». Hay que esperar a la pantalla correcta antes de escribir.
+  await expect(page.getByRole('heading', { name: 'Recupera tu contraseña' })).toBeVisible();
   await page.getByLabel('Email').fill(owner.email);
   await page.getByRole('button', { name: 'Enviar enlace' }).click();
   await expect(page.getByRole('heading', { name: 'Revisa tu correo' })).toBeVisible();

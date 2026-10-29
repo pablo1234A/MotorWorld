@@ -84,6 +84,8 @@ La clave publicable solo hace falta si se usa Stripe.js en el navegador. Con Che
 
 ## 7. Pendiente de decidir antes de implementar
 
+Resumen de las propuestas y su estado en [`decisiones-comerciales.md`](decisiones-comerciales.md): fin de la prueba gratuita, límite de Business, IVA y qué fecha manda al contar una recuperación.
+
 - **Si los precios incluyen IVA** (`vatIncluded`) y cómo se calcula: Stripe Tax o tipo fijo.
 - **Facturación conforme a la normativa española** vigente (contenido de las facturas y sistemas de verificación): revisión fiscal profesional.
 - **Prueba gratuita:** con o sin tarjeta, y qué ocurre al terminar.
