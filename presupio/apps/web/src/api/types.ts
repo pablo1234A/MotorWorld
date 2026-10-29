@@ -30,7 +30,8 @@ export type Permission =
   | 'exclusions:create'
   | 'exclusions:lift'
   | 'activity:read'
-  | 'data:export';
+  | 'data:export'
+  | 'billing:manage';
 
 export interface Page<T> {
   items: T[];
@@ -102,11 +103,13 @@ export interface PlanDefinition {
   priceCents: number;
   currency: 'EUR';
   interval: 'month';
-  monthlyRecoveryLimit: number;
+  /** Intentos de seguimiento al mes (emails automáticos aceptados por el proveedor). */
+  monthlyAttemptLimit: number;
   dailyAutomaticEmailLimit: number;
   fairUse: boolean;
-  vatIncluded: boolean | null;
 }
+
+export type TaxDisplay = 'pending' | 'included' | 'excluded';
 
 export interface SubscriptionInfo {
   subscription: {
@@ -117,10 +120,32 @@ export interface SubscriptionInfo {
     currentPeriodEnd: string | null;
     cancelAtPeriodEnd: boolean;
     hasActiveAccess: boolean;
+    pastDueSince: string | null;
+    /** Sin plan activo la cuenta es de solo lectura (lo aplica el servidor). */
+    readOnly: boolean;
+    accessEndedAt: string | null;
+    dataRetentionUntil: string | null;
     planDetails: PlanDefinition | null;
     paymentsEnabled: boolean;
+    /** Hay una suscripción de pago viva en Stripe (cambios y cancelación por ahí). */
+    managedByProvider: boolean;
+    hasBillingAccount: boolean;
+    taxDisplay: TaxDisplay;
   };
   plans: PlanDefinition[];
+}
+
+export interface BillingEventSummary {
+  id: string;
+  eventType: string;
+  outcome: 'applied' | 'ignored' | 'stale' | 'unmatched' | 'error' | 'duplicate_subscription';
+  subscriptionStatus: SubscriptionStatus | null;
+  plan: SubscriptionPlan | null;
+  createdAt: string;
+}
+
+export interface BillingInfo extends SubscriptionInfo {
+  events: BillingEventSummary[];
 }
 
 export interface Member {
@@ -352,22 +377,19 @@ export interface MessageDelivery {
 // Consumo del plan y métricas (fase 4)
 // ---------------------------------------------------------------------------
 
-export type RecoveryStatus = 'counted' | 'over_limit' | 'no_active_plan' | 'historical';
 export type UsageLevel = 'ok' | 'warning' | 'reached' | 'no_plan';
 
-export interface RecoveryEvent {
+/** Un intento de seguimiento del periodo: contado (enviado) o en curso (reservado). */
+export interface AttemptEvent {
   id: string;
   quoteId: string;
   quoteTitle: string;
   quoteReference: string | null;
   contactName: string;
-  status: RecoveryStatus;
-  responseStatus: 'responded' | 'accepted';
-  respondedAt: string;
-  registeredAt: string;
-  followUpChannel: FollowUpChannel | null;
-  followUpSource: 'manual' | 'rule' | null;
-  followUpAt: string | null;
+  status: 'counted' | 'reserved';
+  sentAt: string | null;
+  reservedAt: string | null;
+  step: number | null;
 }
 
 export interface Usage {
@@ -376,17 +398,19 @@ export interface Usage {
   trialEndsAt: string | null;
   hasActiveAccess: boolean;
   period: { start: string; end: string; source: 'calendar_month' | 'provider'; timezone: string };
-  recoveries: {
+  attempts: {
     used: number;
+    inProgress: number;
     limit: number;
     remaining: number;
-    overLimit: number;
     warningAt: number | null;
     limitReachedAt: string | null;
     level: UsageLevel;
   };
   automaticEmails: { today: number; dailyLimit: number };
-  events: RecoveryEvent[];
+  /** Informativo: recuperaciones registradas en el periodo (no consumen el plan). */
+  recoveriesRecorded: number;
+  events: AttemptEvent[];
 }
 
 export interface Metrics {
@@ -412,7 +436,8 @@ export interface Metrics {
     acceptedAfterFollowUpAmountCents: number;
     amountSource: 'declared_by_company';
   };
-  recoveries: { counted: number; overLimit: number; noActivePlan: number };
+  attempts: { counted: number };
+  recoveries: { recorded: number };
   responseRate: {
     quotesWithFollowUp: number;
     respondedAfterFollowUp: number;
@@ -429,5 +454,5 @@ export interface MetricsMonth {
   followUpsDone: number;
   respondedAfterFollowUp: number;
   acceptedAfterFollowUp: number;
-  recoveriesCounted: number;
+  attemptsCounted: number;
 }

@@ -60,3 +60,21 @@ export function invitationEmail(to: string, companyName: string, inviterName: st
     html: layout(title, lines, { label: 'Aceptar invitación', url }, footer),
   };
 }
+
+/** Aviso de conservación de datos de una cuenta sin plan activo (decisión D1). */
+export function retentionNoticeEmail(to: string, companyName: string, deletionDate: string, url: string): MailMessage {
+  const title = 'Tus datos en Presupio se conservarán hasta una fecha';
+  const lines = [
+    `La cuenta de ${companyName} no tiene un plan activo y está en modo de solo lectura.`,
+    `Conservaremos sus datos hasta el ${deletionDate}. A partir de esa fecha podrán eliminarse.`,
+    'Hasta entonces puedes entrar, consultarlos y descargar una copia completa desde Configuración → Empresa → Exportar. Si contratas un plan, la cuenta vuelve a funcionar con normalidad y no se borra nada.',
+  ];
+  const footer = 'Recibes este aviso porque figuras como propietario de la cuenta.';
+  return {
+    template: 'retention_notice',
+    to,
+    subject: `Presupio · Conservación de los datos de ${companyName}`,
+    text: `${lines.join('\n\n')}\n\n${url}\n\n${footer}`,
+    html: layout(title, lines, { label: 'Entrar en Presupio', url }, footer),
+  };
+}

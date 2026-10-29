@@ -13,6 +13,10 @@ export type ErrorCode =
   | 'INVALID_TOKEN'
   | 'RATE_LIMITED'
   | 'SERVICE_UNAVAILABLE'
+  | 'SUBSCRIPTION_REQUIRED'
+  | 'PAYMENTS_DISABLED'
+  | 'PAYMENTS_UNAVAILABLE'
+  | 'INVALID_SIGNATURE'
   | 'INTERNAL_ERROR';
 
 export interface ErrorDetail {
@@ -45,6 +49,16 @@ export const errors = {
     new AppError(409, 'CONTACT_EXCLUDED', message),
   invalidToken: () => new AppError(400, 'INVALID_TOKEN', 'El enlace no es válido o ha caducado.'),
   rateLimited: () => new AppError(429, 'RATE_LIMITED', 'Demasiados intentos. Inténtalo de nuevo más tarde.'),
+  // Cuenta sin plan activo (fin de la prueba, impago o cancelación): solo lectura.
+  subscriptionRequired: () =>
+    new AppError(
+      403,
+      'SUBSCRIPTION_REQUIRED',
+      'Tu cuenta está en modo de solo lectura porque no tiene un plan activo. Puedes consultar y exportar tus datos; para seguir trabajando, contrata un plan.',
+    ),
+  paymentsDisabled: () => new AppError(409, 'PAYMENTS_DISABLED', 'La contratación en línea todavía no está activa.'),
+  paymentsUnavailable: () =>
+    new AppError(503, 'PAYMENTS_UNAVAILABLE', 'El servicio de pagos no está disponible en este momento. No se ha realizado ningún cambio; inténtalo de nuevo en unos minutos.'),
 };
 
 /** Código de error de PostgreSQL, si lo hay. */

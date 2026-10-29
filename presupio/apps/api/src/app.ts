@@ -22,6 +22,8 @@ import { publicRoutes } from './modules/public/routes.js';
 import { webhookRoutes } from './modules/webhooks/routes.js';
 import { usageRoutes } from './modules/usage/routes.js';
 import { metricsRoutes } from './modules/metrics/routes.js';
+import { billingRoutes, stripeWebhookRoutes } from './modules/billing/routes.js';
+import { createBillingGateway, type BillingGateway } from './modules/billing/gateway.js';
 import { opsRoutes } from './modules/ops/routes.js';
 import { createFollowUpProvider, type FollowUpEmailProvider } from './automation/providers.js';
 import { healthRoutes } from './modules/health/routes.js';
@@ -35,6 +37,8 @@ export interface AppDeps {
   mailer?: Mailer;
   /** Proveedor de los emails de seguimiento. En pruebas se inyecta uno simulado. */
   followUpProvider?: FollowUpEmailProvider;
+  /** Pasarela de pagos. En pruebas se inyecta una simulada; sin pagos activos, null. */
+  billingGateway?: BillingGateway | null;
 }
 
 export interface AppLimiters {
@@ -48,13 +52,14 @@ declare module 'fastify' {
     db: Db;
     mailer: Mailer;
     followUpProvider: FollowUpEmailProvider;
+    billingGateway: BillingGateway | null;
     limiters: AppLimiters;
     /** Ejecuta trabajo después de responder (p. ej. envío de emails) sin filtrar tiempos de respuesta. */
     runInBackground(name: string, task: () => Promise<unknown>): void;
     /** Espera a que termine el trabajo en segundo plano (apagado ordenado y pruebas). */
     flushBackground(): Promise<void>;
     /** Rutas registradas con su modo de autenticación (pruebas y documentación). */
-    routeTable: Array<{ method: string; url: string; auth: string; permission: string | null }>;
+    routeTable: Array<{ method: string; url: string; auth: string; permission: string | null; readOnlyAllowed: boolean }>;
   }
 }
 
@@ -91,6 +96,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   app.decorate('db', deps.db);
   app.decorate('mailer', deps.mailer ?? createMailer(config, app.log));
   app.decorate('followUpProvider', deps.followUpProvider ?? createFollowUpProvider(config));
+  app.decorate('billingGateway', deps.billingGateway !== undefined ? deps.billingGateway : createBillingGateway(config));
   app.decorate('limiters', {
     loginPerEmail: createMemoryLimiter(config.rateLimits.loginPerEmail),
     passwordForgotPerEmail: createMemoryLimiter(config.rateLimits.passwordForgotPerEmail),
@@ -209,6 +215,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         url: route.url,
         auth: route.config?.auth ?? 'required',
         permission: route.config?.permission ?? null,
+        readOnlyAllowed: route.config?.readOnlyAllowed ?? false,
       });
     }
   });
@@ -230,6 +237,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(usageRoutes, { prefix: `${API_PREFIX}/usage` });
   await app.register(metricsRoutes, { prefix: `${API_PREFIX}/metrics` });
   await app.register(opsRoutes, { prefix: `${API_PREFIX}/ops` });
+  await app.register(billingRoutes, { prefix: `${API_PREFIX}/billing` });
+  await app.register(stripeWebhookRoutes, { prefix: `${API_PREFIX}/webhooks` });
 
   return app;
 }

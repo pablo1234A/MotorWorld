@@ -121,6 +121,11 @@ export interface SubscriptionsTable {
   provider: string | null;
   providerCustomerId: string | null;
   providerSubscriptionId: string | null;
+  pastDueSince: Timestamp | null;
+  endedAt: Timestamp | null;
+  providerPriceId: string | null;
+  providerCheckoutSessionId: string | null;
+  providerSyncedAt: Timestamp | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
 }
@@ -277,7 +282,9 @@ export interface JobRunsTable {
   error: string | null;
 }
 
-export type RecoveryEventStatus = 'counted' | 'over_limit' | 'no_active_plan' | 'historical';
+// counted / over_limit / no_active_plan: regla anterior (la recuperación consumía el plan).
+// recorded: desde la 0005 las recuperaciones son solo una métrica. historical: anteriores a la medición.
+export type RecoveryEventStatus = 'counted' | 'over_limit' | 'no_active_plan' | 'historical' | 'recorded';
 
 export interface UsagePeriodsTable {
   companyId: string;
@@ -289,8 +296,58 @@ export interface UsagePeriodsTable {
   recoveriesCounted: Generated<number>;
   recoveriesOverLimit: Generated<number>;
   limitReachedAt: Timestamp | null;
+  attemptLimit: Generated<number>;
+  attemptsCounted: Generated<number>;
+  attemptsReserved: Generated<number>;
+  attemptsLimitReachedAt: Timestamp | null;
   createdAt: CreatedAt;
   updatedAt: UpdatedAt;
+}
+
+export type AttemptStatus = 'reserved' | 'counted' | 'released' | 'unverified' | 'historical';
+
+export interface AttemptEventsTable {
+  id: Generated<string>;
+  companyId: string;
+  followUpId: string;
+  quoteId: string;
+  deliveryId: string | null;
+  status: AttemptStatus;
+  periodStart: Timestamp | null;
+  reservedAt: Timestamp | null;
+  sentAt: Timestamp | null;
+  releasedAt: Timestamp | null;
+  releaseReason: string | null;
+  createdAt: CreatedAt;
+  updatedAt: UpdatedAt;
+}
+
+export type BillingOutcome = 'applied' | 'ignored' | 'stale' | 'unmatched' | 'error' | 'duplicate_subscription';
+
+export interface BillingEventsTable {
+  id: Generated<string>;
+  companyId: string | null;
+  provider: string;
+  providerEventId: string;
+  eventType: string;
+  outcome: BillingOutcome;
+  subscriptionStatus: SubscriptionStatus | null;
+  plan: SubscriptionPlan | null;
+  detail: string | null;
+  createdAt: CreatedAt;
+  updatedAt: UpdatedAt;
+}
+
+export type RetentionStage = '30_days' | '7_days' | '1_day';
+
+export interface RetentionNoticesTable {
+  id: Generated<string>;
+  companyId: string;
+  stage: RetentionStage;
+  deletionDueAt: Timestamp;
+  delivery: 'sent' | 'not_configured' | 'failed' | 'no_recipients';
+  recipients: Generated<number>;
+  createdAt: CreatedAt;
 }
 
 export interface RecoveryEventsTable {
@@ -341,6 +398,9 @@ export interface Database {
   jobRuns: JobRunsTable;
   usagePeriods: UsagePeriodsTable;
   recoveryEvents: RecoveryEventsTable;
+  attemptEvents: AttemptEventsTable;
+  billingEvents: BillingEventsTable;
+  retentionNotices: RetentionNoticesTable;
 }
 
 export type User = Selectable<UsersTable>;
@@ -358,3 +418,5 @@ export type MessageDelivery = Selectable<MessageDeliveriesTable>;
 export type TemplateVersion = Selectable<MessageTemplateVersionsTable>;
 export type UsagePeriod = Selectable<UsagePeriodsTable>;
 export type RecoveryEvent = Selectable<RecoveryEventsTable>;
+export type AttemptEvent = Selectable<AttemptEventsTable>;
+export type BillingEvent = Selectable<BillingEventsTable>;

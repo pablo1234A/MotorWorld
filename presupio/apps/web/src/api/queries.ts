@@ -22,6 +22,7 @@ import type {
   Quote,
   QuoteSummary,
   SubscriptionInfo,
+  BillingInfo,
   TemplateVersion,
   Usage,
 } from './types';
@@ -42,6 +43,7 @@ export const keys = {
   company: ['company'] as const,
   settings: ['company', 'settings'] as const,
   subscription: ['company', 'subscription'] as const,
+  billing: ['billing'] as const,
   members: ['members'] as const,
   invitations: ['members', 'invitations'] as const,
   automation: ['automation'] as const,
@@ -216,6 +218,18 @@ export function useSettings() {
 
 export function useSubscription() {
   return useQuery({ queryKey: keys.subscription, queryFn: ({ signal }) => api<SubscriptionInfo>('/company/subscription', { signal }) });
+}
+
+/**
+ * Suscripción con su historial de facturación. Al volver del pago (`confirming`) se consulta
+ * cada pocos segundos hasta que el servidor recibe la confirmación de Stripe.
+ */
+export function useBilling(confirming = false) {
+  return useQuery({
+    queryKey: keys.billing,
+    queryFn: ({ signal }) => api<BillingInfo>('/billing', { signal }),
+    refetchInterval: (query) => (confirming && !query.state.data?.subscription.managedByProvider && query.state.dataUpdateCount < 30 ? 3000 : false),
+  });
 }
 
 export function useMembers() {

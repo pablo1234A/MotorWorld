@@ -6,6 +6,7 @@ import { loadConfig, type AppConfig } from '../src/config.js';
 import { createDb, type Db } from '../src/db/database.js';
 import { MemoryMailer } from '../src/mail/mailer.js';
 import type { FollowUpEmailProvider } from '../src/automation/providers.js';
+import type { BillingGateway } from '../src/modules/billing/gateway.js';
 
 export const API = '/api/v1';
 export const TEST_PASSWORD = 'Contraseña-de-prueba-1';
@@ -21,7 +22,7 @@ export interface TestContext {
 /** App con base de datos de pruebas, correo en memoria y límites amplios (salvo que se indiquen). */
 export async function createTestApp(
   customize?: (config: AppConfig) => void,
-  deps: { followUpProvider?: FollowUpEmailProvider } = {},
+  deps: { followUpProvider?: FollowUpEmailProvider; billingGateway?: BillingGateway | null } = {},
 ): Promise<TestContext> {
   const config = loadConfig({
     NODE_ENV: 'test',
@@ -39,6 +40,7 @@ export async function createTestApp(
     passwordForgot: generous,
     passwordForgotPerEmail: generous,
     tokenRedeem: generous,
+    billing: generous,
   };
   customize?.(config);
   const db = createDb(config.databaseUrl, config.dbPoolMax);

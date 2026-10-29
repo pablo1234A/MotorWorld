@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, Download, Lock, MailPlus, Plus, Trash2, UserMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router';
+import { Link, NavLink, Outlet, useSearchParams } from 'react-router';
 import { api } from '../../api/client';
-import { keys, useCompany, useInvitations, useMembers, useSettings, useSubscription, useUsage } from '../../api/queries';
-import type { Company, CompanySettings, ContactChannel, Delivery, Invitation, Member, Role } from '../../api/types';
+import { keys, useBilling, useCompany, useInvitations, useMembers, useSettings, useUsage } from '../../api/queries';
+import type { Company, CompanySettings, ContactChannel, Delivery, Invitation, Member, PlanDefinition, Role, TaxDisplay } from '../../api/types';
 import { useSession } from '../../auth/session';
 import { Dialog } from '../../components/Dialog';
 import { useToast } from '../../components/Toasts';
@@ -13,8 +13,7 @@ import { formatDate, formatMoney } from '../../lib/format';
 import { useFormErrors } from '../../lib/forms';
 import {
   CONTACT_CHANNEL_LABEL,
-  FOLLOW_UP_CHANNEL_LABEL,
-  RECOVERY_STATUS_LABEL,
+  ATTEMPT_STATUS_LABEL,
   ROLE_DESCRIPTION,
   ROLE_LABEL,
   SUBSCRIPTION_STATUS_LABEL,
@@ -684,10 +683,30 @@ export function TeamPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Plan (solo lectura: los pagos llegan en una fase posterior)
+// Plan: consumo de intentos y suscripción (el estado de pago lo fija el servidor)
 // ---------------------------------------------------------------------------
 
 const PERIOD_SOURCE_LABEL = { calendar_month: 'mes natural', provider: 'periodo de facturación' } as const;
+
+const TAX_NOTE: Record<TaxDisplay, string> = {
+  pending: 'Importes mensuales por empresa. Está pendiente de validación fiscal si incluyen IVA: antes de pagar verás el importe exacto en la página de pago.',
+  included: 'Importes mensuales por empresa, IVA incluido.',
+  excluded: 'Importes mensuales por empresa, IVA no incluido.',
+};
+
+const BILLING_EVENT_LABEL: Record<string, string> = {
+  'checkout.session.completed': 'Pago completado',
+  'checkout.session.async_payment_succeeded': 'Pago confirmado',
+  'checkout.session.async_payment_failed': 'Pago no completado',
+  'customer.subscription.created': 'Suscripción creada',
+  'customer.subscription.updated': 'Suscripción actualizada',
+  'customer.subscription.deleted': 'Suscripción finalizada',
+  'customer.subscription.paused': 'Suscripción en pausa',
+  'customer.subscription.resumed': 'Suscripción reanudada',
+  'invoice.paid': 'Factura pagada',
+  'invoice.payment_failed': 'Cobro fallido',
+  'invoice.payment_action_required': 'El banco pide confirmar el pago',
+};
 
 function UsageMeter({ used, limit, level }: { used: number; limit: number; level: string }) {
   const pct = limit > 0 ? Math.min(used / limit, 1) : 0;
@@ -696,7 +715,7 @@ function UsageMeter({ used, limit, level }: { used: number; limit: number; level
       <div
         className="meter__track"
         role="meter"
-        aria-label="Recuperaciones usadas en este periodo"
+        aria-label="Intentos de seguimiento usados en este periodo"
         aria-valuemin={0}
         aria-valuemax={limit}
         aria-valuenow={used}
@@ -713,7 +732,7 @@ function UsagePanel() {
   if (usage.isPending) return <Skeleton height="14rem" />;
   if (usage.isError) return <ErrorAlert error={usage.error} onRetry={() => void usage.refetch()} />;
   const u = usage.data.usage;
-  const r = u.recoveries;
+  const a = u.attempts;
   const periodLabel = `${formatDate(u.period.start)} – ${formatDate(new Date(new Date(u.period.end).getTime() - 1).toISOString())}`;
   return (
     <section className="panel" aria-labelledby="usage-title">
@@ -726,32 +745,30 @@ function UsagePanel() {
         </div>
       </div>
       <div className="panel__body stack">
-        {r.level === 'no_plan' ? (
+        {a.level === 'no_plan' ? (
           <Alert tone="warning" title="Sin plan activo">
-            Las respuestas de tus clientes se siguen registrando, pero el envío automático está detenido y las recuperaciones no se descuentan de ningún
-            plan.
+            El envío automático está detenido, así que no se consume ningún intento. Tus datos se pueden consultar y exportar.
           </Alert>
         ) : (
           <>
             <p className="usage-figure">
-              <span className="usage-figure__value num">{r.used}</span>
-              <span className="usage-figure__of"> de {r.limit} recuperaciones</span>
+              <span className="usage-figure__value num">{a.used}</span>
+              <span className="usage-figure__of"> de {a.limit} intentos de seguimiento</span>
             </p>
-            <UsageMeter used={r.used} limit={r.limit} level={r.level} />
+            <UsageMeter used={a.used} limit={a.limit} level={a.level} />
             <p className="small muted">
-              {r.remaining > 0 ? `Te quedan ${r.remaining}.` : 'No quedan recuperaciones en este periodo.'} El contador se reinicia el{' '}
-              {formatDate(u.period.end)}.
+              {a.remaining > 0 ? `Te quedan ${a.remaining}.` : 'No quedan intentos en este periodo.'}
+              {a.inProgress > 0 && ` ${a.inProgress} email(s) enviándose en este momento.`} El contador se reinicia el {formatDate(u.period.end)}.
             </p>
-            {r.level === 'warning' && (
-              <Alert tone="warning" title={`Has usado el ${Math.round((r.used / r.limit) * 100)} % de tus recuperaciones`}>
-                Al llegar a {r.limit}, el envío automático de emails se pondrá en pausa hasta el próximo periodo.
+            {a.level === 'warning' && (
+              <Alert tone="warning" title={`Has usado el ${Math.round((a.used / a.limit) * 100)} % de tus intentos`}>
+                Al llegar a {a.limit}, el envío automático de emails se pondrá en pausa hasta el próximo periodo.
               </Alert>
             )}
-            {r.level === 'reached' && (
-              <Alert tone="warning" title="Has alcanzado el límite de tu plan">
+            {a.level === 'reached' && (
+              <Alert tone="warning" title="Has usado todos los intentos de tu plan">
                 El envío automático está en pausa hasta el {formatDate(u.period.end)}: se cancelaron los emails pendientes y no se programan nuevos. Puedes
                 seguir registrando respuestas, trabajando a mano y consultando todo tu historial.
-                {r.overLimit > 0 && ` Desde entonces se han registrado ${r.overLimit} recuperación(es) más, que no se descuentan.`}
               </Alert>
             )}
           </>
@@ -762,50 +779,50 @@ function UsagePanel() {
             <span className="num">
               {u.automaticEmails.today} de {u.automaticEmails.dailyLimit}
             </span>
-            <span className="cell-sub">Límite técnico diario del plan, para proteger la entrega de tus correos.</span>
+            <span className="cell-sub">Límite técnico diario, independiente del mensual, para proteger la entrega de tus correos.</span>
+          </dd>
+          <dt>Recuperaciones en el periodo</dt>
+          <dd>
+            <span className="num">{u.recoveriesRecorded}</span>
+            <span className="cell-sub">Clientes que respondieron tras un seguimiento. Es un resultado: no consume tu plan.</span>
           </dd>
         </dl>
         <details className="explainer">
-          <summary>¿Qué cuenta como recuperación?</summary>
+          <summary>¿Qué cuenta como intento?</summary>
           <p>
-            Un presupuesto enviado y sin respuesta cuyo cliente responde (o acepta) después de un seguimiento realizado: una llamada, mensaje o visita que
-            registraste como hecha, o un email automático que el proveedor aceptó. La respuesta debe llegar en los 30 días siguientes a ese seguimiento.
+            Cada email automático de seguimiento que Presupio envía y el proveedor de email acepta. Cuenta aunque el cliente no responda, rechace el
+            presupuesto o no se recupere la venta. Si se envían varios seguimientos distintos de un mismo presupuesto, cada uno es un intento.
           </p>
           <p>
-            No cuentan los emails enviados sin respuesta, los seguimientos programados ni las respuestas sin seguimiento previo. Cada presupuesto cuenta una
-            sola vez, en el periodo en que registras la respuesta. Es una coincidencia en el tiempo registrada por tu equipo: no demuestra que el cliente
-            respondiera por el seguimiento.
+            No cuentan los seguimientos programados que se cancelan antes de enviarse, los envíos que fallan antes de realizarse ni los reintentos técnicos de
+            un mismo email. Las llamadas, mensajes y visitas que registra tu equipo tampoco consumen intentos.
           </p>
         </details>
       </div>
       {u.events.length > 0 && (
-        <div className="table-wrap" tabIndex={0} role="region" aria-label="Recuperaciones de este periodo (desplazable)">
+        <div className="table-wrap" tabIndex={0} role="region" aria-label="Intentos de este periodo (desplazable)">
           <table className="table">
-            <caption className="visually-hidden">Recuperaciones de este periodo</caption>
+            <caption className="visually-hidden">Intentos de seguimiento de este periodo</caption>
             <thead>
               <tr>
-                <th scope="col">Registrada</th>
+                <th scope="col">Enviado</th>
                 <th scope="col">Presupuesto</th>
-                <th scope="col">Seguimiento previo</th>
-                <th scope="col">Plan</th>
+                <th scope="col">Estado</th>
               </tr>
             </thead>
             <tbody>
               {u.events.map((e) => (
                 <tr key={e.id}>
-                  <td className="nowrap">{formatDate(e.registeredAt)}</td>
+                  <td className="nowrap">{formatDate(e.sentAt ?? e.reservedAt ?? u.period.start)}</td>
                   <td>
                     <Link to={`/presupuestos/${e.quoteId}`}>{e.quoteTitle}</Link>
                     <span className="cell-sub">
-                      {e.contactName} · {e.responseStatus === 'accepted' ? 'aceptó' : 'respondió'} el {formatDate(e.respondedAt)}
+                      {e.contactName}
+                      {e.step ? ` · email ${e.step} de la secuencia` : ''}
                     </span>
                   </td>
                   <td>
-                    {e.followUpSource === 'rule' ? 'Email automático' : e.followUpChannel ? FOLLOW_UP_CHANNEL_LABEL[e.followUpChannel] : '—'}
-                    {e.followUpAt && <span className="cell-sub">{formatDate(e.followUpAt)}</span>}
-                  </td>
-                  <td>
-                    <span className={`pill ${e.status === 'counted' ? 'pill--accepted' : 'pill--neutral'}`}>{RECOVERY_STATUS_LABEL[e.status]}</span>
+                    <span className={`pill ${e.status === 'counted' ? 'pill--accepted' : 'pill--neutral'}`}>{ATTEMPT_STATUS_LABEL[e.status]}</span>
                   </td>
                 </tr>
               ))}
@@ -817,14 +834,91 @@ function UsagePanel() {
   );
 }
 
+type PlanAction = { kind: 'checkout' | 'change'; plan: PlanDefinition } | { kind: 'cancel' } | null;
+
+/** Mensaje al volver de la página de pago de Stripe (el plan lo confirma el webhook, no esta página). */
+function PaymentReturnNotice({ confirmed }: { confirmed: boolean }) {
+  const [params, setParams] = useSearchParams();
+  const state = params.get('pago');
+  if (state !== 'confirmando' && state !== 'cancelado') return null;
+  const dismiss = () => {
+    params.delete('pago');
+    setParams(params, { replace: true });
+  };
+  if (state === 'cancelado') {
+    return (
+      <Alert tone="info" title="Pago cancelado" action={<button type="button" className="link-button" onClick={dismiss}>Cerrar</button>}>
+        No se ha realizado ningún cargo. Puedes contratar cuando quieras.
+      </Alert>
+    );
+  }
+  return confirmed ? (
+    <Alert tone="success" title="Suscripción activa" action={<button type="button" className="link-button" onClick={dismiss}>Cerrar</button>}>
+      Stripe ha confirmado el pago y tu plan ya está activo.
+    </Alert>
+  ) : (
+    <Alert tone="info" title="Estamos confirmando el pago con Stripe">
+      Tu plan se activará en cuanto Stripe confirme el pago, normalmente en unos segundos. No hace falta que pagues de nuevo.
+    </Alert>
+  );
+}
+
 export function PlanPage() {
   usePageTitle('Plan');
-  const sub = useSubscription();
-  if (sub.isPending) return <Skeleton height="16rem" />;
-  if (sub.isError) return <ErrorAlert error={sub.error} onRetry={() => void sub.refetch()} />;
-  const { subscription: s, plans } = sub.data;
+  const session = useSession();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [params] = useSearchParams();
+  const confirming = params.get('pago') === 'confirmando';
+  const billing = useBilling(confirming);
+  const [action, setAction] = useState<PlanAction>(null);
+
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: keys.billing });
+    void queryClient.invalidateQueries({ queryKey: keys.subscription });
+    void queryClient.invalidateQueries({ queryKey: keys.usage });
+  };
+  const redirect = useMutation({
+    mutationFn: (req: { path: '/billing/checkout' | '/billing/portal'; plan?: string }) =>
+      api<{ checkout?: { url: string }; portal?: { url: string } }>(req.path, { method: 'POST', body: req.plan ? { plan: req.plan } : {} }),
+    onSuccess: (res) => {
+      const url = res.checkout?.url ?? res.portal?.url;
+      // Solo se sale hacia las páginas alojadas por Stripe.
+      if (url && /^https:\/\/(checkout|billing)\.stripe\.com\//.test(url)) window.location.assign(url);
+      else toast.error('No se ha podido abrir la página de pago.');
+    },
+  });
+  const change = useMutation({
+    mutationFn: (plan: string) => api<{ change: { mode: 'upgrade' | 'downgrade' } }>('/billing/change-plan', { method: 'POST', body: { plan } }),
+    onSuccess: (res) => {
+      setAction(null);
+      refresh();
+      toast.success(
+        res.change.mode === 'upgrade'
+          ? 'Cambio solicitado. Tu nuevo límite se aplicará en cuanto Stripe confirme el cobro.'
+          : 'Cambio solicitado. El nuevo plan se cobrará en la próxima renovación; hasta entonces mantienes tu límite actual.',
+      );
+    },
+  });
+  const cancellation = useMutation({
+    mutationFn: (cancel: boolean) => api(cancel ? '/billing/cancel' : '/billing/resume', { method: 'POST', body: {} }),
+    onSuccess: (_res, cancel) => {
+      setAction(null);
+      refresh();
+      toast.success(cancel ? 'Cancelación solicitada: mantienes el acceso hasta el final del periodo pagado.' : 'Se ha anulado la cancelación.');
+    },
+  });
+
+  if (billing.isPending) return <Skeleton height="16rem" />;
+  if (billing.isError) return <ErrorAlert error={billing.error} onRetry={() => void billing.refetch()} />;
+  const { subscription: s, plans, events } = billing.data;
+  const canManage = session.can('billing:manage') && s.paymentsEnabled;
+  const current = s.plan ? plans.find((p) => p.id === s.plan) : undefined;
+  const actionError = redirect.error ?? change.error ?? cancellation.error;
+
   return (
     <div className="stack stack--lg">
+      <PaymentReturnNotice confirmed={s.managedByProvider && s.hasActiveAccess} />
       <section className="panel" aria-labelledby="plan-title">
         <div className="panel__header">
           <h2 id="plan-title">Tu plan</h2>
@@ -833,77 +927,213 @@ export function PlanPage() {
         <div className="panel__body stack">
           <dl className="kv">
             <dt>Plan</dt>
-            <dd className="strong">{s.planDetails?.name ?? 'Ninguno'}</dd>
+            <dd className="strong">
+              {s.planDetails?.name ?? 'Ninguno'}
+              {current && s.managedByProvider && <span className="cell-sub">{formatMoney(current.priceCents, current.currency)} al mes</span>}
+            </dd>
             {s.status === 'trialing' && s.trialEndsAt && (
               <>
-                <dt>Prueba gratuita hasta</dt>
+                <dt>{s.hasActiveAccess ? 'Prueba gratuita hasta' : 'La prueba terminó el'}</dt>
                 <dd>{formatDate(s.trialEndsAt)}</dd>
               </>
             )}
-            {s.currentPeriodEnd && (
+            {s.managedByProvider && s.currentPeriodEnd && (
               <>
-                <dt>Periodo actual hasta</dt>
+                <dt>{s.cancelAtPeriodEnd ? 'Acceso hasta' : 'Próxima renovación'}</dt>
                 <dd>{formatDate(s.currentPeriodEnd)}</dd>
               </>
             )}
+            {s.readOnly && s.dataRetentionUntil && (
+              <>
+                <dt>Datos conservados hasta</dt>
+                <dd>{formatDate(s.dataRetentionUntil)}</dd>
+              </>
+            )}
           </dl>
-          {!s.paymentsEnabled && (
-            <Alert tone="info" title="Los pagos todavía no están activos">
-              Durante la prueba no se te cobrará nada y no necesitas tarjeta. La contratación y el cambio de plan se habilitarán más adelante; el plan no se
-              puede cambiar desde aquí.
+          {s.cancelAtPeriodEnd && (
+            <Alert tone="info" title="Cancelación programada">
+              Tu suscripción terminará el {s.currentPeriodEnd ? formatDate(s.currentPeriodEnd) : 'final del periodo'}. Hasta entonces todo sigue funcionando; después,
+              la cuenta pasará a solo lectura y podrás exportar tus datos.
             </Alert>
           )}
+          {s.status === 'past_due' && (
+            <Alert tone="warning" title="No hemos podido cobrar la última factura">
+              Stripe reintentará el cobro. Actualiza tu método de pago para no pasar a solo lectura.
+            </Alert>
+          )}
+          {!s.paymentsEnabled && (
+            <Alert tone="info" title="La contratación en línea todavía no está activa">
+              Durante la prueba no se te cobrará nada y no necesitas tarjeta. El plan no se puede cambiar desde aquí.
+            </Alert>
+          )}
+          {s.paymentsEnabled && !session.can('billing:manage') && (
+            <p className="small muted">Solo las personas propietarias de la cuenta pueden contratar, cambiar o cancelar el plan.</p>
+          )}
+          {actionError && <ErrorAlert error={actionError} />}
         </div>
+        {canManage && s.hasBillingAccount && (
+          <div className="panel__footer">
+            {s.managedByProvider ? (
+              s.cancelAtPeriodEnd ? (
+                <Button loading={cancellation.isPending} onClick={() => cancellation.mutate(false)}>
+                  Mantener la suscripción
+                </Button>
+              ) : (
+                <Button variant="ghost" onClick={() => setAction({ kind: 'cancel' })}>
+                  Cancelar suscripción
+                </Button>
+              )
+            ) : (
+              <span />
+            )}
+            <Button loading={redirect.isPending && redirect.variables?.path === '/billing/portal'} onClick={() => redirect.mutate({ path: '/billing/portal' })}>
+              Método de pago y facturas
+            </Button>
+          </div>
+        )}
       </section>
       <UsagePanel />
       <section className="panel" aria-labelledby="plans-title">
         <div className="panel__header">
           <div>
-            <h2 id="plans-title">Planes disponibles</h2>
-            <p>Precios por empresa y mes. Pendiente de confirmar si incluyen IVA.</p>
+            <h2 id="plans-title">Planes</h2>
+            <p>{TAX_NOTE[s.taxDisplay]}</p>
           </div>
         </div>
-        <div className="table-wrap" tabIndex={0} role="region" aria-label="Tabla de planes (desplazable)">
-          <table className="table">
-            <caption className="visually-hidden">Planes</caption>
-            <thead>
-              <tr>
-                <th scope="col">Plan</th>
-                <th scope="col" className="num">
-                  Precio
-                </th>
-                <th scope="col" className="num">
-                  Recuperaciones al mes
-                </th>
-                <th scope="col" className="num">
-                  Emails automáticos al día
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {plans.map((p) => (
-                <tr key={p.id} aria-current={p.id === s.plan ? 'true' : undefined}>
-                  <td className="strong">
-                    {p.name} {p.id === s.plan && <span className="pill pill--neutral">Actual</span>}
-                  </td>
-                  <td className="num">{formatMoney(p.priceCents, p.currency)}/mes</td>
-                  <td className="num">
-                    Hasta {p.monthlyRecoveryLimit}
-                    {p.fairUse && <span className="cell-sub">Uso razonable</span>}
-                  </td>
-                  <td className="num">{p.dailyAutomaticEmailLimit}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="plan-grid" aria-label="Planes disponibles">
+          {plans.map((p) => {
+            const isCurrent = p.id === s.plan && (s.managedByProvider || s.hasActiveAccess);
+            return (
+              <li key={p.id} className="plan-card" aria-current={isCurrent ? 'true' : undefined} aria-labelledby={`plan-${p.id}`}>
+                <div className="plan-card__head">
+                  <h3 id={`plan-${p.id}`}>{p.name}</h3>
+                  {isCurrent && <span className="pill pill--neutral">Actual</span>}
+                </div>
+                <p className="plan-card__price">
+                  <span className="num">{formatMoney(p.priceCents, p.currency)}</span> <span className="plan-card__per">/ mes</span>
+                </p>
+                <dl className="plan-card__limits">
+                  <div>
+                    <dt>Intentos de seguimiento al mes</dt>
+                    <dd className="num">
+                      Hasta {p.monthlyAttemptLimit}
+                      {p.fairUse && <span className="cell-sub">Uso razonable</span>}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Emails automáticos al día</dt>
+                    <dd className="num">{p.dailyAutomaticEmailLimit}</dd>
+                  </div>
+                </dl>
+                {canManage &&
+                  (s.managedByProvider ? (
+                    p.id !== s.plan &&
+                    s.status === 'active' && (
+                      <Button block onClick={() => setAction({ kind: 'change', plan: p })}>
+                        Cambiar a {p.name}
+                      </Button>
+                    )
+                  ) : (
+                    <Button
+                      block
+                      variant={isCurrent ? 'secondary' : 'primary'}
+                      loading={redirect.isPending && redirect.variables?.plan === p.id}
+                      onClick={() => setAction({ kind: 'checkout', plan: p })}
+                    >
+                      Contratar {p.name}
+                    </Button>
+                  ))}
+              </li>
+            );
+          })}
+        </ul>
         <div className="panel__footer">
           <p className="small muted">
-            Business no es ilimitado: su límite de uso razonable está publicado aquí y no hay restricciones ocultas. Si una empresa necesitara más, se acordaría
-            aparte.
+            Un intento es cada email automático de seguimiento enviado, responda o no el cliente. Business no es ilimitado: su límite de uso razonable está
+            publicado aquí y no hay restricciones ocultas. El pago lo gestiona Stripe: Presupio no guarda los datos de tu tarjeta.
           </p>
         </div>
       </section>
+      {events.length > 0 && (
+        <section className="panel" aria-labelledby="billing-history-title">
+          <div className="panel__header">
+            <h2 id="billing-history-title">Historial de facturación</h2>
+          </div>
+          <ul className="panel__body stack" style={{ gap: 'var(--s-2)' }}>
+            {events.map((e) => (
+              <li key={e.id} className="cluster" style={{ justifyContent: 'space-between' }}>
+                <span>{BILLING_EVENT_LABEL[e.eventType] ?? 'Aviso de Stripe'}</span>
+                <span className="small muted">{formatDate(e.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <Dialog
+        open={action?.kind === 'checkout'}
+        onClose={() => setAction(null)}
+        title={action?.kind === 'checkout' ? `Contratar ${action.plan.name}` : ''}
+        submitLabel="Ir al pago seguro"
+        submitting={redirect.isPending}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (action?.kind === 'checkout') redirect.mutate({ path: '/billing/checkout', plan: action.plan.id });
+        }}
+        description={
+          action?.kind === 'checkout' ? (
+            <>
+              {formatMoney(action.plan.priceCents, action.plan.currency)} al mes, hasta {action.plan.monthlyAttemptLimit} intentos de seguimiento. Pagarás en la
+              página segura de Stripe; tu plan se activará cuando Stripe confirme el pago.
+            </>
+          ) : undefined
+        }
+      />
+      <Dialog
+        open={action?.kind === 'change'}
+        onClose={() => setAction(null)}
+        title={action?.kind === 'change' ? `Cambiar a ${action.plan.name}` : ''}
+        submitLabel="Confirmar cambio"
+        submitting={change.isPending}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (action?.kind === 'change') change.mutate(action.plan.id);
+        }}
+        description={
+          action?.kind === 'change' && current ? (
+            action.plan.priceCents > current.priceCents ? (
+              <>
+                Se cobrará ahora la parte proporcional hasta tu próxima renovación. El límite pasará a {action.plan.monthlyAttemptLimit} intentos en cuanto
+                Stripe confirme el cobro; si el cobro no se completa, mantienes tu plan actual.
+              </>
+            ) : (
+              <>
+                El nuevo precio se aplicará desde tu próxima renovación{s.currentPeriodEnd ? ` (${formatDate(s.currentPeriodEnd)})` : ''}, sin abonos por el
+                periodo en curso. Hasta entonces mantienes tu límite actual de intentos.
+              </>
+            )
+          ) : undefined
+        }
+      />
+      <Dialog
+        open={action?.kind === 'cancel'}
+        onClose={() => setAction(null)}
+        title="Cancelar la suscripción"
+        submitLabel="Cancelar al final del periodo"
+        submitVariant="danger"
+        cancelLabel="Volver"
+        submitting={cancellation.isPending}
+        onSubmit={(e) => {
+          e.preventDefault();
+          cancellation.mutate(true);
+        }}
+        description={
+          <>
+            Mantienes el acceso hasta el {s.currentPeriodEnd ? formatDate(s.currentPeriodEnd) : 'final del periodo pagado'} y no se te volverá a cobrar. Después,
+            la cuenta pasará a solo lectura: podrás consultar y exportar tus datos durante 90 días.
+          </>
+        }
+      />
     </div>
   );
 }

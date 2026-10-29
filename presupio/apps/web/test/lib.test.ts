@@ -7,7 +7,7 @@ import {
   CONTACT_CHANNEL_LABEL,
   DELIVERY_STATUS_LABEL,
   FOLLOW_UP_STATUS_LABEL,
-  RECOVERY_STATUS_LABEL,
+  ATTEMPT_STATUS_LABEL,
   EXCLUSION_REASON_LABEL,
   FOLLOW_UP_CHANNEL_LABEL,
   OUTCOME_LABEL,
@@ -164,8 +164,13 @@ describe('coherencia con el modelo de datos del backend', () => {
     ['SubscriptionStatus', SUBSCRIPTION_STATUS_LABEL],
     ['FollowUpStatus', FOLLOW_UP_STATUS_LABEL],
     ['DeliveryStatus', DELIVERY_STATUS_LABEL],
-    ['RecoveryEventStatus', RECOVERY_STATUS_LABEL],
   ] as const)('%s tiene exactamente una etiqueta en español por valor', (name, labels) => {
     expect(Object.keys(labels).sort()).toEqual(union(name));
+  });
+
+  it('los intentos que muestra el consumo (contados y en curso) existen en el backend', () => {
+    // La API de consumo solo lista intentos contados o en curso; el resto no se muestra.
+    expect(Object.keys(ATTEMPT_STATUS_LABEL).sort()).toEqual(['counted', 'reserved']);
+    for (const status of Object.keys(ATTEMPT_STATUS_LABEL)) expect(union('AttemptStatus')).toContain(status);
   });
 });

@@ -48,7 +48,7 @@ export async function loadPlanContext(trx: Trx, companyId: string, now: Date): P
   const row = await trx
     .selectFrom('subscriptions as s')
     .innerJoin('companies as c', 'c.id', 's.companyId')
-    .select(['s.plan', 's.status', 's.trialEndsAt', 's.currentPeriodStart', 's.currentPeriodEnd', 'c.timezone'])
+    .select(['s.plan', 's.status', 's.trialEndsAt', 's.pastDueSince', 's.currentPeriodStart', 's.currentPeriodEnd', 'c.timezone'])
     .where('s.companyId', '=', companyId)
     .executeTakeFirstOrThrow();
   return {
@@ -76,16 +76,16 @@ async function findPeriod(trx: Trx, companyId: string, at: Date): Promise<UsageP
 
 /**
  * Fila del periodo vigente (la crea si no existe). Si el plan sube durante el periodo, el
- * límite sube en el acto; una bajada se aplica desde el periodo siguiente.
+ * límite de intentos sube en el acto; una bajada se aplica desde el periodo siguiente.
  */
 export async function ensureUsagePeriod(trx: Trx, ctx: PlanContext, now: Date): Promise<UsagePeriod> {
-  const limit = ctx.plan?.monthlyRecoveryLimit ?? 0;
+  const limit = ctx.plan?.monthlyAttemptLimit ?? 0;
   const existing = await findPeriod(trx, ctx.companyId, now);
   if (existing) {
-    if (limit > existing.recoveryLimit) {
+    if (limit > existing.attemptLimit) {
       return trx
         .updateTable('usagePeriods')
-        .set({ recoveryLimit: limit, plan: ctx.plan?.id ?? null })
+        .set({ attemptLimit: limit, plan: ctx.plan?.id ?? null })
         .where('companyId', '=', ctx.companyId)
         .where('periodStart', '=', existing.periodStart)
         .returningAll()
@@ -112,15 +112,166 @@ export async function ensureUsagePeriod(trx: Trx, ctx: PlanContext, now: Date): 
       periodEnd: ctx.period.end,
       periodSource: ctx.period.source,
       plan: ctx.plan?.id ?? null,
-      recoveryLimit: limit,
+      // Las recuperaciones ya no consumen el plan (desde la migración 0005).
+      recoveryLimit: 0,
+      attemptLimit: limit,
       limitReachedAt: null,
+      attemptsLimitReachedAt: null,
     })
     .onConflict((oc) => oc.doNothing())
     .execute();
   return (await findPeriod(trx, ctx.companyId, now))!;
 }
 
-export type RecoveryStatus = 'counted' | 'over_limit' | 'no_active_plan';
+// ---------------------------------------------------------------------------
+// Intentos: la unidad de consumo de los planes
+// ---------------------------------------------------------------------------
+
+/**
+ * Cupo de intentos que queda en el periodo vigente: límite − contados − reservados (envíos en
+ * curso). Crea el periodo si hace falta. Sin acceso activo o sin plan, el cupo es 0.
+ * Llamar con el bloqueo de envío de la empresa tomado (engine.dispatchCompany).
+ */
+export async function attemptCapacity(trx: Trx, ctx: PlanContext, now: Date): Promise<{ period: UsagePeriod | null; available: number }> {
+  if (!ctx.hasAccess || !ctx.plan) return { period: null, available: 0 };
+  const period = await ensureUsagePeriod(trx, ctx, now);
+  return { period, available: Math.max(period.attemptLimit - period.attemptsCounted - period.attemptsReserved, 0) };
+}
+
+/** ¿Se han contado ya todos los intentos del periodo vigente? (Sin escribir nada.) */
+export async function attemptLimitReached(trx: Trx, ctx: PlanContext, now: Date): Promise<boolean> {
+  if (!ctx.plan) return false;
+  const period = await findPeriod(trx, ctx.companyId, now);
+  return !!period && period.attemptsCounted >= period.attemptLimit;
+}
+
+/**
+ * Reserva el intento de un seguimiento antes de enviarlo. Es idempotente por seguimiento:
+ * un reintento técnico vuelve a reservar el MISMO intento (no crea otro). La sentencia sobre
+ * el periodo es condicional y la base de datos impide superar el límite (CHECK).
+ */
+export async function reserveAttempt(
+  trx: Trx,
+  companyId: string,
+  period: UsagePeriod,
+  followUp: { id: string; quoteId: string },
+  now: Date,
+): Promise<boolean> {
+  const updated = await trx
+    .updateTable('usagePeriods')
+    .set({ attemptsReserved: sql`attempts_reserved + 1` })
+    .where('companyId', '=', companyId)
+    .where('periodStart', '=', period.periodStart)
+    .where(sql<boolean>`attempts_counted + attempts_reserved < attempt_limit`)
+    .returning('periodStart')
+    .executeTakeFirst();
+  if (!updated) return false;
+  const existing = await trx
+    .selectFrom('attemptEvents')
+    .select(['id', 'status'])
+    .where('companyId', '=', companyId)
+    .where('followUpId', '=', followUp.id)
+    .forUpdate()
+    .executeTakeFirst();
+  if (!existing) {
+    await trx
+      .insertInto('attemptEvents')
+      .values({
+        companyId,
+        followUpId: followUp.id,
+        quoteId: followUp.quoteId,
+        deliveryId: null,
+        status: 'reserved',
+        periodStart: period.periodStart,
+        reservedAt: now,
+        sentAt: null,
+        releasedAt: null,
+        releaseReason: null,
+      })
+      .execute();
+    return true;
+  }
+  if (existing.status !== 'released') {
+    // Ya reservado o contado: no se puede volver a reservar (lo impide también el disparador).
+    throw new Error(`Intento en estado ${existing.status}: no se puede reservar de nuevo`);
+  }
+  await trx
+    .updateTable('attemptEvents')
+    .set({ status: 'reserved', periodStart: period.periodStart, reservedAt: now, releasedAt: null, releaseReason: null })
+    .where('companyId', '=', companyId)
+    .where('id', '=', existing.id)
+    .execute();
+  return true;
+}
+
+/**
+ * El proveedor aceptó el email: el intento pasa de reservado a contado en el periodo en que
+ * se reservó. Devuelve el periodo actualizado (o null si no había reserva).
+ */
+export async function confirmAttempt(
+  trx: Trx,
+  companyId: string,
+  followUpId: string,
+  deliveryId: string,
+  at: Date,
+): Promise<UsagePeriod | null> {
+  const attempt = await trx
+    .updateTable('attemptEvents')
+    .set({ status: 'counted', sentAt: at, deliveryId })
+    .where('companyId', '=', companyId)
+    .where('followUpId', '=', followUpId)
+    .where('status', '=', 'reserved')
+    .returning('periodStart')
+    .executeTakeFirst();
+  if (!attempt?.periodStart) return null;
+  const period = await trx
+    .updateTable('usagePeriods')
+    .set({
+      attemptsReserved: sql`attempts_reserved - 1`,
+      attemptsCounted: sql`attempts_counted + 1`,
+      attemptsLimitReachedAt: sql`CASE WHEN attempts_counted + 1 >= attempt_limit THEN coalesce(attempts_limit_reached_at, now()) ELSE attempts_limit_reached_at END`,
+    })
+    .where('companyId', '=', companyId)
+    .where('periodStart', '=', attempt.periodStart)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+  return period;
+}
+
+/**
+ * El envío no llegó a realizarse (fallo antes de enviar) → «released»: no consume y puede
+ * volver a reservarse en un reintento. Resultado desconocido → «unverified»: no se cobra y no
+ * se reintenta (para no arriesgar un duplicado).
+ */
+export async function releaseAttempt(
+  trx: Trx,
+  companyId: string,
+  followUpId: string,
+  status: 'released' | 'unverified',
+  reason: string,
+  deliveryId: string | null,
+  at: Date,
+): Promise<void> {
+  const attempt = await trx
+    .updateTable('attemptEvents')
+    .set({ status, releasedAt: at, releaseReason: reason.slice(0, 200), ...(deliveryId ? { deliveryId } : {}) })
+    .where('companyId', '=', companyId)
+    .where('followUpId', '=', followUpId)
+    .where('status', '=', 'reserved')
+    .returning('periodStart')
+    .executeTakeFirst();
+  if (!attempt?.periodStart) return;
+  await trx
+    .updateTable('usagePeriods')
+    .set({ attemptsReserved: sql`attempts_reserved - 1` })
+    .where('companyId', '=', companyId)
+    .where('periodStart', '=', attempt.periodStart)
+    .execute();
+}
+
+// ---------------------------------------------------------------------------
+// Recuperaciones: métrica de resultados (no consumen el plan)
+// ---------------------------------------------------------------------------
 
 export interface RecoveryInput {
   quoteId: string;
@@ -130,57 +281,16 @@ export interface RecoveryInput {
 }
 
 /**
- * Registra una recuperación y la descuenta del plan. El incremento es una única sentencia
- * condicional sobre la fila del periodo: con peticiones simultáneas PostgreSQL las serializa
- * y vuelve a evaluar la condición, así que el contador nunca supera el límite (además lo
- * impide una restricción CHECK). Llamar con el presupuesto bloqueado (FOR UPDATE).
+ * Registra una recuperación (una vez por presupuesto) como dato de resultados. Desde la fase
+ * 5 no descuenta nada del plan: el consumo se mide en intentos de envío, con la hora del
+ * servidor, así que ninguna fecha declarada por la empresa puede alterarlo.
  */
 export async function recordRecovery(
   trx: Trx,
   ctx: { companyId: string; userId: string | null },
   input: RecoveryInput,
-  now = new Date(),
-): Promise<{ status: RecoveryStatus; used: number | null; limit: number | null } | null> {
-  const already = await trx
-    .selectFrom('recoveryEvents')
-    .select('id')
-    .where('companyId', '=', ctx.companyId)
-    .where('quoteId', '=', input.quoteId)
-    .executeTakeFirst();
-  if (already) return null;
-
-  const plan = await loadPlanContext(trx, ctx.companyId, now);
-  let status: RecoveryStatus = 'no_active_plan';
-  let period: UsagePeriod | null = null;
-  if (plan.hasAccess && plan.plan) {
-    period = await ensureUsagePeriod(trx, plan, now);
-    const counted = await trx
-      .updateTable('usagePeriods')
-      .set({
-        recoveriesCounted: sql`recoveries_counted + 1`,
-        limitReachedAt: sql`CASE WHEN recoveries_counted + 1 >= recovery_limit THEN coalesce(limit_reached_at, now()) ELSE limit_reached_at END`,
-      })
-      .where('companyId', '=', ctx.companyId)
-      .where('periodStart', '=', period.periodStart)
-      .where(sql<boolean>`recoveries_counted < recovery_limit`)
-      .returningAll()
-      .executeTakeFirst();
-    if (counted) {
-      status = 'counted';
-      period = counted;
-    } else {
-      status = 'over_limit';
-      period = await trx
-        .updateTable('usagePeriods')
-        .set({ recoveriesOverLimit: sql`recoveries_over_limit + 1`, limitReachedAt: sql`coalesce(limit_reached_at, now())` })
-        .where('companyId', '=', ctx.companyId)
-        .where('periodStart', '=', period.periodStart)
-        .returningAll()
-        .executeTakeFirstOrThrow();
-    }
-  }
-
-  await trx
+): Promise<{ status: 'recorded' } | null> {
+  const inserted = await trx
     .insertInto('recoveryEvents')
     .values({
       companyId: ctx.companyId,
@@ -192,43 +302,25 @@ export async function recordRecovery(
       respondedAt: input.respondedAt,
       responseStatus: input.responseStatus,
       registeredByUserId: ctx.userId,
-      status,
-      periodStart: period && status !== 'no_active_plan' ? period.periodStart : null,
+      status: 'recorded',
+      periodStart: null,
     })
-    .execute();
-
+    // Una sola vez por presupuesto, también con peticiones simultáneas.
+    .onConflict((oc) => oc.columns(['companyId', 'quoteId']).doNothing())
+    .returning('id')
+    .executeTakeFirst();
+  if (!inserted) return null;
   await logActivity(trx, ctx, {
     action: 'recovery.registered',
     entityType: 'quote',
     entityId: input.quoteId,
     quoteId: input.quoteId,
-    metadata: {
-      status,
-      used: period?.recoveriesCounted ?? null,
-      limit: period?.recoveryLimit ?? null,
-      followUpChannel: input.followUp.channel,
-      automatic: input.followUp.source === 'rule',
-    },
+    metadata: { status: 'recorded', followUpChannel: input.followUp.channel, automatic: input.followUp.source === 'rule' },
   });
-  if (status === 'counted' && period && period.recoveriesCounted === period.recoveryLimit) {
-    await logActivity(trx, ctx, {
-      action: 'usage.limit_reached',
-      entityType: 'company',
-      entityId: ctx.companyId,
-      metadata: { plan: plan.plan?.id ?? null, limit: period.recoveryLimit, periodEnd: period.periodEnd },
-    });
-  }
-  return { status, used: period?.recoveriesCounted ?? null, limit: period?.recoveryLimit ?? null };
+  return { status: 'recorded' };
 }
 
-/** ¿Se ha alcanzado el límite de recuperaciones del periodo vigente? (Sin escribir nada.) */
-export async function recoveryLimitReached(trx: Trx, ctx: PlanContext, now: Date): Promise<boolean> {
-  if (!ctx.plan) return false;
-  const period = await findPeriod(trx, ctx.companyId, now);
-  return !!period && period.recoveriesCounted >= period.recoveryLimit;
-}
-
-/** Emails automáticos enviados hoy (día natural en la zona horaria de la empresa): todos los intentos. */
+/** Emails automáticos enviados hoy (día natural en la zona horaria de la empresa): todos los envíos técnicos. */
 export async function automaticEmailsToday(trx: Trx, companyId: string, timezone: string, now: Date): Promise<number> {
   const p = localParts(now, timezone);
   const midnight = zonedTimeToUtc(p.year, p.month, p.day, 0, 0, timezone);
@@ -247,58 +339,55 @@ export type UsageLevel = 'ok' | 'warning' | 'reached' | 'no_plan';
 export async function usageSummary(trx: Trx, companyId: string, now = new Date()) {
   const ctx = await loadPlanContext(trx, companyId, now);
   const row = await findPeriod(trx, companyId, now);
-  const limit = row?.recoveryLimit ?? ctx.plan?.monthlyRecoveryLimit ?? 0;
-  const used = row?.recoveriesCounted ?? 0;
+  const limit = row?.attemptLimit ?? ctx.plan?.monthlyAttemptLimit ?? 0;
+  const used = row?.attemptsCounted ?? 0;
+  const reserved = row?.attemptsReserved ?? 0;
   const level: UsageLevel = !ctx.hasAccess || !ctx.plan ? 'no_plan' : used >= limit ? 'reached' : used >= Math.ceil(limit * USAGE_WARNING_RATIO) ? 'warning' : 'ok';
-  const events = await trx
-    .selectFrom('recoveryEvents as e')
-    .innerJoin('quotes as q', (j) => j.onRef('q.id', '=', 'e.quoteId').onRef('q.companyId', '=', 'e.companyId'))
-    .innerJoin('contacts as c', (j) => j.onRef('c.id', '=', 'q.contactId').onRef('c.companyId', '=', 'q.companyId'))
-    .select([
-      'e.id',
-      'e.quoteId',
-      'q.title as quoteTitle',
-      'q.reference as quoteReference',
-      'c.fullName as contactName',
-      'e.status',
-      'e.responseStatus',
-      'e.respondedAt',
-      'e.registeredAt',
-      'e.followUpChannel',
-      'e.followUpSource',
-      'e.followUpAt',
-    ])
-    .where('e.companyId', '=', companyId)
-    .where('e.registeredAt', '>=', row?.periodStart ?? ctx.period.start)
-    .where('e.registeredAt', '<', row?.periodEnd ?? ctx.period.end)
-    .orderBy('e.registeredAt', 'desc')
-    .limit(500)
-    .execute();
+  const start = row?.periodStart ?? ctx.period.start;
+  const end = row?.periodEnd ?? ctx.period.end;
+  const events = row
+    ? await trx
+        .selectFrom('attemptEvents as a')
+        .innerJoin('quotes as q', (j) => j.onRef('q.id', '=', 'a.quoteId').onRef('q.companyId', '=', 'a.companyId'))
+        .innerJoin('contacts as c', (j) => j.onRef('c.id', '=', 'q.contactId').onRef('c.companyId', '=', 'q.companyId'))
+        .innerJoin('followUps as f', (j) => j.onRef('f.id', '=', 'a.followUpId').onRef('f.companyId', '=', 'a.companyId'))
+        .select(['a.id', 'a.quoteId', 'q.title as quoteTitle', 'q.reference as quoteReference', 'c.fullName as contactName', 'a.status', 'a.sentAt', 'a.reservedAt', 'f.sequenceStep as step'])
+        .where('a.companyId', '=', companyId)
+        .where('a.periodStart', '=', row.periodStart)
+        .where('a.status', 'in', ['counted', 'reserved'])
+        .orderBy(sql`coalesce(a.sent_at, a.reserved_at)`, 'desc')
+        .limit(500)
+        .execute()
+    : [];
+  const recoveries = await trx
+    .selectFrom('recoveryEvents')
+    .select((eb) => eb.fn.countAll<string>().as('n'))
+    .where('companyId', '=', companyId)
+    .where('registeredAt', '>=', start)
+    .where('registeredAt', '<', end)
+    .where('status', '<>', 'historical')
+    .executeTakeFirstOrThrow();
   return {
     plan: ctx.plan,
     status: ctx.status,
     trialEndsAt: ctx.trialEndsAt,
     hasActiveAccess: ctx.hasAccess,
-    period: {
-      start: row?.periodStart ?? ctx.period.start,
-      end: row?.periodEnd ?? ctx.period.end,
-      source: (row?.periodSource ?? ctx.period.source) as BillingPeriod['source'],
-      timezone: ctx.timezone,
-    },
-    recoveries: {
+    period: { start, end, source: (row?.periodSource ?? ctx.period.source) as BillingPeriod['source'], timezone: ctx.timezone },
+    attempts: {
       used,
+      inProgress: reserved,
       limit,
-      remaining: Math.max(limit - used, 0),
-      overLimit: row?.recoveriesOverLimit ?? 0,
+      remaining: Math.max(limit - used - reserved, 0),
       warningAt: ctx.plan ? Math.ceil(limit * USAGE_WARNING_RATIO) : null,
-      limitReachedAt: row?.limitReachedAt ?? null,
+      limitReachedAt: row?.attemptsLimitReachedAt ?? null,
       level,
     },
     automaticEmails: {
       today: await automaticEmailsToday(trx, companyId, ctx.timezone, now),
       dailyLimit: ctx.plan?.dailyAutomaticEmailLimit ?? 0,
     },
+    // Dato informativo: respuestas tras un seguimiento registradas en el periodo (no consumen).
+    recoveriesRecorded: Number(recoveries.n),
     events,
   };
 }
-

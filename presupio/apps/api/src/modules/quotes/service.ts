@@ -283,7 +283,7 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
 
   await trx.updateTable('quotes').set(patch).where('companyId', '=', auth.companyId).where('id', '=', quoteId).execute();
 
-  // Recuperación: se registra (y descuenta del plan) en la misma transacción que la respuesta.
+  // Recuperación: se registra como métrica en la misma transacción que la respuesta.
   let recovery: Awaited<ReturnType<typeof recordRecovery>> = null;
   if (reactivated && attributedFollowUp) {
     recovery = await recordRecovery(trx, auth, {
@@ -341,7 +341,8 @@ export async function changeQuoteStatus(trx: Trx, auth: AuthContext, quoteId: st
   return {
     reactivated,
     cancelledFollowUps,
-    recovery: recovery && { status: recovery.status, used: recovery.used, limit: recovery.limit },
+    // La recuperación es una métrica: no consume el plan (el consumo se mide en intentos).
+    recovery: recovery && { status: recovery.status },
     recoveryNotCounted: notCounted?.reason ?? null,
   };
 }

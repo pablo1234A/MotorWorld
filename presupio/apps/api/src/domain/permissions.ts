@@ -18,7 +18,8 @@ export type Permission =
   | 'exclusions:create'
   | 'exclusions:lift'
   | 'activity:read'
-  | 'data:export';
+  | 'data:export'
+  | 'billing:manage';
 
 const READ: Permission[] = [
   'company:read',
@@ -45,7 +46,8 @@ const MANAGE: Permission[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<MembershipRole, ReadonlySet<Permission>> = {
-  owner: new Set(MANAGE),
+  // Contratar, cambiar o cancelar el plan y gestionar el pago: solo propietarios.
+  owner: new Set<Permission>([...MANAGE, 'billing:manage']),
   admin: new Set(MANAGE),
   member: new Set(WORK),
   viewer: new Set(READ),

@@ -13,6 +13,7 @@ import { createFollowUpProvider } from './automation/providers.js';
 import { loadConfig } from './config.js';
 import { createDb } from './db/database.js';
 import { safeErrorSerializer } from './lib/log.js';
+import { createMailer } from './mail/mailer.js';
 
 const config = loadConfig();
 const logger = pino({
@@ -22,6 +23,8 @@ const logger = pino({
 });
 const db = createDb(config.databaseUrl, Math.min(config.dbPoolMax, 5));
 const provider = createFollowUpProvider(config);
+// Correo de la aplicación (avisos de conservación de datos). Sin configurar, no se envía nada.
+const mailer = createMailer(config, logger);
 const once = process.argv.includes('--once');
 const RETENTION_EVERY_MS = 60 * 60_000;
 
@@ -32,7 +35,7 @@ async function cycle() {
   const started = Date.now();
   const retention = started - lastRetention >= RETENTION_EVERY_MS;
   try {
-    const result = await runCycle({ db, config, provider }, { retention, logger });
+    const result = await runCycle({ db, config, provider }, { retention, logger, mailer });
     if (retention) lastRetention = started;
     logger.info({ ...result, ms: Date.now() - started }, 'Ciclo del motor completado');
   } catch (error) {

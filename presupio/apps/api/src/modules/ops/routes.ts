@@ -36,7 +36,13 @@ export async function opsRoutes(app: FastifyInstance) {
       if (status.deliveries.stuckSending > 0) alerts.push('deliveries_stuck_sending');
       if (status.followUps.dueApprovedOver15m > 0) alerts.push('approved_emails_delayed');
       if (status.jobErrorsLast24h > 0) alerts.push('job_errors_last_24h');
-      // Informativa: respuestas fechadas antes de un seguimiento ya registrado (revisar con `npm run ops -- backdated`).
+      // Intentos reservados que no se resuelven: el cupo de la empresa queda ocupado.
+      if (status.attempts?.reservedOver15m > 0) alerts.push('attempts_reserved_stuck');
+      // Facturación que necesita una persona (npm run ops -- billing-events).
+      if (status.billing?.errorsLast7d > 0 || status.billing?.unmatchedLast7d > 0) alerts.push('billing_events_failed');
+      if (status.billing?.duplicateSubscriptionsLast30d > 0) alerts.push('billing_duplicate_subscription');
+      // Informativa: respuestas fechadas antes de un seguimiento ya registrado (revisión manual
+      // acordada en D4: `npm run ops -- backdated`). No afectan al consumo, que se mide en intentos.
       const review = status.recoveries?.notCountedBackdatedLast30d > 0 ? ['recoveries_backdated_review'] : [];
       return { status: alerts.length ? 'degraded' : 'ok', database: 'ok', worker: { healthy: workerHealthy }, alerts, review, ...status };
     },

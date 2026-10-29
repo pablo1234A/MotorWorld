@@ -49,7 +49,7 @@ export async function memberRoutes(app: FastifyInstance) {
     })),
   );
 
-  app.patch('/:userId', { config: { permission: 'members:manage' } }, async (req) => {
+  app.patch('/:userId', { config: { permission: 'members:manage', readOnlyAllowed: true } }, async (req) => {
     const { userId } = parseWith(userParams, req.params);
     const body = parseWith(updateMemberBody, req.body);
     return inTenant(app, req, async (trx, auth) => {
@@ -73,7 +73,7 @@ export async function memberRoutes(app: FastifyInstance) {
     });
   });
 
-  app.delete('/:userId', { config: { permission: 'members:manage' } }, async (req, reply) => {
+  app.delete('/:userId', { config: { permission: 'members:manage', readOnlyAllowed: true } }, async (req, reply) => {
     const { userId } = parseWith(userParams, req.params);
     await inTenant(app, req, async (trx, auth) => {
       if (userId === auth.userId) throw errors.forbidden('No puedes eliminarte a ti mismo de la empresa.');
@@ -166,7 +166,7 @@ export async function memberRoutes(app: FastifyInstance) {
     return reply.status(201).send({ invitation: result.invitation, acceptUrl, delivery: delivery.status });
   });
 
-  app.delete('/invitations/:id', { config: { permission: 'members:manage' } }, async (req, reply) => {
+  app.delete('/invitations/:id', { config: { permission: 'members:manage', readOnlyAllowed: true } }, async (req, reply) => {
     const { id } = parseWith(idParams, req.params);
     await inTenant(app, req, async (trx, auth) => {
       const revoked = await trx

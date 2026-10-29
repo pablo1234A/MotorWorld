@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { PLANS, hasActiveAccess } from '../../domain/plans.js';
+import { PLANS } from '../../domain/plans.js';
 import { errors } from '../../lib/errors.js';
 import { email, optionalText, parseWith, phone, requiredText } from '../../lib/validation.js';
 import { inTenant } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
+import { subscriptionView } from '../billing/service.js';
 import { exportCompanyData } from './export.js';
 
 const TIMEZONES = new Set(Intl.supportedValuesOf('timeZone'));
@@ -192,23 +193,14 @@ export async function companyRoutes(app: FastifyInstance) {
     return data;
   });
 
-  /** Estado del plan: solo lectura. Lo modifica el servidor (alta) y, en la fase 5, el proveedor de pagos. */
+  /**
+   * Estado del plan: solo lectura. Lo modifican el alta (prueba gratuita), la herramienta de
+   * operación y los webhooks verificados del proveedor de pagos; nunca el navegador.
+   */
   app.get('/subscription', { config: { permission: 'subscription:read' } }, async (req) =>
-    inTenant(app, req, async (trx, auth) => {
-      const sub = await trx
-        .selectFrom('subscriptions')
-        .select(['plan', 'status', 'trialEndsAt', 'currentPeriodStart', 'currentPeriodEnd', 'cancelAtPeriodEnd'])
-        .where('companyId', '=', auth.companyId)
-        .executeTakeFirstOrThrow();
-      return {
-        subscription: {
-          ...sub,
-          hasActiveAccess: hasActiveAccess(sub),
-          planDetails: sub.plan ? PLANS[sub.plan] : null,
-          paymentsEnabled: false,
-        },
-        plans: Object.values(PLANS),
-      };
-    }),
+    inTenant(app, req, async (trx, auth) => ({
+      subscription: await subscriptionView(trx, app.config, auth),
+      plans: Object.values(PLANS),
+    })),
   );
 }

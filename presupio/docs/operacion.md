@@ -24,6 +24,8 @@
 | Exportación de datos de una empresa | **Activo** (`GET /company/export`, botón en *Configuración → Empresa*) | `modules/company/export.ts` |
 | Eliminación de una empresa | **Activo** solo para el personal autorizado (`npm run ops -- delete-company`) | `scripts/ops.ts` |
 | Conservación: texto de emails 90 días; eventos de webhook y ejecuciones del motor 30 días | **Activo** (trabajo `retention` cada hora) | `automation/engine.ts` |
+| Suscripciones con Stripe **en modo de prueba** (Checkout, webhooks firmados, cambio de plan, cancelación, portal) | **Activo en el código, desactivado por defecto** (`PAYMENTS_ENABLED`). Sin pruebas contra Stripe por falta de credenciales de prueba | [`facturacion.md`](facturacion.md) |
+| Solo lectura sin plan activo y avisos de conservación (30, 7 y 1 día; 90 días) | **Activo.** El borrado sigue siendo manual | `plugins/auth.ts`, `modules/billing/retention.ts` |
 
 ## 2. Entornos y configuración
 
@@ -68,7 +70,7 @@
 | Comprobación | Frecuencia | Alerta si |
 |---|---|---|
 | `GET /api/v1/health/ready` | 1 min | no responde `200` dos veces seguidas |
-| `GET /api/v1/ops/status` con `Authorization: Bearer $OPS_STATUS_TOKEN` | 5 min | `status` ≠ `ok`. Alertas posibles:<ul><li>`worker_not_running`;</li><li>`deliveries_stuck_sending`;</li><li>`approved_emails_delayed`;</li><li>`job_errors_last_24h`.</li></ul> |
+| `GET /api/v1/ops/status` con `Authorization: Bearer $OPS_STATUS_TOKEN` | 5 min | `status` ≠ `ok`. Alertas posibles:<ul><li>`worker_not_running`;</li><li>`deliveries_stuck_sending`;</li><li>`approved_emails_delayed`;</li><li>`job_errors_last_24h`;</li><li>`attempts_reserved_stuck`;</li><li>`billing_events_failed`;</li><li>`billing_duplicate_subscription`.</li></ul> |
 
 **Qué devuelve `/ops/status`:** solo cifras agregadas, sin empresas, personas ni emails. Sin token configurado, la ruta responde `404`. Además de `alerts`, devuelve `review` con avisos informativos que no degradan el estado: `recoveries_backdated_review` indica respuestas fechadas antes de un seguimiento (revisar con `npm run ops -- backdated`).
 
@@ -203,8 +205,23 @@ npm run ops -w @presupio/api -- plan --company <uuid> --plan pro --status active
 npm run ops -w @presupio/api -- delete-company --company <uuid> --confirm "<nombre exacto>"
 ```
 
+```bash
+npm run ops -w @presupio/api -- retention
+```
+
+```bash
+npm run ops -w @presupio/api -- billing-events --days 7
+```
+
+```bash
+npm run ops -w @presupio/api -- backdated --days 30
+```
+
 - Usa `MIGRATION_DATABASE_URL`, el rol propietario, que **solo debe tener el personal autorizado**.
-- Hasta la fase 5, `plan` es la forma controlada de asignar planes de prueba o piloto.
+- **`plan`** asigna un plan sin pasar por Stripe (pilotos, correcciones). Con una suscripción de Stripe, el siguiente webhook lo sobrescribe.
+- **`retention`** lista las cuentas sin plan activo con su fecha de conservación y los avisos enviados. **Nada se borra automáticamente.**
+- **`delete-company`** se niega a borrar antes de que termine el plazo de conservación, salvo con `--before-deadline` (petición expresa de la empresa). Antes de borrar, revisa las obligaciones legales de conservación.
+- **`billing-events`** muestra los eventos de facturación con error, sin empresa o con una segunda suscripción.
 
 ## 8. Procedimientos rápidos
 
@@ -214,7 +231,10 @@ npm run ops -w @presupio/api -- delete-company --company <uuid> --confirm "<nomb
 | `deliveries_stuck_sending` | El motor los marca como «resultado desconocido» en 15 min y no los reenvía. Revisar en *Seguimientos → Fallidos* |
 | `approved_emails_delayed` | Revisar el límite diario, la franja horaria y el proveedor (`/ops/status`, logs) |
 | Base de datos caída | La API responde `503` y el motor reintenta en el siguiente ciclo. Revisar el proveedor de PostgreSQL |
-| Clave filtrada | Rotarla en el proveedor y en el gestor de secretos y redesplegar. Para `OPS_STATUS_TOKEN`, cambiarlo también en el monitor |
+| Clave filtrada | Rotarla en el proveedor y en el gestor de secretos y redesplegar. Para `OPS_STATUS_TOKEN`, cambiarlo también en el monitor; para `STRIPE_WEBHOOK_SECRET`, generar uno nuevo en el endpoint de Stripe |
+| `billing_events_failed` | `npm run ops -- billing-events`. Un precio desconocido indica un `STRIPE_PRICE_*` mal configurado; tras corregirlo, reenvía el evento desde el panel de Stripe (los eventos con error se pueden reprocesar) |
+| `billing_duplicate_subscription` | Una empresa tiene dos suscripciones vivas en Stripe. Cancela y reembolsa la sobrante desde el panel de Stripe; Presupio mantiene la primera |
+| `attempts_reserved_stuck` | Un ciclo del motor se detuvo entre reservar y enviar. El trabajo `recovery` lo resuelve en 15 min (intento sin verificar, no se cobra); si persiste, revisa el worker |
 
 ## 9. Pendiente antes de producción
 
@@ -234,7 +254,7 @@ npm run ops -w @presupio/api -- delete-company --company <uuid> --confirm "<nomb
 - Dependabot;
 - endpoint de supresión de contactos.
 
-**Pagos (fase 5):** ver [`pagos-fase5.md`](pagos-fase5.md).
+**Pagos (fase 5):** integración solo en modo de prueba; pendientes en [`facturacion.md`](facturacion.md#8-pendiente-no-se-ha-activado-ni-se-da-por-resuelto).
 
 **Revisión profesional (jurídica y fiscal) pendiente:**
 - política de privacidad, aviso legal y condiciones de uso;

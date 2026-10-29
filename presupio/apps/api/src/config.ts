@@ -45,6 +45,17 @@ const envSchema = z.object({
   MESSAGE_CONTENT_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
   // Token de la supervisión externa (GET /api/v1/ops/status). Sin él, la ruta no existe.
   OPS_STATUS_TOKEN: z.string().min(32, 'OPS_STATUS_TOKEN debe tener al menos 32 caracteres').optional(),
+
+  // Pagos (fase 5). SOLO modo de prueba de Stripe: las claves live se rechazan al arrancar.
+  PAYMENTS_ENABLED: booleanFromEnv.optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_STARTER: z.string().optional(),
+  STRIPE_PRICE_PRO: z.string().optional(),
+  STRIPE_PRICE_BUSINESS: z.string().optional(),
+  STRIPE_PORTAL_CONFIGURATION_ID: z.string().optional(),
+  // Cómo se presentan los precios respecto al IVA. «pending» mientras no haya validación fiscal.
+  PRICES_TAX_DISPLAY: z.enum(['pending', 'included', 'excluded']).default('pending'),
 });
 
 export type RateLimitRule = { max: number; windowMs: number };
@@ -64,6 +75,18 @@ export interface AppConfig {
   trialDays: number;
   /** Token de la supervisión externa; sin él, /ops/status responde 404. */
   opsStatusToken?: string;
+  billing: {
+    /** Contratación y webhooks de pago activos. Sin ellos, Presupio funciona como antes (prueba y planes asignados por operación). */
+    enabled: boolean;
+    /** Presentación de precios respecto al IVA: no es una configuración fiscal (docs/facturacion.md). */
+    taxDisplay: 'pending' | 'included' | 'excluded';
+    stripe?: {
+      secretKey: string;
+      webhookSecret: string;
+      prices: Record<'starter' | 'pro' | 'business', string>;
+      portalConfigurationId?: string;
+    };
+  };
   mail: {
     transport: 'disabled' | 'log' | 'smtp';
     from?: string;
@@ -96,6 +119,8 @@ export interface AppConfig {
     passwordForgot: RateLimitRule;
     passwordForgotPerEmail: RateLimitRule;
     tokenRedeem: RateLimitRule;
+    /** Acciones de facturación (contratar, cambiar, cancelar, portal) por IP. */
+    billing: RateLimitRule;
   };
 }
 
@@ -108,6 +133,56 @@ function parseTrustProxy(raw: string): boolean | number {
   const hops = Number(raw);
   if (Number.isInteger(hops) && hops >= 0) return hops;
   throw new Error('TRUST_PROXY debe ser true, false o un número de saltos de proxy');
+}
+
+const STRIPE_LIVE = /^(sk|rk|pk)_live_/;
+const STRIPE_TEST_SECRET = /^(sk|rk)_test_[A-Za-z0-9]{10,}$/;
+
+/**
+ * Configuración de pagos. Esta versión SOLO admite el modo de prueba de Stripe: cualquier
+ * clave live (sk_live_, rk_live_, pk_live_) detiene el arranque, aunque los pagos estén
+ * desactivados, para que nunca pueda activarse un cobro real por error.
+ */
+function parseBilling(e: z.infer<typeof envSchema>): AppConfig['billing'] {
+  const stripeValues = [e.STRIPE_SECRET_KEY, e.STRIPE_WEBHOOK_SECRET, e.STRIPE_PRICE_STARTER, e.STRIPE_PRICE_PRO, e.STRIPE_PRICE_BUSINESS];
+  if (stripeValues.some((v) => v && STRIPE_LIVE.test(v.trim()))) {
+    throw new Error('Claves live de Stripe no permitidas: esta versión de Presupio solo funciona con el modo de prueba (sk_test_/rk_test_).');
+  }
+  const enabled = e.PAYMENTS_ENABLED ?? false;
+  if (!enabled) return { enabled: false, taxDisplay: e.PRICES_TAX_DISPLAY };
+
+  const missing = (
+    [
+      ['STRIPE_SECRET_KEY', e.STRIPE_SECRET_KEY],
+      ['STRIPE_WEBHOOK_SECRET', e.STRIPE_WEBHOOK_SECRET],
+      ['STRIPE_PRICE_STARTER', e.STRIPE_PRICE_STARTER],
+      ['STRIPE_PRICE_PRO', e.STRIPE_PRICE_PRO],
+      ['STRIPE_PRICE_BUSINESS', e.STRIPE_PRICE_BUSINESS],
+    ] as const
+  )
+    .filter(([, v]) => !v?.trim())
+    .map(([k]) => k);
+  if (missing.length) throw new Error(`PAYMENTS_ENABLED=true requiere ${missing.join(', ')}`);
+  const secretKey = e.STRIPE_SECRET_KEY!.trim();
+  if (!STRIPE_TEST_SECRET.test(secretKey)) throw new Error('STRIPE_SECRET_KEY debe ser una clave de prueba (sk_test_… o rk_test_…)');
+  const webhookSecret = e.STRIPE_WEBHOOK_SECRET!.trim();
+  if (!/^whsec_[A-Za-z0-9]{10,}$/.test(webhookSecret)) throw new Error('STRIPE_WEBHOOK_SECRET no tiene el formato esperado (whsec_…)');
+  const prices = {
+    starter: e.STRIPE_PRICE_STARTER!.trim(),
+    pro: e.STRIPE_PRICE_PRO!.trim(),
+    business: e.STRIPE_PRICE_BUSINESS!.trim(),
+  };
+  for (const [plan, id] of Object.entries(prices)) {
+    if (!/^price_[A-Za-z0-9]{6,}$/.test(id)) throw new Error(`STRIPE_PRICE_${plan.toUpperCase()} no tiene el formato esperado (price_…)`);
+  }
+  if (new Set(Object.values(prices)).size !== 3) throw new Error('Cada plan necesita su propio precio de Stripe (STRIPE_PRICE_* repetidos)');
+  const portal = e.STRIPE_PORTAL_CONFIGURATION_ID?.trim();
+  if (portal && !/^bpc_[A-Za-z0-9]{6,}$/.test(portal)) throw new Error('STRIPE_PORTAL_CONFIGURATION_ID no tiene el formato esperado (bpc_…)');
+  return {
+    enabled: true,
+    taxDisplay: e.PRICES_TAX_DISPLAY,
+    stripe: { secretKey, webhookSecret, prices, ...(portal ? { portalConfigurationId: portal } : {}) },
+  };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -159,6 +234,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error('FOLLOWUP_EMAIL_PROVIDER=smtp requiere MAIL_TRANSPORT=smtp y los datos SMTP_*');
   }
 
+  const billing = parseBilling(e);
+
   const corsOrigins = (e.CORS_ORIGINS ?? e.APP_WEB_URL)
     .split(',')
     .map((o) => o.trim().replace(/\/$/, ''))
@@ -187,6 +264,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     },
     trialDays: e.TRIAL_DAYS,
     ...(e.OPS_STATUS_TOKEN ? { opsStatusToken: e.OPS_STATUS_TOKEN } : {}),
+    billing,
     mail: { transport: e.MAIL_TRANSPORT, from: e.MAIL_FROM, smtp },
     automation: {
       provider: e.FOLLOWUP_EMAIL_PROVIDER,
@@ -215,6 +293,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       passwordForgot: { max: 10, windowMs: HOUR },
       passwordForgotPerEmail: { max: 3, windowMs: HOUR },
       tokenRedeem: { max: 20, windowMs: 15 * MINUTE },
+      billing: { max: 30, windowMs: HOUR },
     },
   };
 }

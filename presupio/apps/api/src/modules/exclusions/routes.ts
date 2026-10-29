@@ -71,7 +71,7 @@ export async function exclusionRoutes(app: FastifyInstance) {
    * Registra una exclusión y detiene en el acto los seguimientos de contacto pendientes
    * que la incumplirían.
    */
-  app.post('/', { config: { permission: 'exclusions:create' } }, async (req, reply) => {
+  app.post('/', { config: { permission: 'exclusions:create', readOnlyAllowed: true } }, async (req, reply) => {
     const body = parseWith(createBody, req.body);
     const result = await inTenant(app, req, (trx, auth) => registerExclusion(trx, auth, { ...body, via: 'app' }));
     return reply.status(201).send(result);

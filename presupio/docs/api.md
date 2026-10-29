@@ -84,7 +84,7 @@ Los enlaces de los emails apuntan al frontend, que debe enviar el `token` a la A
 | PATCH | `/company` | owner/admin | Opcionales: `name, legalName, taxId, phone, website, timezone` |
 | GET | `/company/settings` | Lectura | Reglas de seguimiento y datos de envío (incluye `automationEnabled`, `automationEnabledAt`) |
 | PATCH | `/company/settings` | owner/admin | Opcionales: `followUpScheduleDays` (1–6 días entre 1 y 180, de menor a mayor; por defecto `[3, 7, 14]`), `allowedWeekdays[1-7]`, `contactWindowStart "HH:MM"`, `contactWindowEnd`, `defaultChannel`, `requireManualApproval`, `legalBasisNote`, `senderName`, `replyToEmail`. Con el envío automático activo no se puede vaciar `replyToEmail` ni `legalBasisNote` |
-| GET | `/company/subscription` | Lectura | `{ subscription: { plan, status, trialEndsAt, hasActiveAccess, planDetails, paymentsEnabled }, plans[] }`. Cada plan: `priceCents, monthlyRecoveryLimit, dailyAutomaticEmailLimit, fairUse, vatIncluded`. Solo lectura |
+| GET | `/company/subscription` | Lectura | `{ subscription: { plan, status, trialEndsAt, currentPeriodStart, currentPeriodEnd, cancelAtPeriodEnd, pastDueSince, hasActiveAccess, readOnly, accessEndedAt, dataRetentionUntil, planDetails, paymentsEnabled, managedByProvider, hasBillingAccount, taxDisplay }, plans[] }`. Cada plan: `priceCents, monthlyAttemptLimit, dailyAutomaticEmailLimit, fairUse`. Solo lectura |
 | GET | `/company/export` | owner/admin (`data:export`) | Exportación JSON de todos los datos de la empresa (adjunto). Máx. 5 por hora |
 
 ## Miembros — `/members`
@@ -177,14 +177,33 @@ Funcionamiento completo en [`automatizacion.md`](automatizacion.md).
 
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
-| GET | `/usage` | Lectura | `{ usage: { plan, status, trialEndsAt, hasActiveAccess, period: { start, end, source, timezone }, recoveries: { used, limit, remaining, overLimit, warningAt, limitReachedAt, level: ok\|warning\|reached\|no_plan }, automaticEmails: { today, dailyLimit }, events[] } }`. No hay ninguna ruta para cambiar el plan ni el consumo |
-| GET | `/metrics?month=AAAA-MM` | Lectura | Mes natural (por defecto, el actual) en la zona horaria de la empresa: `{ metrics: { period, quotes, followUps, outcomes, recoveries, responseRate }, history: [6 meses] }`. 400 si el mes es futuro o no válido. `responseRate.rate` es `null` con menos de 10 casos |
+| GET | `/usage` | Lectura | `{ usage: { plan, status, trialEndsAt, hasActiveAccess, period: { start, end, source, timezone }, attempts: { used, inProgress, limit, remaining, warningAt, limitReachedAt, level: ok\|warning\|reached\|no_plan }, automaticEmails: { today, dailyLimit }, recoveriesRecorded, events: [intentos del periodo] } }`. Ninguna ruta cambia el consumo |
+| GET | `/metrics?month=AAAA-MM` | Lectura | Mes natural (por defecto, el actual) en la zona horaria de la empresa: `{ metrics: { period, quotes, followUps, outcomes, attempts: { counted }, recoveries: { recorded }, responseRate }, history: [6 meses, con attemptsCounted] }`. 400 si el mes es futuro o no válido. `responseRate.rate` es `null` con menos de 10 casos |
+
+## Facturación — `/billing` (Stripe, solo modo de prueba)
+
+Guía completa: [`facturacion.md`](facturacion.md).
+- Las acciones solo **piden** cambios a Stripe: el plan y el acceso cambian con el webhook verificado.
+- Sin `PAYMENTS_ENABLED`, las acciones responden `409 PAYMENTS_DISABLED`.
+- Si Stripe no responde, `503 PAYMENTS_UNAVAILABLE` sin detalles.
+- El cuerpo solo admite `plan` (`starter|pro|business`); cualquier otro campo, `400`.
+- Todas funcionan en solo lectura.
+
+| Método | Ruta | Permiso | Descripción |
+|---|---|---|---|
+| GET | `/billing` | Lectura | `{ subscription, plans[], events[] }` (resumen del historial de facturación, sin datos de pago) |
+| POST | `/billing/checkout` | Propietario | `{ plan }` → `{ checkout: { url } }` (Stripe Checkout). 409 si ya hay una suscripción viva o si el precio de Stripe no coincide con el catálogo |
+| POST | `/billing/change-plan` | Propietario | `{ plan }` → `{ change: { status: "pending_confirmation", mode: upgrade\|downgrade, limitAppliesFrom: confirmation\|next_period } }`. Solo con la suscripción activa |
+| POST | `/billing/cancel` · `/billing/resume` | Propietario | Cancela al final del periodo o anula la cancelación → `{ cancellation: { status, accessUntil } }` |
+| POST | `/billing/portal` | Propietario | `{ portal: { url } }`: portal de cliente de Stripe (método de pago, facturas) |
+
+**Solo lectura.** Sin plan activo, toda petición que modifica datos responde `403 SUBSCRIPTION_REQUIRED`, salvo las excepciones de [`facturacion.md`](facturacion.md#5-fin-de-la-prueba-y-solo-lectura).
 
 ## Supervisión (monitor externo)
 
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| GET | `/ops/status` | `Authorization: Bearer <OPS_STATUS_TOKEN>` | Cifras agregadas: `status (ok\|degraded), alerts[], review[], worker, followUps, deliveries, jobs, recoveries`. Sin datos de empresas ni personas. 404 sin token válido o sin token configurado |
+| GET | `/ops/status` | `Authorization: Bearer <OPS_STATUS_TOKEN>` | Cifras agregadas: `status (ok\|degraded), alerts[], review[], worker, followUps, deliveries, jobs, recoveries, attempts, billing`. Alertas nuevas: `attempts_reserved_stuck`, `billing_events_failed`, `billing_duplicate_subscription`. Sin datos de empresas ni personas. 404 sin token válido o sin token configurado |
 
 Si la base de datos no está disponible, cualquier ruta responde `503 SERVICE_UNAVAILABLE` con `Retry-After`.
 
@@ -195,6 +214,7 @@ Si la base de datos no está disponible, cualquier ruta responde `503 SERVICE_UN
 | POST | `/public/unsubscribe/preview` | `token` → `{ companyName, alreadyUnsubscribed }` (página `APP_WEB_URL/baja?token=…`) |
 | POST | `/public/unsubscribe` | `token` (JSON) o `?token=` con `List-Unsubscribe=One-Click` (formulario, RFC 8058). Idempotente |
 | POST | `/webhooks/mailgun` | Eventos firmados de Mailgun. 401 con firma no válida o caducada; `{ status: "duplicate" }` si el token ya se procesó; 404 si el proveedor no es Mailgun |
+| POST | `/webhooks/stripe` | Eventos de Stripe con `Stripe-Signature`, verificada sobre el cuerpo original. Respuestas: <ul><li>400 con firma no válida o caducada;</li><li>`{ received: true, outcome: applied\|ignored\|stale\|unmatched\|error\|duplicate_subscription\|duplicate }`;</li><li>503 si Stripe no responde (Stripe reintenta);</li><li>404 sin pagos activos.</li></ul> |
 
 ## Exclusiones — `/exclusions`
 

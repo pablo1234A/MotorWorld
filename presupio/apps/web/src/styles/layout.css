@@ -149,6 +149,11 @@
 .page--narrow {
   max-width: 48rem;
 }
+/* Aviso de cuenta (solo lectura, pago pendiente): mismo ancho que el contenido. */
+.account-status {
+  max-width: 76rem;
+  margin: 0 auto var(--s-5);
+}
 
 @media (min-width: 64rem) {
   .shell {

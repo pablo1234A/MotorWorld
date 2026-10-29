@@ -101,3 +101,14 @@ export function simulatedEmails(to: string): Array<Record<string, string>> {
     .map((line) => JSON.parse(line) as Record<string, string>)
     .filter((m) => m.to === to);
 }
+
+/** Termina ya la prueba gratuita de una empresa con la herramienta de operación (rol propietario). */
+export function endTrialNow(companyId: string) {
+  const result = spawnSync('npx', ['tsx', 'scripts/ops.ts', 'plan', '--company', companyId, '--plan', 'starter', '--status', 'trialing', '--trial-days', '0'], {
+    cwd: path.resolve(HERE, '../../api'),
+    env: { PATH: process.env.PATH, HOME: process.env.HOME, MIGRATION_DATABASE_URL: process.env.TEST_MIGRATION_DATABASE_URL },
+    encoding: 'utf8',
+    timeout: 60_000,
+  });
+  if (result.status !== 0) throw new Error(`No se pudo terminar la prueba: ${result.stderr || result.stdout}`);
+}

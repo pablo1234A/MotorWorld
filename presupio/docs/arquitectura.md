@@ -122,7 +122,7 @@ Un rechazo cuenta como respuesta, pero no como reactivación. Las restricciones 
 ### Suscripción
 
 - Al registrarse: `trialing` con los límites de Starter durante `TRIAL_DAYS` (14 por defecto), **sin cobro**.
-- **Ningún endpoint escribe en `subscriptions`**, y desde la fase 4 el rol de la aplicación ni siquiera tiene permiso `UPDATE`/`DELETE` sobre la tabla. En la fase 5 solo la cambiará un webhook verificado del proveedor de pagos (ver [`pagos-fase5.md`](pagos-fase5.md)); hasta entonces, la herramienta de operación.
+- **Ningún endpoint escribe en `subscriptions`**, y desde la fase 4 el rol de la aplicación ni siquiera tiene permiso `UPDATE`/`DELETE` sobre la tabla. Desde la fase 5 la cambian solo las funciones `SECURITY DEFINER` acotadas que aplican un webhook verificado de Stripe (modo de prueba, ver [`facturacion.md`](facturacion.md)) y la herramienta de operación.
 - Consumo por empresa y periodo en `usage_periods` (contador atómico con `CHECK`) y `recovery_events` (una por presupuesto). Ver [`limites-y-metricas.md`](limites-y-metricas.md).
 - El catálogo (27,99 €, 57,99 € y 127,99 €; 25 y 65 recuperaciones al mes; Business con uso razonable) vive en `src/domain/plans.ts`.
 
@@ -138,7 +138,7 @@ Un rechazo cuenta como respuesta, pero no como reactivación. Las restricciones 
 | Decisión | Motivo | Cómo cambiarla |
 |---|---|---|
 | Prueba gratuita de 14 días con límites de Starter | Práctica habitual en SaaS; el plan maestro no la define | `TRIAL_DAYS` |
-| Los precios no indican si incluyen IVA (`vatIncluded: null`) | Pendiente según el plan maestro | `src/domain/plans.ts` |
+| Si los precios incluyen IVA está pendiente de validación fiscal (la interfaz lo indica; no hay Stripe Tax) | Pendiente (D3) | `PRICES_TAX_DISPLAY`, [`facturacion.md`](facturacion.md#8-pendiente-no-se-ha-activado-ni-se-da-por-resuelto) |
 | Business: 300 recuperaciones al mes (uso razonable) y 400 emails automáticos al día | Límite amplio, publicado y sin restricciones ocultas (fase 4) | `src/domain/plans.ts` |
 | Recuperación = respuesta registrada en los 30 días siguientes a un seguimiento verificable | Resultado medible y temprano; la venta se mide aparte (fase 4) | `src/domain/recovery.ts` |
 | El registro revela si un email ya existe (409) | Mejor experiencia en B2B; mitigado con límite por IP | `auth/routes.ts` |

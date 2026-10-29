@@ -304,7 +304,7 @@ El proveedor simulado (`apps/api/test/fake-provider.ts`) y el simulador de las p
   - cuenta como contacto realizado para la métrica de reactivación.
 - **Un paso fallido no bloquea los siguientes:** si falla, el siguiente paso se programa con normalidad. Si el motivo es la dirección, el rebote la excluye y se detiene la secuencia.
 - **Sin confirmación de entrega en SMTP:** con SMTP no hay confirmación de entrega ni gestión de rebotes.
-- **Límites de plan:** desde la fase 4 se aplican al envío: límite de recuperaciones por periodo (al alcanzarlo se cancelan los pendientes y no se programan nuevos) y límite técnico diario de emails. Ver [`limites-y-metricas.md`](limites-y-metricas.md).
+- **Límites de plan:** se aplican al envío. Desde la fase 5 el plan limita **intentos** de seguimiento por periodo: cada email automático aceptado por el proveedor, reservado antes de enviar y confirmado al aceptarse (al agotarlos se cancelan los pendientes y no se programan nuevos). Además hay un límite técnico diario de emails. Sin plan activo se cancela lo programado. Ver [`limites-y-metricas.md`](limites-y-metricas.md).
 
 ## Puesta en producción
 

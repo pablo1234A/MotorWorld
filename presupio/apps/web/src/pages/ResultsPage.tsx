@@ -71,7 +71,10 @@ function History({ rows, current }: { rows: MetricsMonth[]; current: string }) {
       <div className="panel__header">
         <div>
           <h2 id="history-title">Últimos seis meses</h2>
-          <p>Meses naturales en la zona horaria de tu empresa. Respuestas y aceptaciones posteriores a un seguimiento.</p>
+          <p>
+            Meses naturales en la zona horaria de tu empresa. Respuestas y aceptaciones posteriores a un seguimiento, y los intentos de seguimiento que
+            consumieron tu plan.
+          </p>
         </div>
       </div>
       <div className="table-wrap" tabIndex={0} role="region" aria-label="Evolución mensual (desplazable)">
@@ -93,7 +96,7 @@ function History({ rows, current }: { rows: MetricsMonth[]; current: string }) {
                 Aceptados
               </th>
               <th scope="col" className="num">
-                Recuperaciones
+                Intentos del plan
               </th>
             </tr>
           </thead>
@@ -105,7 +108,7 @@ function History({ rows, current }: { rows: MetricsMonth[]; current: string }) {
                 <td className="num">{formatNumber(h.followUpsDone)}</td>
                 <td className="num">{formatNumber(h.respondedAfterFollowUp)}</td>
                 <td className="num">{formatNumber(h.acceptedAfterFollowUp)}</td>
-                <td className="num">{formatNumber(h.recoveriesCounted)}</td>
+                <td className="num">{formatNumber(h.attemptsCounted)}</td>
               </tr>
             ))}
           </tbody>
@@ -167,13 +170,9 @@ export function ResultsPage() {
             title="Recuperaciones"
             cells={[
               {
-                label: 'Recuperaciones contabilizadas',
-                value: formatNumber(m.recoveries.counted),
-                note:
-                  m.recoveries.overLimit > 0
-                    ? `Y ${m.recoveries.overLimit} más por encima del límite del plan (no se descuentan)`
-                    : 'Respuestas tras un seguimiento, registradas este mes',
-                to: '/configuracion/plan',
+                label: 'Recuperaciones',
+                value: formatNumber(m.recoveries.recorded),
+                note: 'Clientes que respondieron tras un seguimiento (no consumen tu plan)',
               },
               {
                 label: 'Respondieron tras un seguimiento',
@@ -207,6 +206,12 @@ export function ResultsPage() {
                 value: formatNumber(m.followUps.automaticSent),
                 note: m.followUps.automaticDelivered > 0 ? `${formatNumber(m.followUps.automaticDelivered)} con entrega confirmada` : 'Aceptados por el proveedor',
                 to: '/seguimientos?estado=sent',
+              },
+              {
+                label: 'Intentos que consumen tu plan',
+                value: formatNumber(m.attempts.counted),
+                note: 'Un intento por seguimiento automático enviado, responda o no el cliente',
+                to: '/configuracion/plan',
               },
               {
                 label: 'Emails que no se pudieron enviar',

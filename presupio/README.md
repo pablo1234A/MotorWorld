@@ -2,7 +2,13 @@
 
 SaaS B2B para que las empresas de reformas integrales recuperen presupuestos enviados que se han quedado sin respuesta: detectar, hacer seguimiento ordenado y medir qué se reactiva y qué termina en venta, **sin inflar resultados**.
 
-> Estado: **Fase 4 de 5 — métricas, límites de los planes y preparación para producción.** Sin pagos (fase 5). **No está listo para producción:** faltan infraestructura, prueba real del proveedor de email y revisión jurídica (ver [`docs/operacion.md`](docs/operacion.md#9-pendiente-antes-de-producción)).
+> Estado: **Fase 5 de 5 — suscripciones con Stripe en MODO DE PRUEBA.** No hay cobros reales: las claves live se rechazan y los pagos están desactivados por defecto. **No está listo para producción:** faltan:
+> - infraestructura;
+> - pruebas con una cuenta de prueba de Stripe y con el proveedor de email real;
+> - validación fiscal (IVA);
+> - revisión jurídica.
+>
+> Ver [`docs/facturacion.md`](docs/facturacion.md#8-pendiente-no-se-ha-activado-ni-se-da-por-resuelto) y [`docs/operacion.md`](docs/operacion.md#9-pendiente-antes-de-producción).
 
 | Fase | Contenido | Estado |
 |---|---|---|
@@ -10,7 +16,7 @@ SaaS B2B para que las empresas de reformas integrales recuperen presupuestos env
 | 2 | Frontend y experiencia de usuario | ✅ |
 | 3 | Motor de seguimiento e integración con un proveedor de email (Mailgun UE / SMTP) | ✅ (falta la prueba con proveedor real) |
 | 4 | Métricas, límites de planes y preparación para producción | ✅ (infraestructura de producción por configurar) |
-| 5 | Pasarela de pago y suscripciones | Pendiente |
+| 5 | Suscripciones con Stripe (modo de prueba), consumo por intentos, solo lectura al terminar la prueba | ✅ en modo de prueba (sin pruebas con una cuenta de Stripe; IVA y condiciones pendientes de validación) |
 
 ## Stack
 
@@ -24,7 +30,7 @@ SaaS B2B para que las empresas de reformas integrales recuperen presupuestos env
 
 **Frontend (`apps/web`):** React 19 + Vite + TypeScript, React Router y TanStack Query. Sistema de diseño propio en CSS ([`apps/web/DESIGN.md`](apps/web/DESIGN.md)), sin frameworks de UI.
 
-Arquitectura y decisiones: [`docs/arquitectura.md`](docs/arquitectura.md). Referencia de la API: [`docs/api.md`](docs/api.md). Frontend: [`docs/frontend.md`](docs/frontend.md). Motor de seguimiento: [`docs/automatizacion.md`](docs/automatizacion.md). Recuperaciones, límites y métricas: [`docs/limites-y-metricas.md`](docs/limites-y-metricas.md). Operación, seguridad y privacidad: [`docs/operacion.md`](docs/operacion.md). Pagos (fase 5): [`docs/pagos-fase5.md`](docs/pagos-fase5.md). Decisiones comerciales pendientes: [`docs/decisiones-comerciales.md`](docs/decisiones-comerciales.md).
+Arquitectura y decisiones: [`docs/arquitectura.md`](docs/arquitectura.md). Referencia de la API: [`docs/api.md`](docs/api.md). Frontend: [`docs/frontend.md`](docs/frontend.md). Motor de seguimiento: [`docs/automatizacion.md`](docs/automatizacion.md). Consumo por intentos, límites y métricas: [`docs/limites-y-metricas.md`](docs/limites-y-metricas.md). Suscripciones con Stripe (modo de prueba), solo lectura y conservación: [`docs/facturacion.md`](docs/facturacion.md). Operación, seguridad y privacidad: [`docs/operacion.md`](docs/operacion.md). Decisiones comerciales: [`docs/decisiones-comerciales.md`](docs/decisiones-comerciales.md).
 
 ## Puesta en marcha (desarrollo)
 
@@ -115,14 +121,14 @@ npm run worker -w @presupio/api -- --once    # o un ciclo por minuto desde un cr
 ## Pruebas
 
 ```bash
-npm test             # API (161) + frontend (68): unitarias, de integración y de componentes
+npm test             # API (187) + frontend (68): unitarias, de integración y de componentes
 ```
 
 ```bash
 npm run test:e2e     # extremo a extremo en Chromium contra la API y la base de datos reales
 ```
 
-Las pruebas E2E recrean la base de datos de pruebas, arrancan la API real (puerto 3100) y sirven la compilación de producción del frontend (puerto 4174) con las mismas cabeceras de seguridad (CSP) que producción. Recorren registro, presupuestos, seguimientos, venta con evidencia, exclusiones, envío automático (activación, aprobación, envío contra un simulador local de la API de Mailgun y baja del cliente), consumo del plan, resultados y exportación, recuperación de contraseña, aislamiento entre empresas, invitaciones, errores de la API, enlaces, accesibilidad (axe) y diseño adaptable a 1440, 768 y 390 px. Necesitan Chromium de Playwright (`npx playwright install chromium` si no está instalado).
+Las pruebas E2E recrean la base de datos de pruebas, arrancan la API real (puerto 3100) y sirven la compilación de producción del frontend (puerto 4174) con las mismas cabeceras de seguridad (CSP) que producción. Recorren registro, presupuestos, seguimientos, venta con evidencia, exclusiones, envío automático (activación, aprobación, envío contra un simulador local de la API de Mailgun y baja del cliente), consumo del plan por intentos, resultados y exportación, fin de la prueba gratuita (solo lectura), recuperación de contraseña, aislamiento entre empresas, invitaciones, errores de la API, enlaces, accesibilidad (axe) y diseño adaptable a 1440, 768 y 390 px. Necesitan Chromium de Playwright (`npx playwright install chromium` si no está instalado).
 
 Las pruebas de la API necesitan una base de datos cuyo nombre termine en `_test`, configurada en `TEST_DATABASE_URL` y `TEST_MIGRATION_DATABASE_URL`. Cada ejecución **borra y recrea** su esquema y aplica las migraciones.
 
@@ -134,7 +140,7 @@ npm test
 npm run typecheck
 ```
 
-La suite (161 pruebas, 10 archivos en `apps/api/test/`) cubre:
+La suite (187 pruebas, 12 archivos en `apps/api/test/`) cubre:
 
 | Archivo | Qué verifica |
 |---|---|
@@ -146,7 +152,9 @@ La suite (161 pruebas, 10 archivos en `apps/api/test/`) cubre:
 | `validation.test.ts` | Validación sintáctica y semántica, errores coherentes, JSON mal formado, prototype poisoning y tamaño máximo |
 | `database.test.ts` | Migraciones idempotentes con checksum, RLS en todas las tablas de empresa, restricciones, claves foráneas compuestas y cascadas |
 | `automation.test.ts` | Motor de seguimiento: programación 3/7/14, respuestas, aceptación y rechazo, baja, ciclos simultáneos sin duplicados, errores del proveedor, límite de reintentos, aislamiento, reinicios, aprobación, franjas, plantillas, webhooks firmados y conservación (proveedor **simulado**) |
-| `plans.test.ts` | Límites de Starter, Pro y Business, simultaneidad, definición de recuperación, periodos, imposibilidad de cambiar el plan (API y base de datos), métricas frente a consultas independientes, aislamiento, exportación, errores sin secretos, supervisión y migración sobre datos existentes |
+| `plans.test.ts` | <ul><li>Límites de Starter, Pro y Business por **intentos** (qué cuenta y qué no, reintentos, varios procesos a la vez);</li><li>recuperaciones como métrica;</li><li>fechas declaradas (D4) sin efecto en el consumo;</li><li>periodos;</li><li>imposibilidad de cambiar el plan;</li><li>métricas;</li><li>aislamiento;</li><li>exportación;</li><li>errores;</li><li>supervisión;</li><li>migraciones 0003 a 0005 sobre datos existentes.</li></ul> |
+| `billing.test.ts` | Stripe en modo de prueba con pasarela **simulada** y verificación de firmas real: <ul><li>Checkout y activación solo por webhook;</li><li>permisos y aislamiento;</li><li>firmas inválidas, eventos repetidos y desordenados;</li><li>cambio de plan y cancelación;</li><li>pago fallido y gracia;</li><li>solo lectura en todas las rutas;</li><li>motor detenido;</li><li>exportación;</li><li>avisos de conservación;</li><li>configuración y Stripe caído.</li></ul> |
+| `stripe-gateway.test.ts` | Librería oficial de Stripe contra un servidor HTTP **local**: parámetros enviados, idempotencia, errores sin secretos, firma y rechazo de claves live |
 | `automation-units.test.ts` | Calendario con cambios de hora, plantillas, firma de webhooks y adaptadores Mailgun y SMTP contra servidores **locales** |
 
 CI: `.github/workflows/presupio.yml` ejecuta la comprobación de tipos, la compilación y las pruebas con PostgreSQL 16 en cada cambio dentro de `presupio/`.
@@ -171,13 +179,18 @@ Todas están documentadas en [`.env.example`](.env.example). Las principales:
 | `TEST_DATABASE_URL`, `TEST_MIGRATION_DATABASE_URL` | Solo pruebas | Base de datos `*_test` |
 | `RATE_LIMIT_PER_MINUTE` | No | Peticiones a la API por IP y minuto (por defecto 600) |
 | `OPS_STATUS_TOKEN` | No | Token (≥ 32 caracteres) para que un monitor externo consulte `GET /api/v1/ops/status`. Sin él, la ruta no existe |
+| `PAYMENTS_ENABLED`, `STRIPE_*`, `PRICES_TAX_DISPLAY` | No | Stripe **solo en modo de prueba** (las claves live detienen el arranque). Detalle en [`docs/facturacion.md`](docs/facturacion.md#2-variables-de-entorno) |
 | `FOLLOWUP_EMAIL_PROVIDER` | No | `disabled` (por defecto: no se envía nada), `mailgun` o `smtp`. Detalle de `FOLLOWUP_*`, `MAILGUN_*`, `PUBLIC_API_URL`, `WORKER_INTERVAL_SECONDS` y `MESSAGE_CONTENT_RETENTION_DAYS` en [`docs/automatizacion.md`](docs/automatizacion.md#5-variables-de-entorno) |
 | `VITE_API_BASE_URL` | No (frontend) | Ruta de la API desde el navegador. Por defecto `/api/v1`, mismo origen. Ver [`apps/web/.env.example`](apps/web/.env.example) |
 
 ## Servicios externos no configurados
 
 - **Correo:** el SMTP está implementado pero **no se ha probado con un proveedor real**. Con `MAIL_TRANSPORT=disabled`, la API **no simula el envío**: responde `delivery: "not_configured"` y lo registra en el log. Hasta configurarlo, los emails de verificación, recuperación e invitación no llegan. Las invitaciones devuelven su enlace (`acceptUrl`) para compartirlo manualmente.
-- **Pagos:** no están integrados (fase 5; guía en [`docs/pagos-fase5.md`](docs/pagos-fase5.md)). El plan lo asigna el servidor (prueba gratuita al registrarse) y, para pruebas o pilotos, el personal autorizado con `npm run ops -w @presupio/api -- plan …`. No hay ningún endpoint para modificarlo y el rol de la aplicación no tiene permiso en la base de datos.
+- **Pagos:**
+  - Stripe Billing está integrado **solo en modo de prueba** y desactivado por defecto ([`docs/facturacion.md`](docs/facturacion.md)).
+  - **No se ha probado contra Stripe** (no había credenciales de prueba): las pruebas usan una pasarela simulada y un servidor local.
+  - Sin pagos activos, el plan lo asigna el servidor (prueba gratuita al registrarse) o el personal autorizado con `npm run ops -w @presupio/api -- plan …`.
+  - El rol de la aplicación no puede escribir en la suscripción.
 - **Copias de seguridad y monitorización:** los scripts (`ops/backup.sh`, `ops/restore.sh`) y el endpoint de supervisión existen y se han probado en local, pero **no hay copias automáticas ni monitor configurados** hasta elegir el alojamiento.
 - **Envío automático de seguimientos:** implementado con Mailgun (región UE) y SMTP como alternativa. **No se ha probado con un proveedor real** (sin cuenta ni credenciales; la red del entorno de desarrollo bloquea Mailgun). Con `FOLLOWUP_EMAIL_PROVIDER=disabled` no se envía nada. Pasos para la puesta en producción en [`docs/automatizacion.md`](docs/automatizacion.md#puesta-en-producción).
 

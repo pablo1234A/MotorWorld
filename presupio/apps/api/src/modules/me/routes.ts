@@ -44,7 +44,7 @@ export async function meRoutes(app: FastifyInstance) {
     };
   });
 
-  app.patch('/me', async (req) => {
+  app.patch('/me', { config: { readOnlyAllowed: true } }, async (req) => {
     const auth = requireAuth(req);
     const body = parseWith(updateMeBody, req.body);
     const user = await app.db

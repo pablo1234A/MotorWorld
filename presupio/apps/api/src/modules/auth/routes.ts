@@ -160,7 +160,7 @@ export async function authRoutes(app: FastifyInstance) {
   // -------------------------------------------------------------------------
   // Cierre de sesión (idempotente)
   // -------------------------------------------------------------------------
-  app.post('/logout', { config: { auth: 'optional' } }, async (req, reply) => {
+  app.post('/logout', { config: { auth: 'optional', readOnlyAllowed: true } }, async (req, reply) => {
     if (req.auth) await app.db.deleteFrom('sessions').where('id', '=', req.auth.sessionId).execute();
     clearSessionCookie(app, reply);
     return reply.status(204).send();
@@ -212,7 +212,7 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.status(200).send({ message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
   });
 
-  app.post('/password/change', async (req, reply) => {
+  app.post('/password/change', { config: { readOnlyAllowed: true } }, async (req, reply) => {
     const auth = requireAuth(req);
     const body = parseWith(changePasswordBody, req.body);
     const user = await app.db
@@ -251,7 +251,7 @@ export async function authRoutes(app: FastifyInstance) {
     return { message: 'Email confirmado.' };
   });
 
-  app.post('/email/verification', { config: { rateLimit: rule(limits.passwordForgot) } }, async (req, reply) => {
+  app.post('/email/verification', { config: { rateLimit: rule(limits.passwordForgot), readOnlyAllowed: true } }, async (req, reply) => {
     const auth = requireAuth(req);
     if (auth.emailVerified) return reply.status(200).send({ message: 'Tu email ya está confirmado.', delivery: null });
     const verificationToken = await app.db
@@ -267,7 +267,7 @@ export async function authRoutes(app: FastifyInstance) {
   // -------------------------------------------------------------------------
   // Cambio de empresa activa (usuarios en varias empresas)
   // -------------------------------------------------------------------------
-  app.post('/switch-company', async (req) => {
+  app.post('/switch-company', { config: { readOnlyAllowed: true } }, async (req) => {
     const auth = requireAuth(req);
     const body = parseWith(switchBody, req.body);
     const memberships = await listMemberships(app, auth.userId);
@@ -306,7 +306,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post(
     '/invitations/accept',
-    { config: { auth: 'optional', rateLimit: rule(limits.tokenRedeem) } },
+    { config: { auth: 'optional', rateLimit: rule(limits.tokenRedeem), readOnlyAllowed: true } },
     async (req, reply) => {
       const body = parseWith(invitationAcceptBody, req.body);
       const found = await findOpenInvitation(body.token);

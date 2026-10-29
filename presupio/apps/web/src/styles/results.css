@@ -3,7 +3,7 @@
  * Mismo lenguaje catastral: el medidor es un lindero que se rellena con la tinta del tramo.
  */
 
-/* Consumo de recuperaciones */
+/* Consumo de intentos de seguimiento */
 .usage-figure {
   display: flex;
   align-items: baseline;
@@ -118,4 +118,67 @@
   .month-nav__text {
     display: none;
   }
+}
+
+/* Planes: tarjetas comparables (tres columnas en escritorio, una en móvil). */
+.plan-grid {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+  gap: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  min-width: 0;
+}
+.plan-card[aria-current='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--accent-soft);
+}
+.plan-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.plan-card__head h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+.plan-card__price {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.plan-card__per {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.plan-card__limits {
+  margin: 0;
+  display: grid;
+  gap: var(--s-3);
+  flex: 1;
+}
+.plan-card__limits dt {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+.plan-card__limits dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+  color: var(--ink);
 }

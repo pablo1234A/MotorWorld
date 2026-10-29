@@ -101,10 +101,16 @@ export async function companyMetrics(trx: Trx, companyId: string, year: number, 
     .select([
       sql<string>`count(*) filter (where responded_at >= ${start} and responded_at < ${end})`.as('respondedAfterFollowUp'),
       sql<string>`count(*) filter (where responded_at >= ${start} and responded_at < ${end} and follow_up_source = 'rule')`.as('afterAutomatic'),
-      sql<string>`count(*) filter (where registered_at >= ${start} and registered_at < ${end} and status = 'counted')`.as('counted'),
-      sql<string>`count(*) filter (where registered_at >= ${start} and registered_at < ${end} and status = 'over_limit')`.as('overLimit'),
-      sql<string>`count(*) filter (where registered_at >= ${start} and registered_at < ${end} and status = 'no_active_plan')`.as('noActivePlan'),
+      // Recuperaciones registradas en el mes (métrica de resultados; no consumen el plan).
+      sql<string>`count(*) filter (where registered_at >= ${start} and registered_at < ${end} and status <> 'historical')`.as('recorded'),
     ])
+    .where('companyId', '=', companyId)
+    .executeTakeFirstOrThrow();
+
+  // Intentos de seguimiento contados en el mes (unidad de consumo del plan).
+  const attempts = await trx
+    .selectFrom('attemptEvents')
+    .select(sql<string>`count(*) filter (where status = 'counted' and sent_at >= ${start} and sent_at < ${end})`.as('counted'))
     .where('companyId', '=', companyId)
     .executeTakeFirstOrThrow();
 
@@ -159,11 +165,9 @@ export async function companyMetrics(trx: Trx, companyId: string, year: number, 
       acceptedAfterFollowUpAmountCents: n(quotes.acceptedAfterFollowUpAmountCents),
       amountSource: 'declared_by_company' as const,
     },
-    recoveries: {
-      counted: n(recoveries.counted),
-      overLimit: n(recoveries.overLimit),
-      noActivePlan: n(recoveries.noActivePlan),
-    },
+    // Consumo (intentos) y resultados (recuperaciones) por separado: no son lo mismo.
+    attempts: { counted: n(attempts.counted) },
+    recoveries: { recorded: n(recoveries.recorded) },
     responseRate: {
       quotesWithFollowUp: withFollowUp,
       respondedAfterFollowUp: respondedInCohort,
@@ -186,7 +190,7 @@ export async function metricsHistory(trx: Trx, companyId: string, year: number, 
   const to = monthRange(year, month, tz).end;
   const bucket = (column: string) => sql<string>`to_char(${sql.ref(column)} at time zone ${tz}, 'YYYY-MM')`;
 
-  const series = async (table: 'quotes' | 'followUps' | 'recoveryEvents', column: string, extra: (qb: any) => any) => {
+  const series = async (table: 'quotes' | 'followUps' | 'recoveryEvents' | 'attemptEvents', column: string, extra: (qb: any) => any) => {
     const rows = await extra(
       trx
         .selectFrom(table)
@@ -205,7 +209,7 @@ export async function metricsHistory(trx: Trx, companyId: string, year: number, 
   const automatic = await series('followUps', 'sent_at', (q) => q.where('status', '=', 'sent').where('source', '=', 'rule'));
   const responded = await series('recoveryEvents', 'responded_at', (q) => q);
   const accepted = await series('quotes', 'accepted_at', (q) => q.where('status', '=', 'accepted').where('reactivatedAt', 'is not', null));
-  const counted = await series('recoveryEvents', 'registered_at', (q) => q.where('status', '=', 'counted'));
+  const attempts = await series('attemptEvents', 'sent_at', (q) => q.where('status', '=', 'counted'));
 
   return Array.from({ length: HISTORY_MONTHS }, (_, i) => {
     const m = shiftMonth(first.year, first.month, i);
@@ -216,7 +220,7 @@ export async function metricsHistory(trx: Trx, companyId: string, year: number, 
       followUpsDone: (manual.get(key) ?? 0) + (automatic.get(key) ?? 0),
       respondedAfterFollowUp: responded.get(key) ?? 0,
       acceptedAfterFollowUp: accepted.get(key) ?? 0,
-      recoveriesCounted: counted.get(key) ?? 0,
+      attemptsCounted: attempts.get(key) ?? 0,
     };
   });
 }

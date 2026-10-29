@@ -137,7 +137,7 @@ export async function automationRoutes(app: FastifyInstance) {
   });
 
   /** Desactivación: detiene en el acto todos los envíos automáticos pendientes. */
-  app.post('/disable', { config: { permission: 'settings:update' } }, async (req) =>
+  app.post('/disable', { config: { permission: 'settings:update', readOnlyAllowed: true } }, async (req) =>
     inTenant(app, req, async (trx, auth) => {
       await trx
         .updateTable('companySettings')
@@ -204,7 +204,7 @@ export async function automationRoutes(app: FastifyInstance) {
   });
 
   /** Vista previa sin enviar nada: con datos de ejemplo o de un presupuesto real de la empresa. */
-  app.post('/templates/preview', { config: { permission: 'quotes:read' } }, async (req) => {
+  app.post('/templates/preview', { config: { permission: 'quotes:read', readOnlyAllowed: true } }, async (req) => {
     const body = parseWith(previewBody, req.body);
     validateTemplate(body);
     return inTenant(app, req, async (trx, auth) => {

@@ -146,6 +146,11 @@ async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
     // Las recuperaciones y los periodos de uso no se borran ni se reescriben desde la aplicación.
     await restrict('recovery_events', 'UPDATE, DELETE');
     await restrict('usage_periods', 'DELETE');
+    // Los intentos no se borran (sus cambios de estado los limita un disparador) y el historial
+    // de facturación solo lo escriben las funciones acotadas que aplican webhooks verificados.
+    await restrict('attempt_events', 'DELETE');
+    await restrict('billing_events', 'INSERT, UPDATE, DELETE');
+    await restrict('retention_notices', 'UPDATE, DELETE');
     // La tabla de migraciones no es asunto de la aplicación.
     await client.query(`REVOKE ALL ON ${schema}.schema_migrations FROM ${role}`);
     // Funciones auxiliares, incluidas las SECURITY DEFINER acotadas (revocadas a PUBLIC en su migración).

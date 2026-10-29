@@ -18,6 +18,8 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/public/unsubscribe/preview',
   'POST /api/v1/public/unsubscribe',
   'POST /api/v1/webhooks/mailgun',
+  // Webhook de Stripe: sin sesión, pero solo procesa eventos con firma válida (y 404 sin pagos activos).
+  'POST /api/v1/webhooks/stripe',
   // Fase 4: supervisión externa, protegida por token (404 sin él).
   'GET /api/v1/ops/status',
 ]);

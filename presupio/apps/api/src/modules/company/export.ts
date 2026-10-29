@@ -28,14 +28,14 @@ export async function exportCompanyData(trx: Trx, companyId: string) {
 
   return {
     format: 'presupio-export',
-    version: 1,
+    version: 2,
     exportedAt: new Date(),
     company,
     members,
     settings: await trx.selectFrom('companySettings').selectAll().where('companyId', '=', companyId).executeTakeFirst(),
     subscription: await trx
       .selectFrom('subscriptions')
-      .select(['plan', 'status', 'trialEndsAt', 'currentPeriodStart', 'currentPeriodEnd', 'cancelAtPeriodEnd'])
+      .select(['plan', 'status', 'trialEndsAt', 'currentPeriodStart', 'currentPeriodEnd', 'cancelAtPeriodEnd', 'pastDueSince', 'endedAt'])
       .where('companyId', '=', companyId)
       .executeTakeFirst(),
     contacts: take(await byCompany('contacts')),
@@ -46,6 +46,16 @@ export async function exportCompanyData(trx: Trx, companyId: string) {
     messageTemplates: take(await byCompany('messageTemplateVersions')),
     recoveries: take(await byCompany('recoveryEvents')),
     usagePeriods: take(await byCompany('usagePeriods')),
+    attempts: take(await byCompany('attemptEvents')),
+    // Historial de facturación: tipos de evento y resultados (sin datos de tarjeta).
+    billingEvents: take(
+      await trx
+        .selectFrom('billingEvents')
+        .select(['eventType', 'outcome', 'subscriptionStatus', 'plan', 'createdAt'])
+        .where('companyId', '=', companyId)
+        .limit(limit)
+        .execute(),
+    ),
     activity: take(await byCompany('activityLog')),
   };
 }

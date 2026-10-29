@@ -7,7 +7,7 @@ import type {
   FollowUpOutcome,
   FollowUpStatus,
   QuoteStatus,
-  RecoveryStatus,
+  AttemptEvent,
   Role,
   SubscriptionStatus,
 } from '../api/types';
@@ -123,11 +123,9 @@ export const DELIVERY_STATUS_LABEL: Record<DeliveryStatus, string> = {
   unknown: 'Resultado desconocido',
 };
 
-export const RECOVERY_STATUS_LABEL: Record<RecoveryStatus, string> = {
-  counted: 'Contabilizada',
-  over_limit: 'Por encima del límite',
-  no_active_plan: 'Sin plan activo',
-  historical: 'Anterior a la medición',
+export const ATTEMPT_STATUS_LABEL: Record<AttemptEvent['status'], string> = {
+  counted: 'Enviado (cuenta)',
+  reserved: 'Enviándose',
 };
 
 const CANCEL_REASON_LABEL: Record<string, string> = {
@@ -145,7 +143,8 @@ const CANCEL_REASON_LABEL: Record<string, string> = {
   quote_resent: 'cambió la fecha de envío del presupuesto',
   approval_expired: 'nadie lo aprobó a tiempo (72 h)',
   expired: 'no pudo enviarse a tiempo',
-  plan_limit_reached: 'se alcanzó el límite de recuperaciones del plan',
+  plan_limit_reached: 'se agotaron los intentos de seguimiento del plan',
+  no_active_plan: 'la cuenta no tiene un plan activo',
 };
 
 export function cancelReasonLabel(reason: string | null): string {
@@ -221,21 +220,30 @@ export function describeActivity(entry: ActivityEntry): string {
     case 'automation.test_email':
       return 'envió un email de prueba';
     case 'recovery.registered':
-      return m.status === 'counted'
-        ? `registró una recuperación${typeof m.used === 'number' && typeof m.limit === 'number' ? ` (${m.used} de ${m.limit} del plan)` : ''}`
-        : m.status === 'over_limit'
-          ? 'registró una recuperación por encima del límite del plan (no se descuenta)'
-          : 'registró una recuperación sin plan activo (no se descuenta)';
+      // Antes de la fase 5 las recuperaciones consumían el plan; desde entonces son solo un resultado.
+      return m.status === 'counted' && typeof m.used === 'number' && typeof m.limit === 'number'
+        ? `registró una recuperación (${m.used} de ${m.limit} del plan, regla anterior)`
+        : 'registró una recuperación (cliente que respondió tras un seguimiento)';
     case 'recovery.not_counted':
       return m.reason === 'response_dated_before_follow_up'
         ? 'registró una respuesta con fecha anterior al seguimiento: no cuenta como recuperación'
         : 'registró una respuesta más de 30 días después del último seguimiento: no cuenta como recuperación';
     case 'usage.limit_reached':
-      return 'alcanzó el límite de recuperaciones del plan: el envío automático queda en pausa hasta el próximo periodo';
+      return m.unit === 'attempts'
+        ? 'agotó los intentos de seguimiento del plan: el envío automático queda en pausa hasta el próximo periodo'
+        : 'alcanzó el límite del plan (regla anterior, por recuperaciones)';
     case 'company.exported':
       return 'exportó los datos de la empresa';
     case 'subscription.changed':
-      return 'cambió el plan de la cuenta';
+      return m.by === 'stripe' ? 'actualizó la suscripción con la confirmación de Stripe' : 'cambió el plan de la cuenta';
+    case 'subscription.checkout_started':
+      return 'abrió el pago de una suscripción';
+    case 'subscription.change_requested':
+      return 'pidió un cambio de plan (pendiente de confirmar el pago)';
+    case 'subscription.cancel_requested':
+      return 'pidió cancelar la suscripción al final del periodo';
+    case 'subscription.resume_requested':
+      return 'anuló la cancelación de la suscripción';
     case 'template.updated':
       return `editó la plantilla del email ${typeof m.step === 'number' ? m.step : ''}`.trimEnd();
     case 'follow_up.updated':

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { withTenant, type Db, type TenantContext, type Trx } from '../db/database.js';
 import type { MembershipRole } from '../db/types.js';
 import { can, type Permission } from '../domain/permissions.js';
+import { hasActiveAccess } from '../domain/plans.js';
 import { generateToken, hashToken, TOKEN_PATTERN } from '../lib/crypto.js';
 import { errors } from '../lib/errors.js';
 
@@ -22,6 +23,11 @@ declare module 'fastify' {
     /** Por defecto 'required': toda ruta es privada salvo que se declare lo contrario. */
     auth?: AuthMode;
     permission?: Permission;
+    /**
+     * Disponible aunque la cuenta no tenga plan activo (solo lectura). Por defecto, toda
+     * petición que modifica datos de la empresa exige un plan activo (decisión D1).
+     */
+    readOnlyAllowed?: boolean;
   }
   interface FastifyRequest {
     auth: AuthContext | null;
@@ -143,6 +149,16 @@ async function resolveSession(app: FastifyInstance, token: string): Promise<Auth
   };
 }
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/** ¿Tiene la empresa activa un plan con acceso en este momento? */
+export async function companyHasAccess(app: FastifyInstance, auth: AuthContext, now = new Date()): Promise<boolean> {
+  const sub = await withTenant(app.db, tenantOf(auth), (trx) =>
+    trx.selectFrom('subscriptions').select(['status', 'trialEndsAt', 'pastDueSince']).where('companyId', '=', auth.companyId).executeTakeFirst(),
+  );
+  return !!sub && hasActiveAccess(sub, now);
+}
+
 export async function authPlugin(app: FastifyInstance) {
   app.decorateRequest('auth', null);
 
@@ -160,5 +176,12 @@ export async function authPlugin(app: FastifyInstance) {
 
     const permission = req.routeOptions.config?.permission;
     if (permission && req.auth && !can(req.auth.role, permission)) throw errors.forbidden();
+
+    // Solo lectura sin plan activo: se comprueba en el servidor en cada escritura (no basta con
+    // ocultar botones). Consultar, exportar, registrar exclusiones, gestionar la propia cuenta y
+    // contratar un plan siguen disponibles (rutas marcadas con readOnlyAllowed).
+    if (req.auth && !SAFE_METHODS.has(req.method) && !req.routeOptions.config?.readOnlyAllowed) {
+      if (!(await companyHasAccess(app, req.auth))) throw errors.subscriptionRequired();
+    }
   });
 }

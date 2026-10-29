@@ -5,6 +5,7 @@ import {
   expectNoHorizontalOverflow,
   lastMailLink,
   loginViaUi,
+  endTrialNow,
   PASSWORD,
   registerViaUi,
   runWorkerOnce,
@@ -395,17 +396,23 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
 
 test('plan y resultados: consumo real, sin cambios de plan desde el navegador y exportación', async () => {
   const { page } = owner;
-  // La venta de «Reforma integral de cocina» (respuesta tras una llamada) es una recuperación.
+  // El plan consume INTENTOS: el único email automático enviado (prueba anterior) es 1 intento.
+  // La venta de «Reforma integral de cocina» (respuesta tras una llamada) es una recuperación,
+  // que es un resultado y no consume el plan.
   await page.goto('/configuracion/plan');
   await expect(page.getByRole('heading', { name: 'Consumo de este periodo' })).toBeVisible();
-  await expect(page.locator('.usage-figure')).toHaveText('1 de 25 recuperaciones');
-  await expect(page.getByRole('meter', { name: 'Recuperaciones usadas en este periodo' })).toHaveAttribute('aria-valuenow', '1');
-  const recoveries = page.getByRole('region', { name: 'Recuperaciones de este periodo (desplazable)' });
-  await expect(recoveries.getByRole('link', { name: 'Reforma integral de cocina' })).toBeVisible();
-  await expect(recoveries.getByText('Contabilizada')).toBeVisible();
-  // No hay ningún control para cambiar de plan.
+  await expect(page.locator('.usage-figure')).toHaveText('1 de 25 intentos de seguimiento');
+  await expect(page.getByRole('meter', { name: 'Intentos de seguimiento usados en este periodo' })).toHaveAttribute('aria-valuenow', '1');
+  const attempts = page.getByRole('region', { name: 'Intentos de este periodo (desplazable)' });
+  await expect(attempts.getByText('Enviado (cuenta)')).toHaveCount(1);
+  await expect(page.locator('.kv').filter({ hasText: 'Recuperaciones en el periodo' })).toContainText('1');
+  // Sin pagos activos en este entorno no hay ningún control para contratar o cambiar de plan.
+  await expect(page.getByText('La contratación en línea todavía no está activa')).toBeVisible();
   await expect(page.getByRole('button', { name: /cambiar|contratar|mejorar/i })).toHaveCount(0);
-  await expect(page.getByRole('row', { name: /Business.*127,99/ })).toContainText('300');
+  const business = page.getByRole('listitem', { name: 'Business' });
+  await expect(business).toContainText('127,99');
+  await expect(business).toContainText('Intentos de seguimiento al mes');
+  await expect(business).toContainText('Hasta 300');
 
   await page.goto('/resultados');
   await expect(page.getByRole('heading', { name: 'Resultados', level: 1 })).toBeVisible();
@@ -427,6 +434,35 @@ test('plan y resultados: consumo real, sin cambios de plan desde el navegador y 
   expect(exported.format).toBe('presupio-export');
   expect(exported.quotes.items.length).toBeGreaterThan(0);
   expect(JSON.stringify(exported)).not.toMatch(/argon2|passwordHash/);
+});
+
+test('fin de la prueba: la cuenta pasa a solo lectura, se avisa y se pueden exportar los datos', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const problems = watchConsole(page);
+  await registerViaUi(page, 'Reformas Caducada SL');
+  const me = await (await page.request.get('/api/v1/me')).json();
+  // La prueba termina ahora (como lo haría el paso del tiempo), con la herramienta de operación.
+  endTrialNow(me.company.id);
+
+  await page.goto('/');
+  await expect(page.getByText('Tu prueba gratuita ha terminado: la cuenta está en modo de solo lectura')).toBeVisible();
+  await expectAccessible(page, 'panel en solo lectura');
+  // El bloqueo lo aplica el servidor, no la interfaz.
+  const blocked = await page.request.post('/api/v1/quotes', { data: { title: 'Obra', contact: { fullName: 'Cliente', phone: '+34600111222' } } });
+  expect(blocked.status()).toBe(403);
+  expect((await blocked.json()).error.code).toBe('SUBSCRIPTION_REQUIRED');
+
+  await page.goto('/configuracion/plan');
+  await expect(page.getByText('La prueba terminó el')).toBeVisible();
+  await expect(page.getByText('Datos conservados hasta')).toBeVisible();
+  await page.goto('/configuracion');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar' }).click();
+  expect((await download).suggestedFilename()).toMatch(/^presupio-export-/);
+  // Los 403 esperados de la comprobación anterior no son errores de la interfaz.
+  expect(problems.filter((p) => !/403/.test(p))).toEqual([]);
+  await context.close();
 });
 
 test('enlaces internos: ninguno lleva a una página inexistente', async () => {

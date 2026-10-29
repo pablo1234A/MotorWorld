@@ -6,7 +6,15 @@ import { hasActiveAccess } from '../domain/plans.js';
 import { generateToken, hashToken } from '../lib/crypto.js';
 import { logActivity } from '../modules/activity/service.js';
 import { hasEmailExclusion } from '../modules/exclusions/service.js';
-import { automaticEmailsToday, loadPlanContext, recoveryLimitReached } from '../modules/usage/service.js';
+import {
+  attemptCapacity,
+  attemptLimitReached,
+  automaticEmailsToday,
+  confirmAttempt,
+  loadPlanContext,
+  releaseAttempt,
+  reserveAttempt,
+} from '../modules/usage/service.js';
 import type { FollowUpEmailProvider } from './providers.js';
 import { localDaysBetween, nextAllowedSlot, stepDueAt, type ContactRules } from './schedule.js';
 import { composeMessage, defaultTemplate, renderBody, type Sender, type TemplateValues } from './templates.js';
@@ -36,8 +44,8 @@ export interface CompanyContext {
   senderName: string | null;
   sender: Sender;
   hasAccess: boolean;
-  /** Se alcanzó el límite de recuperaciones del plan en el periodo vigente. */
-  recoveryLimitReached: boolean;
+  /** Se han contado todos los intentos del plan en el periodo vigente. */
+  attemptLimitReached: boolean;
   /** Límite técnico de emails automáticos por día (zona horaria de la empresa). */
   dailyEmailLimit: number;
 }
@@ -62,6 +70,7 @@ export async function loadCompanyContext(trx: Trx, companyId: string, now: Date)
       'c.timezone',
       'sub.status',
       'sub.trialEndsAt',
+      'sub.pastDueSince',
     ])
     .where('s.companyId', '=', companyId)
     .executeTakeFirstOrThrow();
@@ -79,7 +88,7 @@ export async function loadCompanyContext(trx: Trx, companyId: string, now: Date)
     replyTo: row.replyToEmail,
     senderName: row.senderName,
     sender: { companyName: row.name, legalName: row.legalName, taxId: row.taxId },
-    hasAccess: hasActiveAccess({ status: row.status, trialEndsAt: row.trialEndsAt }, now),
+    hasAccess: hasActiveAccess({ status: row.status, trialEndsAt: row.trialEndsAt, pastDueSince: row.pastDueSince }, now),
     ...(await planLimits(trx, companyId, now)),
   };
 }
@@ -87,7 +96,7 @@ export async function loadCompanyContext(trx: Trx, companyId: string, now: Date)
 async function planLimits(trx: Trx, companyId: string, now: Date) {
   const plan = await loadPlanContext(trx, companyId, now);
   return {
-    recoveryLimitReached: await recoveryLimitReached(trx, plan, now),
+    attemptLimitReached: await attemptLimitReached(trx, plan, now),
     dailyEmailLimit: plan.plan?.dailyAutomaticEmailLimit ?? 0,
   };
 }
@@ -155,9 +164,11 @@ export async function baseEligibility(
 ): Promise<Verdict> {
   if (!ctx.automationEnabled) return { ok: false, action: 'cancel', reason: 'automation_disabled' };
   if (!provider.configured) return { ok: false, action: 'wait', reason: 'provider_not_configured' };
-  if (!ctx.hasAccess) return { ok: false, action: 'wait', reason: 'no_active_plan' };
-  // Límite de recuperaciones del plan alcanzado: no sale nada más hasta el periodo siguiente.
-  if (ctx.recoveryLimitReached) return { ok: false, action: 'cancel', reason: 'plan_limit_reached' };
+  // Sin plan activo (fin de la prueba, impago, cancelación): la cuenta queda en solo lectura y
+  // lo programado se cancela; nada sale hasta que vuelva a haber un plan activo.
+  if (!ctx.hasAccess) return { ok: false, action: 'cancel', reason: 'no_active_plan' };
+  // Intentos del plan agotados: no sale nada más hasta el periodo siguiente.
+  if (ctx.attemptLimitReached) return { ok: false, action: 'cancel', reason: 'plan_limit_reached' };
   if (quote.archivedAt) return { ok: false, action: 'cancel', reason: 'quote_archived' };
   if (quote.status !== 'sent' || !quote.sentAt) return { ok: false, action: 'cancel', reason: `quote_${quote.status}` };
   if (!quote.autoFollowUpEnabled) return { ok: false, action: 'cancel', reason: 'quote_auto_disabled' };
@@ -182,9 +193,14 @@ export async function planCompany(deps: EngineDeps, companyId: string): Promise<
   const stats: PlanStats = { scheduled: 0, rescheduled: 0, cancelled: 0 };
   await withTenant(deps.db, SYSTEM(companyId), async (trx) => {
     const ctx = await loadCompanyContext(trx, companyId, now);
-    if (!ctx.automationEnabled || !deps.provider.configured || !ctx.hasAccess) return;
-    if (ctx.recoveryLimitReached) {
-      // Límite del plan alcanzado: se cancelan los emails automáticos pendientes y no se
+    if (!ctx.automationEnabled || !deps.provider.configured) return;
+    if (!ctx.hasAccess) {
+      // Sin plan activo: se detienen los envíos programados (decisión D1, solo lectura).
+      stats.cancelled += await cancelPendingRuleSteps(trx, companyId, 'no_active_plan');
+      return;
+    }
+    if (ctx.attemptLimitReached) {
+      // Intentos del plan agotados: se cancelan los emails automáticos pendientes y no se
       // programan nuevos hasta el periodo siguiente (docs/limites-y-metricas.md).
       stats.cancelled += await cancelPendingRuleSteps(trx, companyId, 'plan_limit_reached');
       return;
@@ -382,9 +398,14 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
     await sql`select pg_advisory_xact_lock(hashtextextended(${`dispatch:${companyId}`}, 0))`.execute(trx);
     const ctx = await loadCompanyContext(trx, companyId, now);
     const sentToday = await automaticEmailsToday(trx, companyId, ctx.rules.timezone, now);
-    const available = Math.max(ctx.dailyEmailLimit - sentToday, 0);
+    // Dos límites independientes: el técnico diario de emails y los intentos del periodo
+    // (descontando los que otro ciclo tiene en curso). Si no hay plan activo no se descuenta
+    // nada aquí: los pasos vencidos se cancelan abajo (no_active_plan).
+    const planCtx = await loadPlanContext(trx, companyId, now);
+    const capacity = await attemptCapacity(trx, planCtx, now);
+    const available = Math.max(Math.min(ctx.dailyEmailLimit - sentToday, ctx.hasAccess ? capacity.available : 25), 0);
     if (available === 0) {
-      // Límite técnico diario alcanzado: lo vencido espera al día siguiente.
+      // Límite diario o intentos en curso que agotan el cupo: lo vencido espera.
       stats.waiting += Number(
         (
           await trx
@@ -444,6 +465,12 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
       const webUnsubscribeUrl = `${deps.config.appWebUrl}/baja?token=${unsubscribeToken}`;
       const message = composeMessage(rendered.subject, rendered.body, ctx.sender, webUnsubscribeUrl);
       const attempt = f.attemptCount + 1;
+
+      // Se reserva el intento del plan ANTES de enviar (dentro del bloqueo de la empresa).
+      if (!capacity.period || !(await reserveAttempt(trx, companyId, capacity.period, { id: f.id, quoteId: f.quoteId }, now))) {
+        stats.waiting++;
+        continue;
+      }
 
       const delivery = await trx
         .insertInto('messageDeliveries')
@@ -515,6 +542,16 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
           .where('id', '=', c.deliveryId)
           .execute();
         await trx.updateTable('followUps').set({ status: 'sent', sentAt: at, failureReason: null }).where('companyId', '=', companyId).where('id', '=', c.followUpId).execute();
+        // El proveedor aceptó el email: el intento cuenta (una vez por seguimiento).
+        const period = await confirmAttempt(trx, companyId, c.followUpId, c.deliveryId, at);
+        if (period && period.attemptsCounted === period.attemptLimit) {
+          await logActivity(trx, SYSTEM(companyId), {
+            action: 'usage.limit_reached',
+            entityType: 'company',
+            entityId: companyId,
+            metadata: { unit: 'attempts', plan: period.plan, limit: period.attemptLimit, periodEnd: period.periodEnd },
+          });
+        }
         await trx
           .updateTable('quotes')
           .set((eb) => ({ lastFollowUpAt: eb.fn('greatest', [eb.ref('lastFollowUpAt'), eb.val(at)]) }))
@@ -538,6 +575,8 @@ export async function dispatchCompany(deps: EngineDeps, companyId: string): Prom
         .where('companyId', '=', companyId)
         .where('id', '=', c.deliveryId)
         .execute();
+      // El envío no se realizó: el intento no cuenta (un reintento lo vuelve a reservar).
+      await releaseAttempt(trx, companyId, c.followUpId, 'released', result.code, c.deliveryId, at);
       if (result.retryable && c.attempt < automation.maxAttempts) {
         const wait = automation.retryBackoffMs[Math.min(c.attempt - 1, automation.retryBackoffMs.length - 1)]!;
         await trx
@@ -622,9 +661,11 @@ export async function recoverStuckDeliveries(deps: EngineDeps): Promise<number> 
         .where('companyId', '=', companyId)
         .where('status', '=', 'sending')
         .where('createdAt', '<', cutoff)
-        .returning(['followUpId', 'quoteId'])
+        .returning(['id', 'followUpId', 'quoteId'])
         .execute();
       for (const s of stuck) {
+        // Resultado desconocido: no se cobra (no se puede verificar) y tampoco se reintenta.
+        await releaseAttempt(trx, companyId, s.followUpId, 'unverified', 'unknown_outcome', s.id, now);
         await trx
           .updateTable('followUps')
           .set({ status: 'failed', failureReason: 'unknown_outcome' })

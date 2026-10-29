@@ -58,15 +58,15 @@ function Ledger() {
   );
 }
 
-/** Aviso del límite de recuperaciones del plan (desde el 80 %). */
+/** Aviso del límite de intentos de seguimiento del plan (desde el 80 %). */
 function UsageNotice() {
   const usage = useUsage();
-  const r = usage.data?.usage.recoveries;
+  const r = usage.data?.usage.attempts;
   if (!r || (r.level !== 'warning' && r.level !== 'reached')) return null;
   return (
     <Alert
       tone="warning"
-      title={r.level === 'reached' ? 'Has alcanzado el límite de recuperaciones de tu plan' : `Llevas ${r.used} de ${r.limit} recuperaciones este periodo`}
+      title={r.level === 'reached' ? 'Has usado todos los intentos de seguimiento de tu plan' : `Llevas ${r.used} de ${r.limit} intentos de seguimiento este periodo`}
       action={<Link to="/configuracion/plan">Ver consumo</Link>}
     >
       {r.level === 'reached'

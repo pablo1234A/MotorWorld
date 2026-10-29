@@ -7,6 +7,8 @@ import {
   recoverStuckDeliveries,
   type EngineDeps,
 } from './engine.js';
+import type { Mailer } from '../mail/mailer.js';
+import { sendRetentionNotices } from '../modules/billing/retention.js';
 
 // Claves de bloqueo consultivo de PostgreSQL (una por trabajo exclusivo).
 const LOCKS = { planner: 72_001, retention: 72_002, recovery: 72_003 } as const;
@@ -57,7 +59,7 @@ export interface CycleResult {
  * Un ciclo completo del motor. Es seguro ejecutarlo varias veces a la vez (varios procesos o
  * reinicios): la planificación es exclusiva y el envío reclama cada paso con SKIP LOCKED.
  */
-export async function runCycle(deps: EngineDeps, options: { retention?: boolean; logger?: Logger } = {}): Promise<CycleResult> {
+export async function runCycle(deps: EngineDeps, options: { retention?: boolean; logger?: Logger; mailer?: Mailer } = {}): Promise<CycleResult> {
   const result: CycleResult = { recovered: 0, planned: {}, dispatched: {} };
 
   result.recovered = await exclusive(deps, LOCKS.recovery, async () => (await recordRun(deps, 'recovery', async () => ({ recovered: await recoverStuckDeliveries(deps) })))!.recovered);
@@ -99,7 +101,14 @@ export async function runCycle(deps: EngineDeps, options: { retention?: boolean;
   result.dispatched = dispatched;
 
   if (options.retention) {
-    result.retention = await exclusive(deps, LOCKS.retention, async () => (await recordRun(deps, 'retention', () => applyRetention(deps)))!);
+    result.retention = await exclusive(deps, LOCKS.retention, async () =>
+      (await recordRun(deps, 'retention', async () => {
+        const purged = await applyRetention(deps);
+        // Avisos de conservación de datos a cuentas sin plan activo (no borra nada).
+        const notices = options.mailer ? await sendRetentionNotices({ db: deps.db, config: deps.config, mailer: options.mailer, now: deps.now }) : null;
+        return { ...purged, ...(notices ? { retentionNoticesSent: notices.sent, retentionNoticesNotConfigured: notices.notConfigured, retentionPastDeadline: notices.pastDeadline } : {}) };
+      }))!,
+    );
   }
   return result;
 }

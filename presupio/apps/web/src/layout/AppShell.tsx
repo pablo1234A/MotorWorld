@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useSummary } from '../api/queries';
 import { useLogout, useSession, useSwitchCompany } from '../auth/session';
+import { AccountStatusBanner } from '../components/AccountStatusBanner';
 import { Brand } from '../components/Logo';
 import { Menu } from '../components/Menu';
 import { useToast } from '../components/Toasts';
@@ -177,6 +178,7 @@ export function AppShell() {
       </header>
 
       <main id="contenido" className="main" ref={mainRef} tabIndex={-1}>
+        <AccountStatusBanner />
         <Outlet />
       </main>
 

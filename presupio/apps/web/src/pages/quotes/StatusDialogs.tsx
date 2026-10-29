@@ -44,14 +44,14 @@ export function StatusDialog({ quote, target, correction, onClose }: Props) {
       api<{
         reactivated: boolean;
         cancelledFollowUps: number;
-        recovery: { status: 'counted' | 'over_limit' | 'no_active_plan'; used: number | null; limit: number | null } | null;
+        recovery: { status: 'recorded' } | null;
         recoveryNotCounted: 'response_dated_before_follow_up' | 'follow_up_outside_window' | null;
       }>(`/quotes/${quote.id}/status`, { method: 'POST', body }),
     onSuccess: (res) => {
       refresh(quote.contact.id);
       const parts = [`Estado actualizado: ${QUOTE_STATUS_LABEL[target!].toLowerCase()}.`];
-      if (res.recovery?.status === 'counted') parts.push(`Recuperación registrada (${res.recovery.used} de ${res.recovery.limit} este periodo).`);
-      else if (res.recovery?.status === 'over_limit') parts.push('Recuperación registrada; el plan ya había alcanzado su límite, así que no se descuenta.');
+      // Las recuperaciones son un resultado: no consumen el plan (que cuenta intentos de envío).
+      if (res.recovery) parts.push('Recuperación registrada: el cliente respondió tras un seguimiento.');
       else if (res.reactivated) parts.push('Oportunidad reactivada tras el seguimiento.');
       if (res.recoveryNotCounted === 'response_dated_before_follow_up')
         parts.push('No cuenta como recuperación: la fecha de respuesta es anterior al seguimiento registrado. Queda anotado en el historial.');
