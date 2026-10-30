@@ -91,6 +91,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run db:bootstrap
+      # Cómo resuelve «localhost» el ejecutor (diagnóstico: las E2E usan 127.0.0.1 a propósito).
+      - run: getent ahosts localhost || true
       - run: npx playwright install --with-deps ${{ matrix.browser }}
         working-directory: presupio/apps/web
       - run: npx playwright test --project=${{ matrix.browser == 'msedge' && 'edge' || matrix.browser }}

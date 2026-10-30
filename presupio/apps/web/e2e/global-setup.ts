@@ -13,7 +13,10 @@ const SINK_PID_FILE = path.join(E2E_DIR, '.output', 'sink.pid');
 export const SINK_FILE = path.join(E2E_DIR, '.output', 'mailgun-sink.jsonl');
 const API_PORT = 3100;
 const SINK_PORT = 3101;
-const WEB_ORIGIN = 'http://localhost:4174';
+// 127.0.0.1 y no «localhost»: Firefox resuelve «localhost» por su cuenta (::1 y 127.0.0.1) y el
+// servidor escucha en una sola dirección. En la CI, la primera navegación de un contexto nuevo
+// contra localhost:4174 se quedó colgada dos veces; contra 127.0.0.1:4175, nunca.
+const WEB_ORIGIN = 'http://127.0.0.1:4174';
 // Segunda API con pagos activados contra el simulador local de Stripe (e2e/fake-stripe.mjs).
 export const BILLING_API_PORT = 3102;
 export const FAKE_STRIPE_PORT = 3103;

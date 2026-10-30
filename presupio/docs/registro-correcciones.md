@@ -442,3 +442,19 @@ Resultado: **469/469** comprobaciones en Chromium (dos ejecuciones seguidas) y *
   - registros de la API en la CI cuando algo falla.
 
   Así, si el bloqueo de Firefox se repite, quedará localizado.
+
+## Auditoría final · E2E en Firefox: navegación colgada contra `localhost`
+
+- **Síntoma:** en 2 de 5 ejecuciones de Firefox en la CI (21 y 23), la primera navegación de un contexto de navegador nuevo contra `http://localhost:4174` no terminó de cargar.
+  - En la ejecución 21 se agotaron los 6 min de la prueba.
+  - En la 23, el nuevo límite de 30 s la cortó.
+- **Localización:** gracias al diagnóstico añadido, las dos veces fue en un contexto nuevo y contra `localhost`. La batería de pagos crea contextos nuevos contra `127.0.0.1:4175` en cada prueba y nunca falló. Chromium, WebKit y Edge nunca fallaron.
+- **Causa probable, no demostrable aquí** (no hay Firefox en este entorno):
+  - `localhost` tiene dos direcciones (`::1` y `127.0.0.1`) y Firefox lo resuelve por su cuenta;
+  - el servidor de pruebas escucha en una sola dirección.
+- **Corrección:**
+  - la configuración de las E2E usa `127.0.0.1` en lugar de `localhost`, igual que la batería que nunca falló;
+  - la CI imprime cómo resuelve `localhost` el ejecutor.
+
+  No afecta a la aplicación: en producción, nginx atiende al dominio real.
+- **Verificación:** ejecuciones consecutivas de la CI en verde en los cuatro navegadores (ver `AUDITORIA-PRODUCCION.md` §7.1).

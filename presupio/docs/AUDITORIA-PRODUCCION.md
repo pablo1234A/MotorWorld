@@ -192,8 +192,13 @@ Batería E2E completa, la misma en los cuatro motores: registro, presupuestos, s
    - La causa exacta **no se ha podido determinar**: Firefox no se puede descargar en este entorno y los artefactos de la CI tampoco.
    - Al revisar el servidor aparecieron **cuatro defectos reales**, que se corrigieron con pruebas que fallaban antes (§9, puntos 12–15).
    - Desde entonces la batería pasa. Además, una navegación colgada falla a los 30 s indicando la URL y la CI imprime los registros de la API. Si se repite, quedará localizada.
+3. **Ejecución 23:** se repitió, y gracias al diagnóstico quedó localizado. Las dos veces fue **la primera navegación de un contexto de navegador nuevo contra `localhost:4174`**.
+   - El servidor de la batería de pagos (`127.0.0.1:4175`) también crea contextos nuevos en cada prueba y **nunca** se ha colgado.
+   - `localhost` tiene dos direcciones (`::1` y `127.0.0.1`), Firefox lo resuelve por su cuenta y el servidor escucha en una sola.
+   - **Cambio, solo en la configuración de las pruebas:** las E2E usan `127.0.0.1`, como la batería de pagos.
+   - En producción no aplica: nginx atiende al nombre de dominio real y reenvía a `127.0.0.1:3000`.
 
-Es un riesgo residual de las pruebas, no un fallo conocido de la aplicación.
+_Pendiente de verificar con ejecuciones de la CI consecutivas en verde (se completa abajo)._
 
 **Lo que no puede probarse sin hardware de Apple:** Safari de macOS y Safari de iOS **en dispositivos reales**. WebKitGTK y el WebKit de Playwright usan el mismo motor, pero no la misma integración con el sistema (teclado virtual, barra de direcciones, gestos). Queda como **pendiente externo**: 15 minutos con un iPhone y un Mac reales antes de abrir (§10).
 
@@ -252,6 +257,4 @@ Cada uno tiene su entrada en `registro-correcciones.md` y su prueba automática 
 - En la CI hubo un bloqueo de una navegación en Firefox cuya causa no se pudo aislar. No se ha repetido tras corregir el servidor web, y queda instrumentado (§7.1).
 - El contador de límites por IP es el 65 % del trabajo de PostgreSQL bajo carga. No limita el lanzamiento; si hiciera falta, la salida es Redis.
 
-**Veredicto:** no queda ningún problema técnico abierto que se pueda resolver en este entorno. Lo pendiente necesita servicios, cuentas, hardware o decisiones externas, y está enumerado arriba con su procedimiento.
-
-**Presupio está técnicamente listo para contratar hosting.**
+**Veredicto:** _pendiente_. La ejecución 23 falló en Firefox (§7.1, punto 3). Se emite cuando la CI confirme la corrección.

@@ -23,7 +23,7 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   globalTeardown: './e2e/global-teardown.ts',
   use: {
-    baseURL: `http://localhost:${E2E_WEB_PORT}`,
+    baseURL: `http://127.0.0.1:${E2E_WEB_PORT}`, // no «localhost»: ver e2e/global-setup.ts
     locale: 'es-ES',
     timezoneId: 'Europe/Madrid',
     trace: 'retain-on-failure',
@@ -43,10 +43,10 @@ export default defineConfig({
     // Servidor de producción incluido (server/serve.mjs): las pruebas recorren la aplicación
     // con las mismas cabeceras de seguridad que en producción.
     command: `npm run build && node server/serve.mjs`,
-    url: `http://localhost:${E2E_WEB_PORT}/iniciar-sesion`,
+    url: `http://127.0.0.1:${E2E_WEB_PORT}/iniciar-sesion`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { API_URL: `http://127.0.0.1:${E2E_API_PORT}`, PORT: String(E2E_WEB_PORT), HOST: 'localhost' },
+    env: { API_URL: `http://127.0.0.1:${E2E_API_PORT}`, PORT: String(E2E_WEB_PORT), HOST: '127.0.0.1' },
   }, {
     // Misma compilación, frente a la API con pagos de prueba (simulador local de Stripe).
     command: 'node server/serve.mjs',
