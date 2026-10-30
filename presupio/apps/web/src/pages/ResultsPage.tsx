@@ -30,7 +30,7 @@ interface Cell {
 
 function Ledger({ title, cells, id }: { title: string; cells: Cell[]; id: string }) {
   return (
-    <section aria-labelledby={id} className="stack">
+    <section aria-labelledby={id} className="stack ledger-host">
       <h2 id={id} className="section-heading">
         {title}
       </h2>

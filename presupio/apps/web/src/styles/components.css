@@ -627,7 +627,7 @@ a.row:hover {
   width: 1.3rem;
   height: 1.3rem;
 }
-.empty h3 {
+.empty__title {
   font-size: var(--text-lg);
 }
 .empty p {
@@ -1072,4 +1072,29 @@ a.row:hover {
 
 .table-wrap:focus-visible {
   outline-offset: -2px;
+}
+
+/* Pantallas táctiles: los enlaces sueltos y las casillas tienen al menos 24 px de alto para el
+   dedo (WCAG 2.2, 2.5.8). El relleno se compensa con margen negativo: el diseño no se mueve. */
+@media (pointer: coarse) {
+  .auth__switch a,
+  a.small,
+  .ledger dt a,
+  .fu__title a,
+  dd > a[href^='mailto:'] {
+    display: inline-block;
+  }
+  .breadcrumb a,
+  .auth__switch a,
+  a.small,
+  .ledger dt a,
+  .ledger-section__more a,
+  .fu__title a,
+  dd > a[href^='mailto:'] {
+    padding-block: 0.3125rem;
+    margin-block: -0.3125rem;
+  }
+  .check {
+    min-height: 1.5rem;
+  }
 }

@@ -186,7 +186,7 @@ export function AppShell() {
         {[...NAV.filter((n) => !('desktopOnly' in n)), { to: '/configuracion', label: 'Ajustes', icon: Settings }].map(({ to, label, icon: Icon, ...rest }) => (
           <NavLink key={to} to={to} end={'end' in rest}>
             <Icon aria-hidden="true" />
-            {label}
+            <span className="bottomnav__label">{label}</span>
           </NavLink>
         ))}
       </nav>

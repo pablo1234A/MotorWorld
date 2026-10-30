@@ -114,6 +114,10 @@
   .month-nav__label {
     font-size: var(--text-md);
     white-space: nowrap;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: var(--s-1);
+    min-width: 0;
   }
   .month-nav__text {
     display: none;

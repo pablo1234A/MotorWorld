@@ -202,19 +202,22 @@ export function EmptyState({
   children,
   action,
   center = false,
+  heading: Heading = 'h3',
 }: {
   icon: LucideIcon;
   title: string;
   children?: ReactNode;
   action?: ReactNode;
   center?: boolean;
+  /** h1 cuando el estado vacío es toda la página (404, error). */
+  heading?: 'h1' | 'h3';
 }) {
   return (
     <div className={`empty ${center ? 'empty--center' : ''}`}>
       <span className="empty__icon" aria-hidden="true">
         <Icon />
       </span>
-      <h3>{title}</h3>
+      <Heading className="empty__title">{title}</Heading>
       {children && <p>{children}</p>}
       {action}
     </div>

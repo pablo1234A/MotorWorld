@@ -3,12 +3,15 @@ const DAY_MS = 86_400_000;
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 
+/** Importes redondos sin decimales ("7.450 €"); con céntimos, siempre dos ("7.450,50 €", nunca "7.450,5 €"). */
 export function formatMoney(cents: number | null | undefined, currency = 'EUR'): string {
   if (cents === null || cents === undefined) return '—';
-  let f = currencyFormatters.get(currency);
+  const digits = cents % 100 === 0 ? 0 : 2;
+  const key = `${currency}:${digits}`;
+  let f = currencyFormatters.get(key);
   if (!f) {
-    f = new Intl.NumberFormat(LOCALE, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 2, useGrouping: 'always' });
-    currencyFormatters.set(currency, f);
+    f = new Intl.NumberFormat(LOCALE, { style: 'currency', currency, minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: 'always' });
+    currencyFormatters.set(key, f);
   }
   return f.format(cents / 100);
 }

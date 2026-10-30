@@ -104,7 +104,9 @@
   z-index: 30;
   inset: auto 0 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* Ninguna columna baja del ancho de su etiqueta y el sobrante se reparte: con 1fr a secas,
+     «Presupuestos» y «Seguimientos» se pegaban a 320 px. Las cinco caben desde 280 px. */
+  grid-template-columns: repeat(5, minmax(min-content, 1fr));
   height: calc(var(--bottomnav-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
@@ -123,6 +125,16 @@
 .bottomnav a svg {
   width: 1.3rem;
   height: 1.3rem;
+}
+.bottomnav__label {
+  padding-inline: 3px;
+  white-space: nowrap;
+}
+@media (max-width: 22.5rem) {
+  .bottomnav a {
+    font-size: 0.625rem;
+    letter-spacing: -0.01em;
+  }
 }
 .bottomnav a[aria-current='page'] {
   color: var(--accent);

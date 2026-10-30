@@ -54,6 +54,14 @@ describe('importes en formato español', () => {
     expect(formatMoney(6_700_000)).toMatch(/^67\.000\s€$/);
     expect(formatMoney(null)).toBe('—');
   });
+
+  it('con céntimos muestra siempre dos decimales', () => {
+    // Antes: "7.450,5 €" (detectado en la auditoría con WebKit).
+    expect(formatMoney(745_050)).toMatch(/^7\.450,50\s€$/);
+    expect(formatMoney(745_005)).toMatch(/^7\.450,05\s€$/);
+    expect(formatMoney(5)).toMatch(/^0,05\s€$/);
+    expect(formatMoney(745_000)).toMatch(/^7\.450\s€$/);
+  });
 });
 
 describe('fechas', () => {

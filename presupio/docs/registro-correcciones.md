@@ -366,3 +366,55 @@ Se comprobó el informe anterior contra el código; el detalle está en `docs/PL
   - copia de una base migrada con 50 presupuestos y `pg_stat_statements`;
   - restauración en una base vacía, migración, recuento, RLS activo, y rechazo de restaurar encima de una base con datos.
   - Falla con el `restore.sh` anterior y pasa con el nuevo.
+
+## Auditoría final · Importes con céntimos mostrados con un solo decimal
+
+- **Causa:** `formatMoney` usaba `minimumFractionDigits: 0` para no mostrar «,00» en importes redondos. Con céntimos terminados en cero quitaba también ese cero: 7.450,50 € se mostraba «7.450,5 €».
+- **Demostración:** recorrido real en WebKit (motor de Safari): la ficha del presupuesto creado con «7.450,50» mostraba «7.450,5 €». La propia prueba E2E esperaba el formato incorrecto («18.500,5 €»).
+- **Corrección:** los importes redondos se muestran sin decimales («7.450 €»). Con céntimos, siempre dos («7.450,50 €»).
+- **Prueba:**
+  - `lib.test.ts › con céntimos muestra siempre dos decimales`;
+  - E2E corregida a «18.500,50 €»;
+  - WebKit: «7.450,50 €».
+
+## Auditoría final · Diseño adaptable: revisión en 8 dispositivos y en WebKit
+
+Revisión automática de las 18 pantallas en Chromium con emulación de 8 dispositivos: Android de 320 px, Pixel 7, iPhone SE, iPhone 13, iPad vertical y horizontal, y escritorio de 1024 y 1440 px. Se comprobó lo siguiente:
+
+- desborde horizontal;
+- título y `h1`;
+- huecos en las cifras;
+- objetivos táctiles;
+- letra de los campos (zoom de iOS);
+- barra inferior;
+- navegación, menú de cuenta y cierre de sesión;
+- errores de JavaScript.
+
+Problemas encontrados y corregidos:
+
+- **`/resultados` desbordaba 20 px a 320–375 px.**
+  - Causa: el selector de mes (`nowrap`) y la etiqueta «En curso» ensanchaban la columna.
+  - Corrección: la etiqueta baja de línea.
+- **Las cifras dejaban celdas huérfanas** (en tableta, 4 + 1 con una fila casi vacía; en móvil, 2 + 2 + 1).
+  - Corrección: reparto por el ancho real del bloque (container queries), con `auto-fit` como respaldo:
+    - en móvil, 2 columnas y la última impar a lo ancho;
+    - en tamaños intermedios, 3 + 2 o 2 + 2;
+    - en pantallas anchas, una sola fila.
+- **La página 404 y la de error no tenían `h1`** (eran `h3`). `EmptyState` admite ahora `heading="h1"`.
+- **La barra inferior pegaba «Presupuestos» y «Seguimientos» a 320 px** (1 px de separación).
+  - Causa: con `1fr` a secas, las etiquetas largas ensanchaban su columna.
+  - Corrección: `minmax(min-content, 1fr)`, relleno lateral en la etiqueta y letra de 10 px por debajo de 360 px.
+  - Ahora queda como mínimo a 6 px. Las cinco caben desde 280 px.
+- **Enlaces sueltos de 15–20 px de alto en pantallas táctiles** (miga de pan, «¿Has olvidado tu contraseña?», títulos de las cifras, seguimientos, emails) y la casilla «Solo los asignados a mí».
+  - Corrección: con `pointer: coarse`, al menos 24 px (WCAG 2.2, 2.5.8), con relleno compensado. El diseño no se mueve.
+
+Resultado: **469/469** comprobaciones en Chromium (dos ejecuciones seguidas) y **23/23** en WebKit 2.52 (MiniBrowser):
+
+- registro y creación de un presupuesto;
+- formato de importes;
+- 6 pantallas de escritorio;
+- móvil estrecho y tableta;
+- menú de cuenta y cierre de sesión;
+- sin CSP ni errores de JavaScript.
+
+Única excepción aceptada: en el plano de la cartera, las parcelas de importes pequeños pueden medir menos de 24 px. Su tamaño es el dato, y los mismos presupuestos están en la lista.

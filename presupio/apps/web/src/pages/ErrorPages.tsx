@@ -9,6 +9,7 @@ export function NotFoundPage() {
     <div className="page error-page">
       <EmptyState
         center
+        heading="h1"
         icon={Compass}
         title="Esta página no existe"
         action={
@@ -33,6 +34,7 @@ export function RouteErrorPage() {
     <div className="page error-page" style={{ padding: '3rem 1rem' }}>
       <EmptyState
         center
+        heading="h1"
         icon={TriangleAlert}
         title="Algo ha fallado al mostrar esta pantalla"
         action={

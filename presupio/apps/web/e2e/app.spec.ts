@@ -64,7 +64,7 @@ test('presupuesto: alta, seguimiento, respuesta (reactivada) y venta con evidenc
   await expect(page.getByRole('heading', { name: 'Reforma integral de cocina' })).toBeVisible();
   firstQuoteUrl = new URL(page.url()).pathname;
   await expect(page.getByText('Presupuesto registrado.')).toBeVisible();
-  await expect(page.locator('.kv').first()).toContainText('18.500,5 €');
+  await expect(page.locator('.kv').first()).toContainText('18.500,50 €');
   await expect(page.locator('.pill--sent').first()).toHaveText('Pendiente de respuesta');
 
   // Registrar un contacto realizado.

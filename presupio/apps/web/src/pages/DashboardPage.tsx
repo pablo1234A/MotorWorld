@@ -37,7 +37,7 @@ function Ledger() {
     },
   ] as Array<{ label: string; value: string | null; note: string; to?: string }>;
   return (
-    <section aria-labelledby="ledger-title" className="ledger-section">
+    <section aria-labelledby="ledger-title" className="ledger-section ledger-host">
       <h2 id="ledger-title" className="visually-hidden">
         Estado de la cartera
       </h2>

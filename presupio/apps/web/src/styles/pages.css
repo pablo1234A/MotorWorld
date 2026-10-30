@@ -48,6 +48,41 @@
   color: var(--ink-3);
 }
 
+/* Reparto sin celdas huérfanas (3, 4 o 5 cifras) según el ancho real disponible, que depende de
+   si hay barra lateral: 2 columnas (la última impar ocupa la fila), 3 + 2 / 2 + 2 en medio y una
+   sola fila cuando caben. Sin container queries se queda el auto-fit de arriba. */
+.ledger-host {
+  container-type: inline-size;
+}
+@container (max-width: 35.99rem) {
+  .ledger {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ledger__cell:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+@container (min-width: 36rem) and (max-width: 59.99rem) {
+  .ledger {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .ledger__cell {
+    grid-column: span 2;
+  }
+  .ledger__cell:first-child:nth-last-child(4),
+  .ledger__cell:first-child:nth-last-child(4) ~ .ledger__cell,
+  .ledger__cell:first-child:nth-last-child(5) ~ .ledger__cell:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+}
+@container (min-width: 60rem) {
+  .ledger {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+}
+
 /* ==========================================================================
    Plano de la cartera pendiente
    ========================================================================== */
