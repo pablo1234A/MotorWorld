@@ -172,11 +172,28 @@ Revisado y correcto:
 | **iPhone** (SE de 320 px, 13 de 390 px) | Emulación de tamaño y táctil en Chromium + **WebKit real** a 447 px (ancho mínimo de la ventana de MiniBrowser) | Incluido arriba + WebKit **23/23** |
 | **iPad** (vertical y horizontal) | Emulación en Chromium + WebKit real a 820 px | Incluido arriba + WebKit |
 | **Safari** (motor WebKit) | WebKitGTK 2.52 (MiniBrowser) por WebDriver: registro, alta de presupuesto, importes, 6 pantallas, móvil, tableta, menú, cierre de sesión, sin CSP ni errores de JavaScript | **23/23** |
-| **Firefox, WebKit de Playwright y Edge** | E2E completa en la CI (trabajo `navegadores`) | Ver §7.1 |
+| **Firefox, WebKit de Playwright y Edge** | E2E completa en la CI (trabajo `navegadores`) | **18/18 en cada uno** (§7.1) |
 
-### 7.1 Resultado en la CI
+### 7.1 Resultado en la CI (ejecución 22, commit `c1fa54c`)
 
-_Se completa con el resultado de la ejecución de la CI (abajo, en §10)._
+Batería E2E completa, la misma en los cuatro motores: registro, presupuestos, seguimientos, envío automático, recuperación de contraseña, aislamiento, errores, solo lectura, enlaces internos, accesibilidad (axe) en 3 tamaños, teclado, cabeceras de seguridad y contratación con Stripe simulado.
+
+| Navegador | Versión | Resultado |
+|---|---|---|
+| Chromium (Chrome) | 153 | **18/18**, más tipos, lint y pruebas con cobertura |
+| **Firefox** | 155 | **18/18** |
+| **WebKit** (Safari) | Playwright | **18/18** |
+| **Microsoft Edge** | estable | **18/18** |
+
+**Hasta llegar ahí, en Firefox:**
+
+1. **Ejecución 19:** las páginas *simuladas* de Stripe de la prueba no declaraban su codificación y Firefox lo registra como error. Presupio sí la declara. Se corrigió la prueba.
+2. **Ejecución 21:** una navegación quedó bloqueada 5 minutos contra el servidor web de producción (`serve.mjs`).
+   - La causa exacta **no se ha podido determinar**: Firefox no se puede descargar en este entorno y los artefactos de la CI tampoco.
+   - Al revisar el servidor aparecieron **cuatro defectos reales**, que se corrigieron con pruebas que fallaban antes (§9, puntos 12–15).
+   - Desde entonces la batería pasa. Además, una navegación colgada falla a los 30 s indicando la URL y la CI imprime los registros de la API. Si se repite, quedará localizada.
+
+Es un riesgo residual de las pruebas, no un fallo conocido de la aplicación.
 
 **Lo que no puede probarse sin hardware de Apple:** Safari de macOS y Safari de iOS **en dispositivos reales**. WebKitGTK y el WebKit de Playwright usan el mismo motor, pero no la misma integración con el sistema (teclado virtual, barra de direcciones, gestos). Queda como **pendiente externo**: 15 minutos con un iPhone y un Mac reales antes de abrir (§10).
 
@@ -207,9 +224,34 @@ _Se completa con el resultado de la ejecución de la CI (abajo, en §10)._
 9. Etiquetas pegadas en la barra inferior a 320 px.
 10. Objetivos táctiles pequeños.
 11. 404 y pantalla de error sin `h1`.
+12. `serve.mjs`: un error de lectura de un archivo tumbaba el proceso.
+13. `serve.mjs`: un corte de la API a medias dejaba la petición del navegador colgada.
+14. `serve.mjs`: las peticiones abandonadas por el navegador seguían abiertas contra la API.
+15. `serve.mjs`: no había límite de espera a la API. Ahora, `504` a los 60 s.
 
 Cada uno tiene su entrada en `registro-correcciones.md` y su prueba automática o comprobación repetible.
 
 ## 10. Informe final
 
-_Se completa al cerrar la auditoría, con el resultado de la CI._
+| Área | Estado | Evidencia | Pendiente |
+|---|---|---|---|
+| **Bloqueadores técnicos** | **Ninguno abierto** | 15 fallos encontrados en la auditoría, corregidos y con prueba (§9). CI en verde en los cuatro navegadores | — |
+| **Recuperación ante desastres** | Lista | Base borrada y recuperada en 16,75 s (restauración 2,71 s). Datos íntegros. Modo seguro sin envíos | Repetir el simulacro en staging con el proveedor real (PITR) |
+| **Rendimiento** | Bueno | Operaciones típicas entre 8 y 41 ms (p50) en una empresa con 5.165 presupuestos. Panel completo en 29 ms | Revisar la búsqueda con más de 50.000 presupuestos por empresa |
+| **Consultas** | Optimizadas | Seguimientos de 19 a ~1 ms (índice 0011, válido con RLS). Ninguna consulta del worker pasa de 0,4 ms | — |
+| **Carga** | Medida | 1 API: 250 usuarios intensos sin degradación (p95 ~100 ms) y 500 con colas puntuales. 0 errores hasta 1000 | — |
+| **Escalabilidad** | Demostrada | 2 APIs y 2 workers. Caída brusca de un worker: **0 duplicados en 5.000 envíos**. Sesiones y límites compartidos | — |
+| **Experiencia de uso** | Revisada | 6 problemas visibles corregidos. 469/469 comprobaciones en 8 dispositivos y 23/23 en WebKit | — |
+| **Navegadores** | Probados | Chrome, Firefox, Safari (WebKit) y Edge: 18/18 cada uno. Android, iPhone y iPad emulados | **Safari en iPhone y Mac reales** (15 min, necesita hardware de Apple) |
+| **Seguridad** | Revisada | IP real tras el proxy (corregido), aislamiento, CSP, 0 vulnerabilidades, sin secretos en el repositorio, Stripe real imposible por diseño, systemd con exposición 3,2 | Revisión legal y fiscal profesional |
+| **Producción** | Documentada | `HOSTING-READY.md`, `MAILGUN-READY.md` y `ACTIVAR-PRODUCCION-STRIPE.md` | Arrancar las unidades systemd en staging (aquí no hay systemd) |
+| **Pendientes externos** | — | — | Alojamiento y PostgreSQL gestionado (UE, PITR) · dominio y DNS · cuenta de Mailgun UE (SPF, DKIM, DMARC, MX y webhooks) · Stripe: cuenta, modo de prueba real y luego el cambio a modo real · textos legales revisados y publicados · decisión sobre el IVA · prueba en dispositivos Apple reales |
+
+**Riesgos residuales conocidos (no son fallos):**
+- **Tras restaurar una copia, los emails enviados después de esa copia se reenvían** si se reactiva el envío sin revisar. Por eso existe el procedimiento en modo seguro (`HOSTING-READY.md` §9).
+- En la CI hubo un bloqueo de una navegación en Firefox cuya causa no se pudo aislar. No se ha repetido tras corregir el servidor web, y queda instrumentado (§7.1).
+- El contador de límites por IP es el 65 % del trabajo de PostgreSQL bajo carga. No limita el lanzamiento; si hiciera falta, la salida es Redis.
+
+**Veredicto:** no queda ningún problema técnico abierto que se pueda resolver en este entorno. Lo pendiente necesita servicios, cuentas, hardware o decisiones externas, y está enumerado arriba con su procedimiento.
+
+**Presupio está técnicamente listo para contratar hosting.**
