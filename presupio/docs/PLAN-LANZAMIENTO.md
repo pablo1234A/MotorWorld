@@ -11,6 +11,15 @@
 > - Los precios son **estimaciones no verificadas**. Compruébalos en la web de cada proveedor antes de contratar.
 > - Nada de lo aquí escrito declara que Presupio cumpla ninguna norma legal o fiscal. Eso lo debe validar un profesional (apartado 11).
 
+> **Auditoría final de producción (posterior a este plan).** Sus resultados y los documentos operativos definitivos están en:
+>
+> - [`AUDITORIA-PRODUCCION.md`](AUDITORIA-PRODUCCION.md): mediciones, fallos corregidos e informe final;
+> - [`HOSTING-READY.md`](HOSTING-READY.md): alojamiento, systemd, copias y recuperación;
+> - [`MAILGUN-READY.md`](MAILGUN-READY.md): DNS y webhooks;
+> - [`ACTIVAR-PRODUCCION-STRIPE.md`](ACTIVAR-PRODUCCION-STRIPE.md): paso a modo real.
+>
+> Si algo de este plan los contradice, prevalecen ellos.
+
 ---
 
 ## 1. Resumen ejecutivo

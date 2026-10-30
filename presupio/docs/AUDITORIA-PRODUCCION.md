@@ -1,0 +1,215 @@
+# Auditoría final de producción
+
+> **Objetivo:** demostrar con pruebas reales, antes de contratar alojamiento, dominio, Mailgun o activar Stripe, que Presupio puede lanzarse. **Regla:** nada se da por correcto sin medirlo. Cada fallo encontrado se corrigió, se volvió a probar y quedó cubierto por una prueba automática.
+>
+> **Fecha:** 30 de octubre de 2026. **Rama:** `claude/trusting-faraday-s9knnv`.
+
+## 0. Entorno de medición
+
+- **Máquina:** 4 núcleos y 16 GB de RAM. El generador de carga corría en la misma máquina y competía por la CPU, así que **las cifras de capacidad son conservadoras**.
+- **Software:**
+  - API y worker **compilados**, con `NODE_ENV=production`, Node 22.22, Fastify 5.12 y `TRUST_PROXY=loopback`;
+  - frontend servido por `server/serve.mjs`, con las cabeceras de producción;
+  - PostgreSQL 16 con RLS, accediendo con el rol de la aplicación (sin privilegios);
+  - `pg_stat_statements` activado solo para medir.
+- **Proveedor de email:** simulador HTTPS de la API de Mailgun, con certificado propio, 20 ms por mensaje e ids únicos. Detecta duplicados por envío y por destinatario y asunto.
+- **Datos, creados a través de la API** (no con SQL), en 112 s: 221 empresas, 16.000 presupuestos, 11.000 seguimientos y 43.482 entradas de historial.
+  - Al final de las pruebas: 284 empresas, 45.903 presupuestos, 18.881 seguimientos, 155.883 entradas de historial y 5.000 envíos. En total, **139 MB**.
+  - Durante la siembra, con 32 en paralelo: crear un presupuesto, p50 101 ms y p95 151 ms; alta de empresa, p50 239 ms.
+
+## 1. Recuperación ante desastres
+
+Simulacro completo con los scripts reales (`ops/backup.sh`, `ops/restore.sh` y `db:migrate:prod`), mientras el worker enviaba:
+
+| Paso | Resultado |
+|---|---|
+| Copia en caliente | **1,24 s**, 6,8 MB, con SHA-256 y comprobación del índice |
+| Envíos después de la copia | 400 |
+| PostgreSQL detenido (8 s) | API y worker **vivos**. `/health` 200 y `/health/ready` 503 |
+| Base de datos **borrada** | Confirmado: no existe |
+| Restauración | **2,71 s** |
+| Migración | **0,17 s** |
+| API lista | **0,87 s** |
+| **Total desde la caída** (incluye los 8 s de caída simulada) | **16,75 s** |
+| Datos | Iguales a la copia: 281 empresas, 16.180 presupuestos y 1.500 envíos |
+| Inicio de sesión / presupuesto de otra empresa | `200` / `404` (aislamiento intacto) |
+| Worker en **modo seguro** (`FOLLOWUP_EMAIL_PROVIDER=disabled`) | **0 envíos** |
+| Al reactivar el envío | 3.500 envíos pendientes. **Exactamente 400 reenvíos** al mismo destinatario y con el mismo paso: los posteriores a la copia. 0 seguimientos con dos envíos dentro de la base |
+
+**Conclusión:**
+- La restauración funciona y es rápida.
+- **La pérdida de datos posterior a la copia (RPO) se traduce en reenvíos.**
+- Mitigación documentada en `HOSTING-READY.md` §9:
+  - PITR del proveedor (ventana de minutos);
+  - arranque del worker en modo seguro tras restaurar;
+  - revisión de los registros de Mailgun desde la hora de la copia.
+
+**Fallos encontrados durante el simulacro, corregidos y con prueba:**
+- `backup.sh` fallaba el 7 % de las veces (`SIGPIPE` con `grep -q` y `pipefail`). Ahora: 0 de 200.
+- `restore.sh` no restauraba copias con extensiones del proveedor: con `pg_stat_statements`, la restauración entera se abortaba.
+- `test/backup.test.ts` ejecuta en cada CI los scripts reales: copia, restauración en una base vacía, migración, recuento, RLS y rechazo de restaurar sobre una base con datos.
+  - Comprobado en la CI: `✓ test/backup.test.ts (1 test) 2278 ms`.
+
+## 2. Rendimiento (un usuario, 60 repeticiones)
+
+Empresa pequeña (~20 presupuestos) y empresa grande (5.165 presupuestos), con el índice 0011 aplicado:
+
+| Operación | Pequeña p50 / p95 | Grande p50 / p95 |
+|---|---|---|
+| Iniciar sesión (incluye argon2) | 57 / 74 ms | 50 / 63 ms |
+| Alta de empresa | 56 / 73 ms | — |
+| Panel completo (8 peticiones en paralelo) | 34 / 51 ms | **29 / 41 ms** (antes, 41 / 65) |
+| Listar presupuestos, 1.ª página | 9 / 20 ms | 9 / 14 ms |
+| Página siguiente | 8 / 11 ms | 10 / 14 ms |
+| Buscar | 9 / 13 ms | 25 / 39 ms |
+| Ficha | 8 / 23 ms | 8 / 12 ms |
+| Crear presupuesto | 15 / 25 ms | 16 / 22 ms |
+| Editar presupuesto | 13 / 16 ms | 13 / 20 ms |
+| Seguimientos pendientes | 11 / 14 ms | **11 / 17 ms** (antes, 29 / 43) |
+| Contactos | 9 / 15 ms | 6 / 14 ms |
+| Métricas del mes | 22 / 33 ms | 41 / 58 ms |
+| Exportación completa (límite: 5 por hora) | 91 / 100 ms | 710 / 798 ms |
+| **Worker** | 17 envíos/s con 1 worker; 30/s con 2 | — |
+
+## 3. Consultas lentas
+
+`EXPLAIN (ANALYZE, BUFFERS)` como **el rol de la aplicación, con RLS**: así se ejecutan en producción.
+
+| Consulta | Antes | Después | Qué se hizo |
+|---|---|---|---|
+| Listado de seguimientos (panel y página), empresa con 5.000 | **19 ms**: recorría y ordenaba todos los pendientes | **0,8–1,1 ms** (pendientes), 2,5–3,3 ms (otros estados) | **Migración `0011`**: índice `(company_id, created_at DESC, id DESC)` |
+| Búsqueda de presupuestos (5.000) | ~17 ms | Sin cambio | Se mantiene: el `OR` cruza dos tablas y un índice trigram no compensa a este volumen. Revisar con más de 50.000 por empresa |
+| Consultas del worker | < 0,4 ms de media | — | Nada que corregir |
+
+**Por qué el primer índice no servía:** el índice obvio `(company_id, status, created_at, id)` **no se usaba con RLS**. La igualdad sobre un `enum` (`enum_eq`) no es `leakproof`, y PostgreSQL no puede aplicar antes de la política de seguridad una condición que no sea `leakproof`. El índice sin la columna de estado sí se usa, porque `company_id` es `uuid` y su igualdad sí es `leakproof`. El detalle está en `registro-correcciones.md`.
+
+**Bajo carga (`pg_stat_statements`):** el 65 % del tiempo de PostgreSQL es el contador de límites por IP, que hace una escritura por petición y se comparte entre instancias.
+- Se probó como tabla `UNLOGGED` y **no mejoró**: se revirtió.
+- No limita el lanzamiento (§4). Si la base llegara a ser el cuello de botella con varias APIs, la alternativa es Redis.
+
+## 4. Prueba de carga progresiva
+
+Usuarios virtuales con sesión propia y una IP distinta cada uno. Cada usuario repite: panel completo (8 peticiones), listar, ficha, **crear**, **editar** y seguimientos. Se mide en una ventana estable de 60 s, después de la subida. **0 errores en todas las pruebas.**
+
+**Uso intenso (5 s entre acciones), 1 API:**
+
+| Usuarios | Pet/s | Panel p50 / p95 | Listar p50 / p95 | Crear p50 / p95 | CPU API media (máx.) | RAM API | CPU PostgreSQL media | RAM máquina |
+|---|---|---|---|---|---|---|---|---|
+| 50 | 10 | 45 / 101 ms | 12 / 19 ms | 20 / 30 ms | 10 % (86 %) | 233 MB | 8 % | 1,2 GB |
+| 100 | 19 | 46 / 105 ms | 11 / 16 ms | 18 / 25 ms | 15 % (82 %) | 303 MB | 16 % | 1,3 GB |
+| 250 | 45 | **47 / 103 ms** | 12 / 57 ms | 18 / 26 ms | 34 % (100 %) | 312 MB | 38 % | 1,4 GB |
+| 500 | 84 | 98 / 532 ms | 31 / 193 ms | 25 / 366 ms | 56 % (122 %) | 334 MB | 68 % | 1,7 GB |
+| 1000 | 118 | 4,5 / 6,1 s | 2,3 / 6,0 s | 0,98 / 6,4 s | 82 % (152 %) | 461 MB | 98 % | 2,0 GB |
+| 1000 (**2 APIs**) | 133 | 1,2 / 3,9 s | 0,86 / 3,7 s | 0,67 / 4,0 s | 48 % + 48 % | 355 MB cada una | 119 % | 2,4 GB |
+
+**Uso extremo (1 s entre acciones), 1 API:**
+
+| Usuarios | Pet/s | Panel p50 / p95 | CPU API media | RAM API |
+|---|---|---|---|---|
+| 50 | 44 | 37 / 65 ms | 45 % | 230 MB |
+| 100 | 84 | 65 / 247 ms | 67 % | 243 MB |
+| 250 | 138 | 682 ms / 1,7 s | 111 % | 356 MB |
+| 500 | 143 | 2,8 / 3,9 s | 126 % | 428 MB |
+| 250 (**2 APIs**) | 157 | 387 ms / 1,1 s | 71 % + 72 % | 321 MB cada una |
+| 500 (**2 APIs**) | 164 | 1,9 / 3,5 s | 78 % + 77 % | 359 MB cada una |
+
+CPU en % de un núcleo.
+
+**Miles de presupuestos y seguimientos:**
+- la siembra creó 16.000 presupuestos y 11.000 seguimientos a través de la API;
+- la carga añadió unos 30.000 presupuestos más;
+- el worker envió 5.000 seguimientos vencidos de golpe (§5).
+
+**Conclusiones:**
+- **Una API sostiene 250 usuarios de uso intenso sin degradarse** (panel p95 ~100 ms), y unos 500 con colas puntuales.
+- El límite es la CPU. Con 1000 usuarios, la máquina estaba al 87–95 %, con el generador incluido.
+- **Perfil de CPU con 500 usuarios, sin un punto caliente propio:** sockets ~20 %, Kysely ~18 %, Fastify ~6,5 % y GC ~6 %. No hay una optimización pendiente que cambie el dimensionado.
+- Subir el pool de conexiones a 20 no mejoró nada.
+
+## 5. Escalabilidad, reinicios y concurrencia: sin duplicados
+
+| Prueba | Resultado |
+|---|---|
+| **1 worker**, 5.000 envíos vencidos | 294 s (17/s). **0 duplicados**, 0 atascados. 166 MB y 24 % de CPU |
+| **2 workers** a la vez, 5.000 envíos | 166 s (30/s). **0 duplicados**, 0 atascados |
+| 2 workers y **`SIGKILL` de uno a mitad de lote**, rearrancado al segundo | 4.982 enviados al momento, **0 duplicados** y 18 interrumpidos. A los 15 min, la recuperación reencoló y envió **una sola vez** los 17 que no habían llegado al proveedor y dejó en «sin verificar» el que sí había salido. **5.000 de 5.000, sin duplicados** |
+| **2 APIs** sobre la misma base | 0 errores con 250, 500 y 1000 usuarios. Límites por IP compartidos |
+| Sesión entre APIs | Inicio de sesión en la API A, lectura y alta en la B (`200`/`201`), cierre en la B → la A rechaza la sesión (`401`) |
+| Caída de PostgreSQL | API y worker vivos y recuperación automática (§1) |
+| Unicidad en la base | Un id de proveedor duplicado (provocado por un fallo del simulador durante la auditoría, no de Presupio) fue **rechazado por la restricción única**. La recuperación posterior resolvió los envíos afectados sin reenviar |
+
+## 6. Experiencia de uso (revisión como cliente)
+
+Recorrido de registro → panel → presupuesto → ficha → seguimientos → contactos → resultados → configuración → cierre de sesión, con capturas revisadas en escritorio, móvil y tableta.
+
+**Problemas encontrados y corregidos:**
+
+| # | Problema (lo que vería un cliente) | Corrección | Prueba |
+|---|---|---|---|
+| 1 | Un presupuesto de 7.450,50 € se mostraba **«7.450,5 €»** (la E2E esperaba el formato incorrecto) | Importes redondos sin decimales; con céntimos, siempre dos | `lib.test.ts`, E2E y WebKit |
+| 2 | En `/resultados`, a 320–375 px, la página **se desplazaba en horizontal** 20 px | La etiqueta «En curso» baja de línea | Chromium a 320 y 375 px |
+| 3 | Bloques de cifras con **celdas huérfanas** (tableta: 4 + 1 con una fila casi vacía) | Reparto según el ancho real (container queries) | Comprobación automática «cifras sin huecos» en 8 dispositivos |
+| 4 | La barra inferior del móvil **pegaba «Presupuestos» y «Seguimientos»** a 320 px | Columnas de al menos el ancho de su etiqueta | Separación medida ≥ 6 px |
+| 5 | Enlaces sueltos de **15–20 px de alto** en pantallas táctiles | ≥ 24 px con `pointer: coarse` (WCAG 2.2, 2.5.8) | Comprobación de objetivos táctiles |
+| 6 | La página 404 y la de error **sin `h1`** (lectores de pantalla) | `EmptyState heading="h1"` | Comprobación «título y encabezado» |
+
+Revisado y correcto:
+- textos claros y en español de España;
+- botones con nombre;
+- formularios con etiquetas y ayudas («Indica al menos un email o un teléfono», «En euros, por ejemplo 18.500,50»);
+- errores de la API mostrados sin inventar datos (E2E);
+- estados vacíos que explican el siguiente paso;
+- campos de 16 px en móvil (iOS no amplía la página).
+
+**Excepción aceptada:** en el plano de la cartera, las parcelas de presupuestos pequeños pueden medir menos de 24 px. Su tamaño es el dato, y los mismos presupuestos están en la lista.
+
+## 7. Navegadores y dispositivos
+
+| Motor / dispositivo | Cómo | Resultado |
+|---|---|---|
+| **Chrome** (Chromium 153) | E2E completa (18 pruebas) + 8 dispositivos emulados (469 comprobaciones) | **18/18** y **469/469** (dos ejecuciones seguidas) |
+| **Android** (Pixel 7; Android pequeño de 320 px) | Emulación en Chromium: táctil, `isMobile` y su agente de usuario | Incluido arriba: 0 desbordes, navegación, menú y cierre de sesión |
+| **iPhone** (SE de 320 px, 13 de 390 px) | Emulación de tamaño y táctil en Chromium + **WebKit real** a 447 px (ancho mínimo de la ventana de MiniBrowser) | Incluido arriba + WebKit **23/23** |
+| **iPad** (vertical y horizontal) | Emulación en Chromium + WebKit real a 820 px | Incluido arriba + WebKit |
+| **Safari** (motor WebKit) | WebKitGTK 2.52 (MiniBrowser) por WebDriver: registro, alta de presupuesto, importes, 6 pantallas, móvil, tableta, menú, cierre de sesión, sin CSP ni errores de JavaScript | **23/23** |
+| **Firefox, WebKit de Playwright y Edge** | E2E completa en la CI (trabajo `navegadores`) | Ver §7.1 |
+
+### 7.1 Resultado en la CI
+
+_Se completa con el resultado de la ejecución de la CI (abajo, en §10)._
+
+**Lo que no puede probarse sin hardware de Apple:** Safari de macOS y Safari de iOS **en dispositivos reales**. WebKitGTK y el WebKit de Playwright usan el mismo motor, pero no la misma integración con el sistema (teclado virtual, barra de direcciones, gestos). Queda como **pendiente externo**: 15 minutos con un iPhone y un Mac reales antes de abrir (§10).
+
+## 8. Seguridad (comprobado en esta auditoría)
+
+| Comprobación | Resultado |
+|---|---|
+| **IP real del cliente tras el proxy** | **Fallo encontrado y corregido.** Con `TRUST_PROXY=1`, Fastify 5.12 ignora el número de saltos: **todos los clientes compartían la IP de nginx** en los límites por IP. Por ejemplo, 10 altas por hora para todo el mundo. Ahora se indica la IP o red del proxy (`loopback`) y un número detiene el arranque. Pruebas: límite por cliente detrás del proxy, e IP falsificada sin proxy rechazada |
+| Aislamiento entre empresas | `404` al pedir un presupuesto de otra empresa, también tras restaurar (§1). RLS activo en la base restaurada |
+| Cabeceras de producción y CSP | 0 violaciones de CSP y 0 errores de JavaScript en WebKit y Chromium. Cabeceras comprobadas en E2E |
+| Límite de inicios de sesión | Funciona: la repetición de la auditoría desde una misma IP lo activó (20 cada 15 min). Es intencionado |
+| Dependencias | `npm audit`: **0 vulnerabilidades** (producción y desarrollo) |
+| Secretos en el repositorio | Ninguna clave de Stripe, Mailgun ni privada en el historial actual. Ningún `.env` versionado |
+| Migrador con extensiones del proveedor | **Fallo encontrado y corregido:** el `GRANT ON ALL FUNCTIONS` fallaba con `pg_stat_statements` y paraba el despliegue. Ahora solo concede sobre objetos propios. Hay prueba |
+| Stripe en modo real | Imposible por diseño: 4 salvaguardas con pruebas (`ACTIVAR-PRODUCCION-STRIPE.md` §1) |
+| Unidades systemd | `systemd-analyze security`: 7,5 → **3,2 («OK»)** tras el endurecimiento |
+
+## 9. Fallos corregidos en esta auditoría
+
+1. `TRUST_PROXY` con número de saltos: límites por IP compartidos entre todos los clientes (seguridad y disponibilidad).
+2. Listado de seguimientos lento con RLS: índice `0011`, de 19 ms a ~1 ms.
+3. Migrador incompatible con extensiones del proveedor.
+4. `backup.sh` fallaba de forma intermitente.
+5. `restore.sh` no restauraba copias con extensiones.
+6. Importes con céntimos con un solo decimal.
+7. Desborde horizontal en `/resultados` en móviles pequeños.
+8. Celdas huérfanas en los bloques de cifras.
+9. Etiquetas pegadas en la barra inferior a 320 px.
+10. Objetivos táctiles pequeños.
+11. 404 y pantalla de error sin `h1`.
+
+Cada uno tiene su entrada en `registro-correcciones.md` y su prueba automática o comprobación repetible.
+
+## 10. Informe final
+
+_Se completa al cerrar la auditoría, con el resultado de la CI._
