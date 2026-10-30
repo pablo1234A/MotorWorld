@@ -29,7 +29,14 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {} } }],
+  // `npm run test:e2e` usa Chromium. La CI repite la batería completa en Firefox, WebKit (motor de
+  // Safari) y Microsoft Edge, cada uno en su propia ejecución: `playwright test --project=firefox`.
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {} } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    { name: 'edge', use: { ...devices['Desktop Edge'], channel: 'msedge' } },
+  ],
   webServer: [{
     // Servidor de producción incluido (server/serve.mjs): las pruebas recorren la aplicación
     // con las mismas cabeceras de seguridad que en producción.
