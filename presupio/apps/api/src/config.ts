@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { z } from 'zod';
 
 const booleanFromEnv = z
@@ -94,7 +95,8 @@ export interface AppConfig {
   dbPoolMax: number;
   appWebUrl: string;
   corsOrigins: string[];
-  trustProxy: boolean | number;
+  /** false, true (confía en todo: solo si la API no es accesible directamente) o IPs/redes de los proxies. */
+  trustProxy: boolean | string;
   cookie: { name: string; secure: boolean };
   session: { ttlMs: number; idleTimeoutMs: number; touchIntervalMs: number };
   trialDays: number;
@@ -161,12 +163,29 @@ export interface AppConfig {
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
-function parseTrustProxy(raw: string): boolean | number {
-  if (raw === 'true') return true;
-  if (raw === 'false' || raw === '') return false;
-  const hops = Number(raw);
-  if (Number.isInteger(hops) && hops >= 0) return hops;
-  throw new Error('TRUST_PROXY debe ser true, false o un número de saltos de proxy');
+/**
+ * Proxies de confianza para obtener la IP real del cliente (X-Forwarded-For), de la que dependen
+ * los límites por IP. Se indica QUIÉN es el proxy (IP, red CIDR o loopback/linklocal/uniquelocal),
+ * no cuántos saltos: desde Fastify 5.12 un número de saltos no confía en nadie (no puede validar
+ * al vecino inmediato) y todas las peticiones llegaban con la IP del proxy.
+ */
+function parseTrustProxy(raw: string): boolean | string {
+  const value = raw.trim();
+  if (value === 'true') return true;
+  if (value === 'false' || value === '') return false;
+  if (/^\d+$/.test(value)) {
+    throw new Error(
+      'TRUST_PROXY ya no admite un número de saltos (Fastify lo ignora y todos los clientes compartirían la IP del proxy). Indica la IP o red del proxy: «loopback» si nginx está en la misma máquina, o p. ej. «10.0.0.5» o «10.0.0.0/8».',
+    );
+  }
+  const entries = value.split(',').map((v) => v.trim());
+  for (const entry of entries) {
+    const [ip, prefix, extra] = entry.split('/');
+    const presets = ['loopback', 'linklocal', 'uniquelocal'];
+    const validIp = presets.includes(entry) || (isIP(ip ?? '') !== 0 && extra === undefined && (prefix === undefined || (/^\d{1,3}$/.test(prefix) && Number(prefix) <= (isIP(ip ?? '') === 4 ? 32 : 128))));
+    if (!validIp) throw new Error(`TRUST_PROXY no válido: «${entry}». Usa true, false o IPs/redes de los proxies (loopback, 10.0.0.5, 10.0.0.0/8…)`);
+  }
+  return entries.join(',');
 }
 
 const STRIPE_LIVE = /^(sk|rk|pk)_live_/;

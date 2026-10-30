@@ -382,8 +382,8 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 - Usuario de sistema sin privilegios (`presupio`), Node 22 (`.nvmrc`) y nginx.
 - La API escucha **solo en local**: `HOST=127.0.0.1`, `PORT=3000`. nginx es el único punto de entrada.
-- **`TRUST_PROXY=1`** (un salto: nginx). **Imprescindible:** sin él, todos los clientes compartirían la IP de nginx en los límites por IP (por ejemplo, 10 altas por hora en total). Nunca uses `true`: aceptaría IPs falsas en `X-Forwarded-For`.
-- Frontend: nginx sirve `apps/web/dist` con `ops/nginx/presupio-web.conf`. Alternativa sin nginx para los estáticos: `npm run start:web`, que es `server/serve.mjs` con las mismas cabeceras; en ese caso `TRUST_PROXY` debe contar también ese salto.
+- **`TRUST_PROXY=loopback`** (nginx en la misma máquina; si el proxy está en otra, su IP o red, p. ej. `10.0.0.5`). **Imprescindible:** sin él, todos los clientes compartirían la IP de nginx en los límites por IP (por ejemplo, 10 altas por hora en total). **No uses un número de saltos** (`1`): Fastify 5.12 lo ignora y la API se niega a arrancar con él. Nunca uses `true` si la API es accesible sin pasar por nginx: aceptaría IPs falsas en `X-Forwarded-For`.
+- Frontend: nginx sirve `apps/web/dist` con `ops/nginx/presupio-web.conf`. Alternativa sin nginx para los estáticos: `npm run start:web`, que es `server/serve.mjs` con las mismas cabeceras; en ese caso `TRUST_PROXY` debe incluir también la IP de ese servidor.
 - Plantillas de servicio (systemd). Son plantillas: ajusta rutas y pruébalas en staging.
 
 ```ini
@@ -488,7 +488,7 @@ Valores de ejemplo, **nunca reales**. Secreto = sí: va al gestor de secretos, n
 | `MIGRATION_DATABASE_URL` | **Solo despliegue** | Para migrar | `postgres://presupio_owner:<…>@<host>:5432/presupio?sslmode=require` | **Sí** |
 | `APP_WEB_URL` | Runtime | **Obligatoria (https)** | `https://app.tudominio.es` | No |
 | `CORS_ORIGINS` | Runtime | Solo si la API va en otro dominio | — | No |
-| `TRUST_PROXY` | Runtime | **Obligatoria tras nginx** | `1` | No |
+| `TRUST_PROXY` | Runtime | **Obligatoria tras nginx** | `loopback` (o la IP/red del proxy) | No |
 | `COOKIE_SECURE` | Runtime | `true` por defecto en producción (no se admite `false`) | — | No |
 | `SESSION_TTL_HOURS` / `SESSION_IDLE_TIMEOUT_HOURS` | Runtime | Opcional | `720` / `168` | No |
 | `TRIAL_DAYS` | Runtime | Opcional | `14` | No |
@@ -630,7 +630,7 @@ Solo con **direcciones y empresas de prueba propias**. Marca cada punto con la f
 | CSRF / CORS | Las escrituras con una cabecera `Origin` ajena se rechazan (403); solo JSON; cookie `SameSite=Lax`; CORS limitado a `APP_WEB_URL` |
 | Sesiones | Cookie `__Host-`, `HttpOnly`, `Secure`, `SameSite=Lax`; resumidas en la base; caducidad absoluta y por inactividad |
 | Permisos en la base de datos | Ver 2.1. Tablas sin RLS: ver 2.3 |
-| Límites | Globales por IP y por email en login y recuperación; compartidos entre instancias. **Requiere `TRUST_PROXY=1`** |
+| Límites | Globales por IP y por email en login y recuperación; compartidos entre instancias. **Requiere `TRUST_PROXY=loopback`** (o la IP del proxy) |
 | Webhooks | Firmados (Mailgun HMAC, Stripe con el cuerpo original y 5 minutos de tolerancia); antirrepetición; 404 si no están configurados |
 | Pagos | Solo redirige a `checkout.stripe.com` y `billing.stripe.com`; el navegador nunca elige el precio; el modo real está bloqueado |
 | Dependencias | `npm audit`: 0 vulnerabilidades |
@@ -690,7 +690,7 @@ Cada punto con responsable, fecha y evidencia. **El lanzamiento solo se autoriza
 - [ ] Dominio, DNS y HTTPS con renovación automática comprobada.
 - [ ] PostgreSQL gestionado en la UE, roles según 7.5.1, TLS, copias diarias y PITR ≥ 7 días.
 - [ ] Copia externa cifrada y **simulacro de restauración** superado en el proveedor real.
-- [ ] `TRUST_PROXY=1`; la API solo escucha en `127.0.0.1`; nginx con la configuración generada.
+- [ ] `TRUST_PROXY=loopback` (o la IP del proxy); la API solo escucha en `127.0.0.1`; nginx con la configuración generada.
 - [ ] Secretos solo en el gestor o en ficheros con permisos 600; `MIGRATION_DATABASE_URL` fuera del entorno de la API.
 
 **Servicios (obligatorio)**

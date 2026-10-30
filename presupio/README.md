@@ -196,7 +196,7 @@ Todas están documentadas en [`.env.example`](.env.example). Las principales:
 | `APP_WEB_URL` | Sí (https en producción) | URL del frontend: enlaces de los emails y CORS por defecto |
 | `CORS_ORIGINS` | No | Orígenes permitidos separados por comas. No admite `*` |
 | `COOKIE_SECURE` | No | `true` por defecto en producción, donde es obligatorio |
-| `TRUST_PROXY` | No | `true`, `false` o número de saltos de proxy, para obtener la IP real |
+| `TRUST_PROXY` | Tras un proxy, sí | IPs o redes de los proxies de confianza (`loopback` si nginx está en la misma máquina), `true` o `false`. No admite números de saltos. Sin él, los límites por IP serían comunes a todos los clientes |
 | `SESSION_TTL_HOURS` / `SESSION_IDLE_TIMEOUT_HOURS` | No | Duración máxima de la sesión (por defecto 30 días) y cierre por inactividad (por defecto 7 días) |
 | `TRIAL_DAYS` | No | Días de prueba gratuita con los límites de Starter (por defecto 14; `0` = sin prueba) |
 | `MAIL_TRANSPORT` | No | `disabled` (por defecto), `log` (solo desarrollo) o `smtp` |

@@ -313,3 +313,17 @@ Se comprobó el informe anterior contra el código; el detalle está en `docs/PL
 | `ops/restore.sh` y `operacion.md` indicaban `db:migrate` (necesita dependencias de desarrollo) | Lectura | `db:migrate:prod` | Restauración con el esquema actual: recuentos idénticos, RLS activo |
 | Alerta `deliveries_unknown_review` sin documentar | `ops/routes.ts` frente a `operacion.md` | Documentada | — |
 | Faltaba indicar la versión de la API del webhook de Stripe | `normalizeEvent` lee `invoice.parent.subscription_details` | `2026-09-30.endive` en `facturacion.md` y en el plan | — |
+
+## Auditoría final de producción · `TRUST_PROXY=1` no funcionaba: todos los clientes compartían la IP del proxy
+
+- **Causa:** Fastify 5.12 dejó de confiar en un **número de saltos** (`trustProxy: 1`), por seguridad: no puede validar al vecino inmediato. La configuración seguía aceptando `TRUST_PROXY=1` y la guía de despliegue lo recomendaba. Detrás de nginx, `req.ip` era siempre la IP de nginx, así que los límites por IP eran comunes a todos los clientes (10 altas por hora y 20 inicios de sesión cada 15 minutos en total).
+- **Demostración:**
+  - Con la API compilada en producción, `TRUST_PROXY=1` y 221 altas desde 221 IPs distintas (`X-Forwarded-For`), todas cayeron en **una sola** clave de límite. Después, cualquier inicio de sesión respondía 429.
+  - Fastify aislado: `trustProxy: 1` → `ip = 127.0.0.1`; `'127.0.0.1'` o `'loopback'` → la IP del cliente.
+- **Corrección** (`config.ts`, `app.ts`):
+  - `TRUST_PROXY` acepta `true`, `false` o una lista de IPs, redes CIDR y `loopback`/`linklocal`/`uniquelocal`.
+  - Un número **detiene el arranque** con un mensaje claro, en lugar de fallar en silencio.
+  - Documentación: `TRUST_PROXY=loopback` cuando nginx está en la misma máquina.
+- **Prueba:**
+  - `limits-trials.test.ts`, 2 pruebas nuevas: validación de la configuración, límite propio por cliente detrás del proxy, y un cliente directo no puede falsificar su IP.
+  - En vivo, con `TRUST_PROXY=loopback`: tres inicios de sesión desde tres IPs → tres claves distintas.

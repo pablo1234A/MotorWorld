@@ -116,6 +116,38 @@ const trialCtx = await createTestApp((c) => {
 });
 const reminderCtx = await createTestApp();
 
+describe('IP real del cliente tras el proxy (TRUST_PROXY)', () => {
+  it('acepta IPs, redes y loopback; rechaza un número de saltos (Fastify lo ignora en silencio)', async () => {
+    const { loadConfig } = await import('../src/config.js');
+    const base = { NODE_ENV: 'test', LOG_LEVEL: 'silent', DATABASE_URL: 'postgres://u:p@localhost:5432/x' };
+    expect(loadConfig({ ...base, TRUST_PROXY: 'loopback' }).trustProxy).toBe('loopback');
+    expect(loadConfig({ ...base, TRUST_PROXY: '10.0.0.5, 10.1.0.0/16' }).trustProxy).toBe('10.0.0.5,10.1.0.0/16');
+    expect(loadConfig({ ...base, TRUST_PROXY: 'false' }).trustProxy).toBe(false);
+    expect(() => loadConfig({ ...base, TRUST_PROXY: '1' })).toThrow(/número de saltos/);
+    expect(() => loadConfig({ ...base, TRUST_PROXY: 'nginx' })).toThrow(/no válido/);
+    expect(() => loadConfig({ ...base, TRUST_PROXY: '10.0.0.0/40' })).toThrow(/no válido/);
+  });
+
+  it('detrás de nginx (loopback) cada cliente tiene su propio límite y nadie puede falsificar su IP', async () => {
+    const { app } = await createTestApp((c) => {
+      c.trustProxy = 'loopback';
+      c.rateLimits.register = { max: 2, windowMs: 60_000 };
+    });
+    const register = (headers: Record<string, string>, remoteAddress = '127.0.0.1') =>
+      app.inject({ method: 'POST', url: `${API}/auth/register`, remoteAddress, headers, payload: { fullName: 'Ana', email: uniqueEmail('ip'), password: TEST_PASSWORD, companyName: 'IP SL', acceptTerms: true } });
+    // Cliente A (a través de nginx): 2 altas y la tercera, limitada.
+    expect((await register({ 'x-forwarded-for': '198.51.100.1' })).statusCode).toBe(201);
+    expect((await register({ 'x-forwarded-for': '198.51.100.1' })).statusCode).toBe(201);
+    expect((await register({ 'x-forwarded-for': '198.51.100.1' })).statusCode).toBe(429);
+    // Cliente B no comparte el límite de A (antes, con TRUST_PROXY=1, todos compartían la IP del proxy).
+    expect((await register({ 'x-forwarded-for': '198.51.100.2' })).statusCode).toBe(201);
+    // Alguien que llega directamente (no desde el proxy) no puede hacerse pasar por otra IP.
+    expect((await register({ 'x-forwarded-for': '198.51.100.9' }, '203.0.113.7')).statusCode).toBe(201);
+    expect((await register({ 'x-forwarded-for': '198.51.100.10' }, '203.0.113.7')).statusCode).toBe(201);
+    expect((await register({ 'x-forwarded-for': '198.51.100.11' }, '203.0.113.7')).statusCode).toBe(429);
+  });
+});
+
 describe('una prueba gratuita por persona y dominio (P2-01)', () => {
   const ctx = trialCtx;
   const status = async (client: Client) => (await client.get('/me')).body.subscription as { status: string; plan: string | null; hasActiveAccess: boolean };

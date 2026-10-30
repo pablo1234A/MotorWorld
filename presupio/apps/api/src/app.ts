@@ -69,8 +69,8 @@ export const API_PREFIX = '/api/v1';
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const { config } = deps;
   const app = Fastify({
-    // Un número indica cuántos saltos de proxy son de confianza (soportado por Fastify en tiempo de ejecución).
-    trustProxy: config.trustProxy as boolean,
+    // IPs o redes de los proxies de confianza (config.ts): de ahí sale la IP real del cliente.
+    trustProxy: config.trustProxy,
     bodyLimit: 100 * 1024,
     genReqId: () => randomUUID(),
     requestIdHeader: false,

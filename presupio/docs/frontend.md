@@ -24,7 +24,7 @@ El navegador habla siempre con **el mismo origen** (`/api/v1`):
   2. **nginx:** `ops/nginx/presupio-web.conf`. Está generado; no lo edites a mano. Se regenera con `node apps/web/server/hosting-config.mjs --nginx > ops/nginx/presupio-web.conf`. Se ha comprobado con `nginx -t` (1.24) y sirviendo la compilación por HTTPS.
   3. **Alojamiento estático** (Netlify, Cloudflare Pages): `npm run build` genera `dist/_headers`. La API debe quedar en el mismo origen (redirección o proxy de `/api/*` del alojamiento).
 
-  En la API, usa `TRUST_PROXY=1` y `APP_WEB_URL=https://tu-dominio`.
+  En la API, usa `TRUST_PROXY=loopback` (o la IP del proxy, nunca un número de saltos) y `APP_WEB_URL=https://tu-dominio`.
 
 El mismo origen evita CORS y permite la cookie `__Host-`. Si la API vive en otro dominio, define `VITE_API_BASE_URL=https://api.dominio/api/v1` al compilar, `CORS_ORIGINS` con el origen del frontend y `COOKIE_SECURE=true`.
 
