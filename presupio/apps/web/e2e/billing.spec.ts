@@ -36,7 +36,7 @@ async function stripeContext(browser: Browser): Promise<{ context: BrowserContex
   // Nunca se sale a Internet: cualquier petición a stripe.com se sirve en local.
   await context.route(/^https:\/\/([a-z0-9-]+\.)*stripe\.com\//, (route) => {
     stripePages.push(route.request().url());
-    return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Stripe (simulado)</title><h1>Página alojada de Stripe (simulada)</h1>' });
+    return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><title>Stripe (simulado)</title><h1>Página alojada de Stripe (simulada)</h1>' });
   });
   const page = await context.newPage();
   return { context, page, problems: watchConsole(page), stripePages };
