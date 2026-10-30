@@ -88,16 +88,34 @@ curl http://localhost:3000/api/v1/health/ready
 
 ### Producción
 
+Se compila con las dependencias de desarrollo y se ejecuta **solo con las de producción** (sin `tsx`, `tsc` ni `vite`). Está comprobado en una copia limpia: migraciones, `ops`, API, proceso de envío y servidor web.
+
 ```bash
-npm ci && npm run build
+npm ci && npm run build       # etapa de compilación: apps/api/dist y apps/web/dist
 ```
 
 ```bash
-npm run db:migrate            # con MIGRATION_DATABASE_URL (rol propietario)
+npm ci --omit=dev             # imagen o servidor final (con los dist/ ya compilados)
 ```
 
 ```bash
-npm start                     # con DATABASE_URL (rol de aplicación)
+npm run db:migrate:prod       # con MIGRATION_DATABASE_URL (rol propietario)
+```
+
+```bash
+npm start                     # API, con DATABASE_URL (rol de aplicación)
+```
+
+```bash
+npm run start:worker          # proceso de envío (o: node apps/api/dist/src/worker.js --once desde un cron)
+```
+
+```bash
+npm run start:web             # frontend con cabeceras de seguridad y proxy de /api (o nginx: ops/nginx/)
+```
+
+```bash
+npm run ops:prod -w @presupio/api -- companies   # herramienta de operación compilada
 ```
 
 En producción la configuración se valida al arrancar y el proceso se niega a iniciar si:
@@ -107,15 +125,13 @@ En producción la configuración se valida al arrancar y el proceso se niega a i
 - `MAIL_TRANSPORT=log`.
 - `CORS_ORIGINS` contiene `*`.
 - `FOLLOWUP_EMAIL_PROVIDER=mailgun` sin `MAILGUN_WEBHOOK_SIGNING_KEY` o sin `https`.
+- Faltan `LEGAL_TERMS_URL` o `LEGAL_PRIVACY_URL` (https): las versiones **publicadas y revisadas** de los documentos legales. Los de `docs/legal/` son borradores pendientes de revisión.
+- Hay `STRIPE_API_BASE` (solo pruebas) o alguna clave live de Stripe.
 
-El **proceso de envío** es un servicio aparte de la API, con las mismas variables de entorno:
-
-```bash
-npm run worker:start -w @presupio/api        # proceso persistente
-```
+El **proceso de envío** es un servicio aparte de la API, con las mismas variables de entorno. En desarrollo:
 
 ```bash
-npm run worker -w @presupio/api -- --once    # o un ciclo por minuto desde un cron
+npm run worker -w @presupio/api -- --once
 ```
 
 ## Pruebas

@@ -52,10 +52,15 @@
 
 1. **Prepara:** `npm ci && npm run typecheck && npm test && npm run build`. Es lo mismo que ejecuta la CI (`.github/workflows/presupio.yml`), que además pasa las pruebas E2E.
 2. **Copia antes de migrar:** `ops/backup.sh` (o una instantánea del proveedor).
-3. **Migra** con el rol propietario: `npm run db:migrate`.
+3. **Migra** con el rol propietario: `npm run db:migrate:prod` (código compilado; funciona tras `npm ci --omit=dev`).
    - Cada migración va en su transacción. Si falla, no se aplica nada de ella.
    - Las migraciones son **aditivas**: la versión anterior de la aplicación sigue funcionando con el esquema nuevo. Hay que mantener esa regla (expandir primero, contraer en una versión posterior).
-4. **Despliega la API y el proceso de envío** (`npm run worker:start`, o `-- --once` desde un cron cada minuto). Hay que desplegar los dos con la misma versión.
+4. **Despliega la API, el proceso de envío y el frontend:**
+   - API: `npm start`;
+   - proceso de envío: `npm run start:worker`, o `node apps/api/dist/src/worker.js --once` desde un cron cada minuto;
+   - frontend: `npm run start:web` o nginx.
+
+   Hay que desplegar los tres con la misma versión. En producción solo hacen falta las dependencias de producción (`npm ci --omit=dev`) y los `dist/` compilados. La herramienta de operación compilada es `npm run ops:prod -w @presupio/api -- …`.
 5. **Comprueba:** `GET /api/v1/health/ready` y `GET /api/v1/ops/status` (`status: "ok"`).
 
 **Vuelta atrás:**

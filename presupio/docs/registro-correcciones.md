@@ -248,3 +248,22 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
 - **Estado: PENDIENTE DE REVISIÓN LEGAL O FISCAL.**
   - Los textos no están validados. No se publica nada ni se presenta como definitivo.
   - Falta guardar la versión aceptada, si la revisión lo pide.
+
+## P2-03 · Comandos de producción sin dependencias de desarrollo
+
+- **Causa:** las migraciones, `ops` y el proceso de envío en modo `--once` solo se podían ejecutar con `tsx`, que es una dependencia de desarrollo. Tras `npm ci --omit=dev` no funcionaban.
+- **Corrección:**
+  - `db:migrate:prod`, `db:bootstrap:prod` y `ops:prod` ejecutan el código compilado (`dist/scripts`).
+  - En la raíz: `start:worker`, `start:web` y `db:migrate:prod`.
+  - README y `docs/operacion.md`: compilar con todas las dependencias y ejecutar solo con las de producción.
+- **Prueba** (copia limpia sin `.env` ni `node_modules`):
+  - `npm ci` y `npm run build`.
+  - Después se borran los `node_modules` y se ejecuta `npm ci --omit=dev`: 101 paquetes, sin `tsx`, `tsc`, `vitest` ni `vite`.
+  - Con `NODE_ENV=production` sobre una base nueva:
+    - migraciones (10) y una segunda pasada idempotente;
+    - `ops:prod companies`;
+    - API (`/health/ready` 200);
+    - proceso de envío (ciclos de planner, dispatcher, recovery y retention registrados en `job_runs`);
+    - servidor web (`/` 200 y proxy de `/api` 200);
+    - un registro a través del servidor web (201).
+  - La base de comprobación se borró al terminar.

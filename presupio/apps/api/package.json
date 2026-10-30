@@ -12,11 +12,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:bootstrap": "tsx --env-file-if-exists=../../.env scripts/db-bootstrap.ts",
+    "db:bootstrap:prod": "node --env-file-if-exists=../../.env dist/scripts/db-bootstrap.js",
     "db:migrate": "tsx --env-file-if-exists=../../.env scripts/migrate.ts",
+    "db:migrate:prod": "node --env-file-if-exists=../../.env dist/scripts/migrate.js",
     "db:seed": "tsx --env-file-if-exists=../../.env scripts/seed.ts",
     "worker": "tsx --env-file-if-exists=../../.env src/worker.ts",
     "worker:start": "node --env-file-if-exists=../../.env dist/src/worker.js",
-    "ops": "tsx --env-file-if-exists=../../.env scripts/ops.ts"
+    "ops": "tsx --env-file-if-exists=../../.env scripts/ops.ts",
+    "ops:prod": "node --env-file-if-exists=../../.env dist/scripts/ops.js"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.5",
