@@ -16,5 +16,7 @@ FILE="$DIR/presupio-$(date -u +%Y%m%d-%H%M%S).dump"
 pg_dump --format=custom --compress=6 --no-owner --no-privileges --file="$FILE" "$BACKUP_DATABASE_URL"
 sha256sum "$FILE" > "$FILE.sha256"
 # Comprobación mínima: el archivo se puede leer y contiene las tablas principales.
-pg_restore --list "$FILE" | grep -q "TABLE public quotes" || { echo "La copia no contiene la tabla quotes" >&2; exit 1; }
+# grep -c (no -q): lee todo el listado. Con «grep -q» y pipefail, pg_restore recibía SIGPIPE si
+# grep terminaba antes y la copia (correcta) fallaba de forma intermitente (~7 % en la auditoría).
+pg_restore --list "$FILE" | grep -c "TABLE public quotes" >/dev/null || { echo "La copia no contiene la tabla quotes" >&2; exit 1; }
 echo "Copia creada: $FILE ($(du -h "$FILE" | cut -f1))"

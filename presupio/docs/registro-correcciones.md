@@ -349,3 +349,20 @@ Se comprobó el informe anterior contra el código; el detalle está en `docs/PL
   - Falla con el migrador anterior (el mismo `permission denied`) y pasa con el nuevo.
   - El rol de la aplicación no recibe permiso sobre la función ajena y sí sobre las de Presupio.
   - `db:migrate:prod` sobre la base de rendimiento: correcto.
+
+## Auditoría final · `ops/backup.sh` fallaba de forma intermitente
+
+- **Causa:** la comprobación final `pg_restore --list | grep -q` con `set -o pipefail`. `grep -q` termina en la primera coincidencia; si `pg_restore` escribía después, recibía `SIGPIPE` y el script daba por fallida una copia correcta.
+- **Demostración:** 14 fallos de 200 comprobaciones (7 %) sobre una copia real de la base de rendimiento. Durante el simulacro de desastre, la copia falló así.
+- **Corrección:** `grep -c`, que lee todo el listado.
+- **Prueba:** 0 fallos de 200 comprobaciones y 0 fallos de 20 copias completas con `backup.sh`.
+
+## Auditoría final · `ops/restore.sh` no restauraba copias con extensiones del proveedor
+
+- **Causa:** si la base de origen tiene extensiones (`pg_stat_statements` es habitual en un PostgreSQL gestionado), `pg_dump` incluye `CREATE EXTENSION`. Al restaurar con el rol propietario fallaba con `permission denied to create extension`, y con `--single-transaction --exit-on-error` **no se restauraba nada**.
+- **Demostración:** el simulacro de desastre se detuvo en ese error.
+- **Corrección:** `restore.sh` omite las entradas de extensiones del índice de la copia (`--use-list`). Presupio no usa ninguna extensión: ninguna migración crea una.
+- **Prueba:** `test/backup.test.ts`, que ejecuta los scripts reales:
+  - copia de una base migrada con 50 presupuestos y `pg_stat_statements`;
+  - restauración en una base vacía, migración, recuento, RLS activo, y rechazo de restaurar encima de una base con datos.
+  - Falla con el `restore.sh` anterior y pasa con el nuevo.
