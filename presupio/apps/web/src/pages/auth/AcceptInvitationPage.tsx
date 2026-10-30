@@ -5,6 +5,7 @@ import { api } from '../../api/client';
 import { useMe } from '../../api/queries';
 import type { Role } from '../../api/types';
 import { useStartSession } from '../../auth/session';
+import { LegalConsentText } from '../../components/LegalConsentText';
 import { Alert, Button, ErrorAlert, Field, Spinner } from '../../components/ui';
 import { formatDate } from '../../lib/format';
 import { useFormErrors } from '../../lib/forms';
@@ -159,7 +160,7 @@ export function AcceptInvitationPage() {
                   clearField('acceptTerms');
                 }}
               />
-              <span>Acepto los términos del servicio y la política de privacidad de Presupio.</span>
+              <LegalConsentText />
             </label>
             {errors.acceptTerms && (
               <p className="field__error" id="inv-terms-error">

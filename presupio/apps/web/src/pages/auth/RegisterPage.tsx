@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { api } from '../../api/client';
 import type { Delivery } from '../../api/types';
 import { useStartSession } from '../../auth/session';
+import { LegalConsentText } from '../../components/LegalConsentText';
 import { Button, ErrorAlert, Field } from '../../components/ui';
 import { useFormErrors } from '../../lib/forms';
 import { usePageTitle } from '../../lib/usePageTitle';
@@ -86,7 +87,7 @@ export function RegisterPage() {
               aria-invalid={errors.acceptTerms ? true : undefined}
               aria-describedby={errors.acceptTerms ? 'terms-error' : undefined}
             />
-            <span>Acepto los términos del servicio y la política de privacidad de Presupio.</span>
+            <LegalConsentText />
           </label>
           {errors.acceptTerms && (
             <p className="field__error" id="terms-error">

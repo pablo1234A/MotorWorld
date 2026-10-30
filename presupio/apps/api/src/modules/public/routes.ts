@@ -31,6 +31,13 @@ export async function publicRoutes(app: FastifyInstance) {
 
   const limit = { max: app.config.rateLimits.tokenRedeem.max, timeWindow: app.config.rateLimits.tokenRedeem.windowMs };
 
+  // Documentos legales que se piden aceptar en el alta. Sin direcciones (solo fuera de
+  // producción) se indica que están pendientes de publicar: nunca se inventan.
+  app.get('/legal', { config: { auth: 'none' } }, async () => {
+    const { termsUrl, privacyUrl } = app.config.legal;
+    return { legal: { termsUrl: termsUrl ?? null, privacyUrl: privacyUrl ?? null, published: !!termsUrl && !!privacyUrl } };
+  });
+
   app.post('/unsubscribe/preview', { config: { auth: 'none', rateLimit: limit } }, async (req) => {
     const { token } = parseWith(z.strictObject({ token: tokenSchema }), req.body);
     const found = await findDelivery(app, token);

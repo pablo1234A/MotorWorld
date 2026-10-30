@@ -53,6 +53,7 @@ export const keys = {
   templateVersions: (step: number) => ['automation', 'templates', step, 'versions'] as const,
   followUpPreview: (id: string) => ['follow-ups', 'detail', id, 'preview'] as const,
   followUpDeliveries: (id: string) => ['follow-ups', 'detail', id, 'deliveries'] as const,
+  legal: ['public', 'legal'] as const,
 };
 
 export function createQueryClient(): QueryClient {

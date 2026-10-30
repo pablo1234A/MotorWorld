@@ -227,3 +227,24 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
   - `e2e/billing.spec.ts`, 3 pruebas: contratar, activar, cambio de plan, cancelación, fin del periodo, solo lectura, portal, cobro fallido, gracia, recuperación, impago, aislamiento, firma falsa y evento repetido.
   - `billing.test.ts`: dos pruebas nuevas (redirecciones ajenas → 503; `STRIPE_API_BASE` restringido).
 - **Pendiente por dependencia externa:** probar con una cuenta de Stripe en modo de prueba, que requiere credenciales. El simulador **no equivale** a Stripe real.
+
+## P0 · Documentos legales
+
+- **Causa:**
+  - El alta y las invitaciones pedían aceptar «los términos del servicio y la política de privacidad», pero esos documentos no existían ni se enlazaban.
+  - No había un texto de encargo del tratamiento para los datos de los clientes de cada empresa.
+- **Corrección:**
+  - **Borradores** en `docs/legal/`: términos, privacidad, encargo del tratamiento, cookies y aviso legal.
+    - Están marcados como **BORRADOR — PENDIENTE DE REVISIÓN JURÍDICA (Y FISCAL). NO PUBLICAR**.
+    - Usan solo hechos comprobados en el código: datos, plazos, proveedores, cookie única, precios y límites.
+    - Lo que falta queda como `[PENDIENTE: …]`, sin inventar obligaciones ni afirmar que se cumple ninguna norma.
+  - `docs/legal/README.md`: lista de 19 puntos que debe revisar un profesional y tabla de datos y plazos reales.
+  - **En producción la API no arranca** sin `LEGAL_TERMS_URL` y `LEGAL_PRIVACY_URL` (https): las versiones publicadas tras la revisión.
+  - Los formularios enlazan a esas direcciones (`GET /public/legal`). Fuera de producción dicen «Documentos pendientes de publicar en este entorno», y nunca enlazan a los borradores.
+- **Prueba:**
+  - `test/legal.test.ts`, 2 pruebas: producción exige ambas URLs https, y el endpoint indica pendiente o publicado.
+  - `protection.test.ts`: la ruta pública está en la lista revisada.
+  - `apps/web/test/app.test.tsx`: enlaces con `rel="noopener noreferrer"` o aviso de pendiente.
+- **Estado: PENDIENTE DE REVISIÓN LEGAL O FISCAL.**
+  - Los textos no están validados. No se publica nada ni se presenta como definitivo.
+  - Falta guardar la versión aceptada, si la revisión lo pide.

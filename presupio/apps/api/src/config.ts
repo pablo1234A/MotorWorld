@@ -62,6 +62,12 @@ const envSchema = z.object({
   // Token de la supervisión externa (GET /api/v1/ops/status). Sin él, la ruta no existe.
   OPS_STATUS_TOKEN: z.string().min(32, 'OPS_STATUS_TOKEN debe tener al menos 32 caracteres').optional(),
 
+  // Documentos legales publicados y REVISADOS (términos del servicio y política de privacidad).
+  // Obligatorios en producción: el alta y las invitaciones piden aceptarlos. Los borradores de
+  // docs/legal/ están pendientes de revisión y no deben publicarse como definitivos.
+  LEGAL_TERMS_URL: z.string().url().optional(),
+  LEGAL_PRIVACY_URL: z.string().url().optional(),
+
   // Pagos (fase 5). SOLO modo de prueba de Stripe: las claves live se rechazan al arrancar.
   PAYMENTS_ENABLED: booleanFromEnv.optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
@@ -95,6 +101,8 @@ export interface AppConfig {
   trialDomainRuleDays: number;
   /** Días antes del fin de la prueba con aviso, de mayor a menor (p. ej. [3, 1]). */
   trialReminderDays: number[];
+  /** Direcciones de los documentos legales publicados (sin ellas, «pendientes de publicar»). */
+  legal: { termsUrl?: string; privacyUrl?: string };
   /** Token de la supervisión externa; sin él, /ops/status responde 404. */
   opsStatusToken?: string;
   billing: {
@@ -230,6 +238,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const cookieSecure = e.COOKIE_SECURE ?? isProd;
   if (isProd && !cookieSecure) throw new Error('COOKIE_SECURE no puede ser false en producción');
   if (isProd && !e.APP_WEB_URL.startsWith('https://')) throw new Error('APP_WEB_URL debe usar https en producción');
+  if (isProd) {
+    for (const [name, value] of [['LEGAL_TERMS_URL', e.LEGAL_TERMS_URL], ['LEGAL_PRIVACY_URL', e.LEGAL_PRIVACY_URL]] as const) {
+      // El registro pide aceptar estos documentos: en producción tienen que existir (y estar revisados, docs/legal/README.md).
+      if (!value?.startsWith('https://')) throw new Error(`${name} (https) es obligatoria en producción: dirección de la versión publicada y revisada`);
+    }
+  }
   if (isProd && e.MAIL_TRANSPORT === 'log') {
     throw new Error('MAIL_TRANSPORT=log no está permitido en producción (escribiría enlaces privados en los logs)');
   }
@@ -298,6 +312,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       idleTimeoutMs: e.SESSION_IDLE_TIMEOUT_HOURS * HOUR,
       touchIntervalMs: 5 * MINUTE,
     },
+    legal: { ...(e.LEGAL_TERMS_URL ? { termsUrl: e.LEGAL_TERMS_URL } : {}), ...(e.LEGAL_PRIVACY_URL ? { privacyUrl: e.LEGAL_PRIVACY_URL } : {}) },
     trialDays: e.TRIAL_DAYS,
     trialDomainRuleDays: e.TRIAL_DOMAIN_RULE_DAYS,
     trialReminderDays: [...new Set(e.TRIAL_REMINDER_DAYS.split(',').map((d) => d.trim()).filter(Boolean).map(Number))].sort((a, b) => b - a),

@@ -530,9 +530,16 @@ describe('configuración y disponibilidad de Stripe', () => {
   it('el simulador local de Stripe (STRIPE_API_BASE) solo se admite fuera de producción y en local', () => {
     expect(loadConfig({ ...base, ...valid, STRIPE_API_BASE: 'http://127.0.0.1:3103' }).billing.stripe?.apiBase).toEqual({ host: '127.0.0.1', port: 3103, protocol: 'http' });
     expect(() => loadConfig({ ...base, ...valid, STRIPE_API_BASE: 'https://api.ejemplo.test' })).toThrow(/simulador local/);
-    const prod = { ...base, ...valid, NODE_ENV: 'production', APP_WEB_URL: 'https://app.ejemplo.test', STRIPE_API_BASE: 'http://127.0.0.1:3103' };
-    expect(() => loadConfig(prod)).toThrow();
-    expect(() => loadConfig({ ...base, ...valid, NODE_ENV: 'production', STRIPE_API_BASE: 'http://127.0.0.1:3103' })).toThrow();
+    const prod = {
+      ...base,
+      ...valid,
+      NODE_ENV: 'production',
+      APP_WEB_URL: 'https://app.ejemplo.test',
+      LEGAL_TERMS_URL: 'https://ejemplo.test/terminos',
+      LEGAL_PRIVACY_URL: 'https://ejemplo.test/privacidad',
+    };
+    expect(loadConfig(prod).billing.stripe?.apiBase).toBeUndefined();
+    expect(() => loadConfig({ ...prod, STRIPE_API_BASE: 'http://127.0.0.1:3103' })).toThrow(/STRIPE_API_BASE solo se admite en pruebas/);
   });
 
   it('solo redirige a las páginas alojadas por Stripe (checkout.stripe.com, billing.stripe.com)', async () => {

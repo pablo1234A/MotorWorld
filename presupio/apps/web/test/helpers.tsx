@@ -37,7 +37,10 @@ export function mockApi(handlers: Record<string, Handler>) {
   return { fetchMock, calls };
 }
 
-export const unauthenticated = { 'GET /me': () => ({ status: 401, body: { error: { code: 'UNAUTHENTICATED', message: 'Necesitas iniciar sesión.' } } }) };
+export const unauthenticated = {
+  'GET /me': () => ({ status: 401, body: { error: { code: 'UNAUTHENTICATED', message: 'Necesitas iniciar sesión.' } } }),
+  'GET /public/legal': () => ({ body: { legal: { termsUrl: null, privacyUrl: null, published: false } } }),
+};
 
 export function fakeMe(overrides: Partial<Me> = {}): Me {
   return {

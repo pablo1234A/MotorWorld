@@ -161,6 +161,22 @@ describe('registro', () => {
     expect(calls.find((c) => c.path === '/auth/register')?.body).toMatchObject({ acceptTerms: true, email: 'ana@ejemplo.test' });
   });
 
+  it('enlaza a los documentos legales publicados; si no lo están, lo dice (P0)', async () => {
+    mockApi(unauthenticated);
+    const { unmount } = renderApp('/registro');
+    expect(await screen.findByText('Documentos pendientes de publicar en este entorno.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'términos del servicio' })).not.toBeInTheDocument();
+    unmount();
+    mockApi({
+      ...unauthenticated,
+      'GET /public/legal': () => ({ body: { legal: { termsUrl: 'https://ejemplo.test/terminos', privacyUrl: 'https://ejemplo.test/privacidad', published: true } } }),
+    });
+    renderApp('/registro');
+    expect(await screen.findByRole('link', { name: 'términos del servicio' })).toHaveAttribute('href', 'https://ejemplo.test/terminos');
+    expect(screen.getByRole('link', { name: 'política de privacidad' })).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByText('Documentos pendientes de publicar en este entorno.')).not.toBeInTheDocument();
+  });
+
   it('si la prueba gratuita ya se disfrutó, lo explica al entrar y ofrece elegir un plan (P2-01)', async () => {
     let registered = false;
     const me = fakeMe();

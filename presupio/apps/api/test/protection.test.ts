@@ -16,6 +16,8 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/invitations/accept',
   // Fase 3: baja de los correos (token personal) y webhook firmado del proveedor.
   'POST /api/v1/public/unsubscribe/preview',
+  // Direcciones de los documentos legales (solo lectura, sin datos).
+  'GET /api/v1/public/legal',
   'POST /api/v1/public/unsubscribe',
   'POST /api/v1/webhooks/mailgun',
   // Webhook de Stripe: sin sesión, pero solo procesa eventos con firma válida (y 404 sin pagos activos).
