@@ -33,7 +33,10 @@ const TYPES = {
 // Cabeceras de la petición que se reenvían a la API (sin hop-by-hop).
 const HOP_BY_HOP = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'host']);
 
-export function createWebServer({ root, apiUrl, log = () => {} }) {
+// Como proxy_read_timeout de nginx: una API que no contesta no deja peticiones colgadas.
+const API_TIMEOUT_MS = 60_000;
+
+export function createWebServer({ root, apiUrl, log = () => {}, apiTimeoutMs = API_TIMEOUT_MS }) {
   const rootDir = path.resolve(root);
   const api = apiUrl ? new URL(apiUrl) : null;
 
@@ -41,13 +44,30 @@ export function createWebServer({ root, apiUrl, log = () => {} }) {
 
   async function sendFile(req, res, file, cache) {
     const info = await stat(file);
-    res.writeHead(200, withSecurity({
-      'Content-Type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
-      'Content-Length': info.size,
-      'Cache-Control': cache,
-    }));
-    if (req.method === 'HEAD') return res.end();
-    createReadStream(file).pipe(res);
+    const head = () =>
+      res.writeHead(200, withSecurity({
+        'Content-Type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
+        'Content-Length': info.size,
+        'Cache-Control': cache,
+      }));
+    if (req.method === 'HEAD') {
+      head();
+      return res.end();
+    }
+    // Las cabeceras salen cuando el archivo ya está abierto: si desaparece entre stat y la
+    // lectura (p. ej. durante un despliegue), es un 500 limpio. Un error a mitad de lectura
+    // corta la respuesta; nunca queda una excepción sin capturar que tumbe el servidor.
+    const stream = createReadStream(file);
+    stream.once('open', () => {
+      head();
+      stream.pipe(res);
+    });
+    stream.once('error', (err) => {
+      log(`Error al leer ${file}: ${err.message}`);
+      if (!res.headersSent) sendError(res, 500, 'Error interno');
+      else res.destroy();
+    });
+    res.once('close', () => stream.destroy());
   }
 
   function sendError(res, status, message) {
@@ -63,17 +83,30 @@ export function createWebServer({ root, apiUrl, log = () => {} }) {
     headers['x-forwarded-proto'] = req.headers['x-forwarded-proto'] ?? 'http';
     headers.host = req.headers.host ?? api.host;
     const upstream = http.request(
-      { hostname: api.hostname, port: api.port || 80, path: req.url, method: req.method, headers },
+      { hostname: api.hostname, port: api.port || 80, path: req.url, method: req.method, headers, timeout: apiTimeoutMs },
       (apiRes) => {
         // Las respuestas de la API llevan sus propias cabeceras de seguridad (helmet).
         res.writeHead(apiRes.statusCode ?? 502, apiRes.headers);
         apiRes.pipe(res);
+        // Si la API corta a medias, el navegador recibe el corte en vez de esperar para siempre.
+        apiRes.once('aborted', () => res.destroy());
+        apiRes.once('error', () => res.destroy());
       },
     );
+    upstream.once('timeout', () => {
+      log(`La API no contestó en ${apiTimeoutMs} ms: ${req.method} ${req.url}`);
+      if (!res.headersSent) sendError(res, 504, 'La API no ha respondido a tiempo');
+      upstream.destroy();
+    });
     upstream.on('error', (err) => {
+      if (res.writableEnded || res.destroyed) return;
       log(`API no disponible: ${err.message}`);
       if (!res.headersSent) sendError(res, 502, 'API no disponible');
       else res.destroy();
+    });
+    // Si el navegador abandona la petición, se cancela también la de la API.
+    res.once('close', () => {
+      if (!res.writableFinished) upstream.destroy();
     });
     req.pipe(upstream);
   }

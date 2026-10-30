@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -130,6 +130,92 @@ describe('servidor de producción del frontend (P1-05)', () => {
       expectSecurityHeaders(res.headers);
     } finally {
       await new Promise((r) => down.close(r));
+    }
+  });
+});
+
+describe('servidor de producción: robustez ante fallos de lectura, de la API y del navegador', () => {
+  /** Arranca un servidor web contra una API de prueba y devuelve su puerto. */
+  async function serve(apiHandler: http.RequestListener, options: { apiTimeoutMs?: number } = {}) {
+    const upstream = http.createServer(apiHandler);
+    await new Promise<void>((r) => upstream.listen(0, '127.0.0.1', r));
+    const server = createWebServer({ root, apiUrl: `http://127.0.0.1:${(upstream.address() as AddressInfo).port}`, ...options });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+    const close = async () => {
+      server.closeAllConnections();
+      upstream.closeAllConnections();
+      await new Promise((r) => server.close(r));
+      await new Promise((r) => upstream.close(r));
+    };
+    return { port: (server.address() as AddressInfo).port, close };
+  }
+  /** Petición que nunca cuelga la prueba: devuelve el estado o el error de red. */
+  function settle(port: number, rawPath: string) {
+    return new Promise<{ status?: number; error?: string }>((resolve) => {
+      const req = http.get({ host: '127.0.0.1', port, path: rawPath }, (res) => {
+        res.resume();
+        res.on('end', () => resolve({ status: res.statusCode }));
+        res.on('error', (e) => resolve({ error: e.message }));
+        res.on('aborted', () => resolve({ error: 'aborted' }));
+      });
+      req.on('error', (e) => resolve({ error: e.message }));
+    });
+  }
+
+  it('un error al leer un archivo no tumba el servidor (antes: excepción no capturada)', async () => {
+    // /proc/self/mem: stat dice «archivo» y la lectura falla con EIO, como un archivo que
+    // desaparece o se corrompe a mitad de un despliegue.
+    symlinkSync('/proc/self/mem', path.join(root, 'roto.js'));
+    const { port, close } = await serve((_req, res) => res.end());
+    try {
+      const broken = await settle(port, '/roto.js');
+      expect(broken.status === 500 || broken.error !== undefined).toBe(true);
+      expect((await settle(port, '/')).status).toBe(200);
+    } finally {
+      await close();
+      rmSync(path.join(root, 'roto.js'));
+    }
+  });
+
+  it('si la API corta la respuesta a medias, el navegador recibe el corte (antes: petición colgada)', async () => {
+    const { port, close } = await serve((_req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json', 'content-length': '1000' });
+      res.write('{"a":');
+      setTimeout(() => res.socket?.destroy(), 50);
+    });
+    try {
+      const result = await Promise.race([settle(port, '/api/v1/corte'), new Promise((r) => setTimeout(() => r('colgada'), 3000))]);
+      expect(result).not.toBe('colgada');
+    } finally {
+      await close();
+    }
+  });
+
+  it('si el navegador abandona la petición, se cancela también la petición a la API', async () => {
+    let apiRequestClosed = false;
+    const { port, close } = await serve((req) => {
+      req.socket.on('close', () => (apiRequestClosed = true)); // nunca responde
+    });
+    try {
+      const req = http.get({ host: '127.0.0.1', port, path: '/api/v1/lenta' });
+      req.on('error', () => {});
+      await new Promise((r) => setTimeout(r, 150));
+      req.destroy();
+      await new Promise((r) => setTimeout(r, 300));
+      expect(apiRequestClosed).toBe(true);
+    } finally {
+      await close();
+    }
+  });
+
+  it('si la API no contesta a tiempo, 504 con las cabeceras de seguridad (no se espera para siempre)', async () => {
+    const { port, close } = await serve(() => {}, { apiTimeoutMs: 200 });
+    try {
+      const res = await request('/api/v1/lenta', { port });
+      expect(res.status).toBe(504);
+      expectSecurityHeaders(res.headers);
+    } finally {
+      await close();
     }
   });
 });

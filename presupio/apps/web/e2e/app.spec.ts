@@ -492,12 +492,18 @@ test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
     { width: 390, height: 844 },
   ]) {
     await page.setViewportSize(viewport);
+    const times: Array<[string, number]> = [];
     for (const path of [...PAGES, firstQuoteUrl, automaticQuoteUrl]) {
+      const started = Date.now();
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       await expectNoHorizontalOverflow(page, `${path} @${viewport.width}px`);
       if (viewport.width !== 768) await expectAccessible(page, `${path} @${viewport.width}px`);
+      times.push([path, Date.now() - started]);
     }
+    // Diagnóstico en la salida de la CI: duración total y pantalla más lenta de cada tamaño.
+    const slowest = times.reduce((a, b) => (b[1] > a[1] ? b : a));
+    console.log(`${viewport.width}px: ${times.reduce((a, [, ms]) => a + ms, 0)} ms en ${times.length} pantallas; la más lenta ${slowest[0]} (${slowest[1]} ms)`);
   }
   // Pantallas públicas.
   const context = await page.context().browser()!.newContext({ viewport: { width: 390, height: 844 } });

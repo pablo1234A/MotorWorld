@@ -27,6 +27,8 @@ export default defineConfig({
     locale: 'es-ES',
     timezoneId: 'Europe/Madrid',
     trace: 'retain-on-failure',
+    // Una navegación que no termina falla a los 30 s con su URL, sin agotar el tiempo de la prueba.
+    navigationTimeout: 30_000,
     screenshot: 'only-on-failure',
   },
   // `npm run test:e2e` usa Chromium. La CI repite la batería completa en Firefox, WebKit (motor de

@@ -95,6 +95,9 @@ jobs:
         working-directory: presupio/apps/web
       - run: npx playwright test --project=${{ matrix.browser == 'msedge' && 'edge' || matrix.browser }}
         working-directory: presupio/apps/web
+      - name: Registros de la API de pruebas (solo si falla)
+        if: failure()
+        run: tail -n 60 apps/web/e2e/.output/api.log apps/web/e2e/.output/api-billing.log || true
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

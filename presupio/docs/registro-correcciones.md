@@ -418,3 +418,27 @@ Resultado: **469/469** comprobaciones en Chromium (dos ejecuciones seguidas) y *
 - sin CSP ni errores de JavaScript.
 
 Única excepción aceptada: en el plano de la cartera, las parcelas de importes pequeños pueden medir menos de 24 px. Su tamaño es el dato, y los mismos presupuestos están en la lista.
+
+## Auditoría final · Servidor web de producción (`server/serve.mjs`): fallos que podían tumbarlo o dejar peticiones colgadas
+
+- **Contexto:** al ejecutar la batería E2E en Firefox, una navegación quedó colgada 5 minutos contra `serve.mjs`. Revisé el servidor y encontré cuatro defectos reales. **No está demostrado que alguno de ellos causara ese bloqueo** (en el registro no hubo errores del servidor), pero los cuatro se reproducen y se han corregido.
+- **Fallos y demostración** (`production-server.test.ts`, que fallaba con el servidor anterior):
+  1. Un error al leer un archivo (`EIO` simulado con `/proc/self/mem`, como un archivo que desaparece durante un despliegue) lanzaba una **excepción no capturada que tumbaba el proceso**.
+  2. Si la API cortaba una respuesta a medias, **el navegador esperaba para siempre**.
+  3. Si el navegador abandonaba una petición, la petición a la API **seguía abierta**.
+  4. Si la API no contestaba, **no había límite de espera**.
+- **Corrección:**
+  1. Las cabeceras se envían cuando el archivo ya está abierto: si falla antes, `500`; si falla a mitad, se corta la respuesta.
+  2. Un corte de la API se propaga al navegador.
+  3. Si el navegador se va, se cancela la petición a la API.
+  4. Tras 60 s sin respuesta de la API, `504`. Es el mismo valor que `proxy_read_timeout` de nginx.
+- **Prueba:**
+  - 4 pruebas nuevas, que fallaban antes y pasan ahora;
+  - la batería web completa (82);
+  - la E2E completa en Chromium (18/18).
+- **Diagnóstico añadido:**
+  - límite de 30 s por navegación en las E2E;
+  - tiempos por pantalla en la prueba de accesibilidad;
+  - registros de la API en la CI cuando algo falla.
+
+  Así, si el bloqueo de Firefox se repite, quedará localizado.
