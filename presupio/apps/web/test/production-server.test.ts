@@ -146,5 +146,7 @@ describe('configuración de alojamiento generada desde la misma fuente', () => {
     expect(committed).toBe(nginxConfig());
     // Cada location con add_header propio repite todas las de seguridad (nginx no las hereda).
     for (const [name] of Object.entries(securityHeaders)) expect(committed.match(new RegExp(`add_header ${name} `, 'g'))).toHaveLength(3);
+    // El correo entrante (hasta 10 MB en la API) no choca con el límite de 1 MB de nginx.
+    expect(committed).toMatch(/location \/api\/v1\/webhooks\/inbound\/ \{\n {4}client_max_body_size 11m;/);
   });
 });

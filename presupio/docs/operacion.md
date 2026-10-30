@@ -75,7 +75,7 @@
 | Comprobación | Frecuencia | Alerta si |
 |---|---|---|
 | `GET /api/v1/health/ready` | 1 min | no responde `200` dos veces seguidas |
-| `GET /api/v1/ops/status` con `Authorization: Bearer $OPS_STATUS_TOKEN` | 5 min | `status` ≠ `ok`. Alertas posibles:<ul><li>`worker_not_running`;</li><li>`deliveries_stuck_sending`;</li><li>`approved_emails_delayed`;</li><li>`job_errors_last_24h`;</li><li>`attempts_reserved_stuck`;</li><li>`billing_events_failed`;</li><li>`billing_duplicate_subscription`.</li></ul> |
+| `GET /api/v1/ops/status` con `Authorization: Bearer $OPS_STATUS_TOKEN` | 5 min | `status` ≠ `ok`. Alertas posibles:<ul><li>`worker_not_running`;</li><li>`deliveries_stuck_sending`;</li><li>`deliveries_unknown_review` (envíos de resultado desconocido pendientes de revisar);</li><li>`approved_emails_delayed`;</li><li>`job_errors_last_24h`;</li><li>`attempts_reserved_stuck`;</li><li>`billing_events_failed`;</li><li>`billing_duplicate_subscription`.</li></ul> |
 
 **Qué devuelve `/ops/status`:** solo cifras agregadas, sin empresas, personas ni emails. Sin token configurado, la ruta responde `404`. Además de `alerts`, devuelve `review` con avisos informativos que no degradan el estado: `recoveries_backdated_review` indica respuestas fechadas antes de un seguimiento (revisar con `npm run ops -- backdated`).
 
@@ -113,7 +113,7 @@ RESTORE_DATABASE_URL=postgres://owner:…@host/presupio_restaurada ops/restore.s
 ```
 
 ```bash
-MIGRATION_DATABASE_URL=postgres://owner:…@host/presupio_restaurada DATABASE_URL=postgres://app:…@host/presupio_restaurada npm run db:migrate
+MIGRATION_DATABASE_URL=postgres://owner:…@host/presupio_restaurada DATABASE_URL=postgres://app:…@host/presupio_restaurada npm run db:migrate:prod
 ```
 
 1. Restaura la copia (primer comando).

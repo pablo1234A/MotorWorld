@@ -68,6 +68,7 @@ Si no coincide, no se abre el pago (`409`) y se registra un error.
      - `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`;
      - `customer.subscription.created`, `.updated`, `.deleted`, `.paused`, `.resumed`;
      - `invoice.paid`, `invoice.payment_failed`, `invoice.payment_action_required`.
+   - **Versión de la API del endpoint: `2026-09-30.endive`**, la que fija la librería (`stripe` 23.0.0). Con una versión anterior, los eventos de factura llegan sin `parent.subscription_details` y Presupio los ignora («Evento sin suscripción»).
    - Copia el secreto `whsec_…`.
 5. **En local, con la CLI de Stripe:**
    ```bash

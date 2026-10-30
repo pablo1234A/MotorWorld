@@ -39,6 +39,17 @@ ${add('  ')}
     proxy_set_header X-Forwarded-Proto $scheme;
   }
 
+  # Correo entrante de Mailgun (detección de respuestas): el mensaje llega con sus adjuntos y la
+  # API admite hasta 10 MB en esta ruta. Con el límite de nginx por defecto (1 MB) se rechazaba
+  # con 413 y la respuesta no se detectaba. El resto de la API mantiene 1 MB.
+  location /api/v1/webhooks/inbound/ {
+    client_max_body_size 11m;
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
   location /assets/ {
 ${add('    ')}
     # Sin «always»: un 404 no debe quedar en caché un año.

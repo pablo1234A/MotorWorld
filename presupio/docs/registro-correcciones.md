@@ -302,3 +302,14 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
 | Cambios fuera de `presupio/` y `.github/` | Ninguno |
 
 No se ha desplegado nada, no se ha contactado con Stripe, Mailgun ni ningún proveedor real, no se ha enviado ningún email real y no se han tocado datos de producción.
+
+## Revisión de preparación para el lanzamiento (30 de octubre de 2026)
+
+Se comprobó el informe anterior contra el código; el detalle está en `docs/PLAN-LANZAMIENTO.md`, apartado 2.
+
+| Problema | Demostración | Corrección | Prueba |
+|---|---|---|---|
+| nginx rechazaba con 413 el correo entrante de más de 1 MB (respuestas con adjuntos sin detectar) | nginx 1.24 real con la configuración generada: 2 MB → 413 | `client_max_body_size 11m` solo en `/api/v1/webhooks/inbound/` | nginx real: 2 MB y 9 MB → 200; `login` con 2 MB → 413. `production-server.test.ts` comprueba el bloque. |
+| `ops/restore.sh` y `operacion.md` indicaban `db:migrate` (necesita dependencias de desarrollo) | Lectura | `db:migrate:prod` | Restauración con el esquema actual: recuentos idénticos, RLS activo |
+| Alerta `deliveries_unknown_review` sin documentar | `ops/routes.ts` frente a `operacion.md` | Documentada | — |
+| Faltaba indicar la versión de la API del webhook de Stripe | `normalizeEvent` lee `invoice.parent.subscription_details` | `2026-09-30.endive` en `facturacion.md` y en el plan | — |
