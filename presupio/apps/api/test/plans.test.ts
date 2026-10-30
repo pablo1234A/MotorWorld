@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { cpSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -840,6 +840,64 @@ describe('migraciones', () => {
         // Borrar una empresa (herramienta de operación) sigue funcionando con los nuevos registros.
         await c.query('DELETE FROM companies WHERE id = $1', [companyId]);
         expect((await c.query('SELECT count(*)::int AS n FROM attempt_events')).rows[0].n).toBe(0);
+      } finally {
+        await c.end();
+      }
+    } finally {
+      await owner.query(`DROP SCHEMA ${schema} CASCADE`);
+    }
+  });
+
+  it('0006 a 0010 se aplican sobre una base de la fase 5 con cuentas existentes (correcciones prelanzamiento)', async () => {
+    const schema = `mig_${randomBytes(4).toString('hex')}`;
+    const base = process.env.TEST_MIGRATION_DATABASE_URL!;
+    const url = `${base}${base.includes('?') ? '&' : '?'}options=${encodeURIComponent(`-c search_path=${schema}`)}`;
+    const appRole = decodeURIComponent(new URL(process.env.TEST_DATABASE_URL!).username);
+    await owner.query(`CREATE SCHEMA ${schema}`);
+    try {
+      const oldDir = mkdtempSync(path.join(tmpdir(), 'presupio-mig-'));
+      const phase5 = ['0001_init.sql', '0002_follow_up_engine.sql', '0003_usage_limits.sql', '0004_recovery_integrity.sql', '0005_attempts_and_billing.sql'];
+      for (const f of phase5) cpSync(path.join(MIGRATIONS_DIR, f), path.join(oldDir, f));
+      expect((await migrate({ connectionString: url, appRole, dir: oldDir })).applied).toHaveLength(5);
+      const c = new pg.Client({ connectionString: url });
+      await c.connect();
+      try {
+        // Dos empresas existentes: una en prueba (con propietaria) y otra de pago.
+        const email = 'ana.perez+obra@gmail.com';
+        const { rows: u } = await c.query(`INSERT INTO users (email, full_name, password_hash, terms_accepted_at) VALUES ($1, 'Ana', 'x', now()) RETURNING id`, [email]);
+        const companies: string[] = [];
+        for (const [name, status, trial] of [['En prueba', 'trialing', true], ['De pago', 'active', false]] as const) {
+          const { rows } = await c.query(`INSERT INTO companies (name, timezone) VALUES ($1, 'Atlantic/Canary') RETURNING id`, [name]);
+          companies.push(rows[0].id);
+          await c.query('INSERT INTO company_settings (company_id) VALUES ($1)', [rows[0].id]);
+          await c.query(`INSERT INTO subscriptions (company_id, plan, status, trial_ends_at) VALUES ($1, 'starter', $2, $3)`, [rows[0].id, status, trial ? new Date(Date.now() + 3 * 86_400_000) : null]);
+        }
+        await c.query(`INSERT INTO memberships (company_id, user_id, role) VALUES ($1, $2, 'owner')`, [companies[0], u[0].id]);
+
+        expect((await migrate({ connectionString: url, appRole })).applied).toEqual([
+          '0006_follow_up_unknown_status',
+          '0007_interrupted_deliveries',
+          '0008_privacy_erasure',
+          '0009_inbound_replies',
+          '0010_shared_limits_and_trials',
+        ]);
+        // 0009: cada empresa existente recibe su propio token de correo entrante.
+        const tokens = (await c.query('SELECT inbound_token FROM company_settings')).rows.map((r) => r.inbound_token as string);
+        expect(tokens).toHaveLength(2);
+        expect(new Set(tokens).size).toBe(2);
+        expect(tokens.every((t) => /^[0-9a-f]{32}$/.test(t))).toBe(true);
+        // 0010: la cuenta que ya tuvo prueba deja su huella (sin el email en claro); la de pago, no.
+        const expected = createHash('sha256').update(`presupio-trial:email:${email}`).digest('hex');
+        expect((await c.query('SELECT kind, value_hash, company_id FROM trial_claims')).rows).toEqual([{ kind: 'email', value_hash: expected, company_id: companies[0] }]);
+        // 0010: los avisos reciben la zona horaria de la empresa. (Estas funciones fijan
+        // search_path=public, así que en este esquema de prueba se comprueba su firma.)
+        const result = async (fn: string) =>
+          (await c.query(`SELECT pg_get_function_result(p.oid) AS r FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = $1 AND p.proname = $2`, [schema, fn])).rows[0].r as string;
+        expect(await result('app_trial_reminder_candidates')).toMatch(/timezone text/);
+        expect(await result('app_retention_candidates')).toMatch(/owner_emails text\[\], timezone text/);
+        // Datos previos intactos e idempotente.
+        expect((await c.query('SELECT count(*)::int AS n FROM companies')).rows[0].n).toBe(2);
+        expect((await migrate({ connectionString: url, appRole })).applied).toEqual([]);
       } finally {
         await c.end();
       }

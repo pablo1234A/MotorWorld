@@ -137,14 +137,14 @@ npm run worker -w @presupio/api -- --once
 ## Pruebas
 
 ```bash
-npm test             # API (187) + frontend (68): unitarias, de integración y de componentes
+npm test             # API (233) + frontend (77): unitarias, de integración y de componentes
 ```
 
 ```bash
 npm run test:e2e     # extremo a extremo en Chromium contra la API y la base de datos reales
 ```
 
-Las pruebas E2E recrean la base de datos de pruebas, arrancan la API real (puerto 3100) y sirven la compilación de producción del frontend (puerto 4174) con las mismas cabeceras de seguridad (CSP) que producción. Recorren registro, presupuestos, seguimientos, venta con evidencia, exclusiones, envío automático (activación, aprobación, envío contra un simulador local de la API de Mailgun y baja del cliente), consumo del plan por intentos, resultados y exportación, fin de la prueba gratuita (solo lectura), recuperación de contraseña, aislamiento entre empresas, invitaciones, errores de la API, enlaces, accesibilidad (axe) y diseño adaptable a 1440, 768 y 390 px. Necesitan Chromium de Playwright (`npx playwright install chromium` si no está instalado).
+Las pruebas E2E (18) recrean la base de datos de pruebas, arrancan la API real (puerto 3100) y sirven la compilación de producción del frontend con el servidor de producción incluido (`server/serve.mjs`, puerto 4174), con las mismas cabeceras de seguridad que producción. Una segunda API (puerto 3102, web en 4175) tiene los pagos de prueba activados contra un **simulador local de Stripe** (`e2e/fake-stripe.mjs`): contratar, cambiar de plan, cancelar, cobro fallido, impago y aislamiento, sin contactar con Stripe. Recorren registro, presupuestos, seguimientos, venta con evidencia, exclusiones, envío automático (activación, aprobación, envío contra un simulador local de la API de Mailgun y baja del cliente), consumo del plan por intentos, resultados y exportación, fin de la prueba gratuita (solo lectura), recuperación de contraseña, aislamiento entre empresas, invitaciones, errores de la API, enlaces, accesibilidad (axe) y diseño adaptable a 1440, 768 y 390 px. Necesitan Chromium de Playwright (`npx playwright install chromium` si no está instalado).
 
 Las pruebas de la API necesitan una base de datos cuyo nombre termine en `_test`, configurada en `TEST_DATABASE_URL` y `TEST_MIGRATION_DATABASE_URL`. Cada ejecución **borra y recrea** su esquema y aplica las migraciones.
 
@@ -156,7 +156,7 @@ npm test
 npm run typecheck
 ```
 
-La suite (187 pruebas, 12 archivos en `apps/api/test/`) cubre:
+La suite (233 pruebas, 17 archivos en `apps/api/test/`) se ejecuta en paralelo, con una base de datos por trabajador si hay `DATABASE_ADMIN_URL`. Cubre:
 
 | Archivo | Qué verifica |
 |---|---|
@@ -168,12 +168,22 @@ La suite (187 pruebas, 12 archivos en `apps/api/test/`) cubre:
 | `validation.test.ts` | Validación sintáctica y semántica, errores coherentes, JSON mal formado, prototype poisoning y tamaño máximo |
 | `database.test.ts` | Migraciones idempotentes con checksum, RLS en todas las tablas de empresa, restricciones, claves foráneas compuestas y cascadas |
 | `automation.test.ts` | Motor de seguimiento: programación 3/7/14, respuestas, aceptación y rechazo, baja, ciclos simultáneos sin duplicados, errores del proveedor, límite de reintentos, aislamiento, reinicios, aprobación, franjas, plantillas, webhooks firmados y conservación (proveedor **simulado**) |
-| `plans.test.ts` | <ul><li>Límites de Starter, Pro y Business por **intentos** (qué cuenta y qué no, reintentos, varios procesos a la vez);</li><li>recuperaciones como métrica;</li><li>fechas declaradas (D4) sin efecto en el consumo;</li><li>periodos;</li><li>imposibilidad de cambiar el plan;</li><li>métricas;</li><li>aislamiento;</li><li>exportación;</li><li>errores;</li><li>supervisión;</li><li>migraciones 0003 a 0005 sobre datos existentes.</li></ul> |
+| `plans.test.ts` | <ul><li>Límites de Starter, Pro y Business por **intentos** (qué cuenta y qué no, reintentos, varios procesos a la vez);</li><li>recuperaciones como métrica;</li><li>fechas declaradas (D4) sin efecto en el consumo;</li><li>periodos;</li><li>imposibilidad de cambiar el plan;</li><li>métricas;</li><li>aislamiento;</li><li>exportación;</li><li>errores;</li><li>supervisión;</li><li>migraciones 0003 a 0010 sobre datos existentes.</li></ul> |
 | `billing.test.ts` | Stripe en modo de prueba con pasarela **simulada** y verificación de firmas real: <ul><li>Checkout y activación solo por webhook;</li><li>permisos y aislamiento;</li><li>firmas inválidas, eventos repetidos y desordenados;</li><li>cambio de plan y cancelación;</li><li>pago fallido y gracia;</li><li>solo lectura en todas las rutas;</li><li>motor detenido;</li><li>exportación;</li><li>avisos de conservación;</li><li>configuración y Stripe caído.</li></ul> |
 | `stripe-gateway.test.ts` | Librería oficial de Stripe contra un servidor HTTP **local**: parámetros enviados, idempotencia, errores sin secretos, firma y rechazo de claves live |
-| `automation-units.test.ts` | Calendario con cambios de hora, plantillas, firma de webhooks y adaptadores Mailgun y SMTP contra servidores **locales** |
+| `automation-units.test.ts` | Calendario con cambios de hora, plantillas, firma de webhooks, adaptadores Mailgun y SMTP contra servidores **locales** y tiempos máximos del SMTP |
+| `resilience.test.ts` | Caída y vuelta de PostgreSQL (proxy TCP) en la API y en el proceso de envío real, y envíos interrumpidos (resultado desconocido, reconciliación, revisión manual, sin duplicados ni cobro) |
+| `privacy.test.ts` | Anonimizar un contacto y eliminar un presupuesto: permisos, aislamiento, confirmación, exportación sin datos personales, solo lectura |
+| `inbound.test.ts` | Detección de respuestas por correo entrante (Mailgun): firma, repeticiones, aislamiento entre empresas, respuestas automáticas y rebotes |
+| `limits-trials.test.ts` | Límites de peticiones compartidos y persistentes (varias instancias, reinicio, concurrencia, almacén caído), una prueba gratuita por persona y dominio, y avisos de fin de prueba |
+| `legal.test.ts` | Direcciones de los documentos legales obligatorias en producción |
 
-CI: `.github/workflows/presupio.yml` ejecuta la comprobación de tipos, la compilación y las pruebas con PostgreSQL 16 en cada cambio dentro de `presupio/`.
+CI: `.github/workflows/presupio.yml` ejecuta en cada cambio dentro de `presupio/`, con PostgreSQL 16:
+
+- la comprobación de tipos y el lint;
+- la compilación (con la comprobación de que es la de producción);
+- las pruebas con umbrales de cobertura (`npm run test:coverage`);
+- las E2E.
 
 ## Variables de entorno
 

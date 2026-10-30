@@ -282,3 +282,23 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
 | Contraseña fija en `docker-compose.yml` | `PRESUPIO_LOCAL_PG_PASSWORD` (por defecto `postgres`, solo local) | YAML válido |
 | Referencias a MotorWorld | No hay ninguna en el código de Presupio. Solo aparecían en el paquete compilado en local (rutas absolutas; corregido arriba). El repositorio se llama MotorWorld; cambiarle el nombre corresponde a su propietario. | `grep` sin resultados fuera de `dist/` |
 | HTML ajeno en la raíz (`index__1_.html`, página de MotorWorld subida por el propietario en `217fa26`) | **No se borra sin su confirmación.** Queda fuera de Presupio: la CI solo se ejecuta con cambios en `presupio/**` y ninguna compilación lo incluye. | — |
+
+## Validación final (30 de octubre de 2026, en este entorno)
+
+| Comprobación | Resultado |
+|---|---|
+| Comprobación de tipos (API y web) | Correcta |
+| Lint (`npm run lint`) | 0 errores |
+| Compilación (API y web, con la comprobación de producción) | Correcta |
+| Pruebas de la API, **10 ejecuciones consecutivas en paralelo** | 10/10 en verde, 233/233 cada una (17 archivos) |
+| Cobertura de la API | 91,96 % sentencias, 79,79 % ramas, 95,09 % funciones, 95,35 % líneas (umbrales cumplidos) |
+| Pruebas web | 77/77. Cobertura unitaria 27 % (umbral cumplido) |
+| E2E (Chromium, servidor de producción, Mailgun y Stripe simulados en local) | 18/18 |
+| `npm audit` (todas las dependencias y solo producción) | 0 vulnerabilidades |
+| Migraciones nuevas (0001→0010) y sobre datos existentes (0005→0010, 0004→0005, 0002→0003) | Correctas e idempotentes |
+| Instalación de producción limpia (`npm ci --omit=dev`) | Migraciones, `ops`, API, proceso de envío y web en funcionamiento |
+| nginx real (1.24) con la configuración generada | `nginx -t` correcto y cabeceras servidas |
+| Secretos en los cambios | Ninguno. El único `whsec_` es el valor inventado del simulador de E2E. |
+| Cambios fuera de `presupio/` y `.github/` | Ninguno |
+
+No se ha desplegado nada, no se ha contactado con Stripe, Mailgun ni ningún proveedor real, no se ha enviado ningún email real y no se han tocado datos de producción.
