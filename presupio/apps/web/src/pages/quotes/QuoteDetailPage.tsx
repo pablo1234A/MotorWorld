@@ -46,6 +46,7 @@ import { AutomaticEmailDialog, needsApproval, ruleStatus } from './AutomaticEmai
 import { blockedChannels, CancelFollowUpDialog, CHANNEL_ICON, CompleteFollowUpDialog, NewFollowUpDialog } from './FollowUpDialogs';
 import { useRefreshQuoteData } from './quoteMutations';
 import { StatusDialog } from './StatusDialogs';
+import { useNow } from '../../lib/useNow';
 
 // Transiciones "hacia delante" frente a correcciones de estados finales (solo propietario/administrador).
 const CORRECTIONS: Partial<Record<QuoteStatus, QuoteStatus[]>> = {
@@ -232,7 +233,8 @@ function FollowUpItem({
 }) {
   const Icon = CHANNEL_ICON[f.channel];
   const automatic = f.source === 'rule';
-  const overdue = f.status === 'pending' && f.dueAt && new Date(f.dueAt).getTime() < Date.now();
+  const now = useNow();
+  const overdue = f.status === 'pending' && f.dueAt && new Date(f.dueAt).getTime() < now;
   const rule = automatic ? ruleStatus(f, requireApproval) : null;
   const iconState = f.status === 'sent' ? 'completed' : f.status === 'failed' ? 'failed' : f.status === 'sending' ? 'pending' : f.status;
   return (

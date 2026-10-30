@@ -9,6 +9,7 @@ import { Alert, buttonClass, EmptyState, ErrorAlert, Panel, Skeleton, SkeletonRo
 import { daysSince, formatDateTime, formatMoney, formatNumber, formatRelative, formatShortDate } from '../lib/format';
 import { describeActivity, FOLLOW_UP_CHANNEL_LABEL } from '../lib/labels';
 import { usePageTitle } from '../lib/usePageTitle';
+import { useNow } from '../lib/useNow';
 
 function Ledger() {
   const summary = useSummary();
@@ -164,7 +165,7 @@ function UpcomingFollowUps() {
       .sort((a, b) => (a.dueAt ? new Date(a.dueAt).getTime() : Infinity) - (b.dueAt ? new Date(b.dueAt).getTime() : Infinity))
       .slice(0, 6);
   }, [followUps.data]);
-  const now = Date.now();
+  const now = useNow();
 
   return (
     <Panel

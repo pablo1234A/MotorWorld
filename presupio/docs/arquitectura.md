@@ -123,8 +123,11 @@ Un rechazo cuenta como respuesta, pero no como reactivación. Las restricciones 
 
 - Al registrarse: `trialing` con los límites de Starter durante `TRIAL_DAYS` (14 por defecto), **sin cobro**.
 - **Ningún endpoint escribe en `subscriptions`**, y desde la fase 4 el rol de la aplicación ni siquiera tiene permiso `UPDATE`/`DELETE` sobre la tabla. Desde la fase 5 la cambian solo las funciones `SECURITY DEFINER` acotadas que aplican un webhook verificado de Stripe (modo de prueba, ver [`facturacion.md`](facturacion.md)) y la herramienta de operación.
-- Consumo por empresa y periodo en `usage_periods` (contador atómico con `CHECK`) y `recovery_events` (una por presupuesto). Ver [`limites-y-metricas.md`](limites-y-metricas.md).
-- El catálogo (27,99 €, 57,99 € y 127,99 €; 25 y 65 recuperaciones al mes; Business con uso razonable) vive en `src/domain/plans.ts`.
+- Consumo por empresa y periodo en `usage_periods` (contador atómico de **intentos** con `CHECK`) y `attempt_events` (un registro por email automático). Las recuperaciones (`recovery_events`) son una **métrica** y no consumen el plan. Ver [`limites-y-metricas.md`](limites-y-metricas.md).
+- El catálogo vive en `src/domain/plans.ts`:
+  - 27,99 €, 57,99 € y 127,99 €;
+  - 25, 65 y 300 **intentos** de seguimiento al mes (Business con uso razonable);
+  - 60, 150 y 400 emails automáticos al día.
 
 ## Migraciones
 
@@ -139,8 +142,8 @@ Un rechazo cuenta como respuesta, pero no como reactivación. Las restricciones 
 |---|---|---|
 | Prueba gratuita de 14 días con límites de Starter | Práctica habitual en SaaS; el plan maestro no la define | `TRIAL_DAYS` |
 | Si los precios incluyen IVA está pendiente de validación fiscal (la interfaz lo indica; no hay Stripe Tax) | Pendiente (D3) | `PRICES_TAX_DISPLAY`, [`facturacion.md`](facturacion.md#8-pendiente-no-se-ha-activado-ni-se-da-por-resuelto) |
-| Business: 300 recuperaciones al mes (uso razonable) y 400 emails automáticos al día | Límite amplio, publicado y sin restricciones ocultas (fase 4) | `src/domain/plans.ts` |
-| Recuperación = respuesta registrada en los 30 días siguientes a un seguimiento verificable | Resultado medible y temprano; la venta se mide aparte (fase 4) | `src/domain/recovery.ts` |
+| Business: 300 intentos al mes (uso razonable) y 400 emails automáticos al día | Límite amplio, publicado y sin restricciones ocultas (fase 4) | `src/domain/plans.ts` |
+| Recuperación (métrica, no consume el plan) = respuesta registrada en los 30 días siguientes a un seguimiento verificable | Resultado medible y temprano; la venta se mide aparte (fase 4) | `src/domain/recovery.ts` |
 | El registro revela si un email ya existe (409) | Mejor experiencia en B2B; mitigado con límite por IP | `auth/routes.ts` |
 | Login permitido sin email verificado | No bloquea el piloto. Desde la fase 4, activar el envío automático sí exige el email confirmado | `automation/routes.ts` |
 | Las invitaciones devuelven el enlace a quien invita | Funciona sin proveedor de correo; la cuenta queda sin verificar | `members/routes.ts` |

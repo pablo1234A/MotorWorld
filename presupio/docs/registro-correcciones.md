@@ -267,3 +267,18 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
     - servidor web (`/` 200 y proxy de `/api` 200);
     - un registro a través del servidor web (201).
   - La base de comprobación se borró al terminar.
+
+## P3 · Mantenimiento
+
+| Problema | Corrección | Prueba |
+|---|---|---|
+| Sin lint | ESLint 10 con configuración plana (`eslint.config.mjs`): JS, typescript-eslint y reglas de React Hooks. `npm run lint` en la CI. Se corrigieron los 26 errores encontrados, sin desactivar reglas en bloque; las excepciones van en su línea con el motivo. | `npm run lint` sin errores |
+| Fallos reales que encontró el lint | <ul><li>`Date.now()` durante el render en 4 pantallas (estados «vencido» que no se actualizaban): nuevo `useNow()`, que se refresca cada minuto;</li><li>un `setState` síncrono en un efecto;</li><li>acceso a un objeto con `ref` durante el render;</li><li>error de migración sin `cause`;</li><li>`any` sustituido por tipos en `/ops/status`</li></ul> | Pruebas web 77/77 y API en verde |
+| Sin cobertura | `@vitest/coverage-v8`; `npm run test:coverage` en la CI con umbrales por debajo de lo medido | API: 91,7 % sentencias, 79,7 % ramas, 94,8 % funciones, 95 % líneas. Web (unitarias): 27,3 % / 18,4 % / 22,3 % / 27,2 %. La web se cubre sobre todo con las 18 pruebas E2E, que no se miden aquí. |
+| Acciones de GitHub sobre Node 20 (obsoleto) | `actions/checkout`, `setup-node` y `upload-artifact` pasan a **v7** (Node 24). Se comprobaron sus notas de cambios incompatibles: no afectan. Se añade `persist-credentials: false`. La aplicación sigue en Node 22 (`.nvmrc`, `engines`). | Se verifica en la ejecución de la CI tras el push |
+| Email transaccional sin tiempos máximos (por defecto, hasta 2 min para conectar y 10 min con el socket inactivo) | `SMTP_TIMEOUTS`: conexión 15 s, saludo 15 s, socket 30 s, como el proveedor de seguimientos | `automation-units.test.ts › un servidor SMTP que acepta la conexión pero no responde…`: falla como `failed` en menos de 5 s |
+| **Fallo nuevo:** con `NODE_ENV=development` en el entorno (el `.env` local que cargan las E2E), `vite build` generaba un paquete de desarrollo con rutas absolutas del equipo (18 archivos) | `vite build` fuerza producción. `server/check-build.mjs` falla si encuentra JSX de desarrollo, rutas absolutas o mapas de código. | Con `NODE_ENV=development`: 0 archivos afectados. La comprobación falla con un archivo de desarrollo inyectado y pasa con la compilación real. |
+| Documentación con «recuperaciones» como unidad del plan | `arquitectura.md` y `PRODUCT.md`: intentos al mes; las recuperaciones, como métrica. Descripción del paquete raíz corregida. | Revisión de texto |
+| Contraseña fija en `docker-compose.yml` | `PRESUPIO_LOCAL_PG_PASSWORD` (por defecto `postgres`, solo local) | YAML válido |
+| Referencias a MotorWorld | No hay ninguna en el código de Presupio. Solo aparecían en el paquete compilado en local (rutas absolutas; corregido arriba). El repositorio se llama MotorWorld; cambiarle el nombre corresponde a su propietario. | `grep` sin resultados fuera de `dist/` |
+| HTML ajeno en la raíz (`index__1_.html`, página de MotorWorld subida por el propietario en `217fa26`) | **No se borra sin su confirmación.** Queda fuera de Presupio: la CI solo se ejecuta con cambios en `presupio/**` y ninguna compilación lo incluye. | — |

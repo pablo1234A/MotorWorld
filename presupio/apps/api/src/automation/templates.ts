@@ -42,6 +42,8 @@ export function validateTemplate(input: TemplateInput): void {
 /** Limpia un valor que viene de datos introducidos por usuarios antes de insertarlo. */
 function cleanValue(value: string, max = 200): string {
   return value
+    // Caracteres de control (incluido el salto de línea) fuera de un valor de una sola línea: es intencionado.
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

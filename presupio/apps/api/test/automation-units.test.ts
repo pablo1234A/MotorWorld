@@ -250,3 +250,30 @@ describe('adaptador SMTP contra un servidor SMTP local (intercambio real del pro
     expect(await provider().send(email({ to: 'ocupado@ejemplo.test' }))).toMatchObject({ ok: false, retryable: true, code: 'smtp_451' });
   });
 });
+
+describe('email transaccional: tiempos máximos (P3)', () => {
+  it('un servidor SMTP que acepta la conexión pero no responde no deja la petición colgada', async () => {
+    const { SmtpMailer, SMTP_TIMEOUTS } = await import('../src/mail/mailer.js');
+    expect(SMTP_TIMEOUTS).toEqual({ connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000 });
+    // Servidor TCP mudo: acepta y nunca envía el saludo SMTP.
+    const net = await import('node:net');
+    const sockets: import('node:net').Socket[] = [];
+    const silent = net.createServer((s) => sockets.push(s));
+    await new Promise<void>((r) => silent.listen(0, '127.0.0.1', r));
+    try {
+      const port = (silent.address() as AddressInfo).port;
+      const mailer = new SmtpMailer('Presupio <no-reply@ejemplo.test>', { host: '127.0.0.1', port, secure: false }, undefined, {
+        connectionTimeout: 300,
+        greetingTimeout: 300,
+        socketTimeout: 300,
+      });
+      const started = Date.now();
+      const result = await mailer.send({ template: 'prueba', to: 'ana@ejemplo.test', subject: 'x', text: 'x', html: '<p>x</p>' });
+      expect(result.status).toBe('failed');
+      expect(Date.now() - started).toBeLessThan(5_000);
+    } finally {
+      for (const s of sockets) s.destroy();
+      await new Promise((r) => silent.close(r));
+    }
+  });
+});

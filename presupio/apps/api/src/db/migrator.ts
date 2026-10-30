@@ -91,7 +91,7 @@ export async function migrate(options: {
         await client.query('COMMIT');
       } catch (error) {
         await client.query('ROLLBACK');
-        throw new Error(`Error en la migración ${m.version}: ${(error as Error).message}`);
+        throw new Error(`Error en la migración ${m.version}: ${(error as Error).message}`, { cause: error });
       }
       result.applied.push(m.version);
     }

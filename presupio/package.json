@@ -21,6 +21,16 @@
     "db:seed": "npm run db:seed -w @presupio/api",
     "start:worker": "npm run worker:start -w @presupio/api",
     "start:web": "npm run start -w @presupio/web",
-    "db:migrate:prod": "npm run db:migrate:prod -w @presupio/api"
+    "db:migrate:prod": "npm run db:migrate:prod -w @presupio/api",
+    "lint": "eslint .",
+    "test:coverage": "npm run test:coverage -w @presupio/api && npm run test:coverage -w @presupio/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@vitest/coverage-v8": "4.1.12",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "typescript-eslint": "8.71.2"
   }
 }

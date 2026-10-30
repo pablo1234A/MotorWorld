@@ -12,6 +12,8 @@ export async function exportCompanyData(trx: Trx, companyId: string) {
   const take = <T>(rows: T[]) => ({ items: rows.slice(0, EXPORT_ROW_LIMIT), truncated: rows.length > EXPORT_ROW_LIMIT });
   const limit = EXPORT_ROW_LIMIT + 1;
   const byCompany = <T extends keyof import('../../db/types.js').Database>(table: T) =>
+    // Tabla elegida en tiempo de ejecución: Kysely no puede tipar la unión de todas las tablas.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (trx.selectFrom(table as any) as any).selectAll().where('companyId', '=', companyId).limit(limit).execute();
 
   const company = await trx

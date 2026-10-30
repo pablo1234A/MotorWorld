@@ -177,11 +177,14 @@ async function whyRecoveryNotCounted(trx: Trx, companyId: string, quoteId: strin
   followUp: { id: string; source: 'manual' | 'rule'; at: Date };
 } | null> {
   const done = sql<Date>`coalesce(completed_at, sent_at)`;
+  // Mismo filtro sobre dos consultas con columnas distintas (Kysely no puede tipar ambas a la vez).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const verifiable = (qb: any) =>
     qb
       .where('companyId', '=', companyId)
       .where('quoteId', '=', quoteId)
       .where('channel', '<>', 'task')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .where((eb: any) => eb.or([eb('status', '=', 'completed'), eb('status', '=', 'sent')]));
   // Seguimiento ya registrado con fecha POSTERIOR a la respuesta declarada.
   const after = await verifiable(trx.selectFrom('followUps').select(['id', 'source', done.as('doneAt')]))

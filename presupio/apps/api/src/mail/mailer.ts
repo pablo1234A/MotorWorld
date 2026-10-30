@@ -50,6 +50,9 @@ export class LogMailer implements Mailer {
   }
 }
 
+/** Tiempos máximos del SMTP (los de nodemailer por defecto llegan a 2 y 10 minutos). */
+export const SMTP_TIMEOUTS = { connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000 };
+
 export class SmtpMailer implements Mailer {
   readonly configured = true;
   private readonly transport: Transporter;
@@ -58,6 +61,7 @@ export class SmtpMailer implements Mailer {
     private readonly from: string,
     smtp: NonNullable<AppConfig['mail']['smtp']>,
     private readonly logger?: MinimalLogger,
+    timeouts = SMTP_TIMEOUTS,
   ) {
     this.transport = nodemailer.createTransport({
       host: smtp.host,
@@ -65,6 +69,8 @@ export class SmtpMailer implements Mailer {
       secure: smtp.secure,
       requireTLS: !smtp.secure,
       auth: smtp.user ? { user: smtp.user, pass: smtp.password } : undefined,
+      // Un servidor que no responde no deja colgada la petición ni la tarea en segundo plano.
+      ...timeouts,
     });
   }
 

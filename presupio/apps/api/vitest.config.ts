@@ -19,5 +19,13 @@ export default defineConfig({
     pool: 'forks',
     maxWorkers: TEST_WORKERS,
     fileParallelism: isolated,
+    // npm run test:coverage. Umbrales por debajo de lo medido para detectar retrocesos.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/server.ts', 'src/worker.ts'],
+      reporter: ['text-summary', 'html'],
+      thresholds: { statements: 88, branches: 75, functions: 90, lines: 92 },
+    },
   },
 });

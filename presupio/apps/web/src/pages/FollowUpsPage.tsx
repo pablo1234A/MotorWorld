@@ -10,6 +10,7 @@ import { cancelReasonLabel, FOLLOW_UP_CHANNEL_LABEL, OUTCOME_LABEL } from '../li
 import { usePageTitle } from '../lib/usePageTitle';
 import { AutomaticEmailDialog, needsApproval, ruleStatus } from './quotes/AutomaticEmail';
 import { CancelFollowUpDialog, CHANNEL_ICON, CompleteFollowUpDialog } from './quotes/FollowUpDialogs';
+import { useNow } from '../lib/useNow';
 
 type Tab = 'pending' | 'approval' | 'sent' | 'failed' | 'unknown' | 'completed' | 'cancelled';
 
@@ -56,7 +57,7 @@ export function FollowUpsPage() {
     tab === 'pending' || tab === 'approval'
       ? [...items].sort((a, b) => (a.dueAt ? Date.parse(a.dueAt) : Infinity) - (b.dueAt ? Date.parse(b.dueAt) : Infinity))
       : items;
-  const now = Date.now();
+  const now = useNow();
   const canWrite = session.can('follow_ups:write');
   const requireApproval = automation.data?.automation.requireApproval;
   const counts = automation.data?.counts;

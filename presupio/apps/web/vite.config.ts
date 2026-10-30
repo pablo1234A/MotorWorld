@@ -8,6 +8,11 @@ import { securityHeaders } from './server/security-headers.mjs';
 const apiTarget = process.env.PRESUPIO_API_PROXY ?? 'http://localhost:3000';
 const proxy = { '/api': { target: apiTarget, changeOrigin: false } };
 
+// `vite build` produce SIEMPRE la versión de producción. Con NODE_ENV=development en el entorno
+// (p. ej. el .env local que cargan las pruebas E2E) Vite generaba un paquete de desarrollo con
+// rutas absolutas del equipo. server/check-build.mjs lo comprueba después de compilar.
+if (process.argv.includes('build')) process.env.NODE_ENV = 'production';
+
 // Cabeceras de seguridad: una sola fuente (server/security-headers.mjs) para `vite preview`,
 // el servidor de producción (server/serve.mjs) y la configuración generada de nginx y _headers.
 export { securityHeaders };
@@ -23,5 +28,13 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.test.{ts,tsx}'],
     css: false,
+    // npm run test:coverage. Umbrales por debajo de lo medido para detectar retrocesos.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}', 'server/**/*.mjs'],
+      exclude: ['src/main.tsx', 'src/vite-env.d.ts'],
+      reporter: ['text-summary', 'html'],
+      thresholds: { statements: 25, branches: 16, functions: 20, lines: 25 },
+    },
   },
 });

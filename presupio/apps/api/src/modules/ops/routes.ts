@@ -13,6 +13,19 @@ function sameToken(given: string, expected: string): boolean {
  * proceso de envío y de la cola. Solo cifras agregadas: ni empresas, ni personas, ni emails.
  * Exige `Authorization: Bearer <OPS_STATUS_TOKEN>`; sin token configurado, la ruta no existe.
  */
+/** Cifras agregadas de app_ops_status() (migraciones 0005 y 0007). Sin datos de empresas ni personas. */
+interface OpsStatus {
+  automationCompanies: number;
+  jobErrorsLast24h: number;
+  jobs?: Record<string, unknown>;
+  deliveries: { stuckSending: number; unknownPendingReview: number } & Record<string, unknown>;
+  followUps: { dueApprovedOver15m: number } & Record<string, unknown>;
+  attempts?: { reservedOver15m: number } & Record<string, unknown>;
+  billing?: { errorsLast7d: number; unmatchedLast7d: number; duplicateSubscriptionsLast30d: number } & Record<string, unknown>;
+  recoveries?: { notCountedBackdatedLast30d: number } & Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export async function opsRoutes(app: FastifyInstance) {
   app.get(
     '/status',
@@ -25,7 +38,7 @@ export async function opsRoutes(app: FastifyInstance) {
       const token = header.startsWith('Bearer ') ? header.slice(7) : '';
       if (!token || !sameToken(token, expected)) return notFound();
 
-      const { rows } = await sql<{ status: Record<string, any> }>`select app_ops_status() as status`.execute(app.db);
+      const { rows } = await sql<{ status: OpsStatus }>`select app_ops_status() as status`.execute(app.db);
       const status = rows[0]!.status;
       const dispatcher = status.jobs?.dispatcher as { startedAt?: string } | undefined;
       const intervalMs = app.config.automation.workerIntervalMs;
@@ -39,13 +52,13 @@ export async function opsRoutes(app: FastifyInstance) {
       if (status.followUps.dueApprovedOver15m > 0) alerts.push('approved_emails_delayed');
       if (status.jobErrorsLast24h > 0) alerts.push('job_errors_last_24h');
       // Intentos reservados que no se resuelven: el cupo de la empresa queda ocupado.
-      if (status.attempts?.reservedOver15m > 0) alerts.push('attempts_reserved_stuck');
+      if ((status.attempts?.reservedOver15m ?? 0) > 0) alerts.push('attempts_reserved_stuck');
       // Facturación que necesita una persona (npm run ops -- billing-events).
-      if (status.billing?.errorsLast7d > 0 || status.billing?.unmatchedLast7d > 0) alerts.push('billing_events_failed');
-      if (status.billing?.duplicateSubscriptionsLast30d > 0) alerts.push('billing_duplicate_subscription');
+      if ((status.billing?.errorsLast7d ?? 0) > 0 || (status.billing?.unmatchedLast7d ?? 0) > 0) alerts.push('billing_events_failed');
+      if ((status.billing?.duplicateSubscriptionsLast30d ?? 0) > 0) alerts.push('billing_duplicate_subscription');
       // Informativa: respuestas fechadas antes de un seguimiento ya registrado (revisión manual
       // acordada en D4: `npm run ops -- backdated`). No afectan al consumo, que se mide en intentos.
-      const review = status.recoveries?.notCountedBackdatedLast30d > 0 ? ['recoveries_backdated_review'] : [];
+      const review = (status.recoveries?.notCountedBackdatedLast30d ?? 0) > 0 ? ['recoveries_backdated_review'] : [];
       return { status: alerts.length ? 'degraded' : 'ok', database: 'ok', worker: { healthy: workerHealthy }, alerts, review, ...status };
     },
   );

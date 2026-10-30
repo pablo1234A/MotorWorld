@@ -30,21 +30,26 @@ jobs:
       TEST_DATABASE_URL: postgres://presupio_app:ci_app@localhost:5432/presupio_test
       TEST_MIGRATION_DATABASE_URL: postgres://presupio_owner:ci_owner@localhost:5432/presupio_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # v7: ejecutan sobre Node 24 (las v4 usaban Node 20, obsoleto en GitHub Actions).
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: presupio/package-lock.json
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm run build
       - run: npm run db:bootstrap
-      - run: npm test
+      # Pruebas con cobertura: fallan si baja de los umbrales (vitest.config.ts, vite.config.ts).
+      - run: npm run test:coverage
       - run: npx playwright install --with-deps chromium
         working-directory: presupio/apps/web
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-results

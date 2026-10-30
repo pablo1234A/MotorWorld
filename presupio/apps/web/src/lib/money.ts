@@ -3,7 +3,7 @@
  * Acepta "18.500", "18.500,50", "18500,5", "18500.5" y "18 500 €". Devuelve null si no es válido.
  */
 export function parseEuroInput(raw: string): number | null {
-  let s = raw.trim().replace(/€/g, '').replace(/[\s ]/g, '');
+  let s = raw.trim().replace(/€/g, '').replace(/\s/g, '') /* \s incluye los espacios duros (U+00A0, U+202F) */;
   if (s === '') return null;
   if (!/^\d[\d.,]*$/.test(s)) return null;
 

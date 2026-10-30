@@ -47,6 +47,8 @@ export function compact(errors: Record<string, string | undefined>): Errors {
 export function safeRedirect(target: string | null | undefined, fallback = '/'): string {
   if (!target) return fallback;
   if (!target.startsWith('/') || target.startsWith('//') || target.startsWith('/\\')) return fallback;
+  // Una redirección con caracteres de control se descarta: es intencionado.
+  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f]/.test(target)) return fallback;
   try {
     const url = new URL(target, 'https://presupio.invalid');

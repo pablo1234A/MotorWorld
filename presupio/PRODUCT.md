@@ -37,8 +37,9 @@ Especializado en reformas integrales (su vocabulario y estados), se integra con 
 - Estados reales del presupuesto: borrador, enviado (pendiente de respuesta), respondido, aceptado (venta confirmada con evidencia), rechazado; archivado aparte.
 - Roles: propietario, administrador, comercial, lector.
 - Multiempresa con aislamiento estricto.
-- Planes Starter 27,99 €, Pro 57,99 €, Business 127,99 €/mes; pagos aún no activos (fase 5). IVA y definición de "recuperación" pendientes.
-- Sin envío real de mensajes desde Presupio todavía: los seguimientos se registran, no se envían.
+- Planes Starter 27,99 €, Pro 57,99 €, Business 127,99 €/mes, con 25, 65 y 300 **intentos** de seguimiento al mes (Business con uso razonable y 400 emails automáticos al día). Un intento es cada email automático enviado con éxito, responda o no el cliente.
+- Pagos con Stripe implementados **solo en modo de prueba** (no se ha activado ningún cobro real). IVA pendiente de validación fiscal.
+- Emails automáticos de seguimiento (Mailgun o SMTP) que la empresa activa y puede aprobar uno a uno. Las recuperaciones (respuestas tras un seguimiento) son una métrica, no lo que se cobra.
 
 ## Brand Commitments
 

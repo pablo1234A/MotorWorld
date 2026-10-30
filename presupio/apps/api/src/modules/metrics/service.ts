@@ -190,6 +190,8 @@ export async function metricsHistory(trx: Trx, companyId: string, year: number, 
   const to = monthRange(year, month, tz).end;
   const bucket = (column: string) => sql<string>`to_char(${sql.ref(column)} at time zone ${tz}, 'YYYY-MM')`;
 
+  // Consulta sobre una tabla y columna elegidas en tiempo de ejecución (Kysely no puede tiparla).
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const series = async (table: 'quotes' | 'followUps' | 'recoveryEvents' | 'attemptEvents', column: string, extra: (qb: any) => any) => {
     const rows = await extra(
       trx
@@ -203,6 +205,7 @@ export async function metricsHistory(trx: Trx, companyId: string, year: number, 
       .execute();
     return new Map<string, number>(rows.map((r: { month: string; n: string }) => [r.month, Number(r.n)]));
   };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const sent = await series('quotes', 'sent_at', (q) => q);
   const manual = await series('followUps', 'completed_at', (q) => q.where('status', '=', 'completed').where('channel', '<>', 'task'));

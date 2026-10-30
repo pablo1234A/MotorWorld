@@ -10,6 +10,7 @@
     "start": "node --env-file-if-exists=../../.env dist/src/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "db:bootstrap": "tsx --env-file-if-exists=../../.env scripts/db-bootstrap.ts",
     "db:bootstrap:prod": "node --env-file-if-exists=../../.env dist/scripts/db-bootstrap.js",

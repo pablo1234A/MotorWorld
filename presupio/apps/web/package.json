@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json --noEmit && vite build && node server/hosting-config.mjs",
+    "build": "tsc -p tsconfig.json --noEmit && vite build && node server/check-build.mjs && node server/hosting-config.mjs",
     "start": "node server/serve.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test"
   },
   "dependencies": {

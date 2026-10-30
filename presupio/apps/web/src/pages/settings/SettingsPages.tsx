@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, Download, Lock, MailPlus, Plus, Trash2, UserMinus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useSearchParams } from 'react-router';
 import { api } from '../../api/client';
 import { BILLING_WAIT_MS, keys, useBilling, useCompany, type BillingWait, useInvitations, useMembers, useSettings, useUsage } from '../../api/queries';
@@ -870,15 +870,13 @@ export function PlanPage() {
   const toast = useToast();
   const [params] = useSearchParams();
   const confirming = params.get('pago') === 'confirmando';
-  const openedAt = useRef(Date.now());
+  const [openedAt] = useState(() => Date.now());
   // Tras pedir un cambio, la página espera la confirmación de Stripe (llega por webhook).
   const [pending, setPending] = useState<(BillingWait & { label: string }) | null>(null);
-  const billing = useBilling(pending ?? (confirming ? { done: (s) => s.managedByProvider && s.hasActiveAccess, since: openedAt.current } : null));
+  const billing = useBilling(pending ?? (confirming ? { done: (s) => s.managedByProvider && s.hasActiveAccess, since: openedAt } : null));
   const [action, setAction] = useState<PlanAction>(null);
   const pendingDone = !!pending && !!billing.data && pending.done(billing.data.subscription);
-  useEffect(() => {
-    if (pendingDone) setPending(null);
-  }, [pendingDone]);
+  // Pasado el tiempo máximo de espera se deja de esperar (el aviso desaparece).
   useEffect(() => {
     if (!pending) return;
     const timer = setTimeout(() => setPending(null), BILLING_WAIT_MS);
@@ -1169,7 +1167,8 @@ export function ProfilePage() {
   const [name, setName] = useState(session.user.fullName);
   const [nameError, setNameError] = useState<string | undefined>();
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
-  const pwForm = useFormErrors();
+  const { errors: pwErrors, formError: pwFormError, setErrors: setPwErrors, setFormError: setPwFormError, handleError: handlePwError, formRef: pwFormRef } =
+    useFormErrors();
 
   const saveName = useMutation({
     mutationFn: () => api('/me', { method: 'PATCH', body: { fullName: name.trim() } }),
@@ -1186,7 +1185,7 @@ export function ProfilePage() {
       setPw({ current: '', next: '', confirm: '' });
       toast.success(res.message);
     },
-    onError: (e) => pwForm.handleError(e, { newPassword: 'next', currentPassword: 'current' }),
+    onError: (e) => handlePwError(e, { newPassword: 'next', currentPassword: 'current' }),
   });
   const resend = useMutation({
     mutationFn: () => api<{ message: string; delivery: Delivery | null }>('/auth/email/verification', { method: 'POST' }),
@@ -1254,19 +1253,19 @@ export function ProfilePage() {
       </form>
 
       <form
-        ref={pwForm.formRef}
+        ref={pwFormRef}
         className="panel"
         noValidate
         aria-labelledby="pw-title"
         onSubmit={(e) => {
           e.preventDefault();
-          pwForm.setFormError(null);
+          setPwFormError(null);
           const errs = compact({
             current: pw.current ? undefined : 'Introduce tu contraseña actual',
             next: validatePassword(pw.next) ?? (pw.next === pw.current ? 'Debe ser distinta de la actual' : undefined),
             confirm: pw.confirm === pw.next ? undefined : 'Las contraseñas no coinciden',
           });
-          pwForm.setErrors(errs);
+          setPwErrors(errs);
           if (!Object.keys(errs).length) changePassword.mutate();
         }}
       >
@@ -1277,15 +1276,15 @@ export function ProfilePage() {
           </div>
         </div>
         <div className="panel__body form">
-          {pwForm.formError != null && <ErrorAlert error={pwForm.formError} />}
-          <Field label="Contraseña actual" error={pwForm.errors.current}>
+          {pwFormError != null && <ErrorAlert error={pwFormError} />}
+          <Field label="Contraseña actual" error={pwErrors.current}>
             <input className="input" type="password" autoComplete="current-password" value={pw.current} onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))} />
           </Field>
           <div className="form-row">
-            <Field label="Contraseña nueva" error={pwForm.errors.next} hint="Mínimo 10 caracteres.">
+            <Field label="Contraseña nueva" error={pwErrors.next} hint="Mínimo 10 caracteres.">
               <input className="input" type="password" autoComplete="new-password" value={pw.next} maxLength={128} onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))} />
             </Field>
-            <Field label="Repite la contraseña nueva" error={pwForm.errors.confirm}>
+            <Field label="Repite la contraseña nueva" error={pwErrors.confirm}>
               <input className="input" type="password" autoComplete="new-password" value={pw.confirm} maxLength={128} onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))} />
             </Field>
           </div>
