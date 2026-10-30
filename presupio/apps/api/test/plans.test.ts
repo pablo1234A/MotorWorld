@@ -874,7 +874,8 @@ describe('migraciones', () => {
         }
         await c.query(`INSERT INTO memberships (company_id, user_id, role) VALUES ($1, $2, 'owner')`, [companies[0], u[0].id]);
 
-        expect((await migrate({ connectionString: url, appRole })).applied).toEqual([
+        // 0006 a 0010 y las posteriores, en orden (las futuras se añaden al final).
+        expect((await migrate({ connectionString: url, appRole })).applied.slice(0, 5)).toEqual([
           '0006_follow_up_unknown_status',
           '0007_interrupted_deliveries',
           '0008_privacy_erasure',

@@ -327,3 +327,25 @@ Se comprobó el informe anterior contra el código; el detalle está en `docs/PL
 - **Prueba:**
   - `limits-trials.test.ts`, 2 pruebas nuevas: validación de la configuración, límite propio por cliente detrás del proxy, y un cliente directo no puede falsificar su IP.
   - En vivo, con `TRUST_PROXY=loopback`: tres inicios de sesión desde tres IPs → tres claves distintas.
+
+## Auditoría final · Listado de seguimientos lento con RLS (índice 0011)
+
+- **Causa:** `GET /follow-ups` (también en el panel) filtra por empresa y estado y ordena por `created_at DESC, id DESC`. Con RLS, PostgreSQL no puede usar la condición de estado en un índice, porque la igualdad de un `enum` (`enum_eq`) no es `leakproof`. Así que unía y ordenaba **todos** los seguimientos pendientes de la empresa para devolver 26.
+- **Demostración** (`EXPLAIN ANALYZE` como el rol de la aplicación, empresa con 5.000 seguimientos):
+  - 19 ms, con barrido completo de `quotes` y `contacts`.
+  - Un índice `(company_id, status, created_at, id)` **no se usaba** con RLS (sí sin RLS), por el motivo anterior.
+- **Corrección:** migración `0011`, índice `(company_id, created_at DESC, id DESC)`. `company_id` sí es `leakproof`: recorre en orden y se detiene en el límite.
+- **Prueba:** mismo `EXPLAIN ANALYZE` con RLS:
+  - pendientes: 19 ms → **0,8–1,1 ms**;
+  - realizados: 19 → **2,5–3,3 ms**;
+  - un estado sin filas: → **2,5 ms**.
+
+## Auditoría final · El migrador fallaba si el proveedor tiene extensiones en el esquema
+
+- **Causa:** tras migrar, el migrador concedía permisos con `GRANT … ON ALL TABLES/FUNCTIONS IN SCHEMA`. Si el PostgreSQL gestionado tiene funciones de otro rol en `public` (`pg_stat_statements` es habitual), el `GRANT` falla con `permission denied` y el despliegue se interrumpe.
+- **Demostración:** con `pg_stat_statements` instalado en la base de rendimiento, `db:migrate:prod` terminó con `permission denied for function pg_stat_statements_reset`.
+- **Corrección:** solo se conceden permisos sobre las tablas, vistas y funciones cuyo propietario es el rol de migraciones (las de Presupio).
+- **Prueba:** `database.test.ts › migrar no falla si el proveedor tiene funciones propias en el esquema`.
+  - Falla con el migrador anterior (el mismo `permission denied`) y pasa con el nuevo.
+  - El rol de la aplicación no recibe permiso sobre la función ajena y sí sobre las de Presupio.
+  - `db:migrate:prod` sobre la base de rendimiento: correcto.

@@ -129,8 +129,18 @@ async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
   await client.query('BEGIN');
   try {
     await client.query(`GRANT USAGE ON SCHEMA ${schema} TO ${role}`);
-    await client.query(`REVOKE ALL ON ALL TABLES IN SCHEMA ${schema} FROM ${role}`);
-    await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ${schema} TO ${role}`);
+    // Solo los objetos del rol de migraciones (los de Presupio). Un PostgreSQL gestionado puede
+    // tener extensiones en el mismo esquema (p. ej. pg_stat_statements) cuyas funciones este rol
+    // no puede conceder: con «ON ALL … IN SCHEMA» el despliegue fallaba con «permission denied».
+    const owned = async (sql: string) => (await client.query<{ name: string }>(sql, [schemaName])).rows.map((r) => r.name);
+    const tables = await owned(
+      `SELECT format('%I.%I', n.nspname, c.relname) AS name FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'v', 'm') AND pg_has_role(c.relowner, 'USAGE') ORDER BY 1`,
+    );
+    for (const table of tables) {
+      await client.query(`REVOKE ALL ON ${table} FROM ${role}`);
+      await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ${table} TO ${role}`);
+    }
     // Restricciones por tabla (solo si la tabla existe: así se puede migrar paso a paso).
     const restrict = async (table: string, privileges: string) => {
       const qualified = `${schema}.${quoteIdent(table)}`;
@@ -157,7 +167,11 @@ async function applyGrants(client: pg.Client, appRole: string): Promise<void> {
     // La tabla de migraciones no es asunto de la aplicación.
     await client.query(`REVOKE ALL ON ${schema}.schema_migrations FROM ${role}`);
     // Funciones auxiliares, incluidas las SECURITY DEFINER acotadas (revocadas a PUBLIC en su migración).
-    await client.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schema} TO ${role}`);
+    const functions = await owned(
+      `SELECT format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS name FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = $1 AND p.prokind = 'f' AND pg_has_role(p.proowner, 'USAGE') ORDER BY 1`,
+    );
+    for (const fn of functions) await client.query(`GRANT EXECUTE ON FUNCTION ${fn} TO ${role}`);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

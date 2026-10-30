@@ -48,6 +48,27 @@ describe('migraciones', () => {
     expect(rows.every((r) => /^[0-9a-f]{64}$/.test(r.checksum))).toBe(true);
   });
 
+  it.skipIf(!process.env.DATABASE_ADMIN_URL)('migrar no falla si el proveedor tiene funciones propias en el esquema (p. ej. pg_stat_statements)', async () => {
+    // Como en un PostgreSQL gestionado: una función de otro rol, sin permisos para el propietario.
+    const adminUrl = new URL(process.env.DATABASE_ADMIN_URL!);
+    adminUrl.pathname = new URL(ownerUrl).pathname;
+    const admin = new pg.Client({ connectionString: adminUrl.toString() });
+    await admin.connect();
+    try {
+      await admin.query(`CREATE FUNCTION public.funcion_del_proveedor() RETURNS int LANGUAGE sql AS 'SELECT 1'`);
+      await admin.query('REVOKE ALL ON FUNCTION public.funcion_del_proveedor() FROM PUBLIC');
+      // Antes: «permission denied for function funcion_del_proveedor» al conceder permisos.
+      await expect(migrate({ connectionString: ownerUrl, appRole })).resolves.toMatchObject({ applied: [] });
+      const can = async (fn: string) =>
+        (await admin.query<{ ok: boolean }>('SELECT has_function_privilege($1, $2, $3) AS ok', [appRole, fn, 'EXECUTE'])).rows[0]!.ok;
+      expect(await can('public.funcion_del_proveedor()')).toBe(false);
+      expect(await can('public.app_company_id()')).toBe(true);
+    } finally {
+      await admin.query('DROP FUNCTION IF EXISTS public.funcion_del_proveedor()');
+      await admin.end();
+    }
+  });
+
   it('volver a migrar es idempotente', async () => {
     const result = await migrate({ connectionString: ownerUrl, appRole });
     expect(result.applied).toEqual([]);
