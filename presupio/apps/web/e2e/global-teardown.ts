@@ -5,8 +5,8 @@ import { fileURLToPath as toPath } from 'node:url';
 const HERE = path.dirname(toPath(import.meta.url));
 
 export default async function globalTeardown() {
-  // API real y simulador local del proveedor de email.
-  for (const name of ['api.pid', 'sink.pid']) {
+  // APIs reales y simuladores locales (proveedor de email y Stripe).
+  for (const name of ['api.pid', 'sink.pid', 'api-billing.pid', 'stripe.pid']) {
     const pidFile = path.join(HERE, '.output', name);
     if (!existsSync(pidFile)) continue;
     const pid = Number(readFileSync(pidFile, 'utf8'));

@@ -30,6 +30,8 @@ const envSchema = z.object({
     .default('3,1')
     .refine((v) => v.trim() === '' || v.split(',').every((d) => /^\s*\d{1,2}\s*$/.test(d) && Number(d) >= 1 && Number(d) <= 30), 'Lista de días entre 1 y 30 separados por comas'),
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(10).max(100_000).default(600),
+  // Altas de empresa por IP y hora (compartido entre instancias).
+  RATE_LIMIT_REGISTER_PER_HOUR: z.coerce.number().int().min(1).max(10_000).default(10),
 
   MAIL_TRANSPORT: z.enum(['disabled', 'log', 'smtp']).default('disabled'),
   MAIL_FROM: z.string().optional(),
@@ -68,6 +70,9 @@ const envSchema = z.object({
   STRIPE_PRICE_PRO: z.string().optional(),
   STRIPE_PRICE_BUSINESS: z.string().optional(),
   STRIPE_PORTAL_CONFIGURATION_ID: z.string().optional(),
+  // SOLO pruebas (prohibido en producción): servidor local que imita la API de Stripe, para
+  // ejecutar la librería oficial sin red (pruebas E2E). Nunca la API real.
+  STRIPE_API_BASE: z.string().url().optional(),
   // Cómo se presentan los precios respecto al IVA. «pending» mientras no haya validación fiscal.
   PRICES_TAX_DISPLAY: z.enum(['pending', 'included', 'excluded']).default('pending'),
 });
@@ -102,6 +107,8 @@ export interface AppConfig {
       webhookSecret: string;
       prices: Record<'starter' | 'pro' | 'business', string>;
       portalConfigurationId?: string;
+      /** Solo pruebas: servidor local que imita la API de Stripe. */
+      apiBase?: { host: string; port: number; protocol: 'http' | 'https' };
     };
   };
   mail: {
@@ -197,10 +204,17 @@ function parseBilling(e: z.infer<typeof envSchema>): AppConfig['billing'] {
   if (new Set(Object.values(prices)).size !== 3) throw new Error('Cada plan necesita su propio precio de Stripe (STRIPE_PRICE_* repetidos)');
   const portal = e.STRIPE_PORTAL_CONFIGURATION_ID?.trim();
   if (portal && !/^bpc_[A-Za-z0-9]{6,}$/.test(portal)) throw new Error('STRIPE_PORTAL_CONFIGURATION_ID no tiene el formato esperado (bpc_…)');
+  let apiBase: { host: string; port: number; protocol: 'http' | 'https' } | undefined;
+  if (e.STRIPE_API_BASE) {
+    if (e.NODE_ENV === 'production') throw new Error('STRIPE_API_BASE solo se admite en pruebas (simulador local de Stripe), nunca en producción');
+    const u = new URL(e.STRIPE_API_BASE);
+    if (!['127.0.0.1', 'localhost', '::1', '[::1]'].includes(u.hostname)) throw new Error('STRIPE_API_BASE debe apuntar a un simulador local (127.0.0.1 o localhost)');
+    apiBase = { host: u.hostname, port: Number(u.port || (u.protocol === 'https:' ? 443 : 80)), protocol: u.protocol === 'https:' ? 'https' : 'http' };
+  }
   return {
     enabled: true,
     taxDisplay: e.PRICES_TAX_DISPLAY,
-    stripe: { secretKey, webhookSecret, prices, ...(portal ? { portalConfigurationId: portal } : {}) },
+    stripe: { secretKey, webhookSecret, prices, ...(portal ? { portalConfigurationId: portal } : {}), ...(apiBase ? { apiBase } : {}) },
   };
 }
 
@@ -314,7 +328,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       global: { max: e.RATE_LIMIT_PER_MINUTE, windowMs: MINUTE },
       login: { max: 20, windowMs: 15 * MINUTE },
       loginPerEmail: { max: 5, windowMs: 15 * MINUTE },
-      register: { max: 10, windowMs: HOUR },
+      register: { max: e.RATE_LIMIT_REGISTER_PER_HOUR, windowMs: HOUR },
       passwordForgot: { max: 10, windowMs: HOUR },
       passwordForgotPerEmail: { max: 3, windowMs: HOUR },
       tokenRedeem: { max: 20, windowMs: 15 * MINUTE },

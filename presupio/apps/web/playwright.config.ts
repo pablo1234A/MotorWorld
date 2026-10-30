@@ -6,6 +6,7 @@ if (existsSync('../../.env')) process.loadEnvFile('../../.env');
 
 export const E2E_API_PORT = 3100;
 export const E2E_WEB_PORT = 4174;
+export const E2E_BILLING_WEB_PORT = 4175;
 
 /**
  * Pruebas de extremo a extremo: API real + base de datos de pruebas + compilación de
@@ -29,7 +30,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {} } }],
-  webServer: {
+  webServer: [{
     // Servidor de producción incluido (server/serve.mjs): las pruebas recorren la aplicación
     // con las mismas cabeceras de seguridad que en producción.
     command: `npm run build && node server/serve.mjs`,
@@ -37,5 +38,12 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 120_000,
     env: { API_URL: `http://127.0.0.1:${E2E_API_PORT}`, PORT: String(E2E_WEB_PORT), HOST: 'localhost' },
-  },
+  }, {
+    // Misma compilación, frente a la API con pagos de prueba (simulador local de Stripe).
+    command: 'node server/serve.mjs',
+    url: `http://127.0.0.1:${E2E_BILLING_WEB_PORT}/iniciar-sesion`,
+    reuseExistingServer: false,
+    timeout: 120_000,
+    env: { API_URL: 'http://127.0.0.1:3102', PORT: String(E2E_BILLING_WEB_PORT), HOST: '127.0.0.1' },
+  }],
 });

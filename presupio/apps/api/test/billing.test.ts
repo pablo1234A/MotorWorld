@@ -527,6 +527,30 @@ describe('configuración y disponibilidad de Stripe', () => {
     expect(() => loadConfig({ ...base, ...valid, PRICES_TAX_DISPLAY: 'iva21' })).toThrow();
   });
 
+  it('el simulador local de Stripe (STRIPE_API_BASE) solo se admite fuera de producción y en local', () => {
+    expect(loadConfig({ ...base, ...valid, STRIPE_API_BASE: 'http://127.0.0.1:3103' }).billing.stripe?.apiBase).toEqual({ host: '127.0.0.1', port: 3103, protocol: 'http' });
+    expect(() => loadConfig({ ...base, ...valid, STRIPE_API_BASE: 'https://api.ejemplo.test' })).toThrow(/simulador local/);
+    const prod = { ...base, ...valid, NODE_ENV: 'production', APP_WEB_URL: 'https://app.ejemplo.test', STRIPE_API_BASE: 'http://127.0.0.1:3103' };
+    expect(() => loadConfig(prod)).toThrow();
+    expect(() => loadConfig({ ...base, ...valid, NODE_ENV: 'production', STRIPE_API_BASE: 'http://127.0.0.1:3103' })).toThrow();
+  });
+
+  it('solo redirige a las páginas alojadas por Stripe (checkout.stripe.com, billing.stripe.com)', async () => {
+    const acc = await registerAccount(app, 'Reformas Redirección SL');
+    gateway.foreignRedirects = true;
+    try {
+      const checkout = await acc.client.post('/billing/checkout', { plan: 'pro' });
+      expect(checkout.status).toBe(503);
+      expect(JSON.stringify(checkout.body)).not.toContain('ejemplo.test');
+      const portal = await acc.client.post('/billing/portal', {});
+      expect(portal.status).toBe(503);
+      expect(JSON.stringify(portal.body)).not.toContain('ejemplo.test');
+    } finally {
+      gateway.foreignRedirects = false;
+    }
+    expect((await acc.client.post('/billing/checkout', { plan: 'pro' })).body.checkout.url).toMatch(/^https:\/\/checkout\.stripe\.com\//);
+  });
+
   it('sin pagos configurados Presupio sigue funcionando y las rutas de pago no hacen nada', async () => {
     const { app: plain } = await createTestApp();
     const acc = await registerAccount(plain);

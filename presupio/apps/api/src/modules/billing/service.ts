@@ -8,7 +8,7 @@ import { errors } from '../../lib/errors.js';
 import type { AuthContext } from '../../plugins/auth.js';
 import { logActivity } from '../activity/service.js';
 import { ensureUsagePeriod, loadPlanContext } from '../usage/service.js';
-import { BillingUnavailableError, type BillingGateway, type ProviderEvent } from './gateway.js';
+import { BillingUnavailableError, STRIPE_CHECKOUT_URL, STRIPE_PORTAL_URL, type BillingGateway, type ProviderEvent } from './gateway.js';
 
 /** Eventos de Stripe que sincronizan la suscripción. El resto se registra como ignorado. */
 export const HANDLED_EVENTS = new Set([
@@ -204,7 +204,11 @@ export async function startCheckout(deps: BillingDeps, auth: AuthContext, plan: 
       cancelUrl: `${base}?pago=cancelado`,
     }),
   );
-  if (!/^https:\/\//.test(session.url)) throw errors.paymentsUnavailable();
+  // Solo la página de pago de Stripe (antes bastaba con https://, cualquier dominio).
+  if (!STRIPE_CHECKOUT_URL.test(session.url)) {
+    deps.log.error({ action: 'create_checkout' }, 'Stripe devolvió una dirección de pago inesperada');
+    throw errors.paymentsUnavailable();
+  }
 
   const previous = await withCompany(deps.db, auth, async (trx) => {
     const { rows } = await sql<{ previous: string | null }>`select app_billing_set_checkout_session(${session.id}) as previous`.execute(trx);
@@ -273,7 +277,10 @@ export async function openPortal(deps: BillingDeps, auth: AuthContext) {
   const session = await provider(deps, 'portal', () =>
     gateway.createPortalSession({ customerId: sub.providerCustomerId!, returnUrl: `${deps.config.appWebUrl}/configuracion/plan` }),
   );
-  if (!/^https:\/\//.test(session.url)) throw errors.paymentsUnavailable();
+  if (!STRIPE_PORTAL_URL.test(session.url)) {
+    deps.log.error({ action: 'portal' }, 'Stripe devolvió una dirección de portal inesperada');
+    throw errors.paymentsUnavailable();
+  }
   return { url: session.url };
 }
 

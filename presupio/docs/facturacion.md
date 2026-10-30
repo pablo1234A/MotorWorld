@@ -241,10 +241,26 @@ Distinto de los avisos de conservación: llega **antes** de perder el acceso, pa
 
 | Archivo | Qué prueba |
 |---|---|
-| `test/billing.test.ts` (21 pruebas, sin red) | <ul><li>Checkout;</li><li>activación solo por webhook;</li><li>permisos y precio elegido por el navegador;</li><li>aislamiento entre empresas;</li><li>firmas inválidas;</li><li>repetición y desorden;</li><li>modo real, precio desconocido, cliente ajeno y segunda suscripción;</li><li>subida y bajada;</li><li>cancelación;</li><li>pago fallido, gracia y recuperación;</li><li>estados;</li><li>solo lectura en todas las rutas;</li><li>motor detenido;</li><li>exportación;</li><li>avisos de conservación;</li><li>configuración, Stripe caído y precio incoherente</li></ul> |
+| `test/billing.test.ts` (23 pruebas, sin red) | <ul><li>Checkout;</li><li>activación solo por webhook;</li><li>permisos y precio elegido por el navegador;</li><li>aislamiento entre empresas;</li><li>firmas inválidas;</li><li>repetición y desorden;</li><li>modo real, precio desconocido, cliente ajeno y segunda suscripción;</li><li>subida y bajada;</li><li>cancelación;</li><li>pago fallido, gracia y recuperación;</li><li>estados;</li><li>solo lectura en todas las rutas;</li><li>motor detenido;</li><li>exportación;</li><li>avisos de conservación;</li><li>configuración, Stripe caído y precio incoherente;</li><li>solo se redirige a `checkout.stripe.com` y `billing.stripe.com`;</li><li>`STRIPE_API_BASE` rechazado en producción y fuera de local</li></ul> |
 | `test/stripe-gateway.test.ts` (6 pruebas) | La librería oficial contra un servidor HTTP **local**: parámetros exactos enviados, sin impuestos automáticos, idempotencia, errores sin secretos, verificación de firma, rechazo de claves live |
 | `test/plans.test.ts` | Límites de Starter, Pro y Business por intentos y regresión de D4 y de las migraciones 0004 y 0005 |
 | `e2e/app.spec.ts` | Plan sin pagos activos y fin de la prueba en el navegador |
+| `e2e/billing.spec.ts` (3 pruebas, **pagos simulados**) | Ver abajo |
+
+**E2E con pagos simulados.** Una segunda API, con pagos de prueba activados, usa la librería oficial de Stripe contra el **simulador local** `apps/web/e2e/fake-stripe.mjs`. Su dirección se fija con `STRIPE_API_BASE`, que se rechaza en producción y fuera de `127.0.0.1`/`localhost`. El simulador firma los webhooks como Stripe. En el navegador, las páginas de `checkout.stripe.com` y `billing.stripe.com` se sustituyen por una página local, así que nunca se contacta con Stripe.
+
+Se recorre:
+
+- contratar, y volver sin pagar (no cambia nada);
+- un webhook con firma falsa (400, sin cambios);
+- el pago (plan activo y límite de 65) y un evento repetido (`duplicate`);
+- la subida a Business (límite de 300);
+- la cancelación programada, el fin del periodo y la solo lectura (escrituras en 403 y exportación disponible);
+- el portal;
+- el cobro fallido: aviso durante la gracia, recuperación e impago (solo lectura);
+- el aislamiento entre dos empresas y el pago abandonado.
+
+**Esto no equivale a probar con Stripe real:** el simulador reproduce los objetos y eventos que usa Presupio, no los reintentos, la autenticación 3DS, las facturas ni los impuestos de Stripe.
 
 ## 8. Pendiente (no se ha activado ni se da por resuelto)
 
@@ -255,7 +271,7 @@ Distinto de los avisos de conservación: llega **antes** de perder el acceso, pa
     - el tratamiento de clientes intracomunitarios y de Canarias, Ceuta y Melilla;
     - la facturación conforme a la normativa española vigente.
   - Hasta entonces la interfaz dice «pendiente de validación fiscal» (`PRICES_TAX_DISPLAY=pending`) y no calcula ningún desglose. Integrar Stripe **no** significa cumplir las obligaciones fiscales.
-- **Pruebas reales en modo de prueba de Stripe** (apartado 3): no realizadas por falta de credenciales.
+- **Pruebas reales en modo de prueba de Stripe** (apartado 3): no realizadas por falta de credenciales. Las E2E usan un simulador local (apartado 7), que no las sustituye.
 - **Días de gracia** con cobro pendiente: 7, pendiente de confirmar.
 - **Prueba gratuita y pago:**
   - quien contrata durante la prueba empieza a pagar en ese momento; los días de prueba restantes no se trasladan;

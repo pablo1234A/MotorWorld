@@ -14,6 +14,19 @@ export const SINK_FILE = path.join(E2E_DIR, '.output', 'mailgun-sink.jsonl');
 const API_PORT = 3100;
 const SINK_PORT = 3101;
 const WEB_ORIGIN = 'http://localhost:4174';
+// Segunda API con pagos activados contra el simulador local de Stripe (e2e/fake-stripe.mjs).
+export const BILLING_API_PORT = 3102;
+export const FAKE_STRIPE_PORT = 3103;
+export const BILLING_WEB_ORIGIN = 'http://127.0.0.1:4175';
+const STRIPE_PID_FILE = path.join(E2E_DIR, '.output', 'stripe.pid');
+const BILLING_PID_FILE = path.join(E2E_DIR, '.output', 'api-billing.pid');
+export const BILLING_API_LOG = path.join(E2E_DIR, '.output', 'api-billing.log');
+// Valores de PRUEBA inventados (no son claves de Stripe): solo los entiende el simulador.
+const FAKE_STRIPE = {
+  secretKey: 'sk_test_simuladorE2E0123456789',
+  webhookSecret: 'whsec_simuladorE2E0123456789',
+  prices: { price_e2eStarter: { amount: 2799 }, price_e2ePro: { amount: 5799 }, price_e2eBusiness: { amount: 12799 } },
+};
 
 /**
  * Entorno de la API y del proceso de envío en las pruebas. El proveedor «mailgun» apunta a
@@ -41,7 +54,40 @@ export function apiEnv(appUrl: string): NodeJS.ProcessEnv {
     MAILGUN_API_BASE: `http://127.0.0.1:${SINK_PORT}`,
     MAILGUN_WEBHOOK_SIGNING_KEY: 'firma-del-simulador',
     PUBLIC_API_URL: WEB_ORIGIN,
+    // Varias cuentas por ejecución desde la misma IP, compartidas por las dos APIs.
+    RATE_LIMIT_REGISTER_PER_HOUR: '200',
   };
+}
+
+/** La misma API con pagos de PRUEBA activados, contra el simulador local de Stripe. */
+export function billingApiEnv(appUrl: string): NodeJS.ProcessEnv {
+  return {
+    ...apiEnv(appUrl),
+    PORT: String(BILLING_API_PORT),
+    APP_WEB_URL: BILLING_WEB_ORIGIN,
+    PUBLIC_API_URL: BILLING_WEB_ORIGIN,
+    PAYMENTS_ENABLED: 'true',
+    STRIPE_SECRET_KEY: FAKE_STRIPE.secretKey,
+    STRIPE_WEBHOOK_SECRET: FAKE_STRIPE.webhookSecret,
+    STRIPE_PRICE_STARTER: 'price_e2eStarter',
+    STRIPE_PRICE_PRO: 'price_e2ePro',
+    STRIPE_PRICE_BUSINESS: 'price_e2eBusiness',
+    STRIPE_API_BASE: `http://127.0.0.1:${FAKE_STRIPE_PORT}`,
+  };
+}
+
+async function waitFor(url: string, log: string) {
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return;
+    } catch {
+      // aún arrancando
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  throw new Error(`La API de pruebas no arrancó. Revisa ${log}`);
 }
 
 /**
@@ -86,15 +132,18 @@ export default async function globalSetup() {
   api.unref();
   writeFileSync(PID_FILE, String(api.pid));
 
-  const deadline = Date.now() + 30_000;
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${API_PORT}/api/v1/health/ready`);
-      if (res.ok) return;
-    } catch {
-      // aún arrancando
-    }
-    await new Promise((r) => setTimeout(r, 300));
-  }
-  throw new Error(`La API de pruebas no arrancó. Revisa ${API_LOG}`);
+  const stripe = spawn(
+    process.execPath,
+    [path.join(E2E_DIR, 'fake-stripe.mjs'), String(FAKE_STRIPE_PORT), `http://127.0.0.1:${BILLING_API_PORT}/api/v1/webhooks/stripe`, FAKE_STRIPE.webhookSecret, JSON.stringify(FAKE_STRIPE.prices)],
+    { detached: true, stdio: 'ignore' },
+  );
+  stripe.unref();
+  writeFileSync(STRIPE_PID_FILE, String(stripe.pid));
+  const billingOut = openSync(BILLING_API_LOG, 'w');
+  const billingApi = spawn('npx', ['tsx', 'src/server.ts'], { cwd: apiDir, detached: true, stdio: ['ignore', billingOut, billingOut], env: billingApiEnv(appUrl) });
+  billingApi.unref();
+  writeFileSync(BILLING_PID_FILE, String(billingApi.pid));
+
+  await waitFor(`http://127.0.0.1:${API_PORT}/api/v1/health/ready`, API_LOG);
+  await waitFor(`http://127.0.0.1:${BILLING_API_PORT}/api/v1/health/ready`, BILLING_API_LOG);
 }

@@ -224,11 +224,25 @@ export function useSubscription() {
  * Suscripción con su historial de facturación. Al volver del pago (`confirming`) se consulta
  * cada pocos segundos hasta que el servidor recibe la confirmación de Stripe.
  */
-export function useBilling(confirming = false) {
+/**
+ * Espera de una confirmación de Stripe: el estado solo cambia cuando llega su webhook, unos
+ * segundos después de la acción. Mientras `done` no se cumpla, se consulta cada 2 s (máx. 90 s).
+ */
+export interface BillingWait {
+  done: (s: BillingInfo['subscription']) => boolean;
+  since: number;
+}
+export const BILLING_WAIT_MS = 90_000;
+
+export function useBilling(wait: BillingWait | null = null) {
   return useQuery({
     queryKey: keys.billing,
     queryFn: ({ signal }) => api<BillingInfo>('/billing', { signal }),
-    refetchInterval: (query) => (confirming && !query.state.data?.subscription.managedByProvider && query.state.dataUpdateCount < 30 ? 3000 : false),
+    refetchInterval: (query) => {
+      if (!wait || Date.now() - wait.since > BILLING_WAIT_MS) return false;
+      const data = query.state.data;
+      return data && wait.done(data.subscription) ? false : 2000;
+    },
   });
 }
 

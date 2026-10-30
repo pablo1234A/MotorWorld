@@ -66,6 +66,13 @@ export interface BillingGateway {
   parseWebhook(rawBody: Buffer, signature: string | undefined): ProviderEvent;
 }
 
+/**
+ * Las únicas direcciones a las que Presupio envía a un cliente: las páginas alojadas por Stripe.
+ * (El frontend aplica la misma comprobación antes de redirigir.)
+ */
+export const STRIPE_CHECKOUT_URL = /^https:\/\/checkout\.stripe\.com\//;
+export const STRIPE_PORTAL_URL = /^https:\/\/billing\.stripe\.com\//;
+
 /** Stripe no responde, rechaza la clave o devuelve un error: no se ha cambiado nada. */
 export class BillingUnavailableError extends Error {
   constructor(
@@ -283,5 +290,6 @@ export class StripeGateway implements BillingGateway {
 }
 
 export function createBillingGateway(config: AppConfig): BillingGateway | null {
-  return config.billing.enabled && config.billing.stripe ? new StripeGateway(config.billing.stripe) : null;
+  if (!config.billing.enabled || !config.billing.stripe) return null;
+  return new StripeGateway(config.billing.stripe, config.billing.stripe.apiBase ?? {});
 }

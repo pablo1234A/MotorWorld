@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, Download, Lock, MailPlus, Plus, Trash2, UserMinus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useSearchParams } from 'react-router';
 import { api } from '../../api/client';
-import { keys, useBilling, useCompany, useInvitations, useMembers, useSettings, useUsage } from '../../api/queries';
+import { BILLING_WAIT_MS, keys, useBilling, useCompany, type BillingWait, useInvitations, useMembers, useSettings, useUsage } from '../../api/queries';
 import type { Company, CompanySettings, ContactChannel, Delivery, Invitation, Member, PlanDefinition, Role, TaxDisplay } from '../../api/types';
 import { useSession } from '../../auth/session';
 import { Dialog } from '../../components/Dialog';
@@ -870,8 +870,20 @@ export function PlanPage() {
   const toast = useToast();
   const [params] = useSearchParams();
   const confirming = params.get('pago') === 'confirmando';
-  const billing = useBilling(confirming);
+  const openedAt = useRef(Date.now());
+  // Tras pedir un cambio, la página espera la confirmación de Stripe (llega por webhook).
+  const [pending, setPending] = useState<(BillingWait & { label: string }) | null>(null);
+  const billing = useBilling(pending ?? (confirming ? { done: (s) => s.managedByProvider && s.hasActiveAccess, since: openedAt.current } : null));
   const [action, setAction] = useState<PlanAction>(null);
+  const pendingDone = !!pending && !!billing.data && pending.done(billing.data.subscription);
+  useEffect(() => {
+    if (pendingDone) setPending(null);
+  }, [pendingDone]);
+  useEffect(() => {
+    if (!pending) return;
+    const timer = setTimeout(() => setPending(null), BILLING_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [pending]);
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: keys.billing });
@@ -890,9 +902,10 @@ export function PlanPage() {
   });
   const change = useMutation({
     mutationFn: (plan: string) => api<{ change: { mode: 'upgrade' | 'downgrade' } }>('/billing/change-plan', { method: 'POST', body: { plan } }),
-    onSuccess: (res) => {
+    onSuccess: (res, plan) => {
       setAction(null);
       refresh();
+      setPending({ done: (s) => s.plan === plan, since: Date.now(), label: 'el cambio de plan' });
       toast.success(
         res.change.mode === 'upgrade'
           ? 'Cambio solicitado. Tu nuevo límite se aplicará en cuanto Stripe confirme el cobro.'
@@ -905,6 +918,7 @@ export function PlanPage() {
     onSuccess: (_res, cancel) => {
       setAction(null);
       refresh();
+      setPending({ done: (s) => s.cancelAtPeriodEnd === cancel, since: Date.now(), label: cancel ? 'la cancelación' : 'que la suscripción continúa' });
       toast.success(cancel ? 'Cancelación solicitada: mantienes el acceso hasta el final del periodo pagado.' : 'Se ha anulado la cancelación.');
     },
   });
@@ -919,6 +933,11 @@ export function PlanPage() {
   return (
     <div className="stack stack--lg">
       <PaymentReturnNotice confirmed={s.managedByProvider && s.hasActiveAccess} />
+      {pending && !pendingDone && (
+        <Alert tone="info" title="Esperando la confirmación de Stripe">
+          Stripe confirmará {pending.label} en unos segundos; esta página se actualizará sola.
+        </Alert>
+      )}
       <section className="panel" aria-labelledby="plan-title">
         <div className="panel__header">
           <h2 id="plan-title">Tu plan</h2>

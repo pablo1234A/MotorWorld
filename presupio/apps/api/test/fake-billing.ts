@@ -38,6 +38,8 @@ export class FakeBillingGateway implements BillingGateway {
   readonly prices = new Map<string, ProviderPrice>();
   /** Simula que Stripe no responde: toda llamada a la API falla (la firma sigue verificándose). */
   unavailable = false;
+  /** Simula una respuesta inesperada: las páginas de pago y del portal en otro dominio. */
+  foreignRedirects = false;
   /** Retiene la siguiente lectura de suscripción hasta llamar a release() (eventos desordenados). */
   private gate: Promise<void> | null = null;
   private openGate: (() => void) | null = null;
@@ -77,7 +79,7 @@ export class FakeBillingGateway implements BillingGateway {
   async createCheckoutSession(input: CheckoutInput) {
     this.record('createCheckoutSession', input);
     const id = `cs_test_${++this.seq}${randomBytes(4).toString('hex')}`;
-    return { id, url: `https://checkout.stripe.com/c/pay/${id}` };
+    return { id, url: this.foreignRedirects ? `https://checkout.stripe.com.ejemplo.test/c/pay/${id}` : `https://checkout.stripe.com/c/pay/${id}` };
   }
 
   async expireCheckoutSession(id: string) {
@@ -112,7 +114,7 @@ export class FakeBillingGateway implements BillingGateway {
 
   async createPortalSession(input: { customerId: string; returnUrl: string }) {
     this.record('createPortalSession', input);
-    return { url: `https://billing.stripe.com/p/session/test_${randomBytes(6).toString('hex')}` };
+    return { url: `https://${this.foreignRedirects ? 'pagos.ejemplo.test' : 'billing.stripe.com'}/p/session/test_${randomBytes(6).toString('hex')}` };
   }
 
   parseWebhook(rawBody: Buffer, signature: string | undefined): ProviderEvent {

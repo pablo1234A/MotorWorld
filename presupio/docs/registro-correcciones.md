@@ -207,3 +207,23 @@ Para cada problema se recoge la causa, la corrección, la prueba que la demuestr
   - `nginx -t` y nginx 1.24 sirviendo la compilación por HTTPS con un certificado de prueba: cabeceras en `/`, en las rutas, en `/assets` y en los 404; caché solo en respuestas 200; redirección de HTTP a HTTPS.
   - E2E: 15/15 sobre el servidor de producción, y la CSP bloquea un script en línea en Chromium.
 - **Pendiente por dependencia externa:** comprobar las cabeceras en el alojamiento y dominio reales tras desplegar. No se afirma que el alojamiento real esté protegido.
+
+## P1-06 / P2-06 · Revisión de Stripe y E2E con pagos simulados
+
+- **Revisión:** ya estaban bien cubiertos:
+  - firma de los webhooks con tolerancia de 5 minutos;
+  - eventos en modo real ignorados;
+  - claves live rechazadas al arrancar;
+  - precio comprobado contra el catálogo antes de cobrar;
+  - el estado solo cambia por webhook, leyendo la suscripción actual en Stripe;
+  - deduplicación de eventos;
+  - aislamiento por cliente de Stripe.
+- **Correcciones:**
+  - El servidor aceptaba **cualquier URL `https://`** como página de pago o de portal. Ahora solo `https://checkout.stripe.com/` y `https://billing.stripe.com/`, como ya hacía el frontend.
+  - **Interfaz:** tras pedir un cambio de plan, una cancelación o una reanudación, la página no se actualizaba hasta recargar, porque el webhook llega segundos después. Ahora espera la confirmación de Stripe consultando cada 2 s (como mucho 90 s) y lo indica. Lo descubrió la nueva E2E.
+  - `STRIPE_API_BASE`, solo para pruebas: la librería oficial apunta a un simulador local. Se rechaza en producción y fuera de local.
+  - `RATE_LIMIT_REGISTER_PER_HOUR`: ajuste operativo del límite de altas, ahora compartido entre instancias (por defecto 10).
+- **Prueba:**
+  - `e2e/billing.spec.ts`, 3 pruebas: contratar, activar, cambio de plan, cancelación, fin del periodo, solo lectura, portal, cobro fallido, gracia, recuperación, impago, aislamiento, firma falsa y evento repetido.
+  - `billing.test.ts`: dos pruebas nuevas (redirecciones ajenas → 503; `STRIPE_API_BASE` restringido).
+- **Pendiente por dependencia externa:** probar con una cuenta de Stripe en modo de prueba, que requiere credenciales. El simulador **no equivale** a Stripe real.
