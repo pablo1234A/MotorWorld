@@ -1,0 +1,16 @@
+export const TEST_ENV: Record<string, string> = {
+  NODE_ENV: "test",
+  APP_URL: "http://localhost:3999",
+  DATABASE_URL: process.env.TEST_DATABASE_URL ?? "postgresql://resenalo:resenalo@localhost:5432/resenalo_test",
+  REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://127.0.0.1:6379/5",
+  ENCRYPTION_KEYS: "v1:" + Buffer.alloc(32, 7).toString("base64"),
+  STRIPE_WEBHOOK_SECRET: "whsec_test_resenalo_local",
+  STRIPE_PRICE_STARTER: "price_test_starter",
+  STRIPE_PRICE_PRO: "price_test_pro",
+  STRIPE_PRICE_BUSINESS: "price_test_business",
+  GOOGLE_CLIENT_ID: "test-google-client",
+  GOOGLE_CLIENT_SECRET: "test-google-secret",
+  MICROSOFT_CLIENT_ID: "test-ms-client",
+  MICROSOFT_CLIENT_SECRET: "test-ms-secret",
+  LOG_LEVEL: "silent",
+};

@@ -1,0 +1,662 @@
+// Reseñalo — esquema relacional (PostgreSQL)
+// Convenciones: tablas en snake_case, ids cuid, timestamps en UTC.
+// Aislamiento multi-tenant: toda entidad operativa cuelga de `businessId`
+// y todos los accesos del backend filtran por el negocio del usuario autenticado.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Identidad ─────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String
+  passwordHash      String    @map("password_hash")
+  emailVerifiedAt   DateTime? @map("email_verified_at")
+  failedLoginCount  Int       @default(0) @map("failed_login_count")
+  lockedUntil       DateTime? @map("locked_until")
+  lastLoginAt       DateTime? @map("last_login_at")
+  termsAcceptedAt   DateTime  @map("terms_accepted_at")
+  termsVersion      String    @map("terms_version")
+  passwordChangedAt DateTime? @map("password_changed_at")
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  sessions   Session[]
+  tokens     AuthToken[]
+  businesses Business[]
+  auditLogs  AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @unique @map("token_hash")
+  expiresAt  DateTime @map("expires_at")
+  ip         String?
+  userAgent  String?  @map("user_agent")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+model AuthToken {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  type      AuthTokenType
+  tokenHash String        @unique @map("token_hash")
+  expiresAt DateTime      @map("expires_at")
+  usedAt    DateTime?     @map("used_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("auth_tokens")
+}
+
+// ───────────────────────────── Negocio (tenant) ─────────────────────────────
+
+model Business {
+  id                    String    @id @default(cuid())
+  ownerId               String    @map("owner_id")
+  name                  String
+  legalName             String?   @map("legal_name")
+  taxId                 String?   @map("tax_id")
+  addressLine           String?   @map("address_line")
+  city                  String?
+  postalCode            String?   @map("postal_code")
+  country               String    @default("ES")
+  phone                 String?
+  website               String?
+  reviewUrl             String?   @map("review_url")
+  reviewPlatform        String    @default("google") @map("review_platform")
+  senderName            String?   @map("sender_name")
+  replyToEmail          String?   @map("reply_to_email")
+  timezone              String    @default("Europe/Madrid")
+  resendCooldownDays    Int       @default(30) @map("resend_cooldown_days")
+  trackClicks           Boolean   @default(true) @map("track_clicks")
+  automationPaused      Boolean   @default(false) @map("automation_paused")
+  stripeCustomerId      String?   @unique @map("stripe_customer_id")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  dpaAcceptedAt         DateTime? @map("dpa_accepted_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  owner            User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  subscription     Subscription?
+  usage            MonthlyUsage[]
+  customers        Customer[]
+  emailConnection  EmailConnection?
+  templates        EmailTemplate[]
+  automationRules  AutomationRule[]
+  automationEvents AutomationEvent[]
+  emailJobs        EmailJob[]
+  emailLogs        EmailLog[]
+  campaigns        Campaign[]
+  apiKeys          ApiKey[]
+  inboundWebhook   InboundWebhook?
+  invoices         Invoice[]
+  billingEvents    BillingEvent[]
+  auditLogs        AuditLog[]
+  oauthStates      OAuthState[]
+
+  @@index([ownerId])
+  @@map("businesses")
+}
+
+// ───────────────────────────── Planes y facturación ─────────────────────────────
+
+enum PlanCode {
+  STARTER
+  PRO
+  BUSINESS
+}
+
+model Plan {
+  id                String   @id @default(cuid())
+  code              PlanCode @unique
+  name              String
+  // Precio final mostrado al cliente, IVA incluido, en céntimos.
+  priceCents        Int      @map("price_cents")
+  currency          String   @default("eur")
+  vatRateBps        Int      @default(2100) @map("vat_rate_bps") // 21,00 % = 2100 puntos básicos
+  monthlyEmailLimit Int      @map("monthly_email_limit")
+  maxTemplates      Int?     @map("max_templates") // null = ilimitado
+  maxAutomationRules Int     @map("max_automation_rules")
+  features          Json
+  stripePriceId     String?  @unique @map("stripe_price_id")
+  active            Boolean  @default(true)
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  UNPAID
+  CANCELED
+  PAUSED
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  businessId           String             @unique @map("business_id")
+  planId               String             @map("plan_id")
+  status               SubscriptionStatus
+  stripeSubscriptionId String             @unique @map("stripe_subscription_id")
+  stripePriceId        String?            @map("stripe_price_id")
+  currentPeriodStart   DateTime           @map("current_period_start")
+  currentPeriodEnd     DateTime           @map("current_period_end")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  canceledAt           DateTime?          @map("canceled_at")
+  lastStripeEventAt    DateTime?          @map("last_stripe_event_at")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  plan     Plan     @relation(fields: [planId], references: [id])
+
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// Contador de consumo por periodo de facturación. Se crea una fila nueva en
+// cada renovación (periodo de Stripe) => el contador se reinicia de forma natural.
+model MonthlyUsage {
+  id          String   @id @default(cuid())
+  businessId  String   @map("business_id")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  emailLimit  Int      @map("email_limit")
+  // Correos aceptados por el proveedor (Gmail/Outlook) en este periodo.
+  sent        Int      @default(0)
+  // Envíos en curso: reserva temporal mientras el proveedor responde.
+  reserved    Int      @default(0)
+  failed      Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, periodStart])
+  @@index([businessId, periodEnd])
+  @@map("monthly_usage")
+}
+
+model Invoice {
+  id               String    @id @default(cuid())
+  businessId       String?   @map("business_id")
+  stripeInvoiceId  String    @unique @map("stripe_invoice_id")
+  number           String?
+  status           String
+  currency         String
+  subtotalCents    Int       @map("subtotal_cents") // base imponible
+  taxCents         Int       @map("tax_cents")      // cuota de IVA
+  totalCents       Int       @map("total_cents")    // total
+  amountPaidCents  Int       @default(0) @map("amount_paid_cents")
+  hostedInvoiceUrl String?   @map("hosted_invoice_url")
+  invoicePdfUrl    String?   @map("invoice_pdf_url")
+  periodStart      DateTime? @map("period_start")
+  periodEnd        DateTime? @map("period_end")
+  issuedAt         DateTime  @map("issued_at")
+  // Snapshot de datos fiscales del cliente en el momento de emisión
+  customerSnapshot Json?     @map("customer_snapshot")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // Las facturas se conservan aunque se elimine la cuenta (obligación fiscal).
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, issuedAt])
+  @@map("invoices")
+}
+
+// Registro idempotente de webhooks de Stripe.
+model BillingEvent {
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique @map("stripe_event_id")
+  type          String
+  businessId    String?   @map("business_id")
+  payload       Json
+  processedAt   DateTime? @map("processed_at")
+  error         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, createdAt])
+  @@map("billing_events")
+}
+
+// ───────────────────────────── Clientes ─────────────────────────────
+
+enum CustomerEmailStatus {
+  VALID
+  INVALID
+  BOUNCED
+}
+
+enum CustomerSource {
+  MANUAL
+  CSV
+  API
+  WEBHOOK
+}
+
+enum RequestStatus {
+  NONE
+  PENDING
+  SENT
+  FAILED
+  BLOCKED
+}
+
+model Customer {
+  id                String              @id @default(cuid())
+  businessId        String              @map("business_id")
+  name              String
+  email             String
+  phone             String?
+  serviceName       String?             @map("service_name")
+  completedAt       DateTime?           @map("completed_at")
+  notes             String?
+  tags              String[]            @default([])
+  externalId        String?             @map("external_id")
+  source            CustomerSource      @default(MANUAL)
+  emailStatus       CustomerEmailStatus @default(VALID) @map("email_status")
+  unsubscribedAt    DateTime?           @map("unsubscribed_at")
+  lastRequestAt     DateTime?           @map("last_request_at")
+  lastRequestStatus RequestStatus       @default(NONE) @map("last_request_status")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  business Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  events   AutomationEvent[]
+  jobs     EmailJob[]
+
+  @@unique([businessId, email])
+  @@index([businessId, createdAt])
+  @@index([businessId, lastRequestStatus])
+  @@map("customers")
+}
+
+// ───────────────────────────── Correo ─────────────────────────────
+
+enum EmailProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+enum ConnectionStatus {
+  ACTIVE
+  NEEDS_REAUTH
+  DISCONNECTED
+}
+
+model EmailConnection {
+  id              String           @id @default(cuid())
+  businessId      String           @unique @map("business_id")
+  provider        EmailProvider
+  emailAddress    String           @map("email_address")
+  displayName     String?          @map("display_name")
+  // Tokens cifrados con AES-256-GCM (nunca en claro). Nunca se guardan contraseñas.
+  accessTokenEnc  String?          @map("access_token_enc")
+  refreshTokenEnc String?          @map("refresh_token_enc")
+  tokenExpiresAt  DateTime?        @map("token_expires_at")
+  scopes          String
+  status          ConnectionStatus @default(ACTIVE)
+  lastCheckedAt   DateTime?        @map("last_checked_at")
+  lastError       String?          @map("last_error")
+  lastErrorAt     DateTime?        @map("last_error_at")
+  authFailureCount Int             @default(0) @map("auth_failure_count")
+  connectedAt     DateTime         @default(now()) @map("connected_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  business Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  jobs     EmailJob[]
+
+  @@map("email_connections")
+}
+
+model OAuthState {
+  id              String        @id @default(cuid())
+  stateHash       String        @unique @map("state_hash")
+  businessId      String        @map("business_id")
+  userId          String        @map("user_id")
+  provider        EmailProvider
+  codeVerifierEnc String        @map("code_verifier_enc")
+  expiresAt       DateTime      @map("expires_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("oauth_states")
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  businessId  String   @map("business_id")
+  name        String
+  subject     String
+  greeting    String
+  body        String
+  closing     String
+  signature   String
+  buttonLabel String   @default("Dejar mi opinión") @map("button_label")
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  business  Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  rules     AutomationRule[]
+  jobs      EmailJob[]
+  campaigns Campaign[]
+
+  @@index([businessId])
+  @@map("email_templates")
+}
+
+// ───────────────────────────── Automatización ─────────────────────────────
+
+enum EventSource {
+  MANUAL
+  CSV
+  API
+  WEBHOOK
+  CAMPAIGN
+}
+
+model AutomationRule {
+  id              String        @id @default(cuid())
+  businessId      String        @map("business_id")
+  name            String
+  active          Boolean       @default(true)
+  templateId      String        @map("template_id")
+  delayMinutes    Int           @default(120) @map("delay_minutes")
+  // Si se define, la regla solo aplica a servicios cuyo nombre contenga este texto.
+  serviceFilter   String?       @map("service_filter")
+  sources         EventSource[] @default([MANUAL, CSV, API, WEBHOOK])
+  // Ventana horaria de envío (hora local del negocio). null = cualquier hora.
+  sendWindowStart Int?          @map("send_window_start")
+  sendWindowEnd   Int?          @map("send_window_end")
+  priority        Int           @default(0)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  business Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  template EmailTemplate     @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  events   AutomationEvent[]
+  jobs     EmailJob[]
+
+  @@index([businessId, active])
+  @@map("automation_rules")
+}
+
+enum AutomationEventStatus {
+  RECEIVED
+  PROCESSED
+  SKIPPED
+  REJECTED
+}
+
+// Evento "servicio finalizado / compra completada" que origina una solicitud.
+model AutomationEvent {
+  id          String                @id @default(cuid())
+  businessId  String                @map("business_id")
+  customerId  String                @map("customer_id")
+  ruleId      String?               @map("rule_id")
+  campaignId  String?               @map("campaign_id")
+  source      EventSource
+  externalId  String?               @map("external_id") // clave de idempotencia
+  serviceName String?               @map("service_name")
+  completedAt DateTime              @map("completed_at")
+  status      AutomationEventStatus @default(RECEIVED)
+  reason      String?
+  payload     Json?
+  createdAt   DateTime              @default(now()) @map("created_at")
+
+  business Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rule     AutomationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  campaign Campaign?       @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  job      EmailJob?
+
+  @@unique([businessId, externalId])
+  @@index([businessId, createdAt])
+  @@map("automation_events")
+}
+
+enum CampaignStatus {
+  DRAFT
+  RUNNING
+  COMPLETED
+  CANCELED
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  businessId  String         @map("business_id")
+  name        String
+  templateId  String         @map("template_id")
+  status      CampaignStatus @default(DRAFT)
+  totalTargets Int           @default(0) @map("total_targets")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  launchedAt  DateTime?      @map("launched_at")
+
+  business Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  template EmailTemplate     @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  events   AutomationEvent[]
+  jobs     EmailJob[]
+
+  @@index([businessId, createdAt])
+  @@map("campaigns")
+}
+
+enum EmailJobStatus {
+  SCHEDULED // programado para el futuro (retardo / ventana horaria)
+  QUEUED    // listo para envío, en cola
+  SENDING   // el worker lo está enviando
+  SENT      // aceptado por el proveedor (Gmail / Graph)
+  DELIVERED // entregado confirmado (solo si el proveedor lo permite)
+  FAILED    // fallo definitivo
+  BOUNCED   // rechazado por el servidor de destino
+  ON_HOLD   // en espera: conexión de correo sin autorización
+  BLOCKED   // bloqueado: límite del plan, suscripción inactiva, baja…
+  CANCELED  // cancelado por el usuario
+}
+
+model EmailJob {
+  id                String         @id @default(cuid())
+  businessId        String         @map("business_id")
+  customerId        String         @map("customer_id")
+  eventId           String?        @unique @map("event_id")
+  ruleId            String?        @map("rule_id")
+  templateId        String?        @map("template_id")
+  campaignId        String?        @map("campaign_id")
+  connectionId      String?        @map("connection_id")
+  dedupeKey         String         @map("dedupe_key")
+  // Token público para el enlace de seguimiento de clic y la baja.
+  publicToken       String         @unique @map("public_token")
+  toEmail           String         @map("to_email")
+  toName            String         @map("to_name")
+  subject           String
+  bodyText          String         @map("body_text")
+  bodyHtml          String         @map("body_html")
+  reviewUrl         String         @map("review_url")
+  status            EmailJobStatus @default(SCHEDULED)
+  statusReason      String?        @map("status_reason")
+  scheduledFor      DateTime       @map("scheduled_for")
+  attempts          Int            @default(0)
+  maxAttempts       Int            @default(5) @map("max_attempts")
+  nextAttemptAt     DateTime?      @map("next_attempt_at")
+  sendingStartedAt  DateTime?      @map("sending_started_at")
+  lastError         String?        @map("last_error")
+  providerMessageId String?        @map("provider_message_id")
+  sentAt            DateTime?      @map("sent_at")
+  failedAt          DateTime?      @map("failed_at")
+  firstClickedAt    DateTime?      @map("first_clicked_at")
+  clickCount        Int            @default(0) @map("click_count")
+  usagePeriodStart  DateTime?      @map("usage_period_start")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  business   Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  event      AutomationEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  rule       AutomationRule?  @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  template   EmailTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  campaign   Campaign?        @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  connection EmailConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  logs       EmailLog[]
+
+  @@unique([businessId, dedupeKey])
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+  @@index([status, scheduledFor])
+  @@index([businessId, toEmail, sentAt])
+  @@map("email_jobs")
+}
+
+enum EmailLogEvent {
+  CREATED
+  SCHEDULED
+  QUEUED
+  SEND_ATTEMPT
+  SENT
+  RETRY_SCHEDULED
+  FAILED
+  BOUNCED
+  AUTH_ERROR
+  ON_HOLD
+  BLOCKED_LIMIT
+  BLOCKED
+  CANCELED
+  CLICKED
+  UNSUBSCRIBED
+  REQUEUED
+}
+
+model EmailLog {
+  id         String        @id @default(cuid())
+  emailJobId String        @map("email_job_id")
+  businessId String        @map("business_id")
+  event      EmailLogEvent
+  message    String?
+  meta       Json?
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  job      EmailJob @relation(fields: [emailJobId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([emailJobId, createdAt])
+  @@index([businessId, createdAt])
+  @@map("email_logs")
+}
+
+// ───────────────────────────── Integraciones ─────────────────────────────
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  businessId String    @map("business_id")
+  name       String
+  prefix     String
+  keyHash    String    @unique @map("key_hash")
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("api_keys")
+}
+
+model InboundWebhook {
+  id         String   @id @default(cuid())
+  businessId String   @unique @map("business_id")
+  publicId   String   @unique @map("public_id")
+  secretEnc  String   @map("secret_enc")
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("inbound_webhooks")
+}
+
+// ───────────────────────────── Auditoría y RGPD ─────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  businessId String?  @map("business_id")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  ip         String?
+  userAgent  String?  @map("user_agent")
+  meta       Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+enum DataRequestType {
+  ACCESS
+  RECTIFICATION
+  ERASURE
+  OBJECTION
+  RESTRICTION
+  PORTABILITY
+}
+
+model DataRightsRequest {
+  id          String          @id @default(cuid())
+  type        DataRequestType
+  name        String
+  email       String
+  message     String
+  status      String          @default("RECEIVED")
+  resolvedAt  DateTime?       @map("resolved_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("data_rights_requests")
+}
