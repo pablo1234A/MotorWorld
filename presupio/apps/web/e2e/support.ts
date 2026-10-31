@@ -29,7 +29,9 @@ export function watchConsole(page: Page): string[] {
     if (m.type() !== 'error') return;
     const text = m.text();
     if (/status of 401/.test(text)) return;
-    problems.push(text);
+    // Con el documento y la línea: distingue la aplicación de lo que inyecta el navegador o una herramienta.
+    const { url, lineNumber } = m.location();
+    problems.push(url ? `${text} [${url}:${lineNumber}]` : text);
   });
   page.on('response', (r) => {
     if (r.status() === 401 && r.url().endsWith('/api/v1/me')) return;
