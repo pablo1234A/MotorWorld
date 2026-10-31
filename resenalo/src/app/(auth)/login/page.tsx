@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Display";
 
 function safeNext(n: string | null) {
-  return n && n.startsWith("/") && !n.startsWith("//") ? n : "/app";
+  // "/\evil.com" lo normaliza el navegador a "//evil.com": se rechaza cualquier "/" seguido de "/" o "\".
+  return n && /^\/(?![/\\])/.test(n) ? n : "/app";
 }
 
 function LoginForm() {

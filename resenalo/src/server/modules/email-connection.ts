@@ -10,6 +10,7 @@ import { ProviderError } from "../email/providers/types";
 import { sendSystemEmail } from "../email/system-mailer";
 import { audit } from "./audit";
 import { enqueueEmailJob } from "../queue/queues";
+import { refreshCustomerRequestStatus } from "./automation/requests";
 
 const STATE_TTL_MS = 10 * 60_000;
 export const ON_HOLD_RESUME_MAX_AGE_MS = 7 * 86400_000;
@@ -96,23 +97,32 @@ export async function completeOAuth(p: { provider: EmailProvider; state: string;
 /** Reanuda los envíos retenidos por falta de autorización (solo los recientes). */
 export async function resumeOnHoldJobs(businessId: string, connectionId: string) {
   const held = await prisma.emailJob.findMany({ where: { businessId, status: EmailJobStatus.ON_HOLD } });
-  const cutoff = Date.now() - ON_HOLD_RESUME_MAX_AGE_MS;
+  const now = Date.now();
+  const cutoff = now - ON_HOLD_RESUME_MAX_AGE_MS;
   for (const job of held) {
-    if (job.createdAt.getTime() < cutoff) {
-      await prisma.emailJob.update({
-        where: { id: job.id },
+    // Caduca solo si debía haberse enviado hace más de 7 días (un envío con retardo largo aún no vencido no caduca).
+    if (job.scheduledFor.getTime() < cutoff) {
+      const upd = await prisma.emailJob.updateMany({
+        where: { id: job.id, status: EmailJobStatus.ON_HOLD },
         data: { status: EmailJobStatus.CANCELED, statusReason: "EXPIRED_ON_HOLD" },
       });
-      await prisma.emailLog.create({ data: { emailJobId: job.id, businessId, event: EmailLogEvent.CANCELED, message: "Cancelado: llevaba más de 7 días en espera de autorización." } });
+      if (upd.count) {
+        await prisma.emailLog.create({ data: { emailJobId: job.id, businessId, event: EmailLogEvent.CANCELED, message: "Cancelado: llevaba más de 7 días en espera de autorización." } });
+        await refreshCustomerRequestStatus(job.customerId);
+      }
       continue;
     }
+    // Se respeta la hora programada (retardo y ventana horaria): los futuros vuelven a SCHEDULED y los recoge el barrido.
+    const due = job.scheduledFor.getTime() <= now;
     const upd = await prisma.emailJob.updateMany({
       where: { id: job.id, status: EmailJobStatus.ON_HOLD },
-      data: { status: EmailJobStatus.QUEUED, connectionId, statusReason: null, scheduledFor: new Date() },
+      data: due
+        ? { status: EmailJobStatus.QUEUED, connectionId, statusReason: null, scheduledFor: new Date(now) }
+        : { status: EmailJobStatus.SCHEDULED, connectionId, statusReason: null },
     });
     if (upd.count) {
       await prisma.emailLog.create({ data: { emailJobId: job.id, businessId, event: EmailLogEvent.REQUEUED, message: "Reanudado tras reconectar el correo." } });
-      await enqueueEmailJob(job.id);
+      if (due) await enqueueEmailJob(job.id);
     }
   }
 }

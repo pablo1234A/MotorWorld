@@ -16,7 +16,7 @@ export const inboundEventSchema = z.object({
   }),
   serviceName: z.string().trim().max(160).optional(),
   completedAt: z.coerce.date().optional(),
-  metadata: z.record(z.union([z.string().max(500), z.number(), z.boolean(), z.null()])).optional(),
+  metadata: z.record(z.string(), z.union([z.string().max(500), z.number(), z.boolean(), z.null()])).optional(),
 });
 export type InboundEvent = z.infer<typeof inboundEventSchema>;
 

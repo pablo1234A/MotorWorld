@@ -8,7 +8,8 @@ export function parseCsv(input: string): string[][] {
     if (ch === '"') inQ = !inQ;
     else if (!inQ && ch in counts) counts[ch]++;
   }
-  const delim = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][1] > 0 ? Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] : ",";
+  const [topDelim, topCount] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const delim = topCount > 0 ? topDelim : ",";
 
   const rows: string[][] = [];
   let row: string[] = [];
@@ -50,12 +51,12 @@ export function parseFlexibleDate(raw: string | undefined | null): Date | null {
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
   if (m) {
     const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 12), +(m[5] ?? 0), +(m[6] ?? 0)));
-    return isNaN(d.getTime()) || d.getUTCDate() !== +m[3] ? null : d;
+    return isNaN(d.getTime()) || d.getUTCDate() !== +m[3] || d.getUTCMonth() !== +m[2] - 1 ? null : d;
   }
   m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
   if (m) {
     const d = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], +(m[4] ?? 12), +(m[5] ?? 0)));
-    return isNaN(d.getTime()) || d.getUTCDate() !== +m[1] ? null : d;
+    return isNaN(d.getTime()) || d.getUTCDate() !== +m[1] || d.getUTCMonth() !== +m[2] - 1 ? null : d;
   }
   return null;
 }

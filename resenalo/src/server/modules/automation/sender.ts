@@ -72,7 +72,11 @@ async function claim(emailJobId: string): Promise<Claim> {
       const job = await tx.emailJob.findUniqueOrThrow({ where: { id: emailJobId }, include: { customer: true, business: true, event: { select: { source: true } } } });
 
       const block = async (status: EmailJobStatus, reason: string, event: EmailLogEvent, message: string, outcome: SendOutcome): Promise<Claim> => {
-        await tx.emailJob.update({ where: { id: job.id }, data: { status, statusReason: reason, sendingStartedAt: null } });
+        // ON_HOLD no es un intento real: no consume reintentos (igual que la pausa y el error de autorización).
+        await tx.emailJob.update({
+          where: { id: job.id },
+          data: { status, statusReason: reason, sendingStartedAt: null, ...(status === EmailJobStatus.ON_HOLD ? { attempts: { decrement: 1 } } : {}) },
+        });
         await log(tx, job, event, message);
         if (status === EmailJobStatus.BLOCKED) await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestStatus: RequestStatus.BLOCKED } });
         return { kind: "stop", outcome };
@@ -133,6 +137,7 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
   const conn = await prisma.emailConnection.findUniqueOrThrow({ where: { id: job.connectionId! } });
   const business = await prisma.business.findUniqueOrThrow({ where: { id: job.businessId } });
 
+  let providerMessageId: string | null;
   try {
     const accessToken = await getAccessToken(conn);
     const urls = trackingUrls(job.publicToken);
@@ -148,28 +153,30 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
       unsubscribeUrl: urls.oneClick,
       headers: { "X-Resenalo-Request": job.id },
     });
-    const { providerMessageId } = await getProvider(conn.provider).send(accessToken, mime);
-
-    // Confirmado por el proveedor → se contabiliza.
-    await prisma.$transaction(async (tx) => {
-      await tx.emailJob.update({
-        where: { id: job.id },
-        data: { status: EmailJobStatus.SENT, sentAt: new Date(), providerMessageId, lastError: null, statusReason: null, sendingStartedAt: null },
-      });
-      if (job.usagePeriodStart) {
-        await tx.$executeRaw`
-          UPDATE monthly_usage SET reserved = GREATEST(reserved - 1, 0), sent = sent + 1, updated_at = now()
-          WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
-      }
-      await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: RequestStatus.SENT } });
-      await log(tx, job, EmailLogEvent.SENT, `Aceptado por ${conn.provider === "GOOGLE" ? "Gmail" : "Outlook"}${providerMessageId ? ` (id ${providerMessageId})` : ""}.`, {
-        providerMessageId,
-      });
-    });
-    return "sent";
+    ({ providerMessageId } = await getProvider(conn.provider).send(accessToken, mime));
   } catch (err) {
     return handleSendError(job, conn.id, err);
   }
+
+  // Confirmado por el proveedor → se contabiliza. Queda FUERA del try: si este
+  // registro falla, el correo ya salió y NO debe reintentarse (evita duplicados);
+  // el trabajo sigue en SENDING y el barrido lo marcará como resultado desconocido.
+  await prisma.$transaction(async (tx) => {
+    await tx.emailJob.update({
+      where: { id: job.id },
+      data: { status: EmailJobStatus.SENT, sentAt: new Date(), providerMessageId, lastError: null, statusReason: null, sendingStartedAt: null },
+    });
+    if (job.usagePeriodStart) {
+      await tx.$executeRaw`
+        UPDATE monthly_usage SET reserved = GREATEST(reserved - 1, 0), sent = sent + 1, updated_at = now()
+        WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
+    }
+    await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: RequestStatus.SENT } });
+    await log(tx, job, EmailLogEvent.SENT, `Aceptado por ${conn.provider === "GOOGLE" ? "Gmail" : "Outlook"}${providerMessageId ? ` (id ${providerMessageId})` : ""}.`, {
+      providerMessageId,
+    });
+  });
+  return "sent";
 }
 
 async function handleSendError(job: EmailJob, connectionId: string, err: unknown): Promise<SendOutcome> {
@@ -262,7 +269,13 @@ export async function sweep(now = new Date()) {
   }
 
   const orphan = await prisma.emailJob.findMany({
-    where: { status: EmailJobStatus.QUEUED, scheduledFor: { lte: new Date(now.getTime() - 2 * 60_000) } },
+    // Solo los que llevan >10 min encolados sin procesarse (p. ej. Redis perdió datos), no los que
+    // simplemente esperan turno por el límite de velocidad.
+    where: {
+      status: EmailJobStatus.QUEUED,
+      scheduledFor: { lte: new Date(now.getTime() - 2 * 60_000) },
+      OR: [{ lastEnqueuedAt: null }, { lastEnqueuedAt: { lte: new Date(now.getTime() - 10 * 60_000) } }],
+    },
     select: { id: true, attempts: true },
     take: 500,
   });

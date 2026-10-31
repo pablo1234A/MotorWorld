@@ -520,6 +520,8 @@ model EmailJob {
   attempts          Int            @default(0)
   maxAttempts       Int            @default(5) @map("max_attempts")
   nextAttemptAt     DateTime?      @map("next_attempt_at")
+  // Última vez que se añadió a la cola de Redis (evita re-encolados duplicados en el barrido).
+  lastEnqueuedAt    DateTime?      @map("last_enqueued_at")
   sendingStartedAt  DateTime?      @map("sending_started_at")
   lastError         String?        @map("last_error")
   providerMessageId String?        @map("provider_message_id")

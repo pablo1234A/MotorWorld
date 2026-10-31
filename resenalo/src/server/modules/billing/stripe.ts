@@ -117,7 +117,7 @@ export async function changePlan(businessId: string, planCode: PlanCode, userId:
     cancel_at_period_end: false,
     metadata: { businessId, planCode: plan.code },
   });
-  await syncSubscription(updated, new Date());
+  await syncSubscription(updated, null);
   await audit({ action: "billing.plan_changed", userId, businessId, meta: { from: sub.plan.code, to: plan.code } });
 }
 
@@ -125,7 +125,7 @@ export async function setCancelAtPeriodEnd(businessId: string, cancel: boolean, 
   const sub = await prisma.subscription.findUnique({ where: { businessId } });
   if (!sub) throw new AppError("NOT_FOUND", "No tienes suscripción.");
   const updated = await stripe().subscriptions.update(sub.stripeSubscriptionId, { cancel_at_period_end: cancel });
-  await syncSubscription(updated, new Date());
+  await syncSubscription(updated, null);
   await audit({ action: cancel ? "billing.cancel_scheduled" : "billing.cancel_reverted", userId, businessId });
 }
 
@@ -173,7 +173,7 @@ async function resolveBusinessId(sub: Stripe.Subscription) {
  * Sincroniza la suscripción local con el objeto de Stripe. Ignora eventos más
  * antiguos que el último aplicado (los webhooks pueden llegar desordenados).
  */
-export async function syncSubscription(sub: Stripe.Subscription, eventCreated: Date) {
+export async function syncSubscription(sub: Stripe.Subscription, eventCreated: Date | null) {
   const businessId = await resolveBusinessId(sub);
   if (!businessId) {
     logger.warn({ sub: sub.id }, "suscripción de Stripe sin negocio asociado");
@@ -186,8 +186,21 @@ export async function syncSubscription(sub: Stripe.Subscription, eventCreated: D
   const status = STATUS_MAP[sub.status];
 
   const current = await prisma.subscription.findUnique({ where: { businessId } });
-  if (current && current.stripeSubscriptionId === sub.id && current.lastStripeEventAt && current.lastStripeEventAt > eventCreated) {
+  if (eventCreated && current && current.stripeSubscriptionId === sub.id && current.lastStripeEventAt && current.lastStripeEventAt > eventCreated) {
     logger.info({ sub: sub.id }, "evento de Stripe obsoleto ignorado");
+    return current;
+  }
+  // Un evento tardío de OTRA suscripción (p. ej. un intento previo que pasa a incomplete_expired
+  // o una suscripción antigua cancelada) no debe sustituir a la vigente.
+  const TERMINAL: SubscriptionStatus[] = [SubscriptionStatus.CANCELED, SubscriptionStatus.INCOMPLETE_EXPIRED];
+  if (
+    current &&
+    current.stripeSubscriptionId !== sub.id &&
+    !TERMINAL.includes(current.status) &&
+    status !== SubscriptionStatus.ACTIVE &&
+    status !== SubscriptionStatus.TRIALING
+  ) {
+    logger.info({ sub: sub.id, current: current.stripeSubscriptionId }, "evento de una suscripción no vigente ignorado");
     return current;
   }
   const data = {
@@ -199,7 +212,8 @@ export async function syncSubscription(sub: Stripe.Subscription, eventCreated: D
     currentPeriodEnd: end,
     cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
     canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
-    lastStripeEventAt: eventCreated,
+    // Sincronización local (sin evento): no adelanta la marca, para no descartar webhooks posteriores del mismo segundo.
+    lastStripeEventAt: eventCreated ?? (current?.stripeSubscriptionId === sub.id ? current.lastStripeEventAt : null),
   };
   const saved = await prisma.$transaction(async (tx) => {
     const s = await tx.subscription.upsert({ where: { businessId }, create: { businessId, ...data }, update: data });

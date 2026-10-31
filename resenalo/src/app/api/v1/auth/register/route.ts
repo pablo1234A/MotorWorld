@@ -8,7 +8,7 @@ const schema = z.object({
   name: z.string().trim().min(2, "Indica tu nombre").max(100),
   email: z.string().trim().toLowerCase().email("Correo no válido").max(254),
   password: z.string().min(1, "Indica una contraseña").max(128),
-  acceptTerms: z.literal(true, { errorMap: () => ({ message: "Debes aceptar las condiciones y la política de privacidad" }) }),
+  acceptTerms: z.literal(true, { error: "Debes aceptar las condiciones y la política de privacidad" }),
 });
 
 export const POST = route(async (req) => {

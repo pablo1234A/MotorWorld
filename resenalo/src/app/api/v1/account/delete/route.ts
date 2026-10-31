@@ -8,7 +8,7 @@ import { clearSessionCookie } from "@/server/auth/session";
 export const POST = userRoute(
   async (req, { user }) => {
     await enforceRateLimit(`delete:${user.id}`, 5, 3600);
-    const b = await readJson(req, z.object({ password: z.string().min(1).max(128), confirm: z.literal("ELIMINAR", { errorMap: () => ({ message: "Escribe ELIMINAR para confirmar" }) }) }));
+    const b = await readJson(req, z.object({ password: z.string().min(1).max(128), confirm: z.literal("ELIMINAR", { error: "Escribe ELIMINAR para confirmar" }) }));
     await deleteAccount(user.id, b.password, req);
     return Response.json({ ok: true }, { headers: { "set-cookie": clearSessionCookie() } });
   },

@@ -1,4 +1,7 @@
-import { ZodError, type ZodTypeAny, type z } from "zod";
+import { z, ZodError, type ZodTypeAny } from "zod";
+
+// Mensajes de validación por defecto en español.
+z.config(z.locales.es());
 import { AppError } from "./errors";
 
 export function clientIp(req: Request): string {

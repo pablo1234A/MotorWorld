@@ -12,7 +12,7 @@ export const POST = tenantRoute(async (req, { user, business }) => {
     z.object({
       csv: z.string().min(1).max(2_000_000),
       createRequests: z.boolean().default(false),
-      legalBasisConfirmed: z.literal(true, { errorMap: () => ({ message: "Confirma que tienes base legal para contactar a estos clientes" }) }),
+      legalBasisConfirmed: z.literal(true, { error: "Confirma que tienes base legal para contactar a estos clientes" }),
     }),
     2_100_000,
   );
