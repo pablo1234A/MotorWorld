@@ -35,11 +35,10 @@ export default defineConfig({
   // Safari) y Microsoft Edge, cada uno en su propia ejecución: `playwright test --project=firefox`.
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {} } },
-    // Un reintento solo en Firefox: Playwright pierde a veces la primera navegación de una página
-    // nueva (ni «commit» llega), aunque el navegador la carga y la aplicación la pinta: el registro
-    // de accesos del servidor lo demostró (docs/registro-correcciones.md). Un fallo real de la
-    // aplicación falla en los dos intentos; los recuperados salen como «flaky» en la salida.
-    { name: 'firefox', retries: 1, use: { ...devices['Desktop Firefox'] } },
+    // Firefox necesita Playwright ≥ 1.64: con 1.63, la primera navegación de una página nueva a un
+    // documento con Cross-Origin-Opener-Policy (lo envía Presupio) a veces no terminaba nunca
+    // (microsoft/playwright#42731). Sin reintentos.
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'edge', use: { ...devices['Desktop Edge'], channel: 'msedge' } },
   ],

@@ -443,20 +443,16 @@ Resultado: **469/469** comprobaciones en Chromium (dos ejecuciones seguidas) y *
 
   Así, si el bloqueo de Firefox se repite, quedará localizado.
 
-## Auditoría final · E2E en Firefox: Playwright pierde la primera navegación de una página nueva (no es un fallo de Presupio)
+## Auditoría final · E2E en Firefox: navegaciones perdidas por un fallo de Playwright 1.63 con COOP
 
-- **Síntoma:** en 5 de 9 ejecuciones de Firefox en la CI (21, 23, reejecución de la 24, 25 y 26), una navegación de una página recién creada no terminaba según Playwright.
-  - Es siempre la primera navegación de esa página.
-  - Chromium, WebKit y Edge nunca fallaron.
-- **Hipótesis descartadas, con datos:**
-  1. `localhost` frente a `127.0.0.1`: falló igual con `127.0.0.1`. El cambio se mantiene porque es inocuo.
-  2. Que faltara el evento `load`: con `waitUntil: 'commit'`, el primer aviso que hay, tampoco llegó nada (ejecución 26).
-- **Lo que está demostrado:** con el registro de accesos de `serve.mjs` (`ACCESS_LOG`, añadido para esto), en los fallos de las ejecuciones 25 y 26 el servidor recibió y respondió **todas** las peticiones de esa navegación en unos 130 ms. Incluyen las que hace la aplicación después de pintar la pantalla, como `GET /api/v1/public/legal` del formulario de alta.
-
-  Firefox navegó y Presupio funcionó. Lo que se pierde es el seguimiento de esa navegación en Playwright. Hay problemas parecidos conocidos (microsoft/playwright#21430).
-- **Medida:** **un reintento solo en el proyecto de Firefox** (`playwright.config.ts`):
-  - un fallo real de la aplicación falla en los dos intentos y la CI se pone en rojo;
-  - los recuperados aparecen como «flaky» en la salida de la CI;
-  - Chromium, WebKit y Edge siguen sin reintentos.
-- **Descartado:** el `navigate()` probado en la ejecución 26 (esperar a `commit` y comprobar `readyState`) no lo evitaba y se ha retirado.
-- **Verificación:** tres ejecuciones consecutivas de la CI en verde en los cuatro navegadores (ver `AUDITORIA-PRODUCCION.md` §7.1).
+- **Síntoma:** en 6 de 12 ejecuciones del trabajo de Firefox en la CI, la primera navegación de una página recién creada no terminaba nunca según Playwright. Chromium, WebKit y Edge nunca fallaron.
+- **Lo que se descartó, con datos:**
+  1. `localhost` frente a `127.0.0.1`: siguió fallando.
+  2. Que faltara solo el evento `load`: con `waitUntil: 'commit'` tampoco llegaba nada.
+- **Lo que demostró que no era Presupio:** el registro de accesos de `serve.mjs` (`ACCESS_LOG`, añadido para esto). En los fallos, el servidor respondió todas las peticiones en unos 130 ms y la aplicación llegó a pintar la pantalla (por ejemplo, pidió `/api/v1/public/legal` del formulario de alta).
+- **Causa:** [microsoft/playwright#42731](https://github.com/microsoft/playwright/issues/42731), «Firefox page.goto never resolves on the first navigation to a page with COOP same-origin». Se reportó exactamente con **Playwright 1.63.0 y Firefox 155.0 (build 1543)**, las versiones de este proyecto.
+  - Presupio envía `Cross-Origin-Opener-Policy: same-origin`, una cabecera de seguridad correcta que se mantiene.
+  - Con ella, Firefox sustituye el contexto de navegación, y el canal de Juggler (el controlador de Firefox en Playwright) reutiliza un identificador y pierde `Page.navigationCommitted`.
+  - Corregido en Playwright 1.64 (PR #42788).
+- **Corrección:** `@playwright/test` pasa de 1.63.0 a **1.64.1**. Se quita el reintento de Firefox y el `navigate()` probado antes.
+- **Verificación:** tres ejecuciones consecutivas de la CI en verde en los cuatro navegadores, **sin reintentos** (ver `AUDITORIA-PRODUCCION.md` §7.1).
