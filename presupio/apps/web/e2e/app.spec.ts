@@ -457,6 +457,9 @@ test('fin de la prueba: la cuenta pasa a solo lectura, se avisa y se pueden expo
   await expect(page.getByText('La prueba terminó el')).toBeVisible();
   await expect(page.getByText('Datos conservados hasta')).toBeVisible();
   await page.goto('/configuracion');
+  await expect(page.getByRole('heading', { name: 'Exportar datos' })).toBeVisible();
+  // Antes de exportar: separa lo que produce la página de lo que produce la descarga.
+  expect(problems.filter((p) => !/403/.test(p)), 'Consola al abrir /configuracion').toEqual([]);
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Exportar' }).click();
   expect((await download).suggestedFilename()).toMatch(/^presupio-export-/);
