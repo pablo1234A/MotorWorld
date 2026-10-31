@@ -172,33 +172,42 @@ Revisado y correcto:
 | **iPhone** (SE de 320 px, 13 de 390 px) | Emulación de tamaño y táctil en Chromium + **WebKit real** a 447 px (ancho mínimo de la ventana de MiniBrowser) | Incluido arriba + WebKit **23/23** |
 | **iPad** (vertical y horizontal) | Emulación en Chromium + WebKit real a 820 px | Incluido arriba + WebKit |
 | **Safari** (motor WebKit) | WebKitGTK 2.52 (MiniBrowser) por WebDriver: registro, alta de presupuesto, importes, 6 pantallas, móvil, tableta, menú, cierre de sesión, sin CSP ni errores de JavaScript | **23/23** |
-| **Firefox, WebKit de Playwright y Edge** | E2E completa en la CI (trabajo `navegadores`) | **18/18 en cada uno** (§7.1) |
+| **Firefox, WebKit de Playwright y Edge** | E2E completa en la CI (trabajo `navegadores`) | **18/18 en cada uno, tres ejecuciones seguidas** (§7.1) |
 
-### 7.1 Resultado en la CI (ejecución 22, commit `c1fa54c`)
+### 7.1 Resultado en la CI: tres ejecuciones consecutivas en verde, sin reintentos
 
-Batería E2E completa, la misma en los cuatro motores: registro, presupuestos, seguimientos, envío automático, recuperación de contraseña, aislamiento, errores, solo lectura, enlaces internos, accesibilidad (axe) en 3 tamaños, teclado, cabeceras de seguridad y contratación con Stripe simulado.
+Commit `ed6786d`: ejecución 32, intentos 1, 2 y 3, con Playwright 1.64.1. Es la batería E2E completa, la misma en los cuatro motores:
+- registro, presupuestos y seguimientos;
+- envío automático y recuperación de contraseña;
+- aislamiento, errores y solo lectura;
+- enlaces internos;
+- accesibilidad (axe) en 3 tamaños y teclado;
+- cabeceras de seguridad;
+- contratación con Stripe simulado.
 
-| Navegador | Versión | Resultado |
-|---|---|---|
-| Chromium (Chrome) | 153 | **18/18**, más tipos, lint y pruebas con cobertura |
-| **Firefox** | 155 | **18/18** |
-| **WebKit** (Safari) | Playwright | **18/18** |
-| **Microsoft Edge** | estable | **18/18** |
+| Navegador | Versión | Intento 1 | Intento 2 | Intento 3 |
+|---|---|---|---|---|
+| Chromium (Chrome) | 153 | 18/18 + tipos, lint y cobertura | 18/18 | 18/18 |
+| **Firefox** | 155 | 18/18 | 18/18 | 18/18 |
+| **WebKit** (Safari) | 27.2 | 18/18 | 18/18 | 18/18 |
+| **Microsoft Edge** | estable | 18/18 | 18/18 | 18/18 |
 
-**Hasta llegar ahí, en Firefox:**
+**Qué hubo que resolver para llegar ahí** (los detalles están en `registro-correcciones.md`):
 
-1. **Ejecución 19:** las páginas *simuladas* de Stripe de la prueba no declaraban su codificación y Firefox lo registra como error. Presupio sí la declara. Se corrigió la prueba.
-2. **Ejecución 21:** una navegación quedó bloqueada 5 minutos contra el servidor web de producción (`serve.mjs`).
-   - La causa exacta **no se ha podido determinar**: Firefox no se puede descargar en este entorno y los artefactos de la CI tampoco.
-   - Al revisar el servidor aparecieron **cuatro defectos reales**, que se corrigieron con pruebas que fallaban antes (§9, puntos 12–15).
-   - Desde entonces la batería pasa. Además, una navegación colgada falla a los 30 s indicando la URL y la CI imprime los registros de la API. Si se repite, quedará localizada.
-3. **Ejecución 23:** se repitió, y gracias al diagnóstico quedó localizado. Las dos veces fue **la primera navegación de un contexto de navegador nuevo contra `localhost:4174`**.
-   - El servidor de la batería de pagos (`127.0.0.1:4175`) también crea contextos nuevos en cada prueba y **nunca** se ha colgado.
-   - `localhost` tiene dos direcciones (`::1` y `127.0.0.1`), Firefox lo resuelve por su cuenta y el servidor escucha en una sola.
-   - **Cambio, solo en la configuración de las pruebas:** las E2E usan `127.0.0.1`, como la batería de pagos.
-   - En producción no aplica: nginx atiende al nombre de dominio real y reenvía a `127.0.0.1:3000`.
+| # | Hallazgo | ¿Era de Presupio? | Resolución |
+|---|---|---|---|
+| 1 | Las páginas *simuladas* de Stripe de la prueba no declaraban su codificación (ejecución 19) | No (la prueba) | Corregida la prueba |
+| 2 | Al investigar un bloqueo en Firefox: cuatro defectos reales en `serve.mjs` (un error de lectura tumbaba el proceso; peticiones colgadas o sin cancelar; sin límite de espera a la API) | **Sí** | Corregidos, con 4 pruebas que fallaban antes (§9, puntos 12–15) |
+| 3 | Firefox: la primera navegación de una página nueva no terminaba nunca (6 de 12 ejecuciones) | **No**: el registro de accesos demostró que el servidor respondía todo y la aplicación pintaba la pantalla | Causa: fallo de Playwright 1.63 + Firefox 155 con la cabecera COOP que envía Presupio ([microsoft/playwright#42731](https://github.com/microsoft/playwright/issues/42731)). **Playwright 1.64.1**, sin reintentos |
+| 4 | WebKit 27.2: «Refused to apply a stylesheet» al crear cualquier `<select>` | **No**: `style-src-attr` sobre un `<select>` sin atributo `style` | Regresión de WebKit ([bug 327212](https://github.com/WebKit/WebKit/pull/77544), [microsoft/playwright#43617](https://github.com/microsoft/playwright/issues/43617)). Las pruebas ignoran **solo** ese caso exacto en WebKit; cualquier otra violación de CSP sigue fallando |
 
-_Pendiente de verificar con ejecuciones de la CI consecutivas en verde (se completa abajo)._
+**Hipótesis descartadas por el camino:** `localhost` frente a `127.0.0.1`, y esperar a `commit` en lugar de `load`. Se probaron con datos y no eran la causa; el registro lo explica. Queda la configuración con `127.0.0.1`, que es inocua.
+
+**Diagnóstico que queda en el proyecto:**
+- límite de 30 s por navegación;
+- registro de accesos opcional en `serve.mjs` (`ACCESS_LOG`);
+- detalle de cada error de consola (documento y línea) y de cada violación de CSP (directiva, elemento y origen);
+- registros de la API y del servidor web en la CI cuando algo falla.
 
 **Lo que no puede probarse sin hardware de Apple:** Safari de macOS y Safari de iOS **en dispositivos reales**. WebKitGTK y el WebKit de Playwright usan el mismo motor, pero no la misma integración con el sistema (teclado virtual, barra de direcciones, gestos). Queda como **pendiente externo**: 15 minutos con un iPhone y un Mac reales antes de abrir (§10).
 
@@ -234,27 +243,35 @@ _Pendiente de verificar con ejecuciones de la CI consecutivas en verde (se compl
 14. `serve.mjs`: las peticiones abandonadas por el navegador seguían abiertas contra la API.
 15. `serve.mjs`: no había límite de espera a la API. Ahora, `504` a los 60 s.
 
+Además, en las herramientas de prueba (no son fallos de Presupio, §7.1):
+- se actualizó Playwright a 1.64.1 por el fallo de Firefox con COOP;
+- se aísla el falso positivo de CSP de WebKit 27.2 con `<select>`.
+
 Cada uno tiene su entrada en `registro-correcciones.md` y su prueba automática o comprobación repetible.
 
 ## 10. Informe final
 
 | Área | Estado | Evidencia | Pendiente |
 |---|---|---|---|
-| **Bloqueadores técnicos** | **Ninguno abierto** | 15 fallos encontrados en la auditoría, corregidos y con prueba (§9). CI en verde en los cuatro navegadores | — |
+| **Bloqueadores técnicos** | **Ninguno abierto** | 15 fallos de Presupio encontrados en la auditoría, corregidos y con prueba (§9). CI en verde en los cuatro navegadores, tres veces seguidas | — |
 | **Recuperación ante desastres** | Lista | Base borrada y recuperada en 16,75 s (restauración 2,71 s). Datos íntegros. Modo seguro sin envíos | Repetir el simulacro en staging con el proveedor real (PITR) |
 | **Rendimiento** | Bueno | Operaciones típicas entre 8 y 41 ms (p50) en una empresa con 5.165 presupuestos. Panel completo en 29 ms | Revisar la búsqueda con más de 50.000 presupuestos por empresa |
 | **Consultas** | Optimizadas | Seguimientos de 19 a ~1 ms (índice 0011, válido con RLS). Ninguna consulta del worker pasa de 0,4 ms | — |
 | **Carga** | Medida | 1 API: 250 usuarios intensos sin degradación (p95 ~100 ms) y 500 con colas puntuales. 0 errores hasta 1000 | — |
 | **Escalabilidad** | Demostrada | 2 APIs y 2 workers. Caída brusca de un worker: **0 duplicados en 5.000 envíos**. Sesiones y límites compartidos | — |
 | **Experiencia de uso** | Revisada | 6 problemas visibles corregidos. 469/469 comprobaciones en 8 dispositivos y 23/23 en WebKit | — |
-| **Navegadores** | Probados | Chrome, Firefox, Safari (WebKit) y Edge: 18/18 cada uno. Android, iPhone y iPad emulados | **Safari en iPhone y Mac reales** (15 min, necesita hardware de Apple) |
+| **Navegadores** | Probados | Chrome, Firefox, Safari (WebKit) y Edge: 18/18 cada uno en tres ejecuciones seguidas, sin reintentos. Android, iPhone y iPad emulados | **Safari en iPhone y Mac reales** (15 min, necesita hardware de Apple) |
 | **Seguridad** | Revisada | IP real tras el proxy (corregido), aislamiento, CSP, 0 vulnerabilidades, sin secretos en el repositorio, Stripe real imposible por diseño, systemd con exposición 3,2 | Revisión legal y fiscal profesional |
 | **Producción** | Documentada | `HOSTING-READY.md`, `MAILGUN-READY.md` y `ACTIVAR-PRODUCCION-STRIPE.md` | Arrancar las unidades systemd en staging (aquí no hay systemd) |
 | **Pendientes externos** | — | — | Alojamiento y PostgreSQL gestionado (UE, PITR) · dominio y DNS · cuenta de Mailgun UE (SPF, DKIM, DMARC, MX y webhooks) · Stripe: cuenta, modo de prueba real y luego el cambio a modo real · textos legales revisados y publicados · decisión sobre el IVA · prueba en dispositivos Apple reales |
 
 **Riesgos residuales conocidos (no son fallos):**
 - **Tras restaurar una copia, los emails enviados después de esa copia se reenvían** si se reactiva el envío sin revisar. Por eso existe el procedimiento en modo seguro (`HOSTING-READY.md` §9).
-- En la CI hubo un bloqueo de una navegación en Firefox cuya causa no se pudo aislar. No se ha repetido tras corregir el servidor web, y queda instrumentado (§7.1).
+- Los bloqueos de Firefox en la CI se debían a un fallo de Playwright 1.63 con COOP, ya corregido con 1.64.1 (§7.1). No era un fallo de Presupio.
 - El contador de límites por IP es el 65 % del trabajo de PostgreSQL bajo carga. No limita el lanzamiento; si hiciera falta, la salida es Redis.
 
-**Veredicto:** _pendiente_. La ejecución 23 falló en Firefox (§7.1, punto 3). Se emite cuando la CI confirme la corrección.
+**Riesgos residuales de las pruebas:** la excepción del `<select>` en WebKit debe quitarse cuando Playwright incluya un WebKit con la corrección. Hasta entonces solo cubre ese caso exacto.
+
+**Veredicto:** no queda ningún problema técnico abierto que se pueda resolver en este entorno. Lo pendiente necesita servicios, cuentas, hardware o decisiones externas, y está enumerado arriba con su procedimiento.
+
+**Presupio está técnicamente listo para contratar hosting.**

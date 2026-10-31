@@ -20,7 +20,7 @@ El navegador habla siempre con **el mismo origen** (`/api/v1`):
 
 - **Desarrollo:** el proxy de Vite (`vite.config.ts`) reenvía `/api` a `PRESUPIO_API_PROXY`, por defecto `http://localhost:3000`.
 - **Producción:** los estáticos de `apps/web/dist` y `/api/` en el mismo origen, detrás de HTTPS. Tres opciones con **las mismas cabeceras**:
-  1. **Servidor incluido** (`npm run start -w apps/web`, que es `server/serve.mjs`). No tiene dependencias. Variables: `PORT` (8080), `HOST`, `API_URL` (la API) y `WEB_ROOT` (por defecto `dist/`). Pon delante un terminador TLS. Es el que usan las pruebas E2E.
+  1. **Servidor incluido** (`npm run start -w apps/web`, que es `server/serve.mjs`). No tiene dependencias. Variables: `PORT` (8080), `HOST`, `API_URL` (la API), `WEB_ROOT` (por defecto `dist/`) y `ACCESS_LOG` (opcional: archivo donde anota el inicio y el fin de cada petición y las que se cierran sin terminar). Si la API no contesta en 60 s, responde `504`. Pon delante un terminador TLS. Es el que usan las pruebas E2E.
   2. **nginx:** `ops/nginx/presupio-web.conf`. Está generado; no lo edites a mano. Se regenera con `node apps/web/server/hosting-config.mjs --nginx > ops/nginx/presupio-web.conf`. Se ha comprobado con `nginx -t` (1.24) y sirviendo la compilación por HTTPS.
   3. **Alojamiento estático** (Netlify, Cloudflare Pages): `npm run build` genera `dist/_headers`. La API debe quedar en el mismo origen (redirección o proxy de `/api/*` del alojamiento).
 
