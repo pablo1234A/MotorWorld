@@ -443,18 +443,21 @@ Resultado: **469/469** comprobaciones en Chromium (dos ejecuciones seguidas) y *
 
   Así, si el bloqueo de Firefox se repite, quedará localizado.
 
-## Auditoría final · E2E en Firefox: navegación colgada contra `localhost`
+## Auditoría final · E2E en Firefox: navegación «colgada» en un contexto nuevo (no era un fallo de Presupio)
 
-- **Síntoma:** en 2 de 5 ejecuciones de Firefox en la CI (21 y 23), la primera navegación de un contexto de navegador nuevo contra `http://localhost:4174` no terminó de cargar.
-  - En la ejecución 21 se agotaron los 6 min de la prueba.
-  - En la 23, el nuevo límite de 30 s la cortó.
-- **Localización:** gracias al diagnóstico añadido, las dos veces fue en un contexto nuevo y contra `localhost`. La batería de pagos crea contextos nuevos contra `127.0.0.1:4175` en cada prueba y nunca falló. Chromium, WebKit y Edge nunca fallaron.
-- **Causa probable, no demostrable aquí** (no hay Firefox en este entorno):
-  - `localhost` tiene dos direcciones (`::1` y `127.0.0.1`) y Firefox lo resuelve por su cuenta;
-  - el servidor de pruebas escucha en una sola dirección.
-- **Corrección:**
-  - la configuración de las E2E usa `127.0.0.1` en lugar de `localhost`, igual que la batería que nunca falló;
-  - la CI imprime cómo resuelve `localhost` el ejecutor.
+- **Síntoma:** en 4 de 8 ejecuciones de Firefox en la CI, la primera navegación de un contexto de navegador nuevo no terminaba según Playwright.
+  - Ocurrió en las ejecuciones 21, 23, la reejecución de la 24 y la 25.
+  - Primero se agotaban los 6 min de la prueba; con el límite de 30 s añadido, se cortaba antes.
+  - Chromium, WebKit y Edge nunca fallaron.
+- **Hipótesis descartada:** `localhost` frente a `127.0.0.1`. El ejecutor resuelve `localhost` primero a `::1`. Aun así, cambiar las E2E a `127.0.0.1` no evitó el fallo. El cambio se mantiene porque es inocuo.
+- **Prueba de la causa:** se añadió a `serve.mjs` un registro de accesos opcional (`ACCESS_LOG`). En el fallo de la ejecución 25, el servidor recibió y respondió **todas** las peticiones de esa navegación en menos de 120 ms:
+  - documento, JS, CSS, fuente y favicon;
+  - y `/api/v1/me`, que hace la propia aplicación **ya arrancada**.
 
-  No afecta a la aplicación: en producción, nginx atiende al dominio real.
-- **Verificación:** ejecuciones consecutivas de la CI en verde en los cuatro navegadores (ver `AUDITORIA-PRODUCCION.md` §7.1).
+  La página cargó y se ejecutó en Firefox. Lo que no llegó fue el aviso de «load» que Playwright recibe del navegador. Hay problemas parecidos conocidos de Playwright con Firefox (microsoft/playwright#21430).
+- **Corrección, solo en las pruebas:** todas las navegaciones de las E2E usan `navigate()` (`e2e/support.ts`):
+  - espera la respuesta del documento;
+  - después exige **dentro de la página** que `document.readyState === 'complete'`, que es lo mismo que garantiza `load`, medido directamente.
+
+  Si una página no terminara de cargar, la prueba sigue fallando.
+- **Verificación:** varias ejecuciones consecutivas de la CI en verde en los cuatro navegadores (ver `AUDITORIA-PRODUCCION.md` §7.1).

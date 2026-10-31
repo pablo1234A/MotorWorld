@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
-import { registerViaUi, watchConsole } from './support';
+import { navigate, registerViaUi, watchConsole } from './support';
 
 /*
  * P1-06 / P2-06: suscripciones de extremo a extremo con PAGOS SIMULADOS.
@@ -54,7 +54,7 @@ async function attemptLimit(page: Page) {
 
 /** Contrata un plan desde la interfaz y devuelve el id de la sesión de pago creada. */
 async function startCheckout(page: Page, planName: string): Promise<string> {
-  await page.goto('/configuracion/plan');
+  await navigate(page, '/configuracion/plan');
   await page.getByRole('button', { name: `Contratar ${planName}` }).click();
   await page.getByRole('button', { name: 'Ir al pago seguro' }).click();
   await page.waitForURL(/^https:\/\/checkout\.stripe\.com\/c\/pay\/cs_test_[0-9a-f]+$/);
@@ -70,7 +70,7 @@ test('contratar, cambiar de plan y cancelar: el plan solo cambia con webhooks fi
   // 1) Ir a pagar y volver SIN pagar: «confirmando», pero el plan no cambia.
   const sessionId = await startCheckout(page, 'Pro');
   expect(a.stripePages).toHaveLength(1);
-  await page.goto('/configuracion/plan?pago=confirmando');
+  await navigate(page, '/configuracion/plan?pago=confirmando');
   await expect(page.getByText('Estamos confirmando el pago con Stripe')).toBeVisible();
   expect(await subscription(page)).toMatchObject({ status: 'trialing', plan: 'starter' });
 
@@ -134,7 +134,7 @@ test('cobro fallido: aviso durante la gracia, recuperación y, si queda impagada
   expect(await attemptLimit(page)).toBe(25);
 
   await control(`subscriptions/${paid.subscriptionId}/fail_payment`);
-  await page.goto('/configuracion/plan');
+  await navigate(page, '/configuracion/plan');
   await expect(page.getByText('No hemos podido cobrar la última factura')).toBeVisible();
   expect(await subscription(page)).toMatchObject({ status: 'past_due', hasActiveAccess: true });
 
@@ -145,7 +145,7 @@ test('cobro fallido: aviso durante la gracia, recuperación y, si queda impagada
   await control(`subscriptions/${paid.subscriptionId}/unpaid`);
   await expect.poll(async () => (await subscription(page)).status).toBe('unpaid');
   expect(await subscription(page)).toMatchObject({ hasActiveAccess: false, readOnly: true });
-  await page.goto('/');
+  await navigate(page, '/');
   await expect(page.getByText(/la cuenta está en modo de solo lectura/)).toBeVisible();
   expect(b.problems).toEqual([]);
   await b.context.close();
@@ -159,7 +159,7 @@ test('aislamiento: los pagos de una empresa no afectan a otra; pago cancelado si
 
   // C abandona el pago: vuelve a «cancelado», sin cambios.
   const cSession = await startCheckout(c.page, 'Pro');
-  await c.page.goto('/configuracion/plan?pago=cancelado');
+  await navigate(c.page, '/configuracion/plan?pago=cancelado');
   await expect(c.page.getByText('Pago cancelado')).toBeVisible();
   expect(await subscription(c.page)).toMatchObject({ status: 'trialing', plan: 'starter' });
 

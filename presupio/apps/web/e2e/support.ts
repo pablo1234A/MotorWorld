@@ -10,6 +10,22 @@ import { apiEnv, SINK_FILE } from './global-setup';
 const HERE = path.dirname(toPath(import.meta.url));
 
 export const PASSWORD = 'Contraseña-de-prueba-1';
+
+/**
+ * Navega y espera a que la página esté cargada del todo, comprobándolo DENTRO de la página
+ * (document.readyState === 'complete', lo mismo que garantiza el evento load).
+ *
+ * Por qué no page.goto(url) a secas: en Firefox, el aviso de «load» que Playwright recibe del
+ * navegador a veces no llega en la primera navegación de un contexto nuevo. Lo demostró el
+ * registro de accesos del servidor en la CI: el documento, el JS, el CSS, la fuente y la primera
+ * llamada a la API (hecha por la propia aplicación ya arrancada) se sirvieron en < 120 ms, y aun
+ * así page.goto esperó 30 s. Si la página no terminara de cargar de verdad, esto también falla.
+ */
+export async function navigate(page: Page, url: string) {
+  const response = await page.goto(url, { waitUntil: 'commit' });
+  await page.waitForFunction(() => document.readyState === 'complete', undefined, { timeout: 30_000 });
+  return response;
+}
 const API_LOG = path.join(HERE, '.output', 'api.log');
 
 // Un dominio distinto por cuenta: la regla «una prueba gratuita por dominio de empresa y año»
@@ -40,7 +56,7 @@ export function watchConsole(page: Page): string[] {
 
 export async function registerViaUi(page: Page, companyName: string) {
   const email = uniqueEmail();
-  await page.goto('/registro');
+  await navigate(page, '/registro');
   await page.getByLabel('Tu nombre y apellidos').fill('Laura Ensayo');
   await page.getByLabel('Nombre de la empresa').fill(companyName);
   await page.getByLabel('Email de trabajo').fill(email);
