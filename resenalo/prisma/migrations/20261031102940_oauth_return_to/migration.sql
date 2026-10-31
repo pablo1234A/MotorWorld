@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "oauth_states" ADD COLUMN     "return_to" TEXT;

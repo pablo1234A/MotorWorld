@@ -57,12 +57,12 @@ async function ensureStripeCustomer(businessId: string, ownerEmail: string) {
  * Crea la sesión de Stripe Checkout. El precio se toma SIEMPRE del plan en
  * servidor (nunca de la petición), así que manipular el frontend no tiene efecto.
  */
-export async function createCheckoutSession(p: { businessId: string; ownerEmail: string; planCode: PlanCode }) {
+export async function createCheckoutSession(p: { businessId: string; ownerEmail: string; planCode: PlanCode; returnTo?: "onboarding" | "billing" }) {
   const plan = await prisma.plan.findUnique({ where: { code: p.planCode } });
   if (!plan || !plan.active) throw new AppError("NOT_FOUND", "Plan no disponible");
   if (!plan.stripePriceId) throw new AppError("NOT_CONFIGURED", "El plan no está vinculado a un precio de Stripe (ejecuta npm run stripe:setup).");
   const existing = await prisma.subscription.findUnique({ where: { businessId: p.businessId } });
-  if (existing && !(["CANCELED", "INCOMPLETE_EXPIRED"] as SubscriptionStatus[]).includes(existing.status))
+  if (existing && !(["CANCELED", "INCOMPLETE_EXPIRED", "INCOMPLETE"] as SubscriptionStatus[]).includes(existing.status))
     throw new AppError("CONFLICT", "Ya tienes una suscripción. Usa «Cambiar de plan» o el portal de facturación.");
 
   const customerId = await ensureStripeCustomer(p.businessId, p.ownerEmail);
@@ -86,8 +86,8 @@ export async function createCheckoutSession(p: { businessId: string; ownerEmail:
     allow_promotion_codes: false,
     subscription_data: { metadata: { businessId: p.businessId, planCode: plan.code } },
     metadata: { businessId: p.businessId, planCode: plan.code },
-    success_url: `${env().APP_URL}/app/facturacion?checkout=ok`,
-    cancel_url: `${env().APP_URL}/app/facturacion?checkout=cancelado`,
+    success_url: `${env().APP_URL}${p.returnTo === "onboarding" ? "/onboarding" : "/app/facturacion"}?checkout=ok`,
+    cancel_url: `${env().APP_URL}${p.returnTo === "onboarding" ? "/onboarding" : "/app/facturacion"}?checkout=cancelado`,
   });
   if (!session.url) throw new AppError("PROVIDER_ERROR", "Stripe no devolvió la URL de pago.");
   return session.url;

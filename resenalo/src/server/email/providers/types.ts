@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- respuestas JSON de APIs externas con forma variable; se validan campo a campo */
 export type ProviderErrorKind = "auth" | "rate_limit" | "transient" | "permanent" | "invalid_recipient";
 
 /** Error normalizado de un proveedor de correo (Gmail / Microsoft Graph). */

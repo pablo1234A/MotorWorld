@@ -354,6 +354,7 @@ model OAuthState {
   userId          String        @map("user_id")
   provider        EmailProvider
   codeVerifierEnc String        @map("code_verifier_enc")
+  returnTo        String?       @map("return_to")
   expiresAt       DateTime      @map("expires_at")
   createdAt       DateTime      @default(now()) @map("created_at")
 

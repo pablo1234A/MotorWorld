@@ -5,6 +5,7 @@ import { randomToken, sha256 } from "../crypto";
 import { AppError } from "../http/errors";
 import { sendSystemEmail } from "../email/system-mailer";
 import { audit } from "../modules/audit";
+import { clientIp } from "../http/request";
 import { burnPasswordCheck, hashPassword, passwordPolicyError, verifyPassword } from "./password";
 import { createSession, destroyAllSessions } from "./session";
 
@@ -69,7 +70,7 @@ export async function register(input: { name: string; email: string; password: s
   });
   await audit({ action: "auth.register", userId: user.id, req });
   await sendVerificationEmail(user);
-  const meta = req ? { ip: req.headers.get("x-forwarded-for"), userAgent: req.headers.get("user-agent") } : {};
+  const meta = req ? { ip: clientIp(req), userAgent: req.headers.get("user-agent") } : {};
   const session = await createSession(user.id, meta);
   return { user, ...session };
 }
@@ -101,7 +102,7 @@ export async function login(input: { email: string; password: string }, req?: Re
   }
   await prisma.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() } });
   await audit({ action: "auth.login", userId: user.id, req });
-  const meta = req ? { ip: req.headers.get("x-forwarded-for"), userAgent: req.headers.get("user-agent") } : {};
+  const meta = req ? { ip: clientIp(req), userAgent: req.headers.get("user-agent") } : {};
   const session = await createSession(user.id, meta);
   return { user, ...session };
 }

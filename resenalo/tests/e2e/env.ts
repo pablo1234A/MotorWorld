@@ -1,0 +1,25 @@
+import crypto from "node:crypto";
+export const E2E_PORT = 3100;
+export const E2E_ENV: Record<string, string> = {
+  NODE_ENV: "production",
+  APP_URL: `http://localhost:${E2E_PORT}`,
+  PORT: String(E2E_PORT),
+  DATABASE_URL: "postgresql://resenalo:resenalo@localhost:5432/resenalo_e2e",
+  REDIS_URL: "redis://127.0.0.1:6379/6",
+  ENCRYPTION_KEYS: "v1:" + crypto.createHash("sha256").update("e2e-key").digest("base64"),
+  SMTP_HOST: "127.0.0.1",
+  SMTP_PORT: "2527",
+  MAIL_FROM: "Reseñalo <no-reply@resenalo.test>",
+  STRIPE_SECRET_KEY: "sk_test_e2e_not_a_real_key",
+  STRIPE_WEBHOOK_SECRET: "whsec_e2e_local",
+  STRIPE_PRICE_STARTER: "price_e2e_starter",
+  STRIPE_PRICE_PRO: "price_e2e_pro",
+  STRIPE_PRICE_BUSINESS: "price_e2e_business",
+  GOOGLE_CLIENT_ID: "e2e-client",
+  GOOGLE_CLIENT_SECRET: "e2e-secret",
+  GOOGLE_OAUTH_TOKEN_URL: "http://127.0.0.1:4010/google/token",
+  GOOGLE_USERINFO_URL: "http://127.0.0.1:4010/google/userinfo",
+  GOOGLE_GMAIL_API_URL: "http://127.0.0.1:4010/gmail",
+  LOG_LEVEL: "warn",
+  LEGAL_OWNER_NAME: "",
+};

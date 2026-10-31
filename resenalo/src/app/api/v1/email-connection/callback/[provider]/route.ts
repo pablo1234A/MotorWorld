@@ -9,7 +9,9 @@ import { reportError } from "@/server/logger";
 export async function GET(req: Request, ctx: { params: Promise<{ provider: string }> }) {
   const { provider } = await ctx.params;
   const url = new URL(req.url);
-  const back = (q: string) => Response.redirect(`${env().APP_URL}/app/conexion-correo?${q}`, 303);
+  // Destino por defecto; si el state es válido se usa el guardado (onboarding o panel). Nunca una URL externa.
+  let dest = "/app/conexion-correo";
+  const back = (q: string) => Response.redirect(`${env().APP_URL}${dest}?${q}`, 303);
   const p = provider === "google" ? "GOOGLE" : provider === "microsoft" ? "MICROSOFT" : null;
   if (!p) return back("error=" + encodeURIComponent("Proveedor no válido"));
   const auth = await getAuthFromRequest(req);
@@ -20,7 +22,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   const state = url.searchParams.get("state");
   if (!code || !state) return back("error=" + encodeURIComponent("Respuesta OAuth incompleta"));
   try {
-    await completeOAuth({ provider: p, code, state, userId: auth.user.id }, req);
+    const r = await completeOAuth({ provider: p, code, state, userId: auth.user.id }, req);
+    dest = r.returnTo;
     return back("connected=1");
   } catch (e) {
     if (!(e instanceof AppError) && !(e instanceof ProviderError)) void reportError(e, { where: "oauth-callback" });

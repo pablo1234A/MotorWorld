@@ -32,7 +32,9 @@ export function publicConnection(c: EmailConnection | null) {
   };
 }
 
-export async function startOAuth(p: { businessId: string; userId: string; provider: EmailProvider; loginHint?: string }) {
+export const OAUTH_RETURN = { onboarding: "/onboarding", app: "/app/conexion-correo" } as const;
+
+export async function startOAuth(p: { businessId: string; userId: string; provider: EmailProvider; loginHint?: string; returnTo?: keyof typeof OAUTH_RETURN }) {
   const provider = getProvider(p.provider);
   if (!provider.isConfigured())
     throw new AppError("NOT_CONFIGURED", `La conexión con ${provider.label} no está configurada en el servidor (faltan credenciales OAuth).`);
@@ -46,6 +48,7 @@ export async function startOAuth(p: { businessId: string; userId: string; provid
       userId: p.userId,
       provider: p.provider,
       codeVerifierEnc: encrypt(verifier),
+      returnTo: OAUTH_RETURN[p.returnTo ?? "app"],
       expiresAt: new Date(Date.now() + STATE_TTL_MS),
     },
   });
@@ -87,7 +90,7 @@ export async function completeOAuth(p: { provider: EmailProvider; state: string;
   });
   await audit({ action: "email_connection.connected", userId: p.userId, businessId: row.businessId, targetId: connection.id, meta: { provider: p.provider, email: identity.email }, req });
   await resumeOnHoldJobs(row.businessId, connection.id);
-  return connection;
+  return { connection, returnTo: row.returnTo ?? OAUTH_RETURN.app };
 }
 
 /** Reanuda los envíos retenidos por falta de autorización (solo los recientes). */

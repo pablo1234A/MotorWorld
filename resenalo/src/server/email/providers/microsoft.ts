@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- respuestas JSON de APIs externas con forma variable; se validan campo a campo */
 import { env } from "../../env";
 import { fetchWithTimeout, ProviderError, readError, retryAfter, type ConnectedIdentity, type MailProvider, type TokenSet } from "./types";
 

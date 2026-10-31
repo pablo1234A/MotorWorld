@@ -110,4 +110,4 @@ export function req(url: string, init: RequestInit & { cookie?: string; json?: u
   return new Request(`http://localhost:3999${url}`, { ...init, headers, body: init.json !== undefined ? JSON.stringify(init.json) : init.body });
 }
 
-export const ctx = (params: Record<string, string> = {}) => ({ params: Promise.resolve(params) });
+export const ctx = <T extends Record<string, string>>(params: T = {} as T) => ({ params: Promise.resolve(params) });

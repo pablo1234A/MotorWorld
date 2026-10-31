@@ -17,6 +17,7 @@ import { getCurrentUsage, getEntitlements } from "../billing/entitlements";
 import { renderTemplate, type TemplateFields } from "@/lib/template";
 import { isValidEmail } from "@/lib/email";
 import { applySendWindow } from "./schedule";
+import { footerPreview } from "@/lib/footer-preview";
 import { reasonMessage } from "./reasons";
 
 export const PENDING_JOB_STATUSES: EmailJobStatus[] = [
@@ -69,13 +70,7 @@ export function trackingUrls(publicToken: string) {
   };
 }
 
-export function footerLinesFor(b: { name: string; legalName: string | null; addressLine: string | null; postalCode: string | null; city: string | null }) {
-  const addr = [b.addressLine, [b.postalCode, b.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-  return [
-    `Has recibido este mensaje porque has sido cliente de ${b.name}.`,
-    [b.legalName || b.name, addr].filter(Boolean).join(" · "),
-  ];
-}
+export const footerLinesFor = footerPreview;
 
 /**
  * Crea una solicitud de reseña a partir de un evento "servicio finalizado".

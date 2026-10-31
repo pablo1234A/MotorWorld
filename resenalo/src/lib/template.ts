@@ -121,7 +121,6 @@ function tidy(s: string) {
 
 /** Elimina saltos de línea y caracteres de control: evita inyección de cabeceras. */
 export function sanitizeHeader(s: string): string {
-  // eslint-disable-next-line no-control-regex
   return s.replace(/[\r\n\u0000-\u001f\u007f]+/g, " ").replace(/\s{2,}/g, " ").trim();
 }
 

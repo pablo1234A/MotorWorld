@@ -2,8 +2,10 @@ import { ZodError, type ZodTypeAny, type z } from "zod";
 import { AppError } from "./errors";
 
 export function clientIp(req: Request): string {
+  // Se usa la ÚLTIMA entrada: la añade nuestro proxy inverso y el cliente no puede falsificarla
+  // (las anteriores sí). Requiere un proxy que añada X-Forwarded-For (ver README).
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim().slice(0, 64);
+  if (fwd) return fwd.split(",").pop()!.trim().slice(0, 64);
   return req.headers.get("x-real-ip")?.slice(0, 64) ?? "unknown";
 }
 

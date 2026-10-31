@@ -1,0 +1,17 @@
+import clsx from "clsx";
+export function Spinner({ className }: { className?: string }) {
+  return (
+    <svg className={clsx("animate-spin", className)} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity=".25" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+export function PageLoader() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-ink-400" role="status" aria-live="polite">
+      <Spinner className="h-6 w-6" />
+      <span className="sr-only">Cargando…</span>
+    </div>
+  );
+}
