@@ -22,21 +22,47 @@ export function uniqueEmail(prefix = 'e2e'): string {
  * Registra los errores del navegador durante la prueba. Se ignoran únicamente las
  * respuestas 401 de /me (así es como la aplicación detecta que no hay sesión).
  */
+// Mensaje del motor de WebKit para un estilo bloqueado por la CSP (no dice qué elemento).
+const WEBKIT_BLOCKED_STYLE = /^Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline'/;
+const WEBKIT_SELECT_FALSE_POSITIVE = 'CSP: falso positivo de WebKit con <select> (WebKit bug 327212)';
+
 export function watchConsole(page: Page): string[] {
   const problems: string[] = [];
-  // Detalle de cada violación de CSP (directiva, recurso, muestra y elemento bloqueado), para saber
-  // qué la produce: la aplicación, el propio navegador o una herramienta de prueba.
-  void page.addInitScript(() => {
+  const isWebKit = page.context().browser()?.browserType().name() === 'webkit';
+  // Detalle de cada violación de CSP (directiva, recurso, muestra y elemento), para saber qué la
+  // produce. Única excepción, solo en WebKit: la regresión de WebKit 27.2 (bug 327212, PR WebKit
+  // #77544, microsoft/playwright#43617) que pone un atributo style en el árbol interno de cada
+  // <select> y la CSP de la página lo bloquea. Se reconoce por la directiva style-src-attr sobre un
+  // <select> que NO tiene atributo style. Cualquier otra violación sigue haciendo fallar la prueba.
+  void page.addInitScript((marker: string) => {
     document.addEventListener('securitypolicyviolation', (e) => {
-      const el = e.target instanceof Element ? e.target.outerHTML.slice(0, 160) : String(e.target);
+      const t = e.target;
+      if (e.violatedDirective === 'style-src-attr' && t instanceof HTMLSelectElement && !t.hasAttribute('style')) {
+        console.warn(marker);
+        return;
+      }
+      const el = t instanceof Element ? t.outerHTML.slice(0, 160) : String(t);
       console.error(`Detalle CSP: ${JSON.stringify({ directiva: e.violatedDirective, bloqueado: e.blockedURI, muestra: e.sample, origen: `${e.sourceFile}:${e.lineNumber}`, elemento: el })}`);
     });
-  });
+  }, WEBKIT_SELECT_FALSE_POSITIVE);
+  // El aviso del motor y el del evento llegan por separado: se emparejan uno a uno.
+  let pendingFalsePositives = 0;
   page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
   page.on('console', (m) => {
-    if (m.type() !== 'error') return;
     const text = m.text();
+    if (m.type() === 'warning' && text === WEBKIT_SELECT_FALSE_POSITIVE) {
+      if (!isWebKit) return void problems.push(text); // en otro navegador sería un fallo real
+      const i = problems.findIndex((p) => WEBKIT_BLOCKED_STYLE.test(p));
+      if (i >= 0) problems.splice(i, 1);
+      else pendingFalsePositives++;
+      return;
+    }
+    if (m.type() !== 'error') return;
     if (/status of 401/.test(text)) return;
+    if (isWebKit && pendingFalsePositives > 0 && WEBKIT_BLOCKED_STYLE.test(text)) {
+      pendingFalsePositives--;
+      return;
+    }
     // Con el documento y la línea: distingue la aplicación de lo que inyecta el navegador o una herramienta.
     const { url, lineNumber } = m.location();
     problems.push(url ? `${text} [${url}:${lineNumber}]` : text);

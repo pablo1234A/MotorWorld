@@ -456,3 +456,21 @@ Resultado: **469/469** comprobaciones en Chromium (dos ejecuciones seguidas) y *
   - Corregido en Playwright 1.64 (PR #42788).
 - **Corrección:** `@playwright/test` pasa de 1.63.0 a **1.64.1**. Se quita el reintento de Firefox y el `navigate()` probado antes.
 - **Verificación:** tres ejecuciones consecutivas de la CI en verde en los cuatro navegadores, **sin reintentos** (ver `AUDITORIA-PRODUCCION.md` §7.1).
+
+## Auditoría final · WebKit 27.2: falso positivo de CSP en cada `<select>` (fallo de WebKit, no de Presupio)
+
+- **Síntoma:** con Playwright 1.64.1, que trae WebKit 27.2, la E2E «fin de la prueba» falla en WebKit al abrir `/configuracion`. En consola aparece «Refused to apply a stylesheet… style-src».
+- **Localización:** la prueba recoge ahora el detalle del evento `securitypolicyviolation`:
+  - directiva `style-src-attr`;
+  - elemento: el `<select>` de zona horaria, **sin atributo `style`**;
+  - origen: el paquete de React al crear el elemento.
+
+  No se reproduce con WebKitGTK 2.52, ni con la aplicación ni con axe.
+- **Causa:** regresión de WebKit, [bug 327212](https://bugs.webkit.org/show_bug.cgi?id=327212), [PR WebKit #77544](https://github.com/WebKit/WebKit/pull/77544) y [microsoft/playwright#43617](https://github.com/microsoft/playwright/issues/43617).
+  - WebKit pone un atributo `style` en el árbol interno (shadow DOM del navegador) de cada `<select>`, y la CSP de la página lo bloquea.
+  - Presupio no añade estilos en línea: su CSP (`style-src 'self'`) se mantiene.
+  - Efecto en un Safari con esa regresión: solo cosmético. Es el recorte del texto largo de la opción elegida, y nuestras opciones son cortas.
+- **Medida, solo en las pruebas** (`e2e/support.ts`, `watchConsole`):
+  - en WebKit se ignora exactamente esa violación, `style-src-attr` sobre un `<select>` sin atributo `style`;
+  - cualquier otra violación de CSP, en cualquier navegador, sigue haciendo fallar la prueba y se muestra con su detalle.
+- **Revisar** cuando Playwright incluya un WebKit con la corrección: quitar la excepción.
