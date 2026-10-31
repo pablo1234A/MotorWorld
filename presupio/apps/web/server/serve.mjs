@@ -9,7 +9,7 @@
  * Es una opción: también se puede usar nginx (ops/nginx/presupio-web.conf) o un alojamiento
  * estático con dist/_headers. Pon delante un terminador TLS (HTTPS) en producción.
  */
-import { createReadStream } from 'node:fs';
+import { appendFileSync, createReadStream, mkdirSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -36,7 +36,7 @@ const HOP_BY_HOP = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'p
 // Como proxy_read_timeout de nginx: una API que no contesta no deja peticiones colgadas.
 const API_TIMEOUT_MS = 60_000;
 
-export function createWebServer({ root, apiUrl, log = () => {}, apiTimeoutMs = API_TIMEOUT_MS }) {
+export function createWebServer({ root, apiUrl, log = () => {}, apiTimeoutMs = API_TIMEOUT_MS, accessLog = null }) {
   const rootDir = path.resolve(root);
   const api = apiUrl ? new URL(apiUrl) : null;
 
@@ -112,6 +112,13 @@ export function createWebServer({ root, apiUrl, log = () => {}, apiTimeoutMs = A
   }
 
   return http.createServer(async (req, res) => {
+    if (accessLog) {
+      // Registro de accesos opcional: inicio y fin de cada petición, y las que se cierran sin terminar.
+      const started = Date.now();
+      const id = `${req.socket.remotePort}:${req.method} ${req.url}`;
+      accessLog(`→ ${id}`);
+      res.once('close', () => accessLog(`${res.writableFinished ? '✓' : '✗ cerrada sin terminar'} ${res.statusCode} ${Date.now() - started} ms ${id}`));
+    }
     try {
       const url = new URL(req.url ?? '/', 'http://localhost');
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return proxyToApi(req, res);
@@ -151,7 +158,18 @@ if (isMain) {
   const root = process.env.WEB_ROOT ?? path.join(here, '..', 'dist');
   const port = Number(process.env.PORT ?? 8080);
   const host = process.env.HOST ?? '0.0.0.0';
-  const server = createWebServer({ root, apiUrl: process.env.API_URL ?? process.env.PRESUPIO_API_PROXY, log: (m) => console.error(m) });
+  const accessLogFile = process.env.ACCESS_LOG;
+  if (accessLogFile) mkdirSync(path.dirname(path.resolve(accessLogFile)), { recursive: true });
+  const accessLog = accessLogFile
+    ? (line) => {
+        try {
+          appendFileSync(accessLogFile, `${new Date().toISOString()} ${line}\n`);
+        } catch {
+          // El registro de accesos nunca debe impedir servir la petición.
+        }
+      }
+    : null;
+  const server = createWebServer({ root, apiUrl: process.env.API_URL ?? process.env.PRESUPIO_API_PROXY, log: (m) => console.error(m), accessLog });
   server.listen(port, host, () => console.log(`Presupio web en http://${host}:${port} (raíz ${root})`));
   const stop = () => server.close(() => process.exit(0));
   process.on('SIGTERM', stop);

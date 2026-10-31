@@ -46,13 +46,13 @@ export default defineConfig({
     url: `http://127.0.0.1:${E2E_WEB_PORT}/iniciar-sesion`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { API_URL: `http://127.0.0.1:${E2E_API_PORT}`, PORT: String(E2E_WEB_PORT), HOST: '127.0.0.1' },
+    env: { API_URL: `http://127.0.0.1:${E2E_API_PORT}`, PORT: String(E2E_WEB_PORT), HOST: '127.0.0.1', ACCESS_LOG: 'e2e/.output/web.log' },
   }, {
     // Misma compilación, frente a la API con pagos de prueba (simulador local de Stripe).
     command: 'node server/serve.mjs',
     url: `http://127.0.0.1:${E2E_BILLING_WEB_PORT}/iniciar-sesion`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { API_URL: 'http://127.0.0.1:3102', PORT: String(E2E_BILLING_WEB_PORT), HOST: '127.0.0.1' },
+    env: { API_URL: 'http://127.0.0.1:3102', PORT: String(E2E_BILLING_WEB_PORT), HOST: '127.0.0.1', ACCESS_LOG: 'e2e/.output/web-billing.log' },
   }],
 });

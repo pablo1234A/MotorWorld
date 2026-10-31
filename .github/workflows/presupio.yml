@@ -99,7 +99,12 @@ jobs:
         working-directory: presupio/apps/web
       - name: Registros de la API de pruebas (solo si falla)
         if: failure()
-        run: tail -n 60 apps/web/e2e/.output/api.log apps/web/e2e/.output/api-billing.log || true
+        run: |
+          tail -n 40 apps/web/e2e/.output/api.log || true
+          echo "== Peticiones que el servidor web no terminó =="
+          grep -h "✗" apps/web/e2e/.output/web.log | tail -n 40 || true
+          echo "== Últimas peticiones al servidor web =="
+          tail -n 80 apps/web/e2e/.output/web.log || true
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
