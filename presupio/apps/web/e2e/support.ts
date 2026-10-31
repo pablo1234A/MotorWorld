@@ -24,6 +24,14 @@ export function uniqueEmail(prefix = 'e2e'): string {
  */
 export function watchConsole(page: Page): string[] {
   const problems: string[] = [];
+  // Detalle de cada violación de CSP (directiva, recurso, muestra y elemento bloqueado), para saber
+  // qué la produce: la aplicación, el propio navegador o una herramienta de prueba.
+  void page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (e) => {
+      const el = e.target instanceof Element ? e.target.outerHTML.slice(0, 160) : String(e.target);
+      console.error(`Detalle CSP: ${JSON.stringify({ directiva: e.violatedDirective, bloqueado: e.blockedURI, muestra: e.sample, origen: `${e.sourceFile}:${e.lineNumber}`, elemento: el })}`);
+    });
+  });
   page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
   page.on('console', (m) => {
     if (m.type() !== 'error') return;
