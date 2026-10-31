@@ -11,7 +11,6 @@ import {
   runWorkerOnce,
   simulatedEmails,
   uniqueEmail,
-  navigate,
   watchConsole,
 } from './support';
 
@@ -107,7 +106,7 @@ test('presupuesto: alta, seguimiento, respuesta (reactivada) y venta con evidenc
 
 test('seguimientos: programar, completar y respetar la lista de exclusión', async () => {
   const { page } = owner;
-  await navigate(page, '/presupuestos/nuevo');
+  await page.goto('/presupuestos/nuevo');
   await page.getByLabel('Nombre del cliente').fill('Cliente Ficticio Dos');
   await page.getByLabel('Email', { exact: false }).first().fill('cliente.dos@ejemplo.test');
   await page.getByLabel('Título').fill('Baño completo');
@@ -122,7 +121,7 @@ test('seguimientos: programar, completar y respetar la lista de exclusión', asy
   await dialog.getByRole('button', { name: 'Programar' }).click();
   await expect(page.getByText('Seguimiento programado.')).toBeVisible();
 
-  await navigate(page, '/seguimientos');
+  await page.goto('/seguimientos');
   const item = page.locator('.fu', { hasText: 'Llamar para resolver dudas' });
   await expect(item).toBeVisible();
   await item.getByRole('button', { name: 'Hecho' }).click();
@@ -133,7 +132,7 @@ test('seguimientos: programar, completar y respetar la lista de exclusión', asy
   await expect(page.locator('.fu', { hasText: 'Llamar para resolver dudas' })).toContainText('No contestó');
 
   // Exclusión por email desde la ficha del contacto.
-  await navigate(page, quoteUrl);
+  await page.goto(quoteUrl);
   await page.getByRole('link', { name: 'Ver ficha' }).click();
   await page.getByRole('button', { name: 'No contactar' }).click();
   const ex = page.getByRole('dialog', { name: 'No contactar' });
@@ -141,7 +140,7 @@ test('seguimientos: programar, completar y respetar la lista de exclusión', asy
   await ex.getByRole('button', { name: 'Registrar exclusión' }).click();
   await expect(page.getByRole('heading', { name: 'Lista de exclusión' })).toBeVisible();
 
-  await navigate(page, quoteUrl);
+  await page.goto(quoteUrl);
   await expect(page.getByText('Contacto en la lista de exclusión')).toBeVisible();
   await page.getByRole('button', { name: 'Registrar contacto' }).click();
   await expect(page.getByRole('radio', { name: /Email/ })).toBeDisabled();
@@ -155,7 +154,7 @@ test('cierre de sesión y protección de páginas privadas', async () => {
   await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click();
   await expect(page.getByRole('heading', { name: 'Inicia sesión' })).toBeVisible();
 
-  await navigate(page, firstQuoteUrl);
+  await page.goto(firstQuoteUrl);
   await expect(page).toHaveURL(/\/iniciar-sesion\?siguiente=/);
   await loginViaUi(page, owner.email, 'clave-incorrecta-1');
   await expect(page.getByText('Email o contraseña incorrectos.')).toBeVisible();
@@ -167,7 +166,7 @@ test('cierre de sesión y protección de páginas privadas', async () => {
 
 test('recuperación de contraseña de extremo a extremo', async ({ page }) => {
   const problems = watchConsole(page);
-  await navigate(page, '/iniciar-sesion');
+  await page.goto('/iniciar-sesion');
   await page.getByRole('link', { name: '¿Has olvidado tu contraseña?' }).click();
   // La pantalla se carga bajo demanda y, mientras tanto, sigue visible el inicio de sesión,
   // que también tiene un campo «Email». Hay que esperar a la pantalla correcta antes de escribir.
@@ -184,7 +183,7 @@ test('recuperación de contraseña de extremo a extremo', async ({ page }) => {
     }
   }).toMatch(/token=/);
   const link = lastMailLink(owner.email, '/restablecer-contrasena');
-  await navigate(page, link);
+  await page.goto(link);
   await page.getByLabel('Contraseña nueva').fill('Nueva-contraseña-segura-2');
   await page.getByLabel('Repite la contraseña').fill('Otra-distinta-9');
   await page.getByRole('button', { name: 'Guardar contraseña' }).click();
@@ -194,19 +193,19 @@ test('recuperación de contraseña de extremo a extremo', async ({ page }) => {
   await expect(page.getByText('Contraseña actualizada. Ya puedes iniciar sesión con la nueva.')).toBeVisible();
 
   // El enlace ya no sirve una segunda vez.
-  await navigate(page, link);
+  await page.goto(link);
   await page.getByLabel('Contraseña nueva').fill('Tercera-contraseña-3x');
   await page.getByLabel('Repite la contraseña').fill('Tercera-contraseña-3x');
   await page.getByRole('button', { name: 'Guardar contraseña' }).click();
   await expect(page.getByText('El enlace ha caducado o ya se ha usado')).toBeVisible();
 
-  await navigate(page, '/iniciar-sesion');
+  await page.goto('/iniciar-sesion');
   await loginViaUi(page, owner.email, 'Nueva-contraseña-segura-2');
   await expect(page.getByRole('heading', { name: 'Hola, Laura' })).toBeVisible();
   expect(problems.filter((p) => !/status of 400/.test(p))).toEqual([]);
 
   // La sesión anterior del propietario se cerró al restablecer la contraseña.
-  await navigate(owner.page, '/');
+  await owner.page.goto('/');
   await expect(owner.page.getByRole('heading', { name: 'Inicia sesión' })).toBeVisible();
   await loginViaUi(owner.page, owner.email, 'Nueva-contraseña-segura-2');
   await expect(owner.page.getByRole('heading', { name: 'Hola, Laura' })).toBeVisible();
@@ -216,19 +215,19 @@ test('aislamiento: otra empresa no puede ver los presupuestos de esta', async ({
   const context = await browser.newContext();
   const page = await context.newPage();
   await registerViaUi(page, 'Competencia Ensayo SL');
-  await navigate(page, firstQuoteUrl);
+  await page.goto(firstQuoteUrl);
   await expect(page.getByRole('heading', { name: 'Presupuesto no encontrado' })).toBeVisible();
   await expect(page.getByText('Reforma integral de cocina')).toHaveCount(0);
-  await navigate(page, '/presupuestos');
+  await page.goto('/presupuestos');
   await expect(page.getByText('Todavía no hay presupuestos')).toBeVisible();
-  await navigate(page, '/contactos');
+  await page.goto('/contactos');
   await expect(page.getByText('Cliente Ficticio Uno')).toHaveCount(0);
   await context.close();
 });
 
 test('equipo: invitación sin correo configurado y rol de solo lectura', async ({ browser }) => {
   const { page } = owner;
-  await navigate(page, '/configuracion/equipo');
+  await page.goto('/configuracion/equipo');
   const invited = uniqueEmail('lector');
   await page.getByLabel('Email').fill(invited);
   await page.getByLabel('Rol').selectOption('viewer');
@@ -240,7 +239,7 @@ test('equipo: invitación sin correo configurado y rol de solo lectura', async (
   const context = await browser.newContext();
   const guest = await context.newPage();
   const url = new URL(acceptUrl);
-  await navigate(guest, url.pathname + url.search);
+  await guest.goto(url.pathname + url.search);
   await expect(guest.getByRole('heading', { name: 'Únete a Reformas Ensayo SL' })).toBeVisible();
   await guest.getByLabel('Tu nombre y apellidos').fill('Lector Ensayo');
   await guest.getByLabel('Crea una contraseña').fill(PASSWORD);
@@ -249,10 +248,10 @@ test('equipo: invitación sin correo configurado y rol de solo lectura', async (
   await expect(guest.getByRole('heading', { name: 'Hola, Lector' })).toBeVisible();
   // Solo lectura: sin acciones de escritura y configuración bloqueada.
   await expect(guest.getByRole('link', { name: /Nuevo presupuesto/ })).toHaveCount(0);
-  await navigate(guest, firstQuoteUrl);
+  await guest.goto(firstQuoteUrl);
   await expect(guest.getByRole('heading', { name: 'Reforma integral de cocina' })).toBeVisible();
   await expect(guest.getByRole('button', { name: 'Editar' })).toHaveCount(0);
-  await navigate(guest, '/configuracion');
+  await guest.goto('/configuracion');
   await expect(guest.getByText(/Solo las personas propietarias o administradoras/)).toBeVisible();
   await expect(guest.getByLabel('Nombre comercial')).toBeDisabled();
   await context.close();
@@ -263,13 +262,13 @@ test('errores de la API: la interfaz los muestra sin inventar datos', async () =
   await page.route('**/api/v1/quotes/summary', (route) =>
     route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { code: 'INTERNAL_ERROR', message: 'Error interno. Inténtalo de nuevo.', requestId: 'e2e-req-1' } }) }),
   );
-  await navigate(page, '/');
+  await page.goto('/');
   await expect(page.getByText('No se ha podido cargar el estado de la cartera')).toBeVisible();
   await expect(page.getByText(/e2e-req-1/)).toBeVisible();
   await page.unroute('**/api/v1/quotes/summary');
 
   await page.route('**/api/v1/quotes?**', (route) => route.abort('internetdisconnected'));
-  await navigate(page, '/presupuestos');
+  await page.goto('/presupuestos');
   await expect(page.getByText(/No se ha podido conectar con el servidor/)).toBeVisible();
   await page.unroute('**/api/v1/quotes?**');
   owner.problems.length = 0; // los errores provocados en esta prueba son intencionados
@@ -297,7 +296,7 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
   const clientEmail = uniqueEmail('cliente.auto');
 
   // Reglas: todos los días y todo el día, para que la prueba no dependa de la hora en que se ejecute.
-  await navigate(page, '/configuracion/seguimiento');
+  await page.goto('/configuracion/seguimiento');
   await expect(page.getByLabel('Seguimiento 1: días tras el envío')).toHaveValue('3');
   await expect(page.getByLabel('Seguimiento 3: días tras el envío')).toHaveValue('14');
   await page.getByLabel('Sábado').check();
@@ -310,10 +309,10 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
   // Sin email confirmado, dirección de respuesta ni base legal no se puede activar.
   await page.getByRole('link', { name: 'Envío automático' }).first().click();
   await expect(page.locator('.req--missing')).toContainText(['Una dirección donde recibir las respuestas', 'La base legal', 'Tu email confirmado']);
-  await navigate(page, lastMailLink(owner.email, '/verificar-email'));
+  await page.goto(lastMailLink(owner.email, '/verificar-email'));
   await page.getByRole('button', { name: 'Confirmar mi email' }).click();
   await expect(page.getByRole('heading', { name: 'Email confirmado' })).toBeVisible();
-  await navigate(page, '/configuracion/automatico');
+  await page.goto('/configuracion/automatico');
   await expect(page.getByRole('heading', { name: /Envío automático de emails/ })).toContainText('Desactivado');
   await expect(page.getByRole('button', { name: 'Activar envío automático' })).toBeDisabled();
   await page.getByLabel('Las respuestas llegan a').fill('oficina@ensayo.test');
@@ -334,7 +333,7 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
   // Presupuesto enviado hace 3 días y sin respuesta.
   const sent = new Date(Date.now() - 3 * 86_400_000);
   const sentDate = `${sent.getFullYear()}-${String(sent.getMonth() + 1).padStart(2, '0')}-${String(sent.getDate()).padStart(2, '0')}`;
-  await navigate(page, '/presupuestos/nuevo');
+  await page.goto('/presupuestos/nuevo');
   await page.getByLabel('Nombre del cliente').fill('Cliente Automático');
   await page.getByLabel('Email', { exact: false }).first().fill(clientEmail);
   await page.getByLabel('Título').fill('Reforma de baño automática');
@@ -374,21 +373,21 @@ test('envío automático: requisitos, activación, aprobación, envío y baja de
   await expect(sentDialog.getByText('Aceptado por el proveedor')).toBeVisible();
   await sentDialog.getByRole('button', { name: 'Cerrar' }).first().click();
 
-  await navigate(page, '/seguimientos?estado=sent');
+  await page.goto('/seguimientos?estado=sent');
   await expect(page.getByRole('link', { name: 'Email automático 1 de 3' })).toBeVisible();
 
   // El cliente se da de baja desde el enlace del email (sin sesión).
   const link = mails[0]!.text!.match(/https?:\/\/[^\s]+\/baja\?token=[A-Za-z0-9_-]{43}/)![0];
   const anonContext = await browser.newContext();
   const anon = await anonContext.newPage();
-  await navigate(anon, new URL(link).pathname + new URL(link).search);
+  await anon.goto(new URL(link).pathname + new URL(link).search);
   await expect(anon.getByText(/Reformas Ensayo SL/)).toBeVisible();
   await expectAccessible(anon, 'página de baja');
   await anon.getByRole('button', { name: 'No quiero recibir más correos' }).click();
   await expect(anon.getByText('Baja registrada')).toBeVisible();
   await anonContext.close();
 
-  await navigate(page, automaticQuoteUrl);
+  await page.goto(automaticQuoteUrl);
   await expect(page.getByText('Contacto en la lista de exclusión')).toBeVisible();
   await expect(page.locator('.timeline')).toContainText('registró la baja del cliente desde el enlace del email');
   runWorkerOnce();
@@ -400,7 +399,7 @@ test('plan y resultados: consumo real, sin cambios de plan desde el navegador y 
   // El plan consume INTENTOS: el único email automático enviado (prueba anterior) es 1 intento.
   // La venta de «Reforma integral de cocina» (respuesta tras una llamada) es una recuperación,
   // que es un resultado y no consume el plan.
-  await navigate(page, '/configuracion/plan');
+  await page.goto('/configuracion/plan');
   await expect(page.getByRole('heading', { name: 'Consumo de este periodo' })).toBeVisible();
   await expect(page.locator('.usage-figure')).toHaveText('1 de 25 intentos de seguimiento');
   await expect(page.getByRole('meter', { name: 'Intentos de seguimiento usados en este periodo' })).toHaveAttribute('aria-valuenow', '1');
@@ -415,7 +414,7 @@ test('plan y resultados: consumo real, sin cambios de plan desde el navegador y 
   await expect(business).toContainText('Intentos de seguimiento al mes');
   await expect(business).toContainText('Hasta 300');
 
-  await navigate(page, '/resultados');
+  await page.goto('/resultados');
   await expect(page.getByRole('heading', { name: 'Resultados', level: 1 })).toBeVisible();
   const recoveriesLedger = page.getByRole('region', { name: 'Recuperaciones' }).or(page.locator('section', { has: page.getByRole('heading', { name: 'Recuperaciones' }) }));
   await expect(recoveriesLedger.first().locator('.ledger__value').first()).toHaveText('1');
@@ -426,7 +425,7 @@ test('plan y resultados: consumo real, sin cambios de plan desde el navegador y 
   await expect(page.locator('.month-nav__label')).not.toContainText('En curso');
 
   // Exportación de datos (propietario).
-  await navigate(page, '/configuracion');
+  await page.goto('/configuracion');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Exportar' }).click();
   const file = await download;
@@ -446,7 +445,7 @@ test('fin de la prueba: la cuenta pasa a solo lectura, se avisa y se pueden expo
   // La prueba termina ahora (como lo haría el paso del tiempo), con la herramienta de operación.
   endTrialNow(me.company.id);
 
-  await navigate(page, '/');
+  await page.goto('/');
   await expect(page.getByText('Tu prueba gratuita ha terminado: la cuenta está en modo de solo lectura')).toBeVisible();
   await expectAccessible(page, 'panel en solo lectura');
   // El bloqueo lo aplica el servidor, no la interfaz.
@@ -454,10 +453,10 @@ test('fin de la prueba: la cuenta pasa a solo lectura, se avisa y se pueden expo
   expect(blocked.status()).toBe(403);
   expect((await blocked.json()).error.code).toBe('SUBSCRIPTION_REQUIRED');
 
-  await navigate(page, '/configuracion/plan');
+  await page.goto('/configuracion/plan');
   await expect(page.getByText('La prueba terminó el')).toBeVisible();
   await expect(page.getByText('Datos conservados hasta')).toBeVisible();
-  await navigate(page, '/configuracion');
+  await page.goto('/configuracion');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Exportar' }).click();
   expect((await download).suggestedFilename()).toMatch(/^presupio-export-/);
@@ -470,13 +469,13 @@ test('enlaces internos: ninguno lleva a una página inexistente', async () => {
   const { page } = owner;
   const found = new Set<string>([firstQuoteUrl]);
   for (const path of PAGES) {
-    await navigate(page, path);
+    await page.goto(path);
     await page.waitForLoadState('networkidle');
     const hrefs = await page.locator('a[href^="/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href')!));
     hrefs.forEach((h) => found.add(h));
   }
   for (const href of found) {
-    await navigate(page, href);
+    await page.goto(href);
     await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Esta página no existe' }), href).toHaveCount(0);
     await expect(page.getByText('Algo ha fallado al mostrar esta pantalla'), href).toHaveCount(0);
@@ -496,7 +495,7 @@ test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
     const times: Array<[string, number]> = [];
     for (const path of [...PAGES, firstQuoteUrl, automaticQuoteUrl]) {
       const started = Date.now();
-      await navigate(page, path);
+      await page.goto(path);
       await page.waitForLoadState('networkidle');
       await expectNoHorizontalOverflow(page, `${path} @${viewport.width}px`);
       if (viewport.width !== 768) await expectAccessible(page, `${path} @${viewport.width}px`);
@@ -510,7 +509,7 @@ test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
   const context = await page.context().browser()!.newContext({ viewport: { width: 390, height: 844 } });
   const anon = await context.newPage();
   for (const path of ['/iniciar-sesion', '/registro', '/recuperar-contrasena', '/baja?token=enlace-roto']) {
-    await navigate(anon, path);
+    await anon.goto(path);
     await anon.waitForLoadState('networkidle');
     await expectNoHorizontalOverflow(anon, path);
     await expectAccessible(anon, path);
@@ -521,7 +520,7 @@ test('accesibilidad y diseño adaptable (escritorio y móvil)', async () => {
 
 test('navegación por teclado: saltar al contenido y menú de cuenta', async () => {
   const { page } = owner;
-  await navigate(page, '/');
+  await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Hola, Laura' })).toBeVisible();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Saltar al contenido' })).toBeFocused();
@@ -541,7 +540,7 @@ test('navegación por teclado: saltar al contenido y menú de cuenta', async () 
 test('cabeceras de seguridad del servidor de producción: presentes y efectivas en el navegador (P1-05)', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
-  const res = await navigate(page, '/iniciar-sesion');
+  const res = await page.goto('/iniciar-sesion');
   const headers = res!.headers();
   expect(headers['content-security-policy']).toContain("script-src 'self'");
   expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
