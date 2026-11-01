@@ -19,7 +19,9 @@ const stripe = new Stripe(key);
 
 const PLANS = [
   { code: "one_time_pack", name: "Legalito · Pago único", amount: 3900, recurring: undefined },
-  { code: "subscription_monthly", name: "Legalito · Suscripción mensual", amount: 999, recurring: { interval: "month" as const } },
+  { code: "subscription_basic", name: "Legalito · Plan Básico", amount: 599, recurring: { interval: "month" as const } },
+  { code: "subscription_medium", name: "Legalito · Plan Medium", amount: 1099, recurring: { interval: "month" as const } },
+  { code: "subscription_business", name: "Legalito · Plan Business", amount: 3099, recurring: { interval: "month" as const } },
 ];
 
 async function main() {

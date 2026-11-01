@@ -111,7 +111,7 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
     it("anónimo no ve datos personales pero sí el catálogo público", async () => {
       await as(db.pool, "anon", null, async (q) => {
         await expect(q("select * from public.profiles")).rejects.toThrow(/permission denied/);
-        expect((await q("select code from public.products")).rowCount).toBe(2);
+        expect((await q("select code from public.products")).rowCount).toBe(4); // pago único + 3 planes
         expect((await q("select id from public.faqs")).rowCount).toBeGreaterThan(5);
       });
     });

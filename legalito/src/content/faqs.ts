@@ -22,7 +22,7 @@ export const DEFAULT_FAQS: Faq[] = [
   },
   {
     question: "¿Qué ocurre si cambia mi negocio?",
-    answer: "Puedes actualizar tus respuestas en cualquier momento. Con la suscripción regeneras tus documentos sin límite. Con el pago único dispones de un número limitado de regeneraciones para corregir datos con la misma versión de plantilla que compraste.",
+    answer: "Puedes actualizar tus respuestas en cualquier momento. Con la suscripción regeneras tus documentos dentro del cupo mensual de tu plan (20 en Básico, 50 en Medium e ilimitados en Business), incluso de uno en uno. Con el pago único dispones de un número limitado de regeneraciones para corregir datos con la misma versión de plantilla que compraste.",
     category: "documentos",
   },
   {
@@ -32,7 +32,7 @@ export const DEFAULT_FAQS: Faq[] = [
   },
   {
     question: "¿Qué incluye la suscripción?",
-    answer: "La suscripción incluye la generación de los documentos del plan, el acceso a las nuevas versiones de las plantillas cuando se publiquen tras una revisión documentada, la regeneración ilimitada, el historial de versiones y avisos cuando haya cambios relevantes.",
+    answer: "Hay tres planes: Básico (5,99 €/mes, hasta 20 documentos al mes), Medium (10,99 €/mes, hasta 50) y Business (30,99 €/mes, ilimitados). Todos incluyen aviso legal, privacidad y cookies, las nuevas versiones de las plantillas cuando se publiquen tras una revisión documentada, el historial de versiones y avisos de cambios relevantes.",
     category: "suscripcion",
   },
   {

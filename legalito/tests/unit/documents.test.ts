@@ -264,3 +264,20 @@ describe("Cobertura de más tipos de negocio", () => {
     expect(r.missing).toEqual([]);
   });
 });
+
+describe("Presentación profesional de los documentos", () => {
+  it("el HTML identifica al titular y la web e incluye un índice navegable en documentos largos", () => {
+    const { context } = prepareInput(shopAnswers, NOW);
+    const out = composeDocument(tpl("privacidad"), context, { ...meta(), ownerName: "Barro & Co", website: context.contact.website });
+    expect(out.fragment).toContain('<p class="lg-meta">Titular: Barro &amp; Co · Sitio web: <a href="https://www.barro.example"');
+    expect(out.fragment).toContain('<nav class="lg-toc" aria-label="Índice">');
+    expect(out.fragment).toContain('href="#lg-responsable"');
+    expect(out.fragment).toContain('<section id="lg-responsable">');
+  });
+
+  it("los documentos cortos no llevan índice", () => {
+    const { context } = prepareInput(freelancerAnswers, NOW);
+    const short = { title: "Doc", sections: [{ id: "a", heading: "A", blocks: [{ type: "paragraph" as const, text: "Texto" }] }] };
+    expect(composeDocument(short, context, meta()).fragment).not.toContain("lg-toc");
+  });
+});

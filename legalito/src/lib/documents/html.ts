@@ -3,6 +3,8 @@ import type { RenderedBlock, RenderedDocument } from "./engine";
 export interface OutputMeta {
   documentTypeName: string;
   ownerName: string;
+  /** Sitio web al que se aplica el documento (se muestra en la cabecera). */
+  website?: string;
   generatedAt: Date;
   templateVersionLabel: string;
   /** Plantilla de demostración: el documento no tiene validez jurídica. */
@@ -68,9 +70,19 @@ export function renderHtmlFragment(doc: RenderedDocument, meta: OutputMeta): str
   const parts: string[] = [`<article class="legalito-doc" lang="es">`];
   if (notice) parts.push(`<p class="lg-notice" role="note"><strong>${escapeHtml(notice)}</strong></p>`);
   parts.push(`<h1>${escapeHtml(doc.title)}</h1>`);
+  const metaLine = [meta.ownerName && `Titular: ${escapeHtml(meta.ownerName)}`, meta.website && `Sitio web: ${richText(meta.website)}`].filter(Boolean);
+  if (metaLine.length) parts.push(`<p class="lg-meta">${metaLine.join(" · ")}</p>`);
+  // Índice navegable en los documentos largos (los identificadores llevan prefijo para no chocar con la web del cliente).
+  if (doc.sections.length >= 5) {
+    parts.push(
+      `<nav class="lg-toc" aria-label="Índice"><p class="lg-toc-title">Índice</p><ol>${doc.sections
+        .map((s) => `<li><a href="#lg-${escapeHtml(s.id)}">${escapeHtml(s.heading)}</a></li>`)
+        .join("")}</ol></nav>`,
+    );
+  }
   parts.push(...doc.intro.map(blockHtml));
   for (const s of doc.sections) {
-    parts.push(`<section id="${escapeHtml(s.id)}"><h2>${s.number}. ${escapeHtml(s.heading)}</h2>`);
+    parts.push(`<section id="lg-${escapeHtml(s.id)}"><h2>${s.number}. ${escapeHtml(s.heading)}</h2>`);
     parts.push(...s.blocks.map(blockHtml));
     parts.push(`</section>`);
   }
@@ -84,7 +96,8 @@ const STYLES = `
   .legalito-doc h1{font-size:30px;line-height:1.2;color:#1F3A5F;margin:0 0 24px;letter-spacing:-.01em}
   .legalito-doc h2{font-size:19px;color:#1F3A5F;margin:36px 0 12px}
   .legalito-doc h3{font-size:16px;margin:20px 0 8px}
-  .legalito-doc p,.legalito-doc li{margin:0 0 12px}
+  .legalito-doc p{margin:0 0 12px}
+  .legalito-doc li{margin:0 0 6px}
   .legalito-doc ul,.legalito-doc ol{padding-left:22px;margin:0 0 16px}
   .legalito-doc a{color:#2F5D8C;word-break:break-word}
   .legalito-doc .lg-table{overflow-x:auto;margin:0 0 16px}
@@ -92,6 +105,12 @@ const STYLES = `
   .legalito-doc th,.legalito-doc td{border:1px solid #d9dee6;padding:8px 10px;text-align:left;vertical-align:top}
   .legalito-doc th{background:#F4F1EA;color:#1F3A5F}
   .legalito-doc .lg-notice{background:#fff4e5;border:1px solid #f0b458;color:#7a4a00;padding:12px 16px;border-radius:8px}
+  .legalito-doc .lg-meta{color:#5d6878;font-size:14px;margin:-12px 0 24px;padding-bottom:16px;border-bottom:1px solid #e6e2d9}
+  .legalito-doc .lg-toc{background:#f8f6f1;border:1px solid #e6e2d9;border-radius:10px;padding:16px 20px;margin:0 0 28px}
+  .legalito-doc .lg-toc-title{font-weight:600;color:#1F3A5F;margin:0 0 8px}
+  .legalito-doc .lg-toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px;font-size:14px}
+  .legalito-doc .lg-toc li{margin:0 0 4px;break-inside:avoid}
+  @media (max-width:600px){.legalito-doc .lg-toc ol{columns:1}}
   .legalito-doc .lg-callout{border-left:3px solid #2F5D8C;background:#f3f6fa;padding:10px 14px;margin:0 0 16px}
   .legalito-doc .lg-callout-warning{border-color:#c77700;background:#fff8ee}
 `;

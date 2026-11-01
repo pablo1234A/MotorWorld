@@ -54,6 +54,8 @@ export interface ProductRow {
   included_document_types: string[];
   generations_limit: number | null;
   includes_updates: boolean;
+  /** Suscripciones: documentos por periodo de facturación (null = ilimitados). */
+  documents_per_period: number | null;
   features: string[];
   active: boolean;
   sort_order: number;
@@ -69,6 +71,7 @@ export interface SubscriptionRow {
   amount_cents: number | null;
   currency: string | null;
   billing_interval: string | null;
+  current_period_start?: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   cancel_at: string | null;

@@ -134,6 +134,7 @@ test("recorrido del cliente: formulario, vista previa, compra, generación y des
 
   await page.goto("/panel/precompra");
   await expect(page.getByRole("button", { name: "Continuar al pago" })).toBeVisible();
+  for (const plan of ["Básico", "Medium", "Business", "Pago único"]) await expect(page.getByText(plan, { exact: true }).first()).toBeVisible();
   await shot(page, "07-precompra");
 
   // Pago registrado como lo haría el webhook de Stripe.
@@ -178,6 +179,22 @@ test("recorrido del cliente: formulario, vista previa, compra, generación y des
   await expect(page.getByText("Tus documentos están listos")).toBeVisible();
   await expect(page.getByRole("region", { name: "Tu progreso" })).toContainText("4 de 5");
   await shot(page, "10-dashboard");
+});
+
+test("suscripción Básico: generación, cupo mensual y regeneración de un documento", async ({ page, isMobile }) => {
+  await login(page, isMobile ? "plan-mobile@legalito.test" : "plan-desktop@legalito.test");
+  await expect(page.getByText("Plan Básico")).toBeVisible();
+  await page.goto("/panel/generador/revision");
+  await page.getByRole("button", { name: "Generar mis documentos" }).click();
+  await expect(page).toHaveURL(/\/panel\/documentos\?generado=1/, { timeout: 30_000 });
+  await expect(page.getByText("3 de 20")).toBeVisible();
+  await page.getByRole("button", { name: "Regenerar", exact: true }).first().click();
+  await expect(page.getByText("4 de 20")).toBeVisible({ timeout: 20_000 });
+  await shot(page, "14-documentos-suscripcion");
+  await page.goto("/panel/suscripcion");
+  await expect(page.getByText("4 de 20")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Cambiar de plan o gestionar/ })).toBeVisible();
+  await shot(page, "15-suscripcion-plan");
 });
 
 test("mis datos, suscripción y ayuda", async ({ page, isMobile }) => {

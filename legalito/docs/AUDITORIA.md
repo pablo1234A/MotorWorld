@@ -69,3 +69,36 @@ No probado en este entorno (requiere credenciales del propietario): envío real 
 4. Recomendar o integrar un **gestor de consentimiento de cookies** (necesidad detectada en la mayoría de webs con analítica).
 5. Textos de primera capa para formularios (consentimiento de newsletter, contacto) generados con la misma plantilla.
 6. Purga programada de registros antiguos (analítica, límites, errores) y alertas de errores por email.
+
+---
+
+# Ronda 3 · Planes, portada, documentos y nueva revisión
+
+## Cambios
+| Área | Cambio |
+| --- | --- |
+| Planes | Tres suscripciones: **Básico 5,99 €/mes (20 documentos/mes)**, **Medium 10,99 €/mes (50)** y **Business 30,99 €/mes (ilimitados)**, más el pago único de 39 €. Cupo por periodo de facturación de Stripe; editable en /admin/productos. La suscripción anterior de 9,99 € queda inactiva (no se borra, por si hubiera clientes). |
+| Cupo | Cada documento generado cuenta 1. Los suscriptores pueden regenerar **un solo documento**. Mensajes claros al alcanzar el límite; cambio de plan desde el portal de Stripe. Medidor de uso en inicio, documentos y suscripción. |
+| Portada | Cabecera con etiqueta de los tres documentos, maqueta real del producto (pregunta del formulario → documento generado con texto real), tres ventajas clave y franja de normativa (LSSI-CE, RGPD, LOPDGDD, guía AEPD). |
+| Documentos | PDF: identificación del titular y del sitio web bajo el título y encabezado en cada página a partir de la segunda. HTML: línea de identificación e **índice navegable** en documentos de 5 o más apartados (anclas con prefijo para no chocar con la web del cliente). El texto jurídico no se ha modificado. |
+
+## Defectos encontrados en esta revisión y corregidos
+| Gravedad | Defecto | Corrección |
+| --- | --- | --- |
+| Media | El límite antiabuso (10 generaciones/hora) bloqueaba a clientes legítimos al regenerar documento a documento | 30/hora; el límite real es el cupo del plan |
+| Media | «Mi suscripción»: elementos no válidos dentro de una lista de definiciones (accesibilidad) | Estructura corregida |
+| Baja | Página de precios titulada «Dos formas de pagar» | Texto actualizado a los nuevos planes |
+| Baja | En la precompra el pago único aparecía antes que las suscripciones | Mismo orden que la web pública, Medium recomendado |
+
+## Resultado de las pruebas
+| Suite | Resultado |
+| --- | --- |
+| Unitarias + base de datos + flujos (incluye cupo: 15 → 18 → error «quedan 2» → 20 → bloqueo) | **108 / 108** |
+| E2E pública con accesibilidad WCAG 2.1 AA | **65 / 65** |
+| E2E área privada con accesibilidad (incluye suscripción Básico: generar, regenerar un documento, 3 → 4 de 20) | **12 / 12** |
+
+## Limitación conocida
+Dos generaciones simultáneas del mismo cliente podrían superar el cupo por unos pocos documentos (la comprobación no es una transacción única). El impacto es mínimo y está acotado por el límite de frecuencia; si se quisiera exactitud absoluta, mover la comprobación a una función SQL con bloqueo.
+
+## Recomendación de producto
+Los cupos de 20 y 50 documentos al mes cobran todo su sentido si una cuenta puede gestionar **varias webs o negocios** (agencias, gestorías, consultores). Es la evolución natural para justificar Medium y Business.

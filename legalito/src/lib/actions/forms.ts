@@ -8,6 +8,7 @@ import { createAdminClient, createSessionClient } from "@/lib/supabase/server";
 import { coerceAnswers, QUESTIONNAIRE_VERSION, STEPS, validateAnswers, type Answers } from "@/lib/documents/questionnaire";
 import { generateDocuments } from "@/lib/documents/service";
 import { DocumentGenerationError } from "@/lib/documents/compose";
+import { DOCUMENT_TYPES } from "@/lib/documents/registry";
 import { audit, logError, rateLimit } from "@/lib/observability";
 import { trackServer } from "@/lib/analytics-server";
 import type { FormResponseRow, OrganizationRow } from "@/lib/db/types";
@@ -147,10 +148,12 @@ export async function editAnswers(step?: string): Promise<void> {
   redirect(valid ? `/panel/generador?paso=${step}` : "/panel/generador");
 }
 
-/** Generación o regeneración manual desde el panel. */
-export async function generateNow(_prev: FormState): Promise<FormState> {
+/** Generación o regeneración manual desde el panel (opcionalmente de un solo documento). */
+export async function generateNow(_prev: FormState, formData?: FormData): Promise<FormState> {
   const { user, org } = await requireOrganization();
-  if (!(await rateLimit(`generate:${org.id}`, 10, 3600))) {
+  const requested = formData?.get("document_type");
+  const documentTypes = typeof requested === "string" && DOCUMENT_TYPES.some((d) => d.code === requested) ? [requested] : undefined;
+  if (!(await rateLimit(`generate:${org.id}`, 30, 3600))) {
     return { error: "Has generado documentos varias veces en poco tiempo. Inténtalo de nuevo en una hora." };
   }
   try {
@@ -159,6 +162,7 @@ export async function generateNow(_prev: FormState): Promise<FormState> {
       userId: user.id,
       batchKey: `manual:${org.id}:${randomUUID()}`,
       notifyEmail: user.email,
+      documentTypes,
     });
   } catch (e) {
     if (e instanceof DocumentGenerationError) return { error: e.message };

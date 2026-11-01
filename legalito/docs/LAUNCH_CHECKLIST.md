@@ -12,7 +12,8 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 
 ## Bloqueantes técnicos / configuración
 - [ ] Proyectos Supabase staging y producción (UE), migraciones aplicadas, plantillas de email, SMTP con Resend, primer admin.
-- [ ] Stripe: productos y precios, webhook de producción, portal, Smart Retries, email de próxima renovación.
+- [ ] Stripe: productos y precios (pago único, Básico, Medium y Business), webhook de producción, portal **con cambio de plan entre los tres planes**, Smart Retries, email de próxima renovación.
+- [ ] Confirmar los cupos de documentos de cada plan (Básico 20, Medium 50, Business ilimitados) en /admin/productos.
 - [ ] Resend: dominio verificado (SPF/DKIM/DMARC).
 - [ ] Vercel Pro con dominio, variables de producción y `APP_ENV=production`.
 - [ ] Ejecutar la **E2E completa** y los 11 recorridos de docs/TESTING.md en staging.

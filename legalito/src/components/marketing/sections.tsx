@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, ChevronDown, FileCheck2, FileText, Cookie, ShieldCheck, Minus } from "lucide-react";
+import { Check, ChevronDown, FileCheck2, Cookie, ShieldCheck, Minus } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/layout";
 import { formatPrice } from "@/lib/billing/entitlements";
@@ -23,56 +23,6 @@ export function SectionHeading({ eyebrow, title, lead, center, as = "h2" }: { ey
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
       <Heading className={cn("mt-3 font-semibold leading-tight", as === "h1" ? "text-[32px] sm:text-[42px]" : "text-[28px] sm:text-[34px]")}>{title}</Heading>
       {lead && <p className="mt-4 text-[17px] leading-relaxed text-muted">{lead}</p>}
-    </div>
-  );
-}
-
-/** Representación visual del producto: un documento que se adapta a las respuestas. */
-export function DocumentVisual() {
-  const answers = [
-    { label: "Tienda online", on: true },
-    { label: "Newsletter", on: true },
-    { label: "Google Analytics", on: true },
-    { label: "Datos de salud", on: false },
-  ];
-  return (
-    <div className="relative mx-auto w-full max-w-md lg:max-w-none" aria-hidden="true">
-      <div className="absolute -inset-6 -z-10 rounded-[28px] bg-sand" />
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-[var(--shadow-lift)] sm:p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold text-navy">
-            <FileText className="h-4 w-4" /> Política de privacidad
-          </div>
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue">Versión 1.0</span>
-        </div>
-        <div className="mt-5 space-y-4">
-          {[
-            { t: "1. Responsable del tratamiento", w: ["w-11/12", "w-3/4"] },
-            { t: "2. Finalidades y base jurídica", w: ["w-full", "w-5/6", "w-2/3"], hl: true },
-            { t: "3. Destinatarios", w: ["w-10/12", "w-1/2"] },
-          ].map((s) => (
-            <div key={s.t} className={cn("rounded-lg p-2.5 transition-colors", s.hl && "bg-blue-50/70 ring-1 ring-blue/15")}>
-              <p className="text-[13px] font-semibold text-navy-950">{s.t}</p>
-              <div className="mt-2 space-y-1.5">
-                {s.w.map((w, i) => (
-                  <div key={i} className={cn("h-1.5 rounded-full bg-sand-200", w)} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="absolute -bottom-6 -left-4 w-56 rounded-xl border border-line bg-white p-3.5 shadow-[var(--shadow-lift)] sm:-left-10">
-        <p className="text-xs font-medium text-subtle">Tus respuestas</p>
-        <ul className="mt-2 space-y-1.5">
-          {answers.map((a) => (
-            <li key={a.label} className="flex items-center justify-between text-[13px]">
-              <span className={a.on ? "text-ink" : "text-subtle line-through"}>{a.label}</span>
-              {a.on ? <Check className="h-3.5 w-3.5 text-success" /> : <Minus className="h-3.5 w-3.5 text-subtle" />}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }
@@ -126,82 +76,109 @@ export const DOCUMENTS = [
   },
 ];
 
+const quotaLabel = (p: PublicPlan) =>
+  p.kind === "one_time"
+    ? `${p.generationsLimit ?? "Ilimitadas"} generaciones`
+    : p.documentsPerPeriod === null
+      ? "Documentos ilimitados"
+      : `Hasta ${p.documentsPerPeriod} documentos al mes`;
+
+/** Planes: las suscripciones en primer plano (Medium recomendado) y el pago único como alternativa. */
 export function PlanCards({ plans, ctaHref = "/registro" }: { plans: PublicPlan[]; ctaHref?: string }) {
+  const subs = plans.filter((p) => p.kind === "subscription");
+  const oneTime = plans.find((p) => p.kind === "one_time");
+  const featuredCode = subs.length >= 3 ? subs[1].code : subs[0]?.code;
   return (
-    <div className="grid gap-5 md:grid-cols-2">
-      {plans.map((p) => {
-        const featured = p.kind === "subscription";
-        return (
-          <div
-            key={p.code}
-            className={cn(
-              "relative flex flex-col rounded-2xl border bg-white p-6 sm:p-8",
-              featured ? "border-navy shadow-[var(--shadow-lift)]" : "border-line shadow-[var(--shadow-soft)]",
-            )}
-          >
-            {featured && (
-              <span className="absolute -top-3 left-6 rounded-full bg-navy px-3 py-1 text-xs font-medium text-white">Incluye actualizaciones</span>
-            )}
-            <h3 className="text-lg font-semibold">{p.name}</h3>
-            <p className="mt-1.5 text-[15px] text-muted">{p.description}</p>
-            <p className="mt-6 flex items-baseline gap-1.5">
-              <span className="text-4xl font-semibold tracking-tight text-navy-950 tabular-nums">{formatPrice(p.priceCents, p.currency)}</span>
-              <span className="text-sm text-muted">{p.interval === "month" ? "/ mes" : p.interval === "year" ? "/ año" : "pago único"}</span>
-            </p>
-            <p className="mt-1 text-xs text-subtle">IVA incluido{p.interval ? " · Cancela cuando quieras" : ""}</p>
-            <ul className="mt-6 flex-1 space-y-3">
-              {p.features.map((f) => {
-                const negative = /^sin /i.test(f);
-                return (
-                  <li key={f} className="flex gap-2.5 text-[15px]">
-                    {negative ? <Minus className="mt-0.5 h-4.5 w-4.5 shrink-0 text-subtle" /> : <Check className="mt-0.5 h-4.5 w-4.5 shrink-0 text-success" />}
-                    <span className={negative ? "text-muted" : "text-ink-soft"}>{f}</span>
+    <div className="space-y-5">
+      <div className={cn("grid gap-5", subs.length >= 3 ? "lg:grid-cols-3" : "md:grid-cols-2")}>
+        {subs.map((p) => {
+          const featured = p.code === featuredCode;
+          return (
+            <div
+              key={p.code}
+              className={cn(
+                "relative flex flex-col rounded-2xl border bg-white p-6 sm:p-7",
+                featured ? "border-navy shadow-[var(--shadow-lift)] lg:-my-2 lg:py-9" : "border-line shadow-[var(--shadow-soft)]",
+              )}
+            >
+              {featured && <span className="absolute -top-3 left-6 rounded-md bg-navy px-2.5 py-1 text-xs font-medium text-white">Recomendado</span>}
+              <h3 className="text-lg font-semibold">{p.name}</h3>
+              <p className="mt-1 min-h-[2.75rem] text-[14.5px] leading-snug text-muted">{p.description}</p>
+              <p className="mt-5 flex items-baseline gap-1.5">
+                <span className="text-4xl font-semibold tracking-tight text-navy-950 tabular-nums">{formatPrice(p.priceCents, p.currency)}</span>
+                <span className="text-sm text-muted">/ mes</span>
+              </p>
+              <p className="mt-1 text-xs text-subtle">IVA incluido · Cancela cuando quieras</p>
+              <p className="mt-5 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-navy">{quotaLabel(p)}</p>
+              <ul className="mt-5 flex-1 space-y-2.5">
+                {p.features.filter((f) => !/documentos (al mes|ilimitados)/i.test(f)).map((f) => (
+                  <li key={f} className="flex gap-2.5 text-[14.5px]">
+                    <Check className="mt-0.5 h-4.5 w-4.5 shrink-0 text-success" />
+                    <span className="text-ink-soft">{f}</span>
                   </li>
-                );
-              })}
-            </ul>
-            <Link href={ctaHref} className={cn(buttonClass(featured ? "primary" : "secondary", "lg"), "mt-8 w-full")}>
-              Empezar con {p.name.toLowerCase()}
-            </Link>
+                ))}
+              </ul>
+              <Link href={ctaHref} className={cn(buttonClass(featured ? "primary" : "secondary", "lg"), "mt-7 w-full")}>
+                Empezar con {p.name}
+              </Link>
+            </div>
+          );
+        })}
+      </div>
+      {oneTime && (
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+          <div className="max-w-xl">
+            <h3 className="text-lg font-semibold">
+              {oneTime.name} <span className="ml-1 text-base font-normal text-muted">· {formatPrice(oneTime.priceCents, oneTime.currency)}</span>
+            </h3>
+            <p className="mt-1 text-[14.5px] text-muted">
+              ¿Solo los necesitas una vez? Tus tres documentos con acceso permanente y {oneTime.generationsLimit ?? "varias"} generaciones para corregir datos. No incluye
+              actualizaciones futuras.
+            </p>
           </div>
-        );
-      })}
+          <Link href={ctaHref} className={cn(buttonClass("secondary", "md"), "shrink-0")}>
+            Elegir pago único
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
 
 export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
-  const one = plans.find((p) => p.kind === "one_time");
-  const sub = plans.find((p) => p.kind === "subscription");
-  if (!one || !sub) return null;
-  const rows: [string, React.ReactNode, React.ReactNode][] = [
-    ["Aviso legal, privacidad y cookies", true, true],
-    ["Vista previa antes de pagar", true, true],
-    ["Descarga en PDF y HTML", true, true],
-    ["Acceso a los documentos generados", "Permanente", "Permanente"],
-    ["Regeneraciones", one.generationsLimit ? `Hasta ${one.generationsLimit}` : "Ilimitadas", sub.generationsLimit ? `Hasta ${sub.generationsLimit}` : "Ilimitadas"],
-    ["Nuevas versiones revisadas de las plantillas", false, true],
-    ["Avisos de cambios relevantes", false, true],
+  const ordered = [...plans.filter((p) => p.kind === "subscription"), ...plans.filter((p) => p.kind === "one_time")];
+  if (ordered.length < 2) return null;
+  const rows: [string, (p: PublicPlan) => React.ReactNode][] = [
+    ["Precio", (p) => `${formatPrice(p.priceCents, p.currency)}${p.kind === "subscription" ? " / mes" : ""}`],
+    ["Documentos", (p) => (p.kind === "one_time" ? `${p.generationsLimit ?? "Ilimitadas"} generaciones` : p.documentsPerPeriod === null ? "Ilimitados" : `${p.documentsPerPeriod} al mes`)],
+    ["Aviso legal, privacidad y cookies", () => true],
+    ["Vista previa antes de pagar", () => true],
+    ["PDF y código HTML", () => true],
+    ["Regenerar un solo documento", (p) => p.kind === "subscription"],
+    ["Nuevas versiones revisadas", (p) => p.includesUpdates],
+    ["Avisos de cambios relevantes", (p) => p.includesUpdates],
   ];
   const cell = (v: React.ReactNode) =>
     v === true ? <Check className="mx-auto h-4.5 w-4.5 text-success" aria-label="Incluido" /> : v === false ? <Minus className="mx-auto h-4.5 w-4.5 text-subtle" aria-label="No incluido" /> : <span className="text-sm text-ink-soft">{v}</span>;
   return (
     <div className="overflow-x-auto rounded-2xl border border-line bg-white" tabIndex={0} role="region" aria-label="Comparación de planes">
-      <table className="w-full min-w-[520px] text-left">
+      <table className="w-full min-w-[640px] text-left">
         <caption className="sr-only">Comparación de planes</caption>
         <thead>
           <tr className="border-b border-line">
             <th scope="col" className="px-5 py-4 text-sm font-medium text-muted">Qué incluye</th>
-            <th scope="col" className="w-36 px-5 py-4 text-center text-sm font-semibold">{one.name}</th>
-            <th scope="col" className="w-36 px-5 py-4 text-center text-sm font-semibold">{sub.name}</th>
+            {ordered.map((p) => (
+              <th key={p.code} scope="col" className="w-32 px-4 py-4 text-center text-sm font-semibold">{p.name}</th>
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
-          {rows.map(([label, a, b]) => (
+          {rows.map(([label, get]) => (
             <tr key={label}>
               <th scope="row" className="px-5 py-3.5 text-[15px] font-normal text-ink-soft">{label}</th>
-              <td className="px-5 py-3.5 text-center">{cell(a)}</td>
-              <td className="px-5 py-3.5 text-center">{cell(b)}</td>
+              {ordered.map((p) => (
+                <td key={p.code} className="px-4 py-3.5 text-center">{cell(get(p))}</td>
+              ))}
             </tr>
           ))}
         </tbody>

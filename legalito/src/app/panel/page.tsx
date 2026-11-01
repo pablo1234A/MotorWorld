@@ -6,6 +6,7 @@ import { LinkButton } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/ui/layout";
 import { ReviewBadge, SubscriptionBadge, fmtDate } from "@/components/app/status";
 import { ProgressSteps } from "@/components/app/progress-steps";
+import { QuotaMeter } from "@/components/app/quota-meter";
 import { getProfile, requireOrganization } from "@/lib/auth";
 import { getFormStatus, getMyEntitlements, getUpdatesAndNotices, listDocuments } from "@/lib/data/panel";
 import { progress } from "@/lib/documents/questionnaire";
@@ -91,7 +92,7 @@ export default async function DashboardPage() {
           {ent.plan === "subscription" && ent.subscription ? (
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-ink">Suscripción</span>
+                <span className="font-medium text-ink">Plan {ent.planName ?? "suscripción"}</span>
                 <SubscriptionBadge status={ent.subscription.status} />
               </div>
               {ent.subscription.amount_cents !== null && <p className="text-muted">{formatPrice(ent.subscription.amount_cents, ent.subscription.currency ?? "eur")} / mes</p>}
@@ -99,6 +100,7 @@ export default async function DashboardPage() {
                 {ent.subscription.cancel_at_period_end ? "Finaliza el " : "Próxima renovación: "}
                 {fmtDate(ent.subscription.current_period_end)}
               </p>
+              {ent.quota && <QuotaMeter quota={{ ...ent.quota, periodEnd: null }} className="pt-2" />}
             </div>
           ) : ent.plan === "one_time" ? (
             <div className="space-y-2 text-sm">

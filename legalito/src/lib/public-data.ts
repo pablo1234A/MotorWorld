@@ -17,8 +17,12 @@ export interface PublicPlan {
   interval: "month" | "year" | null;
   features: string[];
   generationsLimit: number | null;
+  /** Suscripciones: documentos al mes (null = ilimitados). */
+  documentsPerPeriod: number | null;
   includesUpdates: boolean;
 }
+
+const SUB_FEATURES = ["Aviso legal, privacidad y cookies", "Descarga en PDF y código HTML", "Nuevas versiones revisadas de las plantillas", "Avisos de cambios relevantes", "Cancela cuando quieras"];
 
 export const DEFAULT_PLANS: PublicPlan[] = [
   {
@@ -30,33 +34,54 @@ export const DEFAULT_PLANS: PublicPlan[] = [
     currency: "eur",
     interval: null,
     generationsLimit: 3,
+    documentsPerPeriod: null,
     includesUpdates: false,
     features: [
       "Aviso legal, política de privacidad y política de cookies",
-      "Descarga en PDF y HTML",
+      "Descarga en PDF y código HTML",
       "Acceso permanente a los documentos comprados",
       "Hasta 3 generaciones para corregir tus datos",
       "Sin actualizaciones futuras incluidas",
     ],
   },
   {
-    code: "subscription_monthly",
-    name: "Suscripción",
-    description: "Tus documentos siempre alineados con las versiones revisadas más recientes.",
+    code: "subscription_basic",
+    name: "Básico",
+    description: "Para mantener al día los textos legales de una web.",
     kind: "subscription",
-    priceCents: 999,
+    priceCents: 599,
     currency: "eur",
     interval: "month",
     generationsLimit: null,
+    documentsPerPeriod: 20,
     includesUpdates: true,
-    features: [
-      "Aviso legal, política de privacidad y política de cookies",
-      "Descarga en PDF y HTML",
-      "Nuevas versiones revisadas de las plantillas",
-      "Regeneración ilimitada cuando cambie tu negocio",
-      "Historial de versiones y avisos de cambios relevantes",
-      "Cancela cuando quieras desde tu panel",
-    ],
+    features: ["Hasta 20 documentos al mes", ...SUB_FEATURES],
+  },
+  {
+    code: "subscription_medium",
+    name: "Medium",
+    description: "Para negocios que actualizan su web con frecuencia.",
+    kind: "subscription",
+    priceCents: 1099,
+    currency: "eur",
+    interval: "month",
+    generationsLimit: null,
+    documentsPerPeriod: 50,
+    includesUpdates: true,
+    features: ["Hasta 50 documentos al mes", ...SUB_FEATURES],
+  },
+  {
+    code: "subscription_business",
+    name: "Business",
+    description: "Sin límites para negocios con mucha actividad.",
+    kind: "subscription",
+    priceCents: 3099,
+    currency: "eur",
+    interval: "month",
+    generationsLimit: null,
+    documentsPerPeriod: null,
+    includesUpdates: true,
+    features: ["Documentos ilimitados", ...SUB_FEATURES],
   },
 ];
 
@@ -101,6 +126,7 @@ export async function getPublicPlans(): Promise<PublicPlan[]> {
       interval: p.billing_interval,
       features: Array.isArray(p.features) ? p.features : [],
       generationsLimit: p.generations_limit,
+      documentsPerPeriod: p.documents_per_period ?? null,
       includesUpdates: p.includes_updates,
     }));
   } catch {

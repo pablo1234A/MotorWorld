@@ -6,7 +6,7 @@ import { DISCLAIMER } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Precios",
-  description: "Pago único de 39 € o suscripción de 9,99 €/mes con nuevas versiones revisadas de las plantillas y regeneración ilimitada.",
+  description: "Planes Básico (5,99 €/mes), Medium (10,99 €/mes) y Business (30,99 €/mes), o pago único de 39 €. Aviso legal, privacidad y cookies con nuevas versiones revisadas de las plantillas.",
   alternates: { canonical: "/precios" },
 };
 
@@ -16,8 +16,8 @@ export default async function PricingPage() {
   return (
     <section className="pt-16 pb-24">
       <Container>
-        <SectionHeading as="h1" center eyebrow="Precios" title="Dos formas de pagar, sin letra pequeña" lead="Primero rellenas el formulario y ves la vista previa. Solo pagas si quieres descargar tus documentos." />
-        <div className="mx-auto mt-14 max-w-4xl space-y-12">
+        <SectionHeading as="h1" center eyebrow="Precios" title="Planes claros, sin letra pequeña" lead="Tres planes mensuales según cuántos documentos generes, o un pago único si solo los necesitas una vez. Antes de pagar, rellenas el formulario y ves la vista previa." />
+        <div className="mx-auto mt-14 max-w-6xl space-y-12">
           <PlanCards plans={plans} />
           <PlanComparison plans={plans} />
           <div>

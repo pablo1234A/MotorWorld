@@ -20,6 +20,8 @@ export interface GenerateInput {
   /** Fuerza una fuente concreta (p. ej. la compra recién pagada). */
   purchaseId?: string;
   notifyEmail?: string | null;
+  /** Solo suscripciones: generar únicamente estos tipos (p. ej. regenerar un documento). */
+  documentTypes?: string[];
 }
 
 export interface GeneratedItem {
@@ -92,9 +94,25 @@ export async function generateDocuments(input: GenerateInput): Promise<Generated
     throw new DocumentGenerationError(entitlements.blockedReason ?? "No tienes permiso para generar documentos.", "not_entitled");
   }
 
+  // Selección de documentos: los suscriptores pueden regenerar solo algunos; las compras regeneran el conjunto.
+  let documentTypes = source.documentTypes;
+  if (source.type === "subscription" && input.documentTypes?.length) {
+    documentTypes = source.documentTypes.filter((t) => input.documentTypes!.includes(t));
+    if (documentTypes.length === 0) throw new DocumentGenerationError("Ese documento no está incluido en tu plan.", "not_entitled");
+  }
+  // Cupo mensual del plan: se comprueba antes de generar nada.
+  if (source.type === "subscription" && source.remaining !== null && documentTypes.length > source.remaining) {
+    throw new DocumentGenerationError(
+      source.remaining === 0
+        ? `Has usado los ${source.limit} documentos de tu plan en este periodo. Se renuevan con tu próxima factura o puedes cambiar a un plan superior.`
+        : `Te ${source.remaining === 1 ? "queda 1 documento" : `quedan ${source.remaining} documentos`} este periodo y quieres generar ${documentTypes.length}. Regenera solo los que necesites o cambia de plan.`,
+      "limit_reached",
+    );
+  }
+
   // Resolver plantillas antes de consumir nada.
   const templates: { documentType: string; template: ResolvedTemplate }[] = [];
-  for (const documentType of source.documentTypes) {
+  for (const documentType of documentTypes) {
     const locked = source.type === "purchase" ? source.lockedVersions[documentType] : undefined;
     const template = locked ? await loadTemplateVersion(db, locked) : await resolveActiveTemplate(db, documentType);
     templates.push({ documentType, template });
@@ -108,6 +126,7 @@ export async function generateDocuments(input: GenerateInput): Promise<Generated
       const meta: OutputMeta = {
         documentTypeName: documentTypeName(documentType),
         ownerName,
+        website: prepared.context.contact.website,
         generatedAt: now,
         templateVersionLabel: template.versionLabel,
         isDemo: template.isDemo,
@@ -215,6 +234,7 @@ export async function buildPreview(answers: Record<string, unknown>, documentTyp
   const meta: OutputMeta = {
     documentTypeName: documentTypeName(documentType),
     ownerName: prepared.context.owner.display_name,
+    website: prepared.context.contact.website,
     generatedAt: new Date(),
     templateVersionLabel: template.versionLabel,
     isDemo: template.isDemo,

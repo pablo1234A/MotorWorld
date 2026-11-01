@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Check, Briefcase, Building2, Laptop, ShoppingBag, Store, UserRound } from "lucide-react";
+import { ArrowRight, Check, Eye, FileCode2, ListChecks, Scale, Briefcase, Building2, Laptop, ShoppingBag, Store, UserRound } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/layout";
 import {
   CtaBand,
   DOCUMENTS,
   DocumentMock,
-  DocumentVisual,
-  Eyebrow,
   FaqList,
   JsonLd,
   PlanCards,
@@ -16,6 +14,7 @@ import {
   StepsList,
 } from "@/components/marketing/sections";
 import { getPublicFaqs, getPublicPlans } from "@/lib/public-data";
+import { HeroVisual } from "@/components/marketing/hero-visual";
 import { DISCLAIMER, site } from "@/config/site";
 import { cn } from "@/lib/cn";
 
@@ -56,15 +55,18 @@ export default async function HomePage() {
       <section className="relative isolate overflow-hidden pt-14 pb-24 sm:pt-20 lg:pt-24">
         <div aria-hidden className="bg-dot-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_70%_60%_at_75%_35%,black,transparent)]" />
         <div aria-hidden className="bg-grain pointer-events-none absolute inset-0 -z-10 opacity-60" />
-        <Container className="grid items-center gap-16 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
+        <Container className="grid items-center gap-16 lg:grid-cols-[1.08fr_1fr] lg:gap-12">
           <div className="animate-rise">
-            <Eyebrow>Para autónomos, profesionales y pequeños negocios en España</Eyebrow>
-            <h1 className="mt-5 text-[38px] leading-[1.08] font-semibold sm:text-[50px] lg:text-[56px]">
-              Los textos legales de tu web, adaptados a tu negocio.
+            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-white/80 py-1.5 pr-3.5 pl-1.5 text-[12px] whitespace-nowrap text-ink-soft shadow-[var(--shadow-soft)] backdrop-blur sm:gap-2.5 sm:pr-4 sm:text-[13px]">
+              <span className="rounded-full bg-navy px-2.5 py-0.5 text-xs font-medium text-white">Para webs en España</span>
+              Aviso legal · Privacidad · Cookies
+            </p>
+            <h1 className="mt-6 text-[38px] leading-[1.06] font-semibold sm:text-[48px] xl:text-[52px]">
+              Los textos legales de tu web, <span className="text-blue">adaptados a tu negocio.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-muted">
-              Responde unas preguntas sencillas y obtén tu aviso legal, tu política de privacidad y tu política de cookies, construidos con
-              plantillas estructuradas que incluyen solo lo que corresponde a tu actividad.
+            <p className="mt-6 max-w-[34rem] text-[18px] leading-relaxed text-muted">
+              Responde unas preguntas sobre tu actividad y obtén tu aviso legal, tu política de privacidad y tu política de cookies, listos para
+              publicar en tu web.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href="/registro" className={buttonClass("primary", "lg")}>
@@ -74,18 +76,42 @@ export default async function HomePage() {
                 Ver cómo funciona
               </Link>
             </div>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
-              <li>Vista previa antes de pagar</li>
-              <li>PDF y HTML</li>
-              <li>Sin conocimientos jurídicos</li>
+            <ul className="mt-10 grid max-w-[34rem] gap-4 border-t border-line pt-6 sm:grid-cols-3">
+              {[
+                { icon: ListChecks, t: "Solo lo que te aplica", d: "Preguntas según tu actividad" },
+                { icon: Eye, t: "Vista previa gratis", d: "Antes de elegir plan" },
+                { icon: FileCode2, t: "PDF y código HTML", d: "Listo para pegar en tu web" },
+              ].map((f) => (
+                <li key={f.t} className="flex gap-3 sm:block">
+                  <f.icon className="mt-0.5 h-5 w-5 shrink-0 text-blue sm:mb-2" aria-hidden />
+                  <span>
+                    <span className="block text-sm font-semibold text-navy-950">{f.t}</span>
+                    <span className="block text-[13px] text-muted">{f.d}</span>
+                  </span>
+                </li>
+              ))}
             </ul>
           </div>
-          <DocumentVisual />
+          <HeroVisual />
+        </Container>
+      </section>
+
+      {/* Marco normativo */}
+      <section aria-label="Normativa de referencia" className="border-y border-line bg-white/70">
+        <Container className="flex flex-col items-center gap-x-10 gap-y-3 py-6 text-center sm:flex-row sm:justify-center">
+          <p className="text-sm font-medium text-ink">Plantillas estructuradas según la normativa española y europea</p>
+          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-1.5 text-sm text-muted">
+            {["LSSI-CE", "RGPD", "LOPDGDD", "Guía de cookies de la AEPD"].map((n) => (
+              <li key={n} className="flex items-center gap-2">
+                <Scale className="h-3.5 w-3.5 text-blue" aria-hidden /> {n}
+              </li>
+            ))}
+          </ul>
         </Container>
       </section>
 
       {/* Problema y propuesta de valor */}
-      <section className="border-y border-line bg-white py-20">
+      <section className="border-b border-line bg-white py-20">
         <Container className="grid gap-12 lg:grid-cols-2 lg:gap-20">
           <SectionHeading
             eyebrow="El problema"
@@ -169,8 +195,8 @@ export default async function HomePage() {
       {/* Precios */}
       <section className="border-t border-line bg-white py-24" id="precios">
         <Container>
-          <SectionHeading center eyebrow="Precios" title="Elige cómo quieres pagar" lead="Pago único si solo necesitas tus documentos ahora. Suscripción si quieres mantenerlos al día." />
-          <div className="mx-auto mt-14 max-w-4xl space-y-10">
+          <SectionHeading center eyebrow="Precios" title="Un plan para cada negocio" lead="Elige según cuántos documentos generes al mes, o paga una sola vez si solo los necesitas ahora." />
+          <div className="mx-auto mt-14 max-w-6xl space-y-10">
             <PlanCards plans={plans} />
             <PlanComparison plans={plans} />
             <p className="text-center text-sm text-muted">{DISCLAIMER}</p>

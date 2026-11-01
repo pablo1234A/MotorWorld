@@ -244,8 +244,11 @@ export async function renderPdf(doc: RenderedDocument, meta: OutputMeta): Promis
     l.y -= h + 18;
   }
 
-  l.text(doc.title, { font: fonts.bold, size: 22, color: COLOR.primary, lineHeight: 28, gapAfter: 4 });
-  l.text(meta.ownerName, { size: 10, color: COLOR.muted, gapAfter: 14 });
+  // Franja de marca y bloque de identificación del documento.
+  l.page.drawRectangle({ x: MARGIN.left, y: l.y + 8, width: 36, height: 3, color: COLOR.secondary });
+  l.text(doc.title, { font: fonts.bold, size: 22, color: COLOR.primary, lineHeight: 28, gapAfter: 6 });
+  const idLines = [`Titular: ${meta.ownerName}`, ...(meta.website ? [`Sitio web: ${meta.website}`] : [])];
+  idLines.forEach((t, i) => l.text(t, { size: 9.5, color: COLOR.muted, lineHeight: 13.5, gapAfter: i === idLines.length - 1 ? 14 : 0 }));
   l.page.drawLine({ start: { x: MARGIN.left, y: l.y }, end: { x: PAGE.width - MARGIN.right, y: l.y }, thickness: 0.8, color: COLOR.border });
   l.y -= 16;
 
@@ -262,7 +265,21 @@ export async function renderPdf(doc: RenderedDocument, meta: OutputMeta): Promis
   const total = l.pages.length;
   const footer = l.sanitize(`${doc.title} · ${meta.ownerName}`, fonts.regular);
   const trace = l.sanitize(`Generado con Legalito · Plantilla ${meta.templateVersionLabel}`, fonts.regular);
+  const runningLeft = l.sanitize(doc.title, fonts.bold);
+  const runningRight = l.sanitize(meta.ownerName.length > 60 ? `${meta.ownerName.slice(0, 57)}...` : meta.ownerName, fonts.regular);
   l.pages.forEach((page, i) => {
+    // Encabezado de página a partir de la segunda.
+    if (i > 0) {
+      page.drawText(runningLeft, { x: MARGIN.left, y: PAGE.height - 38, size: 8, font: fonts.bold, color: COLOR.primary });
+      page.drawText(runningRight, {
+        x: PAGE.width - MARGIN.right - fonts.regular.widthOfTextAtSize(runningRight, 8),
+        y: PAGE.height - 38,
+        size: 8,
+        font: fonts.regular,
+        color: COLOR.muted,
+      });
+      page.drawLine({ start: { x: MARGIN.left, y: PAGE.height - 46 }, end: { x: PAGE.width - MARGIN.right, y: PAGE.height - 46 }, thickness: 0.5, color: COLOR.border });
+    }
     page.drawLine({ start: { x: MARGIN.left, y: 44 }, end: { x: PAGE.width - MARGIN.right, y: 44 }, thickness: 0.5, color: COLOR.border });
     page.drawText(footer.length > 90 ? `${footer.slice(0, 87)}...` : footer, { x: MARGIN.left, y: 30, size: 8, font: fonts.regular, color: COLOR.muted });
     const label = `Página ${i + 1} de ${total}`;

@@ -146,7 +146,7 @@ export const LEGAL_PAGES: LegalPage[] = [
         heading: "Modalidades y precios",
         bullets: [
           "Pago único: generación de los documentos incluidos, descarga en PDF y HTML, acceso permanente a los documentos comprados y un número limitado de regeneraciones con la versión de plantilla vigente en la compra. No incluye actualizaciones futuras.",
-          "Suscripción mensual: generación de los documentos incluidos, regeneración ilimitada, acceso a las nuevas versiones revisadas de las plantillas, historial y avisos. Se renueva automáticamente cada mes hasta su cancelación.",
+          "Suscripción mensual (planes Básico, Medium y Business): generación de los documentos incluidos dentro del cupo mensual del plan contratado (20, 50 o ilimitados por periodo de facturación), acceso a las nuevas versiones revisadas de las plantillas, historial y avisos. Se renueva automáticamente cada mes hasta su cancelación. El cupo no utilizado no se acumula.",
           "Los precios se muestran con impuestos incluidos en la página de precios y en el proceso de pago.",
         ],
       },

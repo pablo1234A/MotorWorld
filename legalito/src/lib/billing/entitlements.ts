@@ -6,7 +6,17 @@ import type { ProductRow, PurchaseRow, SubscriptionRow, SubscriptionStatus } fro
  * el navegador nunca decide qué puede hacer un cliente.
  */
 export type EntitlementSource =
-  | { type: "subscription"; subscriptionId: string; documentTypes: string[]; includesUpdates: boolean }
+  | {
+      type: "subscription";
+      subscriptionId: string;
+      documentTypes: string[];
+      includesUpdates: boolean;
+      /** Cupo del periodo (null = ilimitado), documentos usados y restantes. */
+      limit: number | null;
+      used: number;
+      remaining: number | null;
+      periodEnd: string | null;
+    }
   | { type: "purchase"; purchaseId: string; documentTypes: string[]; remaining: number | null; lockedVersions: Record<string, string> };
 
 export interface Entitlements {
@@ -21,6 +31,10 @@ export interface Entitlements {
   blockedReason: string | null;
   /** Hay una incidencia de pago que requiere acción. */
   paymentIssue: boolean;
+  /** Nombre del plan de la suscripción (si existe). */
+  planName: string | null;
+  /** Cupo del periodo de la suscripción activa (null si no aplica). */
+  quota: { limit: number | null; used: number; remaining: number | null; periodEnd: string | null } | null;
 }
 
 const ACTIVE: SubscriptionStatus[] = ["active", "trialing"];
@@ -30,6 +44,8 @@ export function computeEntitlements(input: {
   subscriptions: SubscriptionRow[];
   purchases: PurchaseRow[];
   products: ProductRow[];
+  /** Documentos generados en el periodo actual, por id de suscripción. */
+  usage?: Record<string, number>;
 }): Entitlements {
   const productById = new Map(input.products.map((p) => [p.id, p]));
 
@@ -41,22 +57,38 @@ export function computeEntitlements(input: {
   const remaining = (p: PurchaseRow) => (p.generations_limit === null ? Infinity : p.generations_limit - p.generations_used);
   const usablePurchase = [...activePurchases].filter((p) => remaining(p) > 0).sort((a, b) => remaining(b) - remaining(a))[0];
 
+  let quotaReason: string | null = null;
+  let quotaExhausted: Entitlements["quota"] = null;
+  const subProductName = subscription?.product_id ? (productById.get(subscription.product_id)?.name ?? null) : null;
   if (subscription && ACTIVE.includes(subscription.status)) {
     const product = subscription.product_id ? productById.get(subscription.product_id) : undefined;
-    return {
-      plan: "subscription",
-      canGenerate: true,
-      source: {
-        type: "subscription",
-        subscriptionId: subscription.id,
-        documentTypes: product?.included_document_types ?? ["aviso_legal", "privacidad", "cookies"],
-        includesUpdates: product?.includes_updates ?? true,
-      },
-      subscription,
-      activePurchases,
-      blockedReason: null,
-      paymentIssue: false,
-    };
+    const limit = product?.documents_per_period ?? null;
+    const used = input.usage?.[subscription.id] ?? 0;
+    const remaining = limit === null ? null : Math.max(limit - used, 0);
+    if (remaining === null || remaining > 0) {
+      return {
+        plan: "subscription",
+        canGenerate: true,
+        source: {
+          type: "subscription",
+          subscriptionId: subscription.id,
+          documentTypes: product?.included_document_types ?? ["aviso_legal", "privacidad", "cookies"],
+          includesUpdates: product?.includes_updates ?? true,
+          limit,
+          used,
+          remaining,
+          periodEnd: subscription.current_period_end,
+        },
+        subscription,
+        activePurchases,
+        blockedReason: null,
+        paymentIssue: false,
+        planName: product?.name ?? null,
+        quota: { limit, used, remaining, periodEnd: subscription.current_period_end },
+      };
+    }
+    quotaExhausted = { limit, used, remaining: 0, periodEnd: subscription.current_period_end };
+    quotaReason = `Has usado los ${limit} documentos de tu plan en este periodo. El cupo se renueva con tu próxima factura, o puedes cambiar a un plan superior.`;
   }
 
   const paymentIssue = Boolean(subscription && ["past_due", "unpaid", "incomplete"].includes(subscription.status));
@@ -64,7 +96,7 @@ export function computeEntitlements(input: {
   if (usablePurchase) {
     const r = remaining(usablePurchase);
     return {
-      plan: "one_time",
+      plan: subscription && ACTIVE.includes(subscription.status) ? "subscription" : "one_time",
       canGenerate: true,
       source: {
         type: "purchase",
@@ -77,21 +109,26 @@ export function computeEntitlements(input: {
       activePurchases,
       blockedReason: null,
       paymentIssue,
+      planName: subProductName,
+      quota: quotaExhausted,
     };
   }
 
   let blockedReason = "Necesitas una compra o una suscripción activa para generar documentos.";
-  if (paymentIssue) blockedReason = "Hay un pago pendiente en tu suscripción. Actualiza tu método de pago para seguir generando documentos.";
+  if (quotaReason) blockedReason = quotaReason;
+  else if (paymentIssue) blockedReason = "Hay un pago pendiente en tu suscripción. Actualiza tu método de pago para seguir generando documentos.";
   else if (activePurchases.length > 0) blockedReason = "Has agotado las generaciones incluidas en tu compra.";
 
   return {
-    plan: activePurchases.length > 0 ? "one_time" : subscription ? "subscription" : "none",
+    plan: quotaReason ? "subscription" : activePurchases.length > 0 ? "one_time" : subscription ? "subscription" : "none",
     canGenerate: false,
     source: null,
     subscription,
     activePurchases,
     blockedReason,
     paymentIssue,
+    planName: subProductName,
+    quota: quotaExhausted,
   };
 }
 

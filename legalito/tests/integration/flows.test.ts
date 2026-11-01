@@ -70,7 +70,7 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
     await q("update public.organizations set stripe_customer_id = 'cus_alice' where id = $1", [alice.orgId]);
     await q("update public.organizations set stripe_customer_id = 'cus_bob' where id = $1", [bob.orgId]);
     await q("update public.products set stripe_price_id = 'price_one' where code = 'one_time_pack'");
-    await q("update public.products set stripe_price_id = 'price_sub' where code = 'subscription_monthly'");
+    await q("update public.products set stripe_price_id = 'price_sub' where code = 'subscription_basic'");
   }, 60_000);
 
   afterAll(async () => {
@@ -278,7 +278,7 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
       ended_at: null,
       trial_end: null,
       latest_invoice: "in_bob_1",
-      items: { data: [{ current_period_start: 1798761600, current_period_end: 1801440000, price: { id: "price_sub", unit_amount: 999, currency: "eur", recurring: { interval: "month" } } }] },
+      items: { data: [{ current_period_start: 1761955200, current_period_end: 1801440000, price: { id: "price_sub", unit_amount: 999, currency: "eur", recurring: { interval: "month" } } }] },
       ...over,
     });
 
@@ -301,10 +301,24 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
       expect(e.rows.map((r) => r.template)).toEqual(expect.arrayContaining(["subscription_activated", "documents_ready"]));
     });
 
-    it("el suscriptor regenera sin límite", async () => {
+    it("el suscriptor regenera, también documento a documento, dentro del cupo de su plan (Básico: 20)", async () => {
       const forms = await import("@/lib/actions/forms");
       as(bob);
+      // 3 de la activación + 4 × 3 = 15 documentos
       for (let i = 0; i < 4; i++) expect(await redirectOf(forms.generateNow({}))).toBe("/panel/documentos?generado=1");
+      const single = () => {
+        const fd = new FormData();
+        fd.set("document_type", "cookies");
+        return forms.generateNow({}, fd);
+      };
+      for (let i = 0; i < 3; i++) expect(await redirectOf(single())).toBe("/panel/documentos?generado=1"); // 18
+      expect((await forms.generateNow({})).error).toMatch(/quedan 2 documentos este periodo y quieres generar 3/);
+      for (let i = 0; i < 2; i++) expect(await redirectOf(single())).toBe("/panel/documentos?generado=1"); // 20
+      expect((await single()).error).toMatch(/Has usado los 20 documentos/);
+      const used = await q("select count(*)::int n from public.document_versions where organization_id = $1", [bob.orgId]);
+      expect(used.rows[0].n).toBe(20);
+      const { getMyEntitlements } = await import("@/lib/data/panel");
+      expect((await getMyEntitlements()).quota).toMatchObject({ limit: 20, used: 20, remaining: 0 });
     });
 
     it("un impago registra la incidencia, avisa una vez por intento y bloquea la generación", async () => {
@@ -329,6 +343,7 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
       as(bob);
       const forms = await import("@/lib/actions/forms");
       expect((await forms.generateNow({})).error).toMatch(/pago pendiente/);
+      // (el cupo de Bob ya estaba agotado; el impago tiene prioridad en el mensaje)
 
       // El reintento de cobro tiene éxito: el pago pasa a cobrado y la suscripción se reactiva.
       stripe.subscriptions.retrieve.mockResolvedValue(subObject());

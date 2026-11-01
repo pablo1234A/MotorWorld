@@ -8,6 +8,7 @@ import { ReviewBadge, fmtDate } from "@/components/app/status";
 import { GenerateButton } from "@/components/app/generate-button";
 import { CopyHtmlButton } from "@/components/app/copy-html-button";
 import { PublishGuideList } from "@/components/app/publish-guide";
+import { QuotaMeter } from "@/components/app/quota-meter";
 import { listDocuments, getMyEntitlements } from "@/lib/data/panel";
 import { documentTypeName, DOCUMENT_TYPES } from "@/lib/documents/registry";
 
@@ -88,6 +89,7 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/panel/
                           <CopyHtmlButton versionId={v.id} />
                         </>
                       )}
+                      {ent.source?.type === "subscription" && <GenerateButton label="Regenerar" documentType={d.document_type} variant="ghost" size="sm" />}
                       <Link href={`/panel/documentos/${d.id}`} className={buttonClass("ghost", "sm")}>
                         <History className="h-4 w-4" /> Historial ({d.versionCount})
                       </Link>
@@ -106,13 +108,14 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/panel/
             <PublishGuideList />
           </Panel>
           <Panel title="Regenerar documentos" description="Usa tus respuestas más recientes. Útil si ha cambiado tu negocio o hay una nueva versión de las plantillas.">
+            {ent.quota && <QuotaMeter quota={ent.quota} className="mb-5" />}
             {ent.canGenerate ? (
-              <GenerateButton label="Regenerar ahora" />
+              <GenerateButton label={ent.source?.type === "subscription" ? "Regenerar los tres" : "Regenerar ahora"} />
             ) : (
               <p className="text-sm text-muted">
                 {ent.blockedReason}{" "}
-                <Link href="/panel/precompra" className="text-link">
-                  Ver opciones
+                <Link href={ent.subscription && ["active", "trialing"].includes(ent.subscription.status) ? "/panel/suscripcion" : "/panel/precompra"} className="text-link">
+                  {ent.quota ? "Cambiar de plan" : "Ver opciones"}
                 </Link>
               </p>
             )}

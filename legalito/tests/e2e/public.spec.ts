@@ -36,11 +36,14 @@ test.describe("Web pública", () => {
     });
   }
 
-  test("la portada explica la propuesta y muestra los dos planes", async ({ page }) => {
+  test("la portada explica la propuesta y muestra los planes", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("textos legales");
     await expect(page.getByText("39,00 €").first()).toBeVisible();
-    await expect(page.getByText("9,99 €").first()).toBeVisible();
+    for (const price of ["5,99 €", "10,99 €", "30,99 €"]) await expect(page.getByText(price).first()).toBeVisible();
+    await expect(page.getByText("Hasta 20 documentos al mes").first()).toBeVisible();
+    await expect(page.getByText("Hasta 50 documentos al mes").first()).toBeVisible();
+    await expect(page.getByText("Documentos ilimitados").first()).toBeVisible();
     await expect(page.getByText(/no es un despacho de abogados/i).first()).toBeVisible();
     await expect(page.locator("body")).not.toContainText(/cumplimiento legal garantizado/i);
     const cta = page.getByRole("link", { name: /Crear mis documentos/ }).first();

@@ -10,6 +10,7 @@ import { getMyEntitlements } from "@/lib/data/panel";
 import { createSessionClient } from "@/lib/supabase/server";
 import { openBillingPortal } from "@/lib/actions/billing";
 import { formatPrice } from "@/lib/billing/entitlements";
+import { QuotaMeter } from "@/components/app/quota-meter";
 import type { PaymentRow, ProductRow } from "@/lib/db/types";
 
 export const metadata: Metadata = { title: "Mi suscripción" };
@@ -34,6 +35,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
       <div className="mb-6 space-y-3">
         {sp.portal === "no-disponible" && <Alert tone="info">Todavía no tienes datos de facturación en Stripe. Aparecerán tras tu primera compra.</Alert>}
         {sp.portal === "error" && <Alert tone="danger">No hemos podido abrir el portal de facturación. Inténtalo de nuevo en unos minutos.</Alert>}
+        {ent.quota && ent.quota.remaining === 0 && (
+          <Alert tone="warning" title="Has alcanzado el cupo de tu plan">
+            Has generado {ent.quota.used} documentos en este periodo. El cupo se renueva con tu próxima factura; si lo necesitas antes, cambia a un plan superior desde «Cambiar de plan o gestionar».
+          </Alert>
+        )}
         {ent.paymentIssue && (
           <Alert tone="danger" title="Pago pendiente">
             No hemos podido cobrar la última renovación. Stripe lo reintentará automáticamente; actualiza tu método de pago para evitar la cancelación.
@@ -44,16 +50,19 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
       <div className="grid gap-6 md:grid-cols-2">
         <Panel title="Plan actual">
           {sub ? (
+            <>
             <dl className="space-y-3 text-sm">
-              <Row label="Plan">{productName(sub.product_id)}</Row>
+              <Row label="Plan">{ent.planName ?? productName(sub.product_id)}</Row>
               <Row label="Estado"><SubscriptionBadge status={sub.status} /></Row>
               {sub.amount_cents !== null && <Row label="Precio">{formatPrice(sub.amount_cents, sub.currency ?? "eur")} / {sub.billing_interval === "year" ? "año" : "mes"}</Row>}
               {sub.status !== "canceled" && <Row label={sub.cancel_at_period_end || sub.cancel_at ? "Finaliza el" : "Próxima renovación"}>{fmtDate(sub.cancel_at ?? sub.current_period_end)}</Row>}
               {sub.status === "canceled" && <Row label="Finalizó el">{fmtDate(sub.ended_at ?? sub.canceled_at)}</Row>}
-              {(sub.cancel_at_period_end || sub.cancel_at) && sub.status !== "canceled" && (
-                <p className="rounded-lg bg-sand px-3 py-2 text-muted">Has cancelado la suscripción. Mantienes el acceso hasta el final del periodo pagado.</p>
-              )}
             </dl>
+            {ent.quota && <QuotaMeter quota={ent.quota} className="mt-4 border-t border-line pt-4" />}
+            {(sub.cancel_at_period_end || sub.cancel_at) && sub.status !== "canceled" && (
+              <p className="mt-4 rounded-lg bg-sand px-3 py-2 text-sm text-muted">Has cancelado la suscripción. Mantienes el acceso hasta el final del periodo pagado.</p>
+            )}
+            </>
           ) : ent.activePurchases.length > 0 ? (
             <div className="space-y-3 text-sm">
               {ent.activePurchases.map((p) => (
@@ -68,7 +77,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
                 </div>
               ))}
               <p className="pt-2 text-muted">
-                ¿Quieres recibir las nuevas versiones de las plantillas? <Link href="/panel/precompra?plan=subscription_monthly" className="text-link">Pásate a la suscripción</Link>.
+                ¿Quieres recibir las nuevas versiones de las plantillas? <Link href="/panel/precompra?plan=subscription_medium" className="text-link">Pásate a la suscripción</Link>.
               </p>
             </div>
           ) : (
@@ -76,11 +85,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
           )}
         </Panel>
 
-        <Panel title="Gestionar" description="Método de pago, facturas, cambio de plan y cancelación en el portal seguro de Stripe.">
+        <Panel title="Gestionar" description="Cambia de plan (Básico, Medium o Business), actualiza el método de pago, descarga facturas o cancela en el portal seguro de Stripe.">
           {canPortal ? (
             <form action={openBillingPortal}>
               <Button type="submit" variant="secondary">
-                Abrir portal de facturación <ExternalLink className="h-4 w-4" />
+                {sub && sub.status !== "canceled" ? "Cambiar de plan o gestionar" : "Abrir portal de facturación"} <ExternalLink className="h-4 w-4" />
               </Button>
             </form>
           ) : (

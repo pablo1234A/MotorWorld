@@ -3,8 +3,9 @@ import { canDownloadVersion, computeEntitlements, formatPrice } from "@/lib/bill
 import type { ProductRow, PurchaseRow, SubscriptionRow } from "@/lib/db/types";
 
 const products: ProductRow[] = [
-  { id: "p1", code: "one_time_pack", name: "Pago único", description: null, kind: "one_time", price_cents: 3900, currency: "eur", billing_interval: null, stripe_price_id: "price_1", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: 3, includes_updates: false, features: [], active: true, sort_order: 1 },
-  { id: "p2", code: "subscription_monthly", name: "Suscripción", description: null, kind: "subscription", price_cents: 999, currency: "eur", billing_interval: "month", stripe_price_id: "price_2", included_document_types: ["aviso_legal", "privacidad"], generations_limit: null, includes_updates: true, features: [], active: true, sort_order: 2 },
+  { id: "p1", code: "one_time_pack", name: "Pago único", description: null, kind: "one_time", price_cents: 3900, currency: "eur", billing_interval: null, stripe_price_id: "price_1", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: 3, includes_updates: false, documents_per_period: null, features: [], active: true, sort_order: 1 },
+  { id: "p2", code: "subscription_basic", name: "Básico", description: null, kind: "subscription", price_cents: 599, currency: "eur", billing_interval: "month", stripe_price_id: "price_2", included_document_types: ["aviso_legal", "privacidad"], generations_limit: null, includes_updates: true, documents_per_period: 20, features: [], active: true, sort_order: 2 },
+  { id: "p3", code: "subscription_business", name: "Business", description: null, kind: "subscription", price_cents: 3099, currency: "eur", billing_interval: "month", stripe_price_id: "price_3", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: null, includes_updates: true, documents_per_period: null, features: [], active: true, sort_order: 4 },
 ];
 
 const sub = (status: SubscriptionRow["status"], created = "2026-10-01"): SubscriptionRow => ({
@@ -72,6 +73,35 @@ describe("Permisos según el estado de pago", () => {
     expect(e.subscription?.status).toBe("active");
   });
 
+  it("el cupo mensual del plan limita la generación", () => {
+    const active = sub("active");
+    const ok = computeEntitlements({ subscriptions: [active], purchases: [], products, usage: { [active.id]: 18 } });
+    expect(ok.canGenerate).toBe(true);
+    expect(ok.source).toMatchObject({ type: "subscription", limit: 20, used: 18, remaining: 2 });
+    expect(ok.planName).toBe("Básico");
+    const full = computeEntitlements({ subscriptions: [active], purchases: [], products, usage: { [active.id]: 20 } });
+    expect(full.canGenerate).toBe(false);
+    expect(full.plan).toBe("subscription");
+    expect(full.quota).toMatchObject({ limit: 20, used: 20, remaining: 0 });
+    expect(full.blockedReason).toMatch(/20 documentos/);
+  });
+
+  it("el plan Business no tiene límite de documentos", () => {
+    const business = { ...sub("active"), product_id: "p3" };
+    const e = computeEntitlements({ subscriptions: [business], purchases: [], products, usage: { [business.id]: 500 } });
+    expect(e.canGenerate).toBe(true);
+    expect(e.source).toMatchObject({ limit: null, remaining: null });
+    expect(e.planName).toBe("Business");
+  });
+
+  it("con el cupo agotado puede usar una compra de pago único si la tiene", () => {
+    const active = sub("active");
+    const e = computeEntitlements({ subscriptions: [active], purchases: [purchase(0)], products, usage: { [active.id]: 20 } });
+    expect(e.canGenerate).toBe(true);
+    expect(e.source?.type).toBe("purchase");
+    expect(e.plan).toBe("subscription");
+  });
+
   it("solo se descargan versiones no revocadas", () => {
     expect(canDownloadVersion({ revoked_at: null })).toBe(true);
     expect(canDownloadVersion({ revoked_at: "2026-10-10T00:00:00Z" })).toBe(false);
@@ -79,6 +109,7 @@ describe("Permisos según el estado de pago", () => {
 
   it("formatea precios en euros", () => {
     expect(formatPrice(3900).replace(/\s/g, " ")).toBe("39,00 €");
-    expect(formatPrice(999).replace(/\s/g, " ")).toBe("9,99 €");
+    expect(formatPrice(599).replace(/\s/g, " ")).toBe("5,99 €");
+    expect(formatPrice(3099).replace(/\s/g, " ")).toBe("30,99 €");
   });
 });

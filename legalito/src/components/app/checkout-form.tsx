@@ -17,6 +17,7 @@ export interface CheckoutPlan {
   description: string;
   features: string[];
   available: boolean;
+  recommended?: boolean;
 }
 
 export function CheckoutForm({ plans, defaultPlan }: { plans: CheckoutPlan[]; defaultPlan?: string }) {
@@ -37,6 +38,7 @@ export function CheckoutForm({ plans, defaultPlan }: { plans: CheckoutPlan[]; de
                 !p.available && "cursor-not-allowed opacity-60",
               )}
             >
+              {p.recommended && <span className="absolute -top-2.5 left-5 rounded-md bg-navy px-2 py-0.5 text-[11px] font-medium text-white">Recomendado</span>}
               <input type="radio" name="product" value={p.code} checked={selected === p.code} onChange={() => setSelected(p.code)} disabled={!p.available} className="sr-only" />
               <span className="flex items-start justify-between gap-3">
                 <span>

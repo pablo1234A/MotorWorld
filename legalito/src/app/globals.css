@@ -126,4 +126,8 @@
   .legal-prose .lg-notice { @apply mb-6 rounded-lg border border-warning/30 bg-warning-bg px-4 py-3 text-sm text-warning; }
   .legal-prose .lg-callout { @apply mb-4 rounded-r-lg border-l-2 border-blue bg-blue-50 px-4 py-3 text-sm; }
   .legal-prose .lg-callout p { @apply mb-0; }
+  .legal-prose .lg-meta { @apply -mt-3 mb-6 border-b border-line pb-4 text-sm text-muted; }
+  .legal-prose .lg-toc { @apply mb-7 rounded-xl border border-line bg-sand/50 px-5 py-4; }
+  .legal-prose .lg-toc-title { @apply mb-2 font-semibold text-navy; }
+  .legal-prose .lg-toc ol { @apply mb-0 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2; }
 }

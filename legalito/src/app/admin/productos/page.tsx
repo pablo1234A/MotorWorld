@@ -23,7 +23,7 @@ export default async function AdminProductsPage() {
       </Alert>
       <div className="space-y-6">
         {products.map((p) => (
-          <Panel key={p.id} title={`${p.name} · ${formatPrice(p.price_cents, p.currency)}${p.kind === "subscription" ? " / mes" : ""}`} description={`Código: ${p.code} · ${p.kind === "subscription" ? "Suscripción" : "Pago único"}`}>
+          <Panel key={p.id} title={`${p.name} · ${formatPrice(p.price_cents, p.currency)}${p.kind === "subscription" ? " / mes" : ""}`} description={`Código: ${p.code} · ${p.kind === "subscription" ? "Suscripción" : "Pago único"}${p.active ? "" : " · Inactivo"}`}>
             <ActionForm action={updateProduct.bind(null, p.id)} submitLabel="Guardar plan">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field id={`name-${p.id}`} label="Nombre" required><Input id={`name-${p.id}`} name="name" defaultValue={p.name} /></Field>
@@ -39,7 +39,16 @@ export default async function AdminProductsPage() {
                 </div>
               </fieldset>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field id={`gen-${p.id}`} label="Límite de generaciones" hint="Vacío = ilimitadas."><Input id={`gen-${p.id}`} name="generations_limit" inputMode="numeric" defaultValue={p.generations_limit ?? ""} /></Field>
+                {p.kind === "subscription" ? (
+                  <Field id={`docs-${p.id}`} label="Documentos por mes" hint="Por periodo de facturación. Vacío = ilimitados.">
+                    <Input id={`docs-${p.id}`} name="documents_per_period" inputMode="numeric" defaultValue={p.documents_per_period ?? ""} />
+                    <input type="hidden" name="generations_limit" value="" />
+                  </Field>
+                ) : (
+                  <Field id={`gen-${p.id}`} label="Límite de generaciones" hint="Cada generación produce el conjunto completo. Vacío = ilimitadas.">
+                    <Input id={`gen-${p.id}`} name="generations_limit" inputMode="numeric" defaultValue={p.generations_limit ?? ""} />
+                  </Field>
+                )}
                 <div className="flex flex-col justify-end gap-3 pb-1">
                   <Checkbox name="includes_updates" defaultChecked={p.includes_updates} label="Incluye nuevas versiones de plantillas" />
                   <Checkbox name="active" defaultChecked={p.active} label="Plan activo" />
