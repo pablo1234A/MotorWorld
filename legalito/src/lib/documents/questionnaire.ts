@@ -134,7 +134,7 @@ export const QUESTIONS: Question[] = [
     step: "titular",
     type: "text",
     label: "Nombre comercial",
-    help: "Opcional. El nombre con el que te conocen tus clientes, si es distinto.",
+    help: "El nombre con el que te conocen tus clientes, si es distinto.",
     maxLength: 200,
     autocomplete: "organization",
   },
@@ -220,7 +220,7 @@ export const QUESTIONS: Question[] = [
     required: true,
     autocomplete: "email",
   },
-  { id: "phone", step: "contacto", type: "tel", label: "Teléfono de contacto", help: "Opcional.", maxLength: 30, autocomplete: "tel" },
+  { id: "phone", step: "contacto", type: "tel", label: "Teléfono de contacto", maxLength: 30, autocomplete: "tel" },
   {
     id: "website_url",
     step: "contacto",
@@ -409,7 +409,7 @@ export const QUESTIONS: Question[] = [
     step: "cookies",
     type: "repeater",
     label: "Otras cookies que conozcas",
-    help: "Opcional. Si un escaneo de tu web muestra cookies adicionales, añádelas aquí.",
+    help: "Si un escaneo de tu web muestra cookies adicionales, añádelas aquí.",
     maxItems: 20,
     fields: [
       { id: "name", label: "Nombre", required: true, maxLength: 80, placeholder: "_ejemplo" },
@@ -504,7 +504,7 @@ export const QUESTIONS: Question[] = [
     step: "servicios",
     type: "repeater",
     label: "Otros proveedores que tratan datos de tus usuarios",
-    help: "Opcional. Por ejemplo: CRM, herramienta de facturación o de reservas.",
+    help: "Por ejemplo: CRM, herramienta de facturación o de reservas.",
     maxItems: 15,
     fields: [
       { id: "name", label: "Proveedor", required: true, maxLength: 100 },

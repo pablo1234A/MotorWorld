@@ -1,0 +1,49 @@
+# Configuración para el desarrollo local con Supabase CLI (`supabase start`).
+# En el proyecto alojado, replica estos ajustes en el panel de Supabase (ver docs/SUPABASE.md).
+project_id = "legalito"
+
+[api]
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 16
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed/base.sql", "./seed/templates.sql"]
+
+[storage]
+file_size_limit = "5MiB"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/confirm"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+minimum_password_length = 10
+password_requirements = "letters_digits"
+
+[auth.rate_limit]
+email_sent = 4
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = true
+max_frequency = "60s"
+
+[auth.email.template.confirmation]
+subject = "Confirma tu email en Legalito"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Crea una nueva contraseña de Legalito"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirma tu nuevo email en Legalito"
+content_path = "./supabase/templates/email_change.html"
