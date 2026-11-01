@@ -37,7 +37,7 @@ select * from (values
    'Desde «Mis documentos» en tu panel puedes descargar cada documento en PDF y en HTML. El HTML está pensado para copiarlo y pegarlo en tu web.',
    'documentos', 4),
   ('¿Qué incluye la suscripción?',
-   'Hay tres planes: Básico (5,99 €/mes, hasta 20 documentos al mes), Medium (10,99 €/mes, hasta 50) y Business (30,99 €/mes, ilimitados). Todos incluyen aviso legal, privacidad y cookies, las nuevas versiones de las plantillas cuando se publiquen tras una revisión documentada, el historial de versiones y avisos de cambios relevantes.',
+   'Hay tres planes: Básico (5,99 €/mes, hasta 20 documentos al mes), Medium (9,99 €/mes, hasta 50) y Business (19,99 €/mes, ilimitados). Todos incluyen aviso legal, privacidad y cookies, las nuevas versiones de las plantillas cuando se publiquen tras una revisión documentada, el historial de versiones y avisos de cambios relevantes.',
    'suscripcion', 5),
   ('¿Cómo cancelo la suscripción?',
    'Desde «Mi suscripción» en tu panel accedes al portal seguro de Stripe, donde puedes cancelar en cualquier momento. Mantienes el acceso hasta el final del periodo ya pagado y conservas la descarga de los documentos generados.',

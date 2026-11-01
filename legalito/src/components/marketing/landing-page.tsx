@@ -5,6 +5,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/layout";
 import { CtaBand, Eyebrow, JsonLd } from "@/components/marketing/sections";
 import { LANDINGS, type Landing } from "@/content/landings";
+import { GUIDES, guidesForLanding } from "@/content/guides";
 import { DISCLAIMER, site } from "@/config/site";
 
 export function landingMetadata(slug: string): Metadata {
@@ -19,6 +20,8 @@ export function landingMetadata(slug: string): Metadata {
 
 export function LandingPage({ slug }: { slug: string }) {
   const l: Landing = LANDINGS.find((x) => x.slug === slug)!;
+  const own = guidesForLanding(`/${l.slug}`);
+  const guides = [...own, ...GUIDES.filter((g) => !own.includes(g))].slice(0, 3);
   return (
     <>
       <JsonLd
@@ -81,6 +84,18 @@ export function LandingPage({ slug }: { slug: string }) {
                 </div>
               ))}
             </dl>
+          </div>
+          <div>
+            <h2 className="text-[22px] font-semibold">Guías relacionadas</h2>
+            <ul className="mt-5 space-y-3">
+              {guides.map((g) => (
+                <li key={g.slug}>
+                  <Link href={`/guias/${g.slug}`} className="text-link font-medium">
+                    {g.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
           <p className="text-sm text-subtle">{DISCLAIMER}</p>
         </Container>

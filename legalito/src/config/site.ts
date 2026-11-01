@@ -25,6 +25,7 @@ export const company = {
 export const mainNav = [
   { href: "/como-funciona", label: "Cómo funciona" },
   { href: "/precios", label: "Precios" },
+  { href: "/guias", label: "Guías" },
   { href: "/preguntas-frecuentes", label: "Preguntas frecuentes" },
   { href: "/contacto", label: "Contacto" },
 ];

@@ -47,6 +47,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Todo salvo estáticos, imágenes, metadatos y el webhook de Stripe (que no usa cookies).
-    "/((?!_next/static|_next/image|icon.svg|logo.svg|robots.txt|sitemap.xml|api/stripe/webhook|api/analytics).*)",
+    "/((?!_next/static|_next/image|icon.svg|logo.svg|logo-512.png|robots.txt|sitemap.xml|api/stripe/webhook|api/analytics).*)",
   ],
 };

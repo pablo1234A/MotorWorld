@@ -102,3 +102,25 @@ Dos generaciones simultáneas del mismo cliente podrían superar el cupo por uno
 
 ## Recomendación de producto
 Los cupos de 20 y 50 documentos al mes cobran todo su sentido si una cuenta puede gestionar **varias webs o negocios** (agencias, gestorías, consultores). Es la evolución natural para justificar Medium y Business.
+
+---
+
+# Ronda 4 · Precios y posicionamiento
+
+- Precios actualizados: **Medium 9,99 €/mes** (antes 10,99) y **Business 19,99 €/mes** (antes 30,99). Migración `20261101000600_plan_prices.sql`. En Stripe hay que crear precios nuevos (son inmutables) y asignarlos en /admin/productos.
+- **SEO** (detalle y pasos del propietario en `docs/SEO.md`):
+  - Sección **Guías** (`/guias`) con 6 guías largas y originales: aviso legal, política de privacidad, cookies y banner, obligatoriedad de los textos legales, tiendas online y RGPD para autónomos. Índice navegable, tablas, FAQ, migas de pan y fecha de actualización.
+  - Datos estructurados: `Organization` y `WebSite` en todas las páginas; `Article`, `BreadcrumbList` y `FAQPage` en guías; `CollectionPage` en el índice.
+  - Título de portada orientado a la búsqueda principal y URL canónica; metaetiquetas de verificación de Google y Bing por variable de entorno; sitemap con guías y `lastmod`; logotipo PNG para Google.
+  - Enlazado interno: «Guías» en el menú, columnas «Soluciones» y «Guías» en el pie, guías destacadas en portada y guías relacionadas en cada landing.
+  - Corrección detectada al revisar: con cinco enlaces, el menú de escritorio se partía en dos líneas a 1024 px. Ahora el menú completo aparece desde 1024 px sin cortes y por debajo se usa el menú móvil.
+- **Exportación HTML**: `scripts/export-html.mjs` genera la web pública en HTML estático (24 páginas con enlaces relativos y menú móvil sin JavaScript de Next) y una portada en un solo archivo con estilos y fuentes incrustados. Sirve para enseñar o revisar la web sin servidor; formularios, acceso, pagos y panel requieren la aplicación.
+
+## Resultado de las pruebas (ronda 4)
+| Suite | Resultado |
+| --- | --- |
+| Unitarias + base de datos + flujos | **108 / 108** |
+| E2E pública con accesibilidad WCAG 2.1 AA (ahora incluye las 7 páginas de guías, datos estructurados, canónicas y sitemap) | **83 / 83** |
+| Exportación HTML abierta desde disco | Sin enlaces rotos; fuentes y menú móvil funcionando |
+
+El área privada no se ha modificado en esta ronda (solo precios por defecto, ya cubiertos por las pruebas unitarias).

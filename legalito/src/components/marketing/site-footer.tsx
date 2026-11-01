@@ -2,11 +2,12 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { DISCLAIMER, legalNav, mainNav } from "@/config/site";
 import { LANDINGS } from "@/content/landings";
+import { GUIDES } from "@/content/guides";
 
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-line bg-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] lg:px-8">
         <div className="max-w-xs">
           <Logo />
           <p className="mt-4 text-sm leading-relaxed text-muted">
@@ -14,7 +15,8 @@ export function SiteFooter() {
           </p>
         </div>
         <FooterColumn title="Producto" links={mainNav} />
-        <FooterColumn title="Guías" links={LANDINGS.map((l) => ({ href: `/${l.slug}`, label: l.navLabel }))} />
+        <FooterColumn title="Soluciones" links={LANDINGS.map((l) => ({ href: `/${l.slug}`, label: l.navLabel }))} />
+        <FooterColumn title="Guías" links={[...GUIDES.slice(0, 5).map((g) => ({ href: `/guias/${g.slug}`, label: g.navLabel })), { href: "/guias", label: "Todas las guías" }]} />
         <FooterColumn title="Legal" links={legalNav} />
       </div>
       <div className="border-t border-line">

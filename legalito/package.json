@@ -13,6 +13,7 @@
     "test:db": "vitest run tests/integration",
     "test:e2e:build": "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54399 NEXT_PUBLIC_SUPABASE_ANON_KEY=e2e-anon-key-not-real-0000000000 next build",
     "test:e2e": "playwright test",
+    "export:html": "node scripts/export-html.mjs",
     "db:seed:generate": "tsx scripts/generate-template-seed.ts",
     "check": "npm run lint && npm run typecheck && npm run test"
   },

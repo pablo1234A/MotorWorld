@@ -90,4 +90,5 @@ legalito/
 - [Supabase](docs/SUPABASE.md) · [Stripe](docs/STRIPE.md) · [Despliegue](docs/DEPLOYMENT.md)
 - [Seguridad y privacidad](docs/SECURITY.md) · [Pruebas](docs/TESTING.md)
 - [Lista de pendientes para abrir al público](docs/LAUNCH_CHECKLIST.md)
+- [Posicionamiento en Google (SEO)](docs/SEO.md) · exportar la web pública a HTML estático: `npm run export:html` (ver cabecera de `scripts/export-html.mjs`)
 - [Auditoría de calidad (ronda 2)](docs/AUDITORIA.md)

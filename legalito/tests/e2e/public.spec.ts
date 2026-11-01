@@ -14,6 +14,13 @@ const PUBLIC_PAGES = [
   "/generador-politica-de-cookies",
   "/textos-legales-pagina-web",
   "/documentos-legales-tienda-online",
+  "/guias",
+  "/guias/aviso-legal-que-es-y-que-debe-incluir",
+  "/guias/politica-de-privacidad-que-debe-incluir",
+  "/guias/politica-de-cookies-y-banner-de-consentimiento",
+  "/guias/es-obligatorio-aviso-legal-privacidad-cookies",
+  "/guias/textos-legales-tienda-online",
+  "/guias/rgpd-para-autonomos",
   "/legal/aviso-legal",
   "/legal/privacidad",
   "/legal/cookies",
@@ -40,7 +47,7 @@ test.describe("Web pública", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("textos legales");
     await expect(page.getByText("39,00 €").first()).toBeVisible();
-    for (const price of ["5,99 €", "10,99 €", "30,99 €"]) await expect(page.getByText(price).first()).toBeVisible();
+    for (const price of ["5,99 €", "9,99 €", "19,99 €"]) await expect(page.getByText(price).first()).toBeVisible();
     await expect(page.getByText("Hasta 20 documentos al mes").first()).toBeVisible();
     await expect(page.getByText("Hasta 50 documentos al mes").first()).toBeVisible();
     await expect(page.getByText("Documentos ilimitados").first()).toBeVisible();
@@ -55,15 +62,49 @@ test.describe("Web pública", () => {
     await expect(page.getByText("Borrador pendiente de revisión jurídica")).toBeVisible();
   });
 
+  async function structuredTypes(page: import("@playwright/test").Page) {
+    const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+    return blocks.flatMap((b) => {
+      const data = JSON.parse(b);
+      return (data["@graph"] ?? [data]).map((n: { "@type": string }) => n["@type"]);
+    });
+  }
+
   test("el FAQ publica datos estructurados", async ({ page }) => {
     await page.goto("/preguntas-frecuentes");
-    const jsonld = await page.locator('script[type="application/ld+json"]').first().textContent();
-    expect(JSON.parse(jsonld!)["@type"]).toBe("FAQPage");
+    const types = await structuredTypes(page);
+    expect(types).toContain("FAQPage");
+    expect(types).toContain("Organization");
+    expect(types).toContain("WebSite");
+  });
+
+  test("las guías publican artículo, migas y FAQ, y enlazan a la landing", async ({ page }) => {
+    await page.goto("/guias/aviso-legal-que-es-y-que-debe-incluir");
+    expect(await structuredTypes(page)).toEqual(expect.arrayContaining(["Article", "BreadcrumbList", "FAQPage"]));
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/guias\/aviso-legal-que-es-y-que-debe-incluir$/);
+    await expect(page.getByRole("navigation", { name: "Ruta de navegación" })).toBeVisible();
+    await page.getByRole("navigation", { name: "En esta guía" }).getByRole("link").first().click();
+    await expect(page).toHaveURL(/#/);
+    await page.getByRole("link", { name: "Generador de aviso legal" }).first().click();
+    await expect(page).toHaveURL(/\/generador-aviso-legal$/);
+    await expect(page.getByRole("heading", { name: "Guías relacionadas" })).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(/cumplimiento legal garantizado/i);
+  });
+
+  test("la portada enlaza a las guías y tiene URL canónica", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+    await expect(page).toHaveTitle(/Generador de aviso legal, política de privacidad y cookies/);
+    await page.getByRole("link", { name: "Ver todas las guías" }).click();
+    await expect(page).toHaveURL(/\/guias$/);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Guías");
   });
 
   test("sitemap y robots", async ({ request }) => {
     const sitemap = await (await request.get("/sitemap.xml")).text();
     expect(sitemap).toContain("/generador-aviso-legal");
+    expect(sitemap).toContain("/guias/rgpd-para-autonomos");
+    expect(sitemap).toContain("<lastmod>");
     expect(sitemap).not.toContain("/panel");
     const robots = await (await request.get("/robots.txt")).text();
     expect(robots).toMatch(/Disallow: \//); // Entornos que no son producción no se indexan.

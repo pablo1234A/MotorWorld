@@ -6,7 +6,7 @@
 ```bash
 STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-setup.ts
 ```
-Crea «Pago único» (39 €) y los planes «Básico» (5,99 €/mes), «Medium» (10,99 €/mes) y «Business» (30,99 €/mes) con IVA incluido (`tax_behavior: inclusive`) y muestra los `price_…`. Pégalos en **/admin/productos**: al guardar se verifica el precio en Stripe y se sincroniza el importe mostrado.
+Crea «Pago único» (39 €) y los planes «Básico» (5,99 €/mes), «Medium» (9,99 €/mes) y «Business» (19,99 €/mes) con IVA incluido (`tax_behavior: inclusive`) y muestra los `price_…`. Pégalos en **/admin/productos**: al guardar se verifica el precio en Stripe y se sincroniza el importe mostrado.
 
 ## 2. Webhook
 Developers → Webhooks → Add endpoint: `https://tudominio.es/api/stripe/webhook`

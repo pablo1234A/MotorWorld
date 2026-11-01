@@ -17,6 +17,12 @@ import { getPublicFaqs, getPublicPlans } from "@/lib/public-data";
 import { HeroVisual } from "@/components/marketing/hero-visual";
 import { DISCLAIMER, site } from "@/config/site";
 import { cn } from "@/lib/cn";
+import { GUIDES } from "@/content/guides";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const BUSINESSES = [
   { icon: UserRound, name: "Autónomos", body: "Web para presentar tus servicios y recibir contactos." },
@@ -214,6 +220,31 @@ export default async function HomePage() {
             </Link>
           </div>
           <FaqList faqs={faqs.slice(0, 6)} />
+        </Container>
+      </section>
+
+      {/* Guías */}
+      <section className="border-t border-line bg-white py-24">
+        <Container>
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+            <SectionHeading eyebrow="Guías" title="Aprende qué necesita tu web" lead="Explicaciones claras sobre aviso legal, privacidad y cookies, sin jerga innecesaria." />
+            <Link href="/guias" className={cn(buttonClass("secondary", "md"), "shrink-0")}>
+              Ver todas las guías
+            </Link>
+          </div>
+          <ul className="mt-10 grid gap-4 md:grid-cols-3">
+            {GUIDES.slice(0, 3).map((g) => (
+              <li key={g.slug}>
+                <Link href={`/guias/${g.slug}`} className="group flex h-full flex-col rounded-2xl border border-line bg-white p-6 transition-[border-color,box-shadow] hover:border-navy/30 hover:shadow-[var(--shadow-lift)]">
+                  <span className="font-semibold leading-snug text-navy-950">{g.title}</span>
+                  <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted">{g.description}</span>
+                  <span className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-medium text-navy">
+                    Leer guía <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </Container>
       </section>
 

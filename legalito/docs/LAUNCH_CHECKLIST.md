@@ -7,6 +7,7 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 - [ ] Revisión del **catálogo de cookies** y de las reglas de adaptación (qué bloque aplica a qué caso).
 - [ ] Revisión de las **páginas legales propias** (`src/content/legal-pages.ts`): completar datos del titular, regiones de proveedores, política de reembolsos, desistimiento en suscripción y límites de responsabilidad. Después `NEXT_PUBLIC_LEGAL_PAGES_REVIEWED=true`.
 - [ ] Revisión de textos comerciales (sin promesas de cumplimiento) y de la cláusula de consentimiento de contenido digital en la precompra.
+- [ ] Revisión jurídica de las **guías** (`src/content/guides.ts`) antes de indexarlas.
 - [ ] Registro de actividades de tratamiento y contratos de encargo con Supabase, Vercel, Stripe y Resend.
 - [ ] Confirmar con gestoría: IVA, facturación de pagos únicos y suscripciones, alta censal de la actividad.
 
@@ -20,7 +21,8 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 - [ ] Copias de seguridad (Pro + PITR) y prueba de restauración.
 - [ ] MFA en todas las cuentas de servicio.
 - [ ] Sustituir el **logotipo provisional** (`public/logo.svg`, `src/app/icon.svg`, `src/components/ui/logo.tsx`) por el original.
-- [ ] Revisar la imagen Open Graph (`src/app/opengraph-image.tsx`) cuando esté el logotipo final.
+- [ ] Revisar la imagen Open Graph (`src/app/opengraph-image.tsx`) y `public/logo-512.png` cuando esté el logotipo final.
+- [ ] SEO: Search Console y Bing con sus variables de verificación, envío del sitemap (ver docs/SEO.md).
 
 ## Autorización expresa del propietario
 - [ ] Activar cobros reales: clave `sk_live_`, precios live y `STRIPE_LIVE_PAYMENTS_ENABLED=true`.
@@ -30,4 +32,4 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 - Integración o recomendación de plataformas de consentimiento de cookies.
 - Purga programada de registros antiguos (analítica, límites, errores).
 - Programa de afiliados sobre los parámetros `ref`/UTM ya registrados en el alta.
-- Contenido orgánico (guías) enlazado a las landings existentes.
+- Publicar 2 guías nuevas al mes y conseguir enlaces de calidad (docs/SEO.md).

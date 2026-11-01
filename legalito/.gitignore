@@ -44,3 +44,4 @@ next-env.d.ts
 /.next-qa/
 /test-results/
 /playwright-report/
+/entregables/

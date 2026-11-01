@@ -6,7 +6,7 @@ import { DISCLAIMER } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Precios",
-  description: "Planes Básico (5,99 €/mes), Medium (10,99 €/mes) y Business (30,99 €/mes), o pago único de 39 €. Aviso legal, privacidad y cookies con nuevas versiones revisadas de las plantillas.",
+  description: "Planes Básico (5,99 €/mes), Medium (9,99 €/mes) y Business (19,99 €/mes), o pago único de 39 €. Aviso legal, privacidad y cookies con nuevas versiones revisadas de las plantillas.",
   alternates: { canonical: "/precios" },
 };
 

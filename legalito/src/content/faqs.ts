@@ -32,7 +32,7 @@ export const DEFAULT_FAQS: Faq[] = [
   },
   {
     question: "¿Qué incluye la suscripción?",
-    answer: "Hay tres planes: Básico (5,99 €/mes, hasta 20 documentos al mes), Medium (10,99 €/mes, hasta 50) y Business (30,99 €/mes, ilimitados). Todos incluyen aviso legal, privacidad y cookies, las nuevas versiones de las plantillas cuando se publiquen tras una revisión documentada, el historial de versiones y avisos de cambios relevantes.",
+    answer: "Hay tres planes: Básico (5,99 €/mes, hasta 20 documentos al mes), Medium (9,99 €/mes, hasta 50) y Business (19,99 €/mes, ilimitados). Todos incluyen aviso legal, privacidad y cookies, las nuevas versiones de las plantillas cuando se publiquen tras una revisión documentada, el historial de versiones y avisos de cambios relevantes.",
     category: "suscripcion",
   },
   {
