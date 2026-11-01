@@ -31,7 +31,7 @@ export default async function FaqPage() {
       />
       <section className="pt-16 pb-12">
         <Container className="max-w-3xl">
-          <SectionHeading eyebrow="Ayuda" title="Preguntas frecuentes" lead="Si no encuentras lo que buscas, escríbenos desde la página de contacto." />
+          <SectionHeading as="h1" eyebrow="Ayuda" title="Preguntas frecuentes" lead="Si no encuentras lo que buscas, escríbenos desde la página de contacto." />
           <div className="mt-12 space-y-12">
             {categories.map((c) => (
               <div key={c}>

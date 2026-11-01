@@ -21,7 +21,7 @@ export default function HowItWorksPage() {
     <>
       <section className="pt-16 pb-20">
         <Container>
-          <SectionHeading eyebrow="Cómo funciona" title="Seis pasos, sin necesidad de conocimientos jurídicos" lead="El proceso está pensado para completarse sin ayuda. Si algo no está claro, cada pregunta incluye una explicación." />
+          <SectionHeading as="h1" eyebrow="Cómo funciona" title="Seis pasos, sin necesidad de conocimientos jurídicos" lead="El proceso está pensado para completarse sin ayuda. Si algo no está claro, cada pregunta incluye una explicación." />
           <div className="mt-14">
             <StepsList />
           </div>

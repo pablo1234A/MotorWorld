@@ -41,7 +41,14 @@ let cached: ServerEnv | null = null;
 
 export function env(): ServerEnv {
   if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+  // Las variables NEXT_PUBLIC_* se insertan en el build solo en accesos directos:
+  // se leen explícitamente para que el servidor use el mismo valor que el cliente.
+  const parsed = schema.safeParse({
+    ...process.env,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  });
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Configuración de entorno no válida: ${issues}`);

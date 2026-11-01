@@ -1,0 +1,60 @@
+import type { Answers } from "@/lib/documents/questionnaire";
+
+/** Respuestas de ejemplo con datos FICTICIOS: pruebas y vista previa de plantillas en administración. */
+
+/** Tienda online constituida como sociedad, con analítica, píxel y CMP. Datos ficticios. */
+export const shopAnswers: Answers = {
+  business_type: "tienda_online",
+  owner_type: "persona_juridica",
+  legal_name: "Cerámicas Ficticias S.L.",
+  trade_name: "Barro & Co",
+  nif: "B12345674",
+  address_line: "Calle Inventada 12, 2º B",
+  postal_code: "28013",
+  city: "Madrid",
+  province: "Madrid",
+  registry_data: "Registro Mercantil de Madrid, Tomo 1, Folio 1, Hoja M-1",
+  regulated_profession: true, // oculto para tiendas: debe descartarse
+  contact_email: "Hola@Barro.example",
+  phone: "+34 600 000 000",
+  website_url: "www.barro.example",
+  activity_description: "Venta online de cerámica artesanal.",
+  sells_to: "consumidores",
+  ships_goods: true,
+  data_collection: ["contacto", "newsletter", "pedidos", "cuentas"],
+  newsletter_provider: "Mailchimp",
+  special_categories: false,
+  minors: false,
+  has_dpo: false,
+  analytics_tool: "google_analytics",
+  advertising: ["meta_pixel"],
+  embeds: ["youtube"],
+  has_cmp: true,
+  cmp_name: "CookieYes",
+  hosting_provider: "Raiola Networks",
+  email_provider: "google_workspace",
+  payment_providers: ["stripe", "redsys"],
+  shipping_providers: "Correos",
+};
+
+/** Autónomo con web informativa que no recoge datos ni usa cookies. Datos ficticios. */
+export const freelancerAnswers: Answers = {
+  business_type: "autonomo_web",
+  owner_type: "persona_fisica",
+  legal_name: "Lucía Ejemplo Pérez",
+  nif: "12345678Z",
+  address_line: "Avenida Ficticia 3",
+  postal_code: "46001",
+  city: "Valencia",
+  province: "Valencia",
+  regulated_profession: false,
+  contact_email: "lucia@ejemplo.example",
+  website_url: "https://lucia.example",
+  activity_description: "Ilustración editorial.",
+  data_collection: ["ninguno"],
+  analytics_tool: "plausible",
+  advertising: ["ninguna"],
+  embeds: ["ninguno"],
+  hosting_provider: "Netlify",
+  email_provider: "hosting",
+};

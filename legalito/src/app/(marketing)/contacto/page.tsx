@@ -16,7 +16,7 @@ export default function ContactPage() {
     <section className="pt-16 pb-24">
       <Container className="grid gap-14 lg:grid-cols-[1fr_1.5fr]">
         <div>
-          <SectionHeading eyebrow="Contacto" title="¿En qué podemos ayudarte?" lead="Respondemos personalmente a cada mensaje. Si ya eres cliente, también puedes escribirnos desde la sección de ayuda de tu panel." />
+          <SectionHeading as="h1" eyebrow="Contacto" title="¿En qué podemos ayudarte?" lead="Respondemos personalmente a cada mensaje. Si ya eres cliente, también puedes escribirnos desde la sección de ayuda de tu panel." />
           <ul className="mt-10 space-y-6 text-[15px]">
             <li className="flex gap-3">
               <Clock className="mt-0.5 h-5 w-5 text-blue" aria-hidden />

@@ -16,7 +16,7 @@ export default async function PricingPage() {
   return (
     <section className="pt-16 pb-24">
       <Container>
-        <SectionHeading center eyebrow="Precios" title="Dos formas de pagar, sin letra pequeña" lead="Primero rellenas el formulario y ves la vista previa. Solo pagas si quieres descargar tus documentos." />
+        <SectionHeading as="h1" center eyebrow="Precios" title="Dos formas de pagar, sin letra pequeña" lead="Primero rellenas el formulario y ves la vista previa. Solo pagas si quieres descargar tus documentos." />
         <div className="mx-auto mt-14 max-w-4xl space-y-12">
           <PlanCards plans={plans} />
           <PlanComparison plans={plans} />

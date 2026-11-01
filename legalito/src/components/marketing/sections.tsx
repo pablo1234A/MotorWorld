@@ -11,11 +11,12 @@ export function Eyebrow({ children, className }: { children: React.ReactNode; cl
   return <p className={cn("text-[13px] font-semibold uppercase tracking-[0.12em] text-blue", className)}>{children}</p>;
 }
 
-export function SectionHeading({ eyebrow, title, lead, center }: { eyebrow?: string; title: string; lead?: string; center?: boolean }) {
+export function SectionHeading({ eyebrow, title, lead, center, as = "h2" }: { eyebrow?: string; title: string; lead?: string; center?: boolean; as?: "h1" | "h2" }) {
+  const Heading = as;
   return (
     <div className={cn("max-w-2xl", center && "mx-auto text-center")}>
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h2 className="mt-3 text-[28px] font-semibold leading-tight sm:text-[34px]">{title}</h2>
+      <Heading className={cn("mt-3 font-semibold leading-tight", as === "h1" ? "text-[32px] sm:text-[42px]" : "text-[28px] sm:text-[34px]")}>{title}</Heading>
       {lead && <p className="mt-4 text-[17px] leading-relaxed text-muted">{lead}</p>}
     </div>
   );
