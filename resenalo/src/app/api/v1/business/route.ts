@@ -3,7 +3,7 @@ import { route } from "@/server/http/handler";
 import { tenantRoute } from "@/server/http/tenant";
 import { readJson } from "@/server/http/request";
 import { requireUser } from "@/server/auth/context";
-import { businessSchema, createBusiness, updateBusiness } from "@/server/modules/business";
+import { businessSchema, businessUpdateSchema, createBusiness, updateBusiness } from "@/server/modules/business";
 
 export const GET = tenantRoute(async (_req, { business }) => Response.json({ business }));
 
@@ -15,7 +15,7 @@ export const POST = route(async (req) => {
 });
 
 export const PATCH = tenantRoute(async (req, { user, business }) => {
-  const body = await readJson(req, businessSchema.partial());
+  const body = await readJson(req, businessUpdateSchema);
   const updated = await updateBusiness(business.id, user.id, body, req);
   return Response.json({ business: updated });
 });

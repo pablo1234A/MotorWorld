@@ -22,24 +22,24 @@ export const reviewUrlSchema = z
   .max(500)
   .refine((u) => u.startsWith("https://"), "El enlace debe empezar por https://");
 
-export const businessSchema = z.object({
+const businessFields = {
   name: z.string().trim().min(2, "Indica el nombre del negocio").max(120),
   legalName: optionalText(160),
   taxId: optionalText(30),
   addressLine: optionalText(200),
   city: optionalText(80),
   postalCode: optionalText(12),
-  country: z.string().trim().length(2).default("ES"),
+  country: z.string().trim().length(2),
   phone: optionalText(30),
   website: z.string().trim().url().max(300).optional().nullable().or(z.literal("")).transform((v) => v || null),
   reviewUrl: reviewUrlSchema.optional().nullable().or(z.literal("")).transform((v) => v || null),
-  reviewPlatform: z.enum(["google", "tripadvisor", "trustpilot", "facebook", "otro"]).default("google"),
+  reviewPlatform: z.enum(["google", "tripadvisor", "trustpilot", "facebook", "otro"]),
   senderName: optionalText(80),
   replyToEmail: z.string().trim().toLowerCase().email("Correo de respuesta no válido").optional().nullable().or(z.literal("")).transform((v) => v || null),
-  timezone: z.string().refine(isValidTimeZone, "Zona horaria no válida").default("Europe/Madrid"),
-  resendCooldownDays: z.coerce.number().int().min(0).max(365).default(30),
-  trackClicks: z.boolean().default(true),
-  weeklyDigest: z.boolean().default(true),
+  timezone: z.string().refine(isValidTimeZone, "Zona horaria no válida"),
+  resendCooldownDays: z.coerce.number().int().min(0).max(365),
+  trackClicks: z.boolean(),
+  weeklyDigest: z.boolean(),
   smsSenderId: z
     .string()
     .trim()
@@ -49,6 +49,20 @@ export const businessSchema = z.object({
     .nullable()
     .or(z.literal(""))
     .transform((v) => v || null),
+};
+
+/** Actualización parcial: sin valores por defecto (en zod 4, .partial() aplicaría los .default() y
+ * restablecería los campos omitidos en un PATCH). */
+export const businessUpdateSchema = z.object(businessFields).partial();
+
+export const businessSchema = z.object({
+  ...businessFields,
+  country: businessFields.country.default("ES"),
+  reviewPlatform: businessFields.reviewPlatform.default("google"),
+  timezone: businessFields.timezone.default("Europe/Madrid"),
+  resendCooldownDays: businessFields.resendCooldownDays.default(30),
+  trackClicks: businessFields.trackClicks.default(true),
+  weeklyDigest: businessFields.weeklyDigest.default(true),
 });
 
 export type BusinessInput = z.infer<typeof businessSchema>;

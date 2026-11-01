@@ -43,6 +43,11 @@ export function parseCsv(input: string): string[][] {
   return rows;
 }
 
+/** Hora fuera de rango ("25:00", "10:99") → no válida (Date.UTC la desbordaría al día/hora siguiente). */
+function validTime(h?: string, min?: string, sec?: string) {
+  return (h === undefined || +h < 24) && (min === undefined || +min < 60) && (sec === undefined || +sec < 60);
+}
+
 /** Fechas habituales en España: 2026-10-31, 31/10/2026, 31-10-2026 (con hora opcional). */
 export function parseFlexibleDate(raw: string | undefined | null): Date | null {
   if (!raw) return null;
@@ -50,11 +55,13 @@ export function parseFlexibleDate(raw: string | undefined | null): Date | null {
   if (!s) return null;
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
   if (m) {
+    if (!validTime(m[4], m[5], m[6])) return null;
     const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 12), +(m[5] ?? 0), +(m[6] ?? 0)));
     return isNaN(d.getTime()) || d.getUTCDate() !== +m[3] || d.getUTCMonth() !== +m[2] - 1 ? null : d;
   }
   m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
   if (m) {
+    if (!validTime(m[4], m[5])) return null;
     const d = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], +(m[4] ?? 12), +(m[5] ?? 0)));
     return isNaN(d.getTime()) || d.getUTCDate() !== +m[1] || d.getUTCMonth() !== +m[2] - 1 ? null : d;
   }

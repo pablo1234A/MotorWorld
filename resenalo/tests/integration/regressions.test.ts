@@ -10,6 +10,7 @@ import { createReviewRequest } from "@/server/modules/automation/requests";
 import { sweep } from "@/server/modules/automation/sender";
 import { resumeOnHoldJobs } from "@/server/modules/email-connection";
 import { syncSubscription } from "@/server/modules/billing/stripe";
+import { businessUpdateSchema } from "@/server/modules/business";
 import { makeCustomer, makeTenant, resetDb } from "../helpers";
 
 beforeEach(async () => {
@@ -26,6 +27,28 @@ describe("regresiones de la revisión de código", () => {
     expect(parseFlexibleDate("10/31/2026")).toBeNull();
     expect(parseFlexibleDate("2026-13-01")).toBeNull();
     expect(parseFlexibleDate("31/10/2026")?.toISOString().slice(0, 10)).toBe("2026-10-31");
+    expect(parseFlexibleDate("2026-10-30 10:99")).toBeNull();
+    expect(parseFlexibleDate("30/10/2026 24:00")).toBeNull();
+  });
+
+  it("PATCH parcial del negocio no restablece los campos omitidos a sus valores por defecto", () => {
+    const body = businessUpdateSchema.parse({ name: "Nuevo nombre" });
+    expect(body).toEqual({ name: "Nuevo nombre" });
+  });
+
+  it("un evento tardío ACTIVO de una suscripción antigua no sobrescribe la vigente", async () => {
+    const t = await makeTenant({ plan: "PRO" });
+    await prisma.subscription.update({ where: { businessId: t.business.id }, data: { lastStripeEventAt: new Date() } });
+    const now = Math.floor(Date.now() / 1000);
+    const old = {
+      id: "sub_antigua_activa", object: "subscription", customer: "cus_x", status: "active", cancel_at_period_end: false, canceled_at: null,
+      metadata: { businessId: t.business.id },
+      items: { data: [{ id: "si", price: { id: "price_test_starter" }, current_period_start: now - 100, current_period_end: now + 1000 }] },
+    } as unknown as Stripe.Subscription;
+    await syncSubscription(old, new Date(Date.now() - 60_000));
+    const sub = await prisma.subscription.findUniqueOrThrow({ where: { businessId: t.business.id }, include: { plan: true } });
+    expect(sub.stripeSubscriptionId).not.toBe("sub_antigua_activa");
+    expect(sub.plan.code).toBe("PRO");
   });
 
   it("al reconectar, los envíos en espera aún no vencidos conservan su programación", async () => {
@@ -63,5 +86,15 @@ describe("regresiones de la revisión de código", () => {
     expect((await sweep()).orphan).toBe(0);
     await prisma.emailJob.update({ where: { id: r.jobId! }, data: { lastEnqueuedAt: new Date(Date.now() - 20 * 60_000) } });
     expect((await sweep()).orphan).toBe(1);
+  });
+
+  it("con la automatización en pausa, un envío manual programado sí avanza en el barrido", async () => {
+    const t = await makeTenant();
+    const c = await makeCustomer(t.business.id);
+    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
+    await prisma.emailJob.update({ where: { id: r.jobId! }, data: { status: "SCHEDULED", scheduledFor: new Date(Date.now() - 1000) } });
+    await prisma.business.update({ where: { id: t.business.id }, data: { automationPaused: true } });
+    await sweep();
+    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } })).status).toBe("QUEUED");
   });
 });

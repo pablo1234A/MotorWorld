@@ -14,7 +14,7 @@ import { logger, reportError } from "../../logger";
 import { getProvider } from "../../email/providers";
 import { ProviderError } from "../../email/providers/types";
 import { buildMime } from "../../email/mime";
-import { enqueueEmailJob } from "../../queue/queues";
+import { enqueueEmailJob, isStillQueued } from "../../queue/queues";
 import { getAccessToken, markAuthFailure } from "../email-connection";
 import { getCurrentUsage, subscriptionAllowsSending } from "../billing/entitlements";
 import { lockBusiness, refreshCustomerRequestStatus, scheduleDueReminders, trackingUrls } from "./requests";
@@ -143,6 +143,24 @@ async function claim(emailJobId: string): Promise<Claim> {
 }
 
 /**
+ * Registra un envío ya aceptado por el proveedor. Un fallo transitorio de BD no debe
+ * dejar el correo como "resultado desconocido" (contaría como fallido, no como enviado,
+ * e invitaría a reintentarlo a mano → duplicado), así que se reintenta unas veces.
+ */
+async function withBookkeepingRetry(emailJobId: string, providerMessageId: string | null, fn: () => Promise<unknown>) {
+  for (let i = 1; ; i++) {
+    try {
+      await fn();
+      return;
+    } catch (err) {
+      logger.error({ err, emailJobId, providerMessageId, attempt: i }, "envío aceptado por el proveedor pero no se pudo registrar");
+      if (i >= 3) throw err;
+      await new Promise((r) => setTimeout(r, 500 * i));
+    }
+  }
+}
+
+/**
  * Procesa un EmailJob de principio a fin. Idempotente: si el trabajo ya no está
  * en cola (enviado, cancelado, en curso en otro worker) no hace nada.
  * Un correo SOLO se contabiliza como enviado cuando el proveedor confirma su aceptación.
@@ -183,13 +201,16 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
   }
 
   // Confirmado por el proveedor → se contabiliza. Queda FUERA del try: si este
-  // registro falla, el correo ya salió y NO debe reintentarse (evita duplicados);
-  // el trabajo sigue en SENDING y el barrido lo marcará como resultado desconocido.
-  await prisma.$transaction(async (tx) => {
-    await tx.emailJob.update({
-      where: { id: job.id },
+  // registro falla, el correo ya salió y NO debe reenviarse (evita duplicados). Se
+  // reintenta el registro; si aun así falla, el trabajo sigue en SENDING y el barrido
+  // lo marcará como resultado desconocido.
+  await withBookkeepingRetry(job.id, providerMessageId, () => prisma.$transaction(async (tx) => {
+    // Condicional: si un intento anterior sí llegó a confirmarse, no se contabiliza dos veces.
+    const marked = await tx.emailJob.updateMany({
+      where: { id: job.id, status: EmailJobStatus.SENDING },
       data: { status: EmailJobStatus.SENT, sentAt: new Date(), providerMessageId, lastError: null, statusReason: null, sendingStartedAt: null },
     });
+    if (!marked.count) return;
     if (job.usagePeriodStart) {
       await tx.$executeRaw`
         UPDATE monthly_usage SET reserved = GREATEST(reserved - 1, 0), sent = sent + 1, updated_at = now()
@@ -199,7 +220,7 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
     await log(tx, job, EmailLogEvent.SENT, `Aceptado por ${conn.provider === "GOOGLE" ? "Gmail" : "Outlook"}${providerMessageId ? ` (id ${providerMessageId})` : ""}.`, {
       providerMessageId,
     });
-  });
+  }));
   await checkUsageAlerts(job.businessId);
   return "sent";
 }
@@ -217,11 +238,23 @@ async function processSms(job: EmailJob): Promise<SendOutcome> {
   } catch (err) {
     return handleSendError(job, null, err);
   }
-  // Aceptado por Twilio → se contabiliza (fuera del try: no reintentar si falla el registro).
-  await prisma.$transaction(async (tx) => {
+  // Aceptado por Twilio → se contabiliza (fuera del try: no reenviar si falla el registro).
+  await withBookkeepingRetry(job.id, res.providerMessageId, () => prisma.$transaction(async (tx) => {
+    const current = await tx.emailJob.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, providerStatus: true } });
+    if (current.status !== EmailJobStatus.SENDING) return; // ya registrado en un intento anterior
+    // El aviso de entrega de Twilio puede llegar antes que este registro.
+    const delivered = current.providerStatus === "delivered";
     await tx.emailJob.update({
       where: { id: job.id },
-      data: { status: EmailJobStatus.SENT, sentAt: new Date(), providerMessageId: res.providerMessageId, providerStatus: res.status, lastError: null, statusReason: null, sendingStartedAt: null },
+      data: {
+        status: delivered ? EmailJobStatus.DELIVERED : EmailJobStatus.SENT,
+        sentAt: new Date(),
+        providerMessageId: res.providerMessageId,
+        providerStatus: delivered ? "delivered" : res.status,
+        lastError: null,
+        statusReason: null,
+        sendingStartedAt: null,
+      },
     });
     if (job.usagePeriodStart)
       await tx.$executeRaw`
@@ -229,7 +262,7 @@ async function processSms(job: EmailJob): Promise<SendOutcome> {
         WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
     await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: RequestStatus.SENT } });
     await log(tx, job, EmailLogEvent.SENT, `SMS aceptado por Twilio (${res.providerMessageId}, estado ${res.status}).`, { providerMessageId: res.providerMessageId });
-  });
+  }));
   return "sent";
 }
 
@@ -239,6 +272,8 @@ export async function applySmsStatus(publicToken: string, status: string, errorC
   if (!job || job.channel !== Channel.SMS) return false;
   if (status === "delivered") {
     await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENT }, data: { status: EmailJobStatus.DELIVERED, deliveredAt: new Date(), providerStatus: status } });
+    // Si aún se está registrando el envío, se anota para que el registro lo marque como entregado.
+    await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { deliveredAt: new Date(), providerStatus: status } });
     await log(prisma, job, EmailLogEvent.DELIVERED, "El operador confirmó la entrega del SMS.");
   } else if (status === "undelivered" || status === "failed") {
     // El SMS ya fue cobrado por el operador: sigue contando en el cupo.
@@ -339,7 +374,12 @@ async function handleSendError(job: EmailJob, connectionId: string | null, err: 
  */
 export async function sweep(now = new Date()) {
   const due = await prisma.emailJob.findMany({
-    where: { status: EmailJobStatus.SCHEDULED, scheduledFor: { lte: now }, business: { automationPaused: false } },
+    // Con la automatización en pausa solo avanzan los envíos explícitos (manuales y campañas).
+    where: {
+      status: EmailJobStatus.SCHEDULED,
+      scheduledFor: { lte: now },
+      OR: [{ business: { automationPaused: false } }, { campaignId: { not: null } }, { event: { source: "MANUAL" } }],
+    },
     select: { id: true, attempts: true },
     take: 500,
   });
@@ -356,10 +396,16 @@ export async function sweep(now = new Date()) {
       scheduledFor: { lte: new Date(now.getTime() - 2 * 60_000) },
       OR: [{ lastEnqueuedAt: null }, { lastEnqueuedAt: { lte: new Date(now.getTime() - 10 * 60_000) } }],
     },
-    select: { id: true, attempts: true },
+    select: { id: true, attempts: true, lastEnqueuedAt: true },
     take: 500,
   });
-  for (const j of orphan) await enqueueEmailJob(j.id);
+  let reEnqueued = 0;
+  for (const j of orphan) {
+    // Si sigue en la cola de Redis (esperando turno por el límite de velocidad) no se duplica.
+    if (j.lastEnqueuedAt && (await isStillQueued(j.id, j.lastEnqueuedAt))) continue;
+    await enqueueEmailJob(j.id);
+    reEnqueued++;
+  }
 
   const stale = await prisma.emailJob.findMany({
     where: { status: EmailJobStatus.SENDING, sendingStartedAt: { lte: new Date(now.getTime() - 10 * 60_000) } },
@@ -378,5 +424,5 @@ export async function sweep(now = new Date()) {
     await refreshCustomerRequestStatus(job.customerId);
   }
   const reminders = await scheduleDueReminders(now);
-  return { due: due.length, orphan: orphan.length, stale: stale.length, reminders: reminders.created };
+  return { due: due.length, orphan: reEnqueued, stale: stale.length, reminders: reminders.created };
 }

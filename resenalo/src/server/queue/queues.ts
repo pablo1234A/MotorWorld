@@ -21,6 +21,19 @@ export function maintenanceQueue(): Queue {
   return g.maintenanceQueue;
 }
 
+const queueJobId = (emailJobId: string, at: Date) => `${emailJobId}-${at.getTime().toString(36)}`;
+
+/** ¿Sigue el último encolado de este envío pendiente en Redis (esperando, retrasado o en curso)? */
+export async function isStillQueued(emailJobId: string, lastEnqueuedAt: Date) {
+  try {
+    const j = await emailQueue().getJob(queueJobId(emailJobId, lastEnqueuedAt));
+    if (!j) return false;
+    return ["waiting", "delayed", "active", "prioritized", "waiting-children"].includes(await j.getState());
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Encola el envío de un EmailJob. La BD es la fuente de verdad: si Redis
  * falla, el barrido periódico del worker vuelve a encolar los trabajos
@@ -29,9 +42,10 @@ export function maintenanceQueue(): Queue {
  */
 export async function enqueueEmailJob(emailJobId: string, delayMs = 0) {
   try {
-    const jobId = `${emailJobId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    await emailQueue().add("send", { emailJobId }, { jobId, delay: Math.max(0, Math.round(delayMs)) });
-    await prisma.emailJob.update({ where: { id: emailJobId }, data: { lastEnqueuedAt: new Date(Date.now() + Math.max(0, delayMs)) } }).catch(() => undefined);
+    // El id del trabajo en Redis deriva de last_enqueued_at para poder comprobar después si sigue en la cola.
+    const stamp = Date.now() + Math.max(0, Math.round(delayMs));
+    await emailQueue().add("send", { emailJobId }, { jobId: queueJobId(emailJobId, new Date(stamp)), delay: Math.max(0, Math.round(delayMs)) });
+    await prisma.emailJob.update({ where: { id: emailJobId }, data: { lastEnqueuedAt: new Date(stamp) } }).catch(() => undefined);
   } catch (err) {
     logger.warn({ err, emailJobId }, "no se pudo encolar en Redis; lo recogerá el barrido periódico");
   }

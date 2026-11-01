@@ -9,8 +9,16 @@ import { Input } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Display";
 
 function safeNext(n: string | null) {
-  // "/\evil.com" lo normaliza el navegador a "//evil.com": se rechaza cualquier "/" seguido de "/" o "\".
-  return n && /^\/(?![/\\])/.test(n) ? n : "/app";
+  // "/\evil.com" lo normaliza el navegador a "//evil.com", y el parser de URL elimina tabuladores y
+  // saltos de línea ("/\t/evil.com" → "//evil.com"): se rechazan "\" y caracteres de control, y la
+  // URL resuelta debe seguir en nuestro origen.
+  if (!n || !n.startsWith("/") || /[\\\u0000-\u001f\u007f]/.test(n)) return "/app";
+  try {
+    const u = new URL(n, window.location.origin);
+    return u.origin === window.location.origin ? u.pathname + u.search + u.hash : "/app";
+  } catch {
+    return "/app";
+  }
 }
 
 function LoginForm() {
