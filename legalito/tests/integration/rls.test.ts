@@ -38,9 +38,8 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
        values ($1, $2, 1, '{"legal_name":"Bob SL"}')`,
       [bob.orgId, bob.userId],
     );
-    const t = await db.pool.query(
-      "insert into public.templates (slug, name, document_type) values ('aviso-legal', 'Aviso legal', 'aviso_legal') returning id",
-    );
+    // Plantilla cargada por el seed de demostración.
+    const t = await db.pool.query("select id from public.templates where slug = 'aviso-legal'");
     templateId = t.rows[0].id;
     await db.pool.query("insert into storage.objects (bucket_id, name) values ('documents', $1), ('documents', $2)", [
       `${bob.orgId}/aviso_legal/${randomUUID()}.pdf`,
@@ -183,12 +182,20 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
         const m = await q("select public.admin_metrics(30) as m");
         expect(m.rows[0].m.total_users).toBe(3);
         expect(m.rows[0].m.one_time_purchases).toBe(1);
-        expect((await q("select * from public.templates")).rowCount).toBe(1);
+        expect((await q("select * from public.templates")).rowCount).toBe(3);
       });
     });
   });
 
   describe("Flujo editorial de plantillas", () => {
+    it("el seed carga las plantillas demo como borradores no publicables", async () => {
+      const r = await db.pool.query("select status, is_demo from public.template_versions");
+      expect(r.rowCount).toBe(3);
+      expect(r.rows.every((x) => x.status === "draft" && x.is_demo)).toBe(true);
+      const t = await db.pool.query("select count(*)::int as n from public.templates where published_version_id is null");
+      expect(t.rows[0].n).toBe(3);
+    });
+
     it("bloquea la aprobación sin revisión documentada y de versiones demo", async () => {
       await as(db.pool, "authenticated", admin.userId, async (q) => {
         const demo = await q(
@@ -205,7 +212,7 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
            values ($1, '1.0.0', '{"title":"x","sections":[]}', 1) returning id, version_number`,
           [templateId],
         );
-        expect(v.rows[0].version_number).toBe(2);
+        expect(v.rows[0].version_number).toBe(3); // 1 = seed demo, 2 = demo anterior
         await expect(q("select public.publish_template_version($1)", [v.rows[0].id])).rejects.toThrow(/aprobadas/);
         await q("select public.submit_template_version($1)", [v.rows[0].id]);
         await expect(q("select public.approve_template_version($1, '', '', now(), '', null)", [v.rows[0].id])).rejects.toThrow(
