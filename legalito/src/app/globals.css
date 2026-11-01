@@ -1,26 +1,107 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Identidad visual de Legalito
+ *  - Principal  #1F3A5F (navy)
+ *  - Secundario #2F5D8C (azul)
+ *  - Contraste  #F4F1EA (arena)
+ *  - Tipografía Inter (autoalojada)
+ */
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-navy-950: #0f1e33;
+  --color-navy-900: #172d4a;
+  --color-navy: #1f3a5f;
+  --color-navy-700: #26466f;
+  --color-blue: #2f5d8c;
+  --color-blue-500: #3d72a8;
+  --color-blue-100: #e3ecf5;
+  --color-blue-50: #f1f5fa;
+  --color-sand: #f4f1ea;
+  --color-sand-200: #ebe6da;
+  --color-sand-300: #ddd6c6;
+  --color-canvas: #fbfaf7;
+  --color-ink: #17202d;
+  --color-ink-soft: #364152;
+  --color-muted: #5d6878;
+  --color-subtle: #8a93a1;
+  --color-line: #e6e2d9;
+  --color-line-strong: #d6d0c3;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-success: #1f7a4d;
+  --color-success-bg: #eaf6ef;
+  --color-warning: #8a5a00;
+  --color-warning-bg: #fdf4e3;
+  --color-danger: #b42318;
+  --color-danger-bg: #fdeceb;
+
+  --radius-card: 14px;
+  --shadow-soft: 0 1px 2px rgb(23 32 45 / 0.04), 0 4px 16px -6px rgb(23 32 45 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(23 32 45 / 0.05), 0 16px 40px -16px rgb(23 32 45 / 0.18);
+
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    background: var(--color-blue-100);
+    color: var(--color-navy-950);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+  h1, h2, h3, h4 {
+    @apply text-navy-950;
+    letter-spacing: -0.015em;
+  }
+  /* Evita el zoom automático de iOS en campos de formulario. */
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Documentos legales renderizados dentro de la aplicación (vista previa y páginas legales). */
+@layer components {
+  .legal-prose { @apply text-[15px] leading-relaxed text-ink-soft; }
+  .legal-prose h1 { @apply mb-6 text-2xl font-semibold text-navy sm:text-3xl; }
+  .legal-prose h2 { @apply mt-9 mb-3 text-lg font-semibold text-navy; }
+  .legal-prose h3 { @apply mt-5 mb-2 font-semibold; }
+  .legal-prose p { @apply mb-3; }
+  .legal-prose ul, .legal-prose ol { @apply mb-4 space-y-1.5 pl-5; }
+  .legal-prose ul { @apply list-disc; }
+  .legal-prose ol { @apply list-decimal; }
+  .legal-prose a { @apply text-blue underline decoration-blue/30 underline-offset-2 break-words hover:decoration-blue; }
+  .legal-prose .lg-table { @apply mb-4 overflow-x-auto rounded-lg border border-line; }
+  .legal-prose table { @apply w-full border-collapse text-sm; }
+  .legal-prose th { @apply bg-sand px-3 py-2 text-left font-semibold text-navy; }
+  .legal-prose td { @apply border-t border-line px-3 py-2 align-top; }
+  .legal-prose .lg-notice { @apply mb-6 rounded-lg border border-warning/30 bg-warning-bg px-4 py-3 text-sm text-warning; }
+  .legal-prose .lg-callout { @apply mb-4 rounded-r-lg border-l-2 border-blue bg-blue-50 px-4 py-3 text-sm; }
+  .legal-prose .lg-callout p { @apply mb-0; }
 }

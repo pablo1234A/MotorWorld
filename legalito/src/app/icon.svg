@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Legalito">
+  <!-- Logotipo PROVISIONAL reconstruido a partir de la descripción (documento con esquina doblada y check).
+       Sustituir por el logo.svg original cuando esté disponible. -->
+  <path d="M8.5 2.5h10.75L26.5 9.75V27a2.5 2.5 0 0 1-2.5 2.5H8.5A2.5 2.5 0 0 1 6 27V5a2.5 2.5 0 0 1 2.5-2.5Z" fill="#1F3A5F"/>
+  <path d="M19.25 2.5v5.25a2 2 0 0 0 2 2h5.25Z" fill="#2F5D8C"/>
+  <path d="m11 17.25 3.5 3.5 6.75-7" fill="none" stroke="#F4F1EA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

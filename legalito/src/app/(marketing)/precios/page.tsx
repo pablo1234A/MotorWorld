@@ -1,0 +1,32 @@
+import type { Metadata } from "next";
+import { Container } from "@/components/ui/layout";
+import { FaqList, PlanCards, PlanComparison, SectionHeading } from "@/components/marketing/sections";
+import { getPublicFaqs, getPublicPlans } from "@/lib/public-data";
+import { DISCLAIMER } from "@/config/site";
+
+export const metadata: Metadata = {
+  title: "Precios",
+  description: "Pago único de 39 € o suscripción de 9,99 €/mes con nuevas versiones revisadas de las plantillas y regeneración ilimitada.",
+  alternates: { canonical: "/precios" },
+};
+
+export default async function PricingPage() {
+  const [plans, faqs] = await Promise.all([getPublicPlans(), getPublicFaqs()]);
+  const billingFaqs = faqs.filter((f) => ["pagos", "suscripcion"].includes(f.category));
+  return (
+    <section className="pt-16 pb-24">
+      <Container>
+        <SectionHeading center eyebrow="Precios" title="Dos formas de pagar, sin letra pequeña" lead="Primero rellenas el formulario y ves la vista previa. Solo pagas si quieres descargar tus documentos." />
+        <div className="mx-auto mt-14 max-w-4xl space-y-12">
+          <PlanCards plans={plans} />
+          <PlanComparison plans={plans} />
+          <div>
+            <h2 className="mb-5 text-xl font-semibold">Preguntas sobre pagos</h2>
+            <FaqList faqs={billingFaqs} />
+          </div>
+          <p className="text-center text-sm text-muted">{DISCLAIMER}</p>
+        </div>
+      </Container>
+    </section>
+  );
+}
