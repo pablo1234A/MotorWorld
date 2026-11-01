@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, CloudOff, Info, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea, inputClass } from "@/components/ui/field";
@@ -30,6 +31,8 @@ export function QuestionnaireWizard({ responseId, initialAnswers, initialStep }:
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef(answers);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const router = useRouter();
+  const [leaving, setLeaving] = useState(false);
 
   const steps = useMemo(() => STEPS.filter((s) => visibleQuestions(answers, s.id).length > 0), [answers]);
   const [stepId, setStepId] = useState<StepId>(() => (STEPS.find((s) => s.id === initialStep)?.id ?? "negocio") as StepId);
@@ -157,6 +160,7 @@ export function QuestionnaireWizard({ responseId, initialAnswers, initialStep }:
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-ink-soft">
               Paso {index + 1} de {steps.length}
+              <span className="text-subtle lg:hidden"> · {step.title}</span>
             </span>
             <SaveIndicator state={saveState} />
           </div>
@@ -208,7 +212,22 @@ export function QuestionnaireWizard({ responseId, initialAnswers, initialStep }:
             )}
           </div>
         </section>
-        <p className="mt-4 text-center text-xs text-subtle">Tus respuestas se guardan automáticamente. Puedes salir y continuar más tarde.</p>
+        <div className="mt-4 flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
+          <p className="text-xs text-subtle">Tus respuestas se guardan automáticamente. Puedes salir y continuar más tarde.</p>
+          <button
+            type="button"
+            disabled={leaving}
+            onClick={async () => {
+              setLeaving(true);
+              if (timer.current) clearTimeout(timer.current);
+              await persist(latest.current, step.id);
+              router.push("/panel");
+            }}
+            className="text-sm text-link disabled:opacity-60"
+          >
+            {leaving ? "Guardando…" : "Guardar y salir"}
+          </button>
+        </div>
       </div>
     </div>
   );

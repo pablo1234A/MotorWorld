@@ -3,7 +3,32 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { CreditCard, FileText, HelpCircle, LayoutDashboard, Menu, PenLine, Shield, UserRound, X, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Bell,
+  Bug,
+  CreditCard,
+  FileStack,
+  FileText,
+  Files,
+  HelpCircle,
+  LayoutDashboard,
+  LifeBuoy,
+  ListChecks,
+  Megaphone,
+  Menu,
+  MessageCircleQuestion,
+  PenLine,
+  Receipt,
+  Repeat,
+  Shield,
+  Tags,
+  UserRound,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/cn";
 
@@ -12,6 +37,8 @@ export interface NavItem {
   label: string;
   icon: keyof typeof ICONS;
   exact?: boolean;
+  /** Encabezado del grupo al que pertenece (se muestra al cambiar de grupo). */
+  group?: string;
 }
 
 const ICONS = {
@@ -22,17 +49,33 @@ const ICONS = {
   billing: CreditCard,
   help: HelpCircle,
   admin: Shield,
+  back: ArrowLeft,
+  metrics: BarChart3,
+  users: Users,
+  subscriptions: Repeat,
+  payments: Receipt,
+  files: Files,
+  templates: FileStack,
+  plans: Tags,
+  updates: Megaphone,
+  notices: Bell,
+  faq: MessageCircleQuestion,
+  support: LifeBuoy,
+  errors: Bug,
+  audit: ListChecks,
 } satisfies Record<string, LucideIcon>;
 
 function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <ul className="space-y-0.5">
-      {items.map((item) => {
+      {items.map((item, idx) => {
         const Icon = ICONS[item.icon];
         const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const groupStart = item.group && item.group !== items[idx - 1]?.group;
         return (
           <li key={item.href}>
+            {groupStart && <p className="mt-5 mb-1.5 px-3 text-xs font-medium text-subtle">{item.group}</p>}
             <Link
               href={item.href}
               onClick={onNavigate}
@@ -62,11 +105,11 @@ export function AppNav({ items, footer, homeHref }: { items: NavItem[]; footer: 
   return (
     <>
       {/* Escritorio */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-sand/50 lg:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-sand/50 lg:sticky lg:top-0 lg:flex lg:h-dvh">
         <div className="px-5 py-5">
           <Logo href={homeHref} />
         </div>
-        <nav aria-label="Panel" className="flex-1 px-3">
+        <nav aria-label="Panel" className="flex-1 overflow-y-auto px-3 pb-4">
           <NavLinks items={items} />
         </nav>
         <div className="border-t border-line p-3">{footer}</div>

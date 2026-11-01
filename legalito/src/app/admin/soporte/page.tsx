@@ -23,7 +23,7 @@ export default async function AdminSupportPage({ searchParams }: PageProps<"/adm
         title="Soporte"
         description="Consultas recibidas desde el formulario de contacto y el panel. Responde por email al remitente."
         actions={
-          <a href={showClosed ? "/admin/soporte" : "/admin/soporte?cerradas=1"} className="text-sm font-medium text-blue hover:underline">
+          <a href={showClosed ? "/admin/soporte" : "/admin/soporte?cerradas=1"} className="text-sm text-link">
             {showClosed ? "Ocultar resueltas" : "Mostrar resueltas"}
           </a>
         }
@@ -36,7 +36,7 @@ export default async function AdminSupportPage({ searchParams }: PageProps<"/adm
               <div>
                 <p className="font-semibold text-ink">{r.subject}</p>
                 <p className="text-sm text-muted">
-                  {r.name} · <a href={`mailto:${r.email}?subject=${encodeURIComponent(`Re: ${r.subject}`)}`} className="text-blue hover:underline">{r.email}</a> · {fmtDate(r.created_at, true)}
+                  {r.name} · <a href={`mailto:${r.email}?subject=${encodeURIComponent(`Re: ${r.subject}`)}`} className="text-link">{r.email}</a> · {fmtDate(r.created_at, true)}
                 </p>
               </div>
               <div className="flex gap-2">

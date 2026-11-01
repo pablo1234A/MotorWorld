@@ -11,7 +11,7 @@ export function NotConfigured({ service = "Supabase" }: { service?: string }) {
       <Alert tone="warning" className="mt-4" title={`${service} no está configurado en este entorno`}>
         El área privada necesita las variables de entorno de {service}. Consulta <code>docs/SUPABASE.md</code> y <code>.env.example</code>.
       </Alert>
-      <Link href="/" className="mt-6 text-sm font-medium text-blue hover:underline">
+      <Link href="/" className="mt-6 text-sm text-link">
         Volver al inicio
       </Link>
     </main>

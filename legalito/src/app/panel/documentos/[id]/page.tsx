@@ -69,8 +69,8 @@ export default async function DocumentDetailPage({ params }: PageProps<"/panel/d
                   <span className="text-muted">—</span>
                 ) : (
                   <span className="flex gap-3">
-                    <a href={`/api/documentos/${v.id}/descargar?formato=pdf`} className="font-medium text-blue hover:underline">PDF</a>
-                    <a href={`/api/documentos/${v.id}/descargar?formato=html`} className="font-medium text-blue hover:underline">HTML</a>
+                    <a href={`/api/documentos/${v.id}/descargar?formato=pdf`} className="text-link">PDF</a>
+                    <a href={`/api/documentos/${v.id}/descargar?formato=html`} className="text-link">HTML</a>
                   </span>
                 )}
               </td>

@@ -16,7 +16,7 @@ export default async function AccountPage() {
         <Panel title="Datos del negocio" description="Se usan para precargar el formulario. Para aplicarlos a tus documentos, revisa el formulario y regenera.">
           <BusinessForm org={org} />
           <p className="mt-4 text-sm text-muted">
-            ¿Quieres actualizar también tus documentos? <Link href="/panel/generador" className="font-medium text-blue hover:underline">Revisa tus respuestas</Link>.
+            ¿Quieres actualizar también tus documentos? <Link href="/panel/generador" className="text-link">Revisa tus respuestas</Link>.
           </p>
         </Panel>
         {profile && (
@@ -30,7 +30,7 @@ export default async function AccountPage() {
           </Panel>
           <Panel title="Contraseña">
             <p className="text-sm text-muted">Te enviaremos un enlace para establecer una nueva contraseña.</p>
-            <Link href="/recuperar" className="mt-4 inline-block text-sm font-medium text-blue hover:underline">
+            <Link href="/recuperar" className="mt-4 inline-block text-sm text-link">
               Cambiar contraseña
             </Link>
           </Panel>

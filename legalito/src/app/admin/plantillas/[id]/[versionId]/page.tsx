@@ -72,7 +72,7 @@ export default async function AdminTemplateVersionPage({ params, searchParams }:
             </Panel>
           ) : (
             <Panel title="Contenido" description="Inmutable: para cambiarlo crea una nueva versión.">
-              <pre className="max-h-[480px] overflow-auto rounded-lg bg-sand/60 p-3 text-[12px] leading-snug">{JSON.stringify(v.content, null, 2)}</pre>
+              <pre tabIndex={0} className="max-h-[480px] overflow-auto rounded-lg bg-sand/60 p-3 text-[12px] leading-snug">{JSON.stringify(v.content, null, 2)}</pre>
               {v.changelog && <p className="mt-4 text-sm text-muted"><strong className="text-ink">Cambios:</strong> {v.changelog}</p>}
             </Panel>
           )}
@@ -137,7 +137,7 @@ export default async function AdminTemplateVersionPage({ params, searchParams }:
               <div className="mb-3 flex flex-wrap gap-1.5">
                 {(v.variables as { key: string }[]).map((x) => <Badge key={x.key}>{x.key}</Badge>)}
               </div>
-              <div className="legal-prose max-h-[820px] overflow-y-auto rounded-xl border border-line bg-canvas px-5 py-6" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+              <div className="legal-prose max-h-[820px] overflow-y-auto rounded-xl border border-line bg-canvas px-5 py-6" tabIndex={0} role="region" aria-label="Vista previa" dangerouslySetInnerHTML={{ __html: previewHtml }} />
             </>
           )}
         </Panel>

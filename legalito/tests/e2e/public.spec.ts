@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { expectAccessible } from "./a11y";
 
-test.skip(process.env.E2E_FULL === "1", "Suite pública: se ejecuta sin servicios externos reales");
+test.skip(process.env.E2E_FULL === "1" || process.env.E2E_APP === "1", "Suite pública: se ejecuta sin servicios externos reales");
 
 const PUBLIC_PAGES = [
   "/",
@@ -31,6 +32,7 @@ test.describe("Web pública", () => {
       await expect(page.locator("h1").first()).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow).toBeLessThanOrEqual(1);
+      await expectAccessible(page);
     });
   }
 

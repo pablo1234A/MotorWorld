@@ -59,7 +59,7 @@ export async function generateDocuments(input: GenerateInput): Promise<Generated
   // Idempotencia: si el lote ya se generó, se devuelve lo existente.
   const { data: existing } = await db
     .from("document_versions")
-    .select("id, version_number, is_demo, generation_key, documents(document_type)")
+    .select("id, version_number, is_demo, generation_key, documents!document_versions_document_id_fkey(document_type)")
     .eq("organization_id", input.organizationId)
     .like("generation_key", `${input.batchKey}:%`);
   if (existing && existing.length > 0) {

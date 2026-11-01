@@ -68,7 +68,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
                 </div>
               ))}
               <p className="pt-2 text-muted">
-                ¿Quieres recibir las nuevas versiones de las plantillas? <Link href="/panel/precompra?plan=subscription_monthly" className="font-medium text-blue hover:underline">Pásate a la suscripción</Link>.
+                ¿Quieres recibir las nuevas versiones de las plantillas? <Link href="/panel/precompra?plan=subscription_monthly" className="text-link">Pásate a la suscripción</Link>.
               </p>
             </div>
           ) : (
@@ -106,7 +106,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
                 <td><PaymentBadge status={p.status} /></td>
                 <td>
                   {p.hosted_invoice_url ? (
-                    <a href={p.hosted_invoice_url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue hover:underline">Ver</a>
+                    <a href={p.hosted_invoice_url} target="_blank" rel="noopener noreferrer" className="text-link">Ver</a>
                   ) : (
                     <span className="text-muted">En el portal</span>
                   )}

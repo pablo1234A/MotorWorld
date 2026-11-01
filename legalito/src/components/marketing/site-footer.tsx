@@ -30,7 +30,7 @@ export function SiteFooter() {
 function FooterColumn({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
     <div>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-subtle">{title}</h2>
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
       <ul className="mt-4 space-y-2.5">
         {links.map((l) => (
           <li key={l.href}>

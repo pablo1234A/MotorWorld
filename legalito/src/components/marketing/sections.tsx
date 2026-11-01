@@ -8,7 +8,12 @@ import type { Faq } from "@/content/faqs";
 import { cn } from "@/lib/cn";
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cn("text-[13px] font-semibold uppercase tracking-[0.12em] text-blue", className)}>{children}</p>;
+  return (
+    <p className={cn("inline-flex items-center gap-2 text-sm font-semibold text-blue", className)}>
+      <span aria-hidden className="h-px w-5 bg-blue/50" />
+      {children}
+    </p>
+  );
 }
 
 export function SectionHeading({ eyebrow, title, lead, center, as = "h2" }: { eyebrow?: string; title: string; lead?: string; center?: boolean; as?: "h1" | "h2" }) {
@@ -58,7 +63,7 @@ export function DocumentVisual() {
         </div>
       </div>
       <div className="absolute -bottom-6 -left-4 w-56 rounded-xl border border-line bg-white p-3.5 shadow-[var(--shadow-lift)] sm:-left-10">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-subtle">Tus respuestas</p>
+        <p className="text-xs font-medium text-subtle">Tus respuestas</p>
         <ul className="mt-2 space-y-1.5">
           {answers.map((a) => (
             <li key={a.label} className="flex items-center justify-between text-[13px]">
@@ -99,18 +104,21 @@ export function StepsList({ compact }: { compact?: boolean }) {
 
 export const DOCUMENTS = [
   {
+    kind: "aviso" as const,
     icon: FileCheck2,
     name: "Aviso legal",
     body: "Identifica al titular de la web y regula su uso. Incluye datos registrales o colegiales cuando corresponden.",
     points: ["Datos identificativos", "Condiciones de uso", "Propiedad intelectual", "Contratación, si vendes online"],
   },
   {
+    kind: "privacidad" as const,
     icon: ShieldCheck,
     name: "Política de privacidad",
     body: "Explica qué datos tratas, para qué, con qué base jurídica, durante cuánto tiempo y con qué proveedores.",
     points: ["Tabla de tratamientos", "Proveedores y transferencias", "Derechos de las personas", "Menores y datos sensibles"],
   },
   {
+    kind: "cookies" as const,
     icon: Cookie,
     name: "Política de cookies",
     body: "Informa de las cookies de tus herramientas y de cómo gestionarlas. Te avisa si además necesitas un banner de consentimiento.",
@@ -178,7 +186,7 @@ export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
   const cell = (v: React.ReactNode) =>
     v === true ? <Check className="mx-auto h-4.5 w-4.5 text-success" aria-label="Incluido" /> : v === false ? <Minus className="mx-auto h-4.5 w-4.5 text-subtle" aria-label="No incluido" /> : <span className="text-sm text-ink-soft">{v}</span>;
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+    <div className="overflow-x-auto rounded-2xl border border-line bg-white" tabIndex={0} role="region" aria-label="Comparación de planes">
       <table className="w-full min-w-[520px] text-left">
         <caption className="sr-only">Comparación de planes</caption>
         <thead>
@@ -243,4 +251,75 @@ export function CtaBand({ title = "Prepara los textos legales de tu web hoy", bo
 export function JsonLd({ data }: { data: Record<string, unknown> }) {
   // JSON.stringify no escapa "<": se neutraliza para evitar cierres prematuros del script.
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
+}
+
+/** Maqueta ilustrativa de cada documento mostrando cómo se adaptan sus bloques. */
+export function DocumentMock({ kind }: { kind: "aviso" | "privacidad" | "cookies" }) {
+  const frame = (title: string, children: React.ReactNode) => (
+    <div aria-hidden className="relative">
+      <div className="absolute -inset-4 -z-10 rounded-[26px] bg-white/60 ring-1 ring-line/70" />
+      <div className="rounded-2xl border border-line bg-white p-6 shadow-[var(--shadow-lift)]">
+        <p className="text-[15px] font-semibold text-navy">{title}</p>
+        <div className="mt-4 space-y-3">{children}</div>
+      </div>
+    </div>
+  );
+  const line = (w: string) => <div className={cn("h-1.5 rounded-full bg-sand-200", w)} />;
+  const chip = (label: string, on: boolean, note: string) => (
+    <div className={cn("flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-[13px]", on ? "border-blue/20 bg-blue-50/60" : "border-dashed border-line-strong text-subtle")}>
+      <span className={on ? "font-medium text-navy" : ""}>{label}</span>
+      <span className={cn("text-xs", on ? "text-success" : "text-subtle")}>{note}</span>
+    </div>
+  );
+  if (kind === "aviso")
+    return frame(
+      "Aviso legal",
+      <>
+        {line("w-11/12")}
+        {line("w-2/3")}
+        {chip("Datos registrales", true, "Eres una sociedad")}
+        {chip("Colegio profesional", false, "No aplica")}
+        {chip("Contratación online", true, "Vendes por internet")}
+        {line("w-4/5")}
+      </>,
+    );
+  if (kind === "privacidad")
+    return frame(
+      "Política de privacidad",
+      <div className="overflow-hidden rounded-lg border border-line text-[12.5px]">
+        <div className="grid grid-cols-3 bg-sand px-3 py-2 font-medium text-navy">
+          <span>Finalidad</span>
+          <span>Base jurídica</span>
+          <span>Plazo</span>
+        </div>
+        {[
+          ["Contacto", "Consentimiento", "Hasta responder"],
+          ["Pedidos", "Contrato", "Plazos fiscales"],
+          ["Newsletter", "Consentimiento", "Hasta la baja"],
+        ].map((r) => (
+          <div key={r[0]} className="grid grid-cols-3 border-t border-line px-3 py-2 text-ink-soft">
+            {r.map((c) => (
+              <span key={c}>{c}</span>
+            ))}
+          </div>
+        ))}
+      </div>,
+    );
+  return frame(
+    "Política de cookies",
+    <div className="space-y-2 text-[12.5px]">
+      {[
+        ["_ga", "Google Analytics", "Analítica"],
+        ["_fbp", "Meta", "Publicitaria"],
+        ["Sesión", "Propia", "Técnica"],
+      ].map(([n, p, k]) => (
+        <div key={n} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
+          <span className="font-mono text-navy">{n}</span>
+          <span className="text-muted">{p}</span>
+          <span className="rounded-md bg-sand px-2 py-0.5 text-xs text-ink-soft">{k}</span>
+        </div>
+      ))}
+      <div className="flex gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning">Necesitas un banner de consentimiento: te lo indicamos.</div>
+    </div>,
+  );
 }

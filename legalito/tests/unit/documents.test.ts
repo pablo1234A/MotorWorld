@@ -246,3 +246,21 @@ describe("Seed de plantillas", () => {
     expect(file).toBe(buildTemplateSeedSql());
   });
 });
+
+describe("Cobertura de más tipos de negocio", () => {
+  it("acepta asociaciones y otros tipos de web sin preguntas de tienda", () => {
+    for (const business_type of ["asociacion", "otro"]) {
+      const r = validateAnswers({ ...freelancerAnswers, business_type, owner_type: "persona_juridica", nif: "G12345674", registry_data: "Registro Nacional de Asociaciones, n.º 123456" });
+      expect(r.errors).toEqual({});
+      expect(visibleQuestions(r.cleaned).map((q) => q.id)).not.toContain("sells_to");
+    }
+  });
+
+  it("incluye el tratamiento de redes sociales cuando se marca", () => {
+    const ctx = buildContext(validateAnswers({ ...freelancerAnswers, data_collection: ["redes"], special_categories: false, minors: false, has_dpo: false }).cleaned, NOW);
+    expect(ctx.data.social_networks).toBe(true);
+    const r = renderTemplate(tpl("privacidad"), ctx);
+    expect(JSON.stringify(r.document)).toContain("redes sociales");
+    expect(r.missing).toEqual([]);
+  });
+});

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BellRing, FileText, MailWarning, PenLine } from "lucide-react";
+import { ArrowRight, BellRing, CircleAlert, FileText, PenLine } from "lucide-react";
 import { Alert, Badge, EmptyState } from "@/components/ui/feedback";
 import { LinkButton } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/ui/layout";
 import { ReviewBadge, SubscriptionBadge, fmtDate } from "@/components/app/status";
+import { ProgressSteps } from "@/components/app/progress-steps";
 import { getProfile, requireOrganization } from "@/lib/auth";
 import { getFormStatus, getMyEntitlements, getUpdatesAndNotices, listDocuments } from "@/lib/data/panel";
 import { progress } from "@/lib/documents/questionnaire";
@@ -43,7 +44,19 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-5 md:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6">
+        <ProgressSteps
+          steps={[
+            { label: "Cuenta creada", done: true },
+            { label: "Formulario completado", done: Boolean(form.completed), href: "/panel/generador" },
+            { label: "Modalidad elegida", done: ent.plan !== "none", href: form.completed ? "/panel/precompra" : undefined },
+            { label: "Documentos generados", done: docs.length > 0, href: ent.canGenerate ? "/panel/generador/revision" : undefined },
+            { label: "Publicados en tu web", done: false, href: docs.length > 0 ? "/panel/documentos#publicar" : undefined },
+          ]}
+        />
+      </div>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-[1.4fr_1fr]">
         {/* Acción principal según el momento del cliente */}
         <Panel>
           {docs.length > 0 ? (
@@ -100,10 +113,10 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3 text-sm">
               <p className="text-muted">Todavía no tienes un plan. Puedes completar el formulario y ver la vista previa gratis.</p>
-              <Link href="/precios" className="font-medium text-blue hover:underline">Ver planes</Link>
+              <Link href="/precios" className="text-link">Ver planes</Link>
             </div>
           )}
-          <Link href="/panel/suscripcion" className="mt-4 inline-block text-sm font-medium text-blue hover:underline">Gestionar</Link>
+          <Link href="/panel/suscripcion" className="mt-4 inline-block text-sm text-link">Gestionar</Link>
         </Panel>
       </div>
 
@@ -112,7 +125,7 @@ export default async function DashboardPage() {
           <ul className="space-y-3">
             {critical.map((r) => (
               <li key={r.id} className="flex gap-3 text-sm">
-                <MailWarning className="mt-0.5 h-4.5 w-4.5 shrink-0 text-warning" aria-hidden />
+                <CircleAlert className="mt-0.5 h-4.5 w-4.5 shrink-0 text-danger" aria-hidden />
                 <span><strong className="font-medium text-ink">{r.title}.</strong> <span className="text-muted">{r.detail}</span></span>
               </li>
             ))}
@@ -121,7 +134,7 @@ export default async function DashboardPage() {
       )}
 
       <div className="mt-5 grid gap-5 md:grid-cols-2">
-        <Panel title="Documentos recientes" actions={docs.length > 0 ? <Link href="/panel/documentos" className="text-sm font-medium text-blue hover:underline">Ver todos</Link> : undefined}>
+        <Panel title="Documentos recientes" actions={docs.length > 0 ? <Link href="/panel/documentos" className="text-sm text-link">Ver todos</Link> : undefined}>
           {docs.length === 0 ? (
             <EmptyState icon={<FileText className="h-5 w-5" />} title="Aún no hay documentos" description="Aparecerán aquí cuando los generes." />
           ) : (

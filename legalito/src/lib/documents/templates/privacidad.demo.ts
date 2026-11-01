@@ -103,6 +103,14 @@ export const privacidadDemo: TemplateContent = {
               ],
             },
             {
+              when: { truthy: "data.social_networks" },
+              cells: [
+                "Gestionar nuestros perfiles en redes sociales e interactuar con quienes nos siguen o nos escriben a través de ellas.",
+                "Tu consentimiento al seguirnos o interactuar con nosotros (art. 6.1.a RGPD).",
+                "Mientras sigas nuestros perfiles o no solicites la supresión. Cada red social trata además tus datos conforme a su propia política.",
+              ],
+            },
+            {
               when: { truthy: "data.comments" },
               cells: [
                 "Publicar y moderar los comentarios o reseñas que envías.",

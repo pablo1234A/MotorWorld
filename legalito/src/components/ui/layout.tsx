@@ -34,12 +34,13 @@ export function Panel({ children, className, title, description, actions }: { ch
   );
 }
 
-export function DataTable({ headers, children, empty }: { headers: string[]; children: ReactNode; empty?: ReactNode }) {
+export function DataTable({ headers, children, empty, label = "Tabla de datos" }: { headers: string[]; children: ReactNode; empty?: ReactNode; label?: string }) {
   return (
-    <div className="-mx-5 overflow-x-auto sm:-mx-6">
+    // Región enfocable: permite desplazar la tabla con el teclado en pantallas estrechas.
+    <div className="-mx-5 overflow-x-auto sm:-mx-6" tabIndex={0} role="region" aria-label={label}>
       <table className="w-full min-w-[560px] text-left text-sm">
         <thead>
-          <tr className="border-b border-line text-xs uppercase tracking-wide text-subtle">
+          <tr className="border-b border-line text-[13px] text-subtle">
             {headers.map((h) => (
               <th key={h} scope="col" className="px-5 py-2.5 font-medium first:pl-5 sm:first:pl-6">
                 {h}
@@ -57,7 +58,7 @@ export function DataTable({ headers, children, empty }: { headers: string[]; chi
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
     <div className="rounded-xl border border-line bg-white px-4 py-3.5">
-      <p className="text-xs font-medium uppercase tracking-wide text-subtle">{label}</p>
+      <p className="text-[13px] font-medium text-muted">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums text-navy-950">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
     </div>

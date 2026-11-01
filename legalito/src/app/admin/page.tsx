@@ -30,7 +30,8 @@ interface Metrics {
   retention_30d: number | null;
 }
 
-const pct = (a: number, b: number) => (b > 0 ? `${((a / b) * 100).toFixed(1)} %` : "—");
+const pctFmt = new Intl.NumberFormat("es-ES", { style: "percent", maximumFractionDigits: 1 });
+const pct = (a: number, b: number) => (b > 0 ? pctFmt.format(a / b) : "sin datos previos");
 
 export default async function AdminMetricsPage({ searchParams }: PageProps<"/admin">) {
   await requireAdmin();
@@ -70,7 +71,7 @@ export default async function AdminMetricsPage({ searchParams }: PageProps<"/adm
       ) : (
         <div className="space-y-8">
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-subtle">Ingresos</h2>
+            <h2 className="mb-3 text-[15px] font-semibold text-ink">Ingresos</h2>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Stat label="MRR" value={formatPrice(m.mrr_cents)} hint="Suscripciones activas" />
               <Stat label={`Ingresos ${days} d`} value={formatPrice(m.revenue_cents)} hint="Neto de reembolsos" />
@@ -79,7 +80,7 @@ export default async function AdminMetricsPage({ searchParams }: PageProps<"/adm
             </div>
           </section>
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-subtle">Embudo de conversión ({days} días)</h2>
+            <h2 className="mb-3 text-[15px] font-semibold text-ink">Embudo de conversión ({days} días)</h2>
             <Panel>
               <ol className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 {[
@@ -101,7 +102,7 @@ export default async function AdminMetricsPage({ searchParams }: PageProps<"/adm
             </Panel>
           </section>
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-subtle">Clientes y retención</h2>
+            <h2 className="mb-3 text-[15px] font-semibold text-ink">Clientes y retención</h2>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Stat label="Usuarios totales" value={m.total_users} />
               <Stat label="Suscripciones activas" value={m.active_subscriptions} hint={`${m.past_due_subscriptions} con pago pendiente`} />
@@ -110,7 +111,7 @@ export default async function AdminMetricsPage({ searchParams }: PageProps<"/adm
             </div>
           </section>
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-subtle">Operación</h2>
+            <h2 className="mb-3 text-[15px] font-semibold text-ink">Operación</h2>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Stat label="Documentos generados" value={m.documents_generated} />
               <Stat label="Pagos fallidos" value={m.failed_payments} />

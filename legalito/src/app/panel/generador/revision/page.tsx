@@ -50,7 +50,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/panel/gen
         title="Revisa tu información"
         description="Comprueba tus respuestas y la vista previa de tus documentos antes de continuar."
         actions={
-          <form action={editAnswers}>
+          <form action={editAnswers.bind(null, undefined)}>
             <Button variant="secondary" type="submit">
               <PencilLine className="h-4 w-4" /> Editar respuestas
             </Button>
@@ -86,7 +86,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/panel/gen
                 {previewError}
               </Alert>
             ) : (
-              <div className="relative max-h-[640px] overflow-y-auto rounded-xl border border-line bg-canvas px-5 py-6 sm:px-8">
+              <div className="relative max-h-[640px] overflow-y-auto rounded-xl border border-line bg-canvas px-5 py-6 sm:px-8" tabIndex={0} role="region" aria-label="Vista previa del documento">
                 {preview?.isDemo && (
                   <Badge tone="warning" className="mb-4">
                     Plantilla de demostración
@@ -101,7 +101,14 @@ export default async function ReviewPage({ searchParams }: PageProps<"/panel/gen
             <div className="space-y-6">
               {STEPS.filter((s) => visibleQuestions(answers, s.id).length > 0).map((s) => (
                 <div key={s.id}>
-                  <h3 className="text-sm font-semibold text-navy">{s.title}</h3>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-navy">{s.title}</h3>
+                    <form action={editAnswers.bind(null, s.id)}>
+                      <button type="submit" className="text-sm text-link">
+                        Editar<span className="sr-only"> {s.title}</span>
+                      </button>
+                    </form>
+                  </div>
                   <dl className="mt-2 divide-y divide-line rounded-lg border border-line">
                     {visibleQuestions(answers, s.id).map((q) => (
                       <div key={q.id} className="grid gap-1 px-3.5 py-2.5 text-sm sm:grid-cols-[1fr_1.2fr] sm:gap-4">

@@ -49,7 +49,8 @@ Configuración paso a paso: [Supabase](docs/SUPABASE.md) · [Stripe](docs/STRIPE
 | `npm run lint` · `npm run typecheck` | ESLint y TypeScript |
 | `npm test` | Pruebas unitarias + integración de base de datos |
 | `npm run test:db` | RLS, privilegios y funciones SQL contra PostgreSQL real (`TEST_DATABASE_URL`) |
-| `npm run test:e2e:build && npm run test:e2e` | Pruebas end-to-end con Playwright |
+| `npm run test:e2e:build && npm run test:e2e` | Pruebas end-to-end de la web pública con Playwright (incluye accesibilidad) |
+| `scripts/qa-app.sh build\|start\|test` | App completa contra PostgreSQL local y E2E del área privada |
 | `npm run db:seed:generate` | Regenera `supabase/seed/templates.sql` desde las plantillas demo del código |
 | `npx tsx scripts/stripe-setup.ts` | Crea productos y precios en Stripe **modo test** |
 
@@ -89,3 +90,4 @@ legalito/
 - [Supabase](docs/SUPABASE.md) · [Stripe](docs/STRIPE.md) · [Despliegue](docs/DEPLOYMENT.md)
 - [Seguridad y privacidad](docs/SECURITY.md) · [Pruebas](docs/TESTING.md)
 - [Lista de pendientes para abrir al público](docs/LAUNCH_CHECKLIST.md)
+- [Auditoría de calidad (ronda 2)](docs/AUDITORIA.md)

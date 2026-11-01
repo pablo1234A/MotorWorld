@@ -28,7 +28,7 @@ export default async function AdminTemplatesPage() {
             return (
               <tr key={t.id}>
                 <td>
-                  <Link href={`/admin/plantillas/${t.id}`} className="font-medium text-blue hover:underline">{t.name}</Link>
+                  <Link href={`/admin/plantillas/${t.id}`} className="text-link">{t.name}</Link>
                 </td>
                 <td className="font-mono text-xs text-muted">{t.document_type}</td>
                 <td>{pub ? <Badge tone="success">v{pub.version_label}</Badge> : <Badge tone="warning">Ninguna</Badge>}</td>

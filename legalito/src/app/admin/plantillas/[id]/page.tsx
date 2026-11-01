@@ -46,7 +46,7 @@ export default async function AdminTemplatePage({ params }: PageProps<"/admin/pl
             {(versions ?? []).map((v) => (
               <tr key={v.id}>
                 <td>
-                  <Link href={`/admin/plantillas/${id}/${v.id}`} className="font-medium text-blue hover:underline">v{v.version_label}</Link>
+                  <Link href={`/admin/plantillas/${id}/${v.id}`} className="text-link">v{v.version_label}</Link>
                   {v.id === template.published_version_id && <span className="ml-2 text-xs text-success">● en producción</span>}
                 </td>
                 <td><TemplateStatusBadge status={v.status} demo={v.is_demo} /></td>

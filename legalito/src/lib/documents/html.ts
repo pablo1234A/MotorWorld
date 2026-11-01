@@ -46,7 +46,7 @@ function blockHtml(b: RenderedBlock): string {
       return `<${tag}>${b.items.map((i) => `<li>${richText(i)}</li>`).join("")}</${tag}>`;
     }
     case "table":
-      return `<div class="lg-table"><table><thead><tr>${b.columns
+      return `<div class="lg-table" tabindex="0" role="region" aria-label="Tabla"><table><thead><tr>${b.columns
         .map((c) => `<th scope="col">${escapeHtml(c)}</th>`)
         .join("")}</tr></thead><tbody>${b.rows
         .map((r) => `<tr>${r.map((c) => `<td>${richText(c)}</td>`).join("")}</tr>`)

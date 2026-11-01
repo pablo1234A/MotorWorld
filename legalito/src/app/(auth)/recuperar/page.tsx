@@ -11,7 +11,7 @@ export default function ResetPage() {
       <p className="mt-1.5 mb-7 text-[15px] text-muted">Te enviaremos un enlace para crear una nueva contraseña.</p>
       <ResetRequestForm />
       <p className="mt-6 text-center text-sm">
-        <Link href="/acceder" className="font-medium text-blue hover:underline">
+        <Link href="/acceder" className="text-link">
           Volver a acceder
         </Link>
       </p>

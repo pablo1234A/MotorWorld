@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, Building2, Laptop, ShoppingBag, Store, UserRound } from "lucide-react";
+import { ArrowRight, Check, Briefcase, Building2, Laptop, ShoppingBag, Store, UserRound } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/layout";
 import {
   CtaBand,
   DOCUMENTS,
+  DocumentMock,
   DocumentVisual,
   Eyebrow,
   FaqList,
@@ -52,7 +53,9 @@ export default async function HomePage() {
       />
 
       {/* Hero */}
-      <section className="overflow-hidden pt-14 pb-24 sm:pt-20 lg:pt-24">
+      <section className="relative isolate overflow-hidden pt-14 pb-24 sm:pt-20 lg:pt-24">
+        <div aria-hidden className="bg-dot-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_70%_60%_at_75%_35%,black,transparent)]" />
+        <div aria-hidden className="bg-grain pointer-events-none absolute inset-0 -z-10 opacity-60" />
         <Container className="grid items-center gap-16 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
           <div className="animate-rise">
             <Eyebrow>Para autónomos, profesionales y pequeños negocios en España</Eyebrow>
@@ -118,20 +121,25 @@ export default async function HomePage() {
       <section className="bg-sand/60 py-24">
         <Container>
           <SectionHeading eyebrow="Documentos" title="Tres documentos coherentes entre sí" lead="Comparten tus datos, tus proveedores y tus herramientas, así que nunca tendrás que responder lo mismo dos veces." />
-          <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-3">
-            {DOCUMENTS.map((d) => (
-              <article key={d.name} className="bg-white p-7">
-                <d.icon className="h-6 w-6 text-blue" aria-hidden />
-                <h3 className="mt-4 text-lg font-semibold">{d.name}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-muted">{d.body}</p>
-                <ul className="mt-5 space-y-1.5 text-sm text-ink-soft">
-                  {d.points.map((p) => (
-                    <li key={p} className="flex gap-2">
-                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-blue" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
+          <div className="mt-16 space-y-20 lg:space-y-24">
+            {DOCUMENTS.map((d, i) => (
+              <article key={d.name} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+                <div className={i % 2 === 1 ? "lg:order-2" : undefined}>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-blue shadow-[var(--shadow-soft)] ring-1 ring-line">
+                    <d.icon className="h-5 w-5" aria-hidden />
+                  </span>
+                  <h3 className="mt-5 text-2xl font-semibold">{d.name}</h3>
+                  <p className="mt-3 max-w-md text-[16px] leading-relaxed text-muted">{d.body}</p>
+                  <ul className="mt-6 grid max-w-md gap-x-6 gap-y-2.5 text-[15px] text-ink-soft sm:grid-cols-2">
+                    {d.points.map((p) => (
+                      <li key={p} className="flex gap-2.5">
+                        <Check className="mt-1 h-4 w-4 shrink-0 text-success" aria-hidden />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <DocumentMock kind={d.kind} />
               </article>
             ))}
           </div>

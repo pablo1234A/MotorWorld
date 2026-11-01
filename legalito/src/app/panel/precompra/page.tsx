@@ -19,7 +19,9 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
   await requireOrganization();
   const [form, ent, sp] = await Promise.all([getFormStatus(), getMyEntitlements(), searchParams]);
   if (!form.completed) redirect("/panel/generador");
-  if (ent.canGenerate) redirect("/panel/generador/revision");
+  // Un suscriptor activo no necesita comprar; quien tiene un pago único sí puede pasarse a la suscripción.
+  if (ent.source?.type === "subscription") redirect("/panel/generador/revision");
+  const hasPurchase = ent.activePurchases.length > 0;
 
   const db = createAdminClient();
   const products = await listActiveProducts(db);
@@ -41,6 +43,11 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
       <TrackEvent name="purchase_view" />
       <PageHeader title="Elige cómo quieres obtener tus documentos" description="Después del pago generaremos tus documentos automáticamente con las respuestas que has revisado." />
       <div className="mb-6 space-y-3">
+        {hasPurchase && (
+          <Alert tone="info" title="Ya tienes una compra de pago único">
+            Puedes seguir usando tus generaciones disponibles. Con la suscripción recibirás además las nuevas versiones revisadas de las plantillas.
+          </Alert>
+        )}
         {sp.cancelado && (
           <Alert tone="info" title="Pago cancelado">
             No se ha realizado ningún cargo. Puedes intentarlo de nuevo cuando quieras.
@@ -62,7 +69,7 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
           </Alert>
         )}
       </div>
-      <CheckoutForm plans={plans} defaultPlan={typeof sp.plan === "string" ? sp.plan : undefined} />
+      <CheckoutForm plans={plans} defaultPlan={typeof sp.plan === "string" ? sp.plan : hasPurchase ? "subscription_monthly" : undefined} />
       <p className="mt-8 text-xs leading-relaxed text-subtle">{DISCLAIMER}</p>
     </>
   );

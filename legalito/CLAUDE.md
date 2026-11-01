@@ -34,6 +34,8 @@ npm run lint && npm run typecheck && npm test
 npm run test:e2e:build && npm run test:e2e
 ```
 
+Para cambios en el área privada, ejecuta también `scripts/qa-app.sh build && scripts/qa-app.sh start && scripts/qa-app.sh test` (app completa contra PostgreSQL local; ver docs/TESTING.md). Si añades una consulta con incrustaciones (`tabla(columnas)`), comprueba que no hay dos relaciones posibles: el arnés reproduce el error de ambigüedad de PostgREST.
+
 `npm run test:db` necesita PostgreSQL local (`TEST_DATABASE_URL`); si no está disponible, esas pruebas se omiten (dilo explícitamente en tu informe).
 
 ## Diseño

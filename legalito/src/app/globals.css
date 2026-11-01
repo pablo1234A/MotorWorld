@@ -24,8 +24,8 @@
   --color-canvas: #fbfaf7;
   --color-ink: #17202d;
   --color-ink-soft: #364152;
-  --color-muted: #5d6878;
-  --color-subtle: #8a93a1;
+  --color-muted: #525c6b;
+  --color-subtle: #616a78;
   --color-line: #e6e2d9;
   --color-line-strong: #d6d0c3;
 
@@ -73,6 +73,16 @@
   h1, h2, h3, h4 {
     @apply text-navy-950;
     letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  h1 {
+    letter-spacing: -0.025em;
+  }
+  p, li, dd {
+    text-wrap: pretty;
+  }
+  html {
+    scroll-behavior: smooth;
   }
   /* Evita el zoom automático de iOS en campos de formulario. */
   input, select, textarea {
@@ -88,6 +98,18 @@
 
 /* Documentos legales renderizados dentro de la aplicación (vista previa y páginas legales). */
 @layer components {
+  /* Enlaces dentro de texto: subrayado discreto (no se distinguen solo por el color). */
+  .text-link {
+    @apply font-medium text-blue underline decoration-blue/35 underline-offset-[3px] transition-colors hover:decoration-blue;
+  }
+  /* Textura sutil para romper la planitud en zonas destacadas. */
+  .bg-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.23 0 0 0 0 0.37 0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .bg-dot-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgb(31 58 95 / 0.09) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
   .legal-prose { @apply text-[15px] leading-relaxed text-ink-soft; }
   .legal-prose h1 { @apply mb-6 text-2xl font-semibold text-navy sm:text-3xl; }
   .legal-prose h2 { @apply mt-9 mb-3 text-lg font-semibold text-navy; }

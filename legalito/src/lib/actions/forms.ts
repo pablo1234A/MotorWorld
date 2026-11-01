@@ -140,10 +140,11 @@ export async function completeForm(responseId: string, rawAnswers: unknown): Pro
   redirect("/panel/generador/revision");
 }
 
-/** Abre un nuevo borrador a partir de las últimas respuestas para editarlas. */
-export async function editAnswers(): Promise<void> {
+/** Abre un nuevo borrador a partir de las últimas respuestas para editarlas (opcionalmente en un paso concreto). */
+export async function editAnswers(step?: string): Promise<void> {
   await getOrCreateDraft();
-  redirect("/panel/generador");
+  const valid = typeof step === "string" && STEPS.some((s) => s.id === step);
+  redirect(valid ? `/panel/generador?paso=${step}` : "/panel/generador");
 }
 
 /** Generación o regeneración manual desde el panel. */

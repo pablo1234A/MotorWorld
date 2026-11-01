@@ -37,6 +37,7 @@ export interface DocumentContext {
     bookings: boolean;
     job_applications: boolean;
     comments: boolean;
+    social_networks: boolean;
     special_categories: boolean;
     minors: boolean;
     has_dpo: boolean;
@@ -69,6 +70,8 @@ const BUSINESS_LABELS: Record<string, string> = {
   pequena_empresa: "empresa",
   negocio_local: "negocio local",
   tienda_online: "tienda online",
+  asociacion: "entidad sin ánimo de lucro",
+  otro: "titular",
 };
 
 const EMAIL_PROVIDER: Record<string, { name: string; transfer: boolean }> = {
@@ -251,6 +254,7 @@ export function buildContext(a: Answers, now: Date = new Date()): DocumentContex
       bookings: has("reservas"),
       job_applications: has("empleo"),
       comments: has("comentarios"),
+      social_networks: has("redes"),
       special_categories: collectsAny && bool(a.special_categories),
       minors: collectsAny && bool(a.minors),
       has_dpo: collectsAny && bool(a.has_dpo),

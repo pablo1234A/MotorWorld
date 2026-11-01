@@ -103,6 +103,8 @@ export const QUESTIONS: Question[] = [
       { value: "pequena_empresa", label: "Pequeña empresa", hint: "Sociedad con web corporativa" },
       { value: "negocio_local", label: "Negocio local", hint: "Restaurante, peluquería, taller, tienda física…" },
       { value: "tienda_online", label: "Tienda online", hint: "Vendes productos o servicios por internet" },
+      { value: "asociacion", label: "Asociación o entidad sin ánimo de lucro", hint: "ONG, club deportivo, federación, fundación…" },
+      { value: "otro", label: "Otro tipo de web", hint: "Blog con publicidad, academia, proyecto personal con actividad económica…" },
     ],
   },
   {
@@ -280,6 +282,7 @@ export const QUESTIONS: Question[] = [
       { value: "reservas", label: "Reservas o citas" },
       { value: "empleo", label: "Envío de currículums" },
       { value: "comentarios", label: "Comentarios o reseñas" },
+      { value: "redes", label: "Perfiles en redes sociales", hint: "Instagram, Facebook, LinkedIn, TikTok…" },
       { value: "ninguno", label: "No recojo datos personales" },
     ],
     advisories: [

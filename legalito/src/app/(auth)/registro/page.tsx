@@ -25,7 +25,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/registro"
       <h1 className="text-2xl font-semibold">Crea tu cuenta</h1>
       <p className="mt-1.5 mb-7 text-[15px] text-muted">
         ¿Ya tienes cuenta?{" "}
-        <Link href="/acceder" className="font-medium text-blue hover:underline">
+        <Link href="/acceder" className="text-link">
           Accede
         </Link>
       </p>

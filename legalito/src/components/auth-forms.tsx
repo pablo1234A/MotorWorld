@@ -40,7 +40,7 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: boo
           <PasswordInput id="password" name="password" autoComplete="current-password" invalid={!!fe.password} />
         </Field>
         <div className="flex justify-end">
-          <Link href="/recuperar" className="text-sm font-medium text-blue hover:underline">
+          <Link href="/recuperar" className="text-sm text-link">
             ¿Has olvidado tu contraseña?
           </Link>
         </div>
@@ -148,7 +148,7 @@ export function NewPasswordForm() {
     return (
       <div className="space-y-4">
         <FormMessage state={state} />
-        <Link href="/panel" className="block text-center text-sm font-medium text-blue hover:underline">
+        <Link href="/panel" className="block text-center text-sm text-link">
           Ir a mi panel
         </Link>
       </div>

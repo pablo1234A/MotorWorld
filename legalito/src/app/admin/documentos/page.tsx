@@ -10,7 +10,7 @@ export default async function AdminDocumentsPage() {
   await requireAdmin();
   const db = await createSessionClient();
   const [{ data: versions }, { data: orgs }, { data: tvs }] = await Promise.all([
-    db.from("document_versions").select("id, organization_id, version_number, template_version_id, entitlement_source, is_demo, generated_at, revoked_at, documents(document_type)").order("generated_at", { ascending: false }).limit(200),
+    db.from("document_versions").select("id, organization_id, version_number, template_version_id, entitlement_source, is_demo, generated_at, revoked_at, documents!document_versions_document_id_fkey(document_type)").order("generated_at", { ascending: false }).limit(200),
     db.from("organizations").select("id, legal_name"),
     db.from("template_versions").select("id, version_label"),
   ]);

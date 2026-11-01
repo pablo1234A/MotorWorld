@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
+/**
+ * Backend de pruebas (tests/harness/app-backend.ts): solo con LEGALITO_TEST_BACKEND=1.
+ * Sustituye los clientes de Supabase por PostgreSQL local para las pruebas E2E del
+ * área privada. Usa un directorio de build separado y nunca se activa en producción.
+ */
+const testBackend = process.env.LEGALITO_TEST_BACKEND === "1";
+if (testBackend && process.env.APP_ENV === "production") throw new Error("LEGALITO_TEST_BACKEND no se permite en producción");
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 /**
@@ -38,7 +45,11 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  ...(testBackend ? { distDir: ".next-qa", serverExternalPackages: ["pg"] } : {}),
   turbopack: {
+    ...(testBackend
+      ? { resolveAlias: { "@supabase/supabase-js": "./tests/harness/app-backend.ts", "@supabase/ssr": "./tests/harness/app-backend.ts" } }
+      : {}),
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

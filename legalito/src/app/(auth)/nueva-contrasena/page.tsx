@@ -12,7 +12,7 @@ export default async function NewPasswordPage() {
       <>
         <h1 className="text-2xl font-semibold">Enlace caducado</h1>
         <p className="mt-2 text-[15px] text-muted">Este enlace ya no es válido. Solicita uno nuevo para cambiar tu contraseña.</p>
-        <Link href="/recuperar" className="mt-6 inline-block font-medium text-blue hover:underline">
+        <Link href="/recuperar" className="mt-6 inline-block text-link">
           Solicitar un nuevo enlace
         </Link>
       </>

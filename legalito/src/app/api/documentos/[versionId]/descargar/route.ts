@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/document
   const db = await createSessionClient();
   const { data: version } = await db
     .from("document_versions")
-    .select("id, organization_id, version_number, html_path, pdf_path, revoked_at, documents(document_type)")
+    .select("id, organization_id, version_number, html_path, pdf_path, revoked_at, documents!document_versions_document_id_fkey(document_type)")
     .eq("id", versionId)
     .maybeSingle();
   if (!version) return NextResponse.json({ error: "No encontrado" }, { status: 404, headers: noStore });
