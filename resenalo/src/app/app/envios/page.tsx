@@ -13,7 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { PageLoader } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 
-type Item = { id: string; toName: string; toEmail: string; subject: string; status: string; reasonText: string | null; scheduledFor: string; sentAt: string | null; createdAt: string; attempts: number; lastError: string | null; clickCount: number; rule: { name: string } | null; campaign: { name: string } | null; event: { source: string; serviceName: string | null } | null };
+type Item = { id: string; channel: "EMAIL" | "SMS"; isReminder: boolean; toPhone: string | null; toName: string; toEmail: string; subject: string; status: string; reasonText: string | null; scheduledFor: string; sentAt: string | null; createdAt: string; attempts: number; lastError: string | null; clickCount: number; rule: { name: string } | null; campaign: { name: string } | null; event: { source: string; serviceName: string | null } | null };
 type Detail = Item & { bodyHtml: string; bodyText: string; providerMessageId: string | null; logs: { id: string; event: string; message: string | null; createdAt: string }[] };
 
 const GROUPS = [
@@ -56,7 +56,7 @@ function Envios() {
   return (
     <>
       <PageHeader title="Historial de envíos" description="Cada solicitud generada, su estado y el registro detallado de lo ocurrido." />
-      <Alert tone="info" className="mb-4">«Enviado» significa que Gmail u Outlook <strong>aceptó</strong> el mensaje. Estos proveedores no informan de la entrega en el buzón ni de si el cliente publica la reseña; sí registramos los clics en el enlace.</Alert>
+      <Alert tone="info" className="mb-4">«Enviado» significa que Gmail, Outlook o el operador de SMS <strong>aceptó</strong> el mensaje. En los SMS también verás «Entregado» cuando el operador lo confirme; los correos no informan de la entrega. Registramos los clics en el enlace y, si conectas tu ficha de Google, las reseñas reales.</Alert>
       <Card padded={false}>
         <div className="flex flex-col gap-3 border-b border-ink-100 p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="-mx-1 flex gap-1 overflow-x-auto px-1" role="tablist">
@@ -79,7 +79,11 @@ function Envios() {
                 <li key={it.id}>
                   <button className="flex w-full flex-col gap-2 px-4 py-3.5 text-left hover:bg-cream-50 sm:flex-row sm:items-center sm:justify-between" onClick={() => { setTab("log"); setOpenId(it.id); }}>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{it.toName || it.toEmail} <span className="font-normal text-ink-500">· {it.toEmail}</span></p>
+                      <p className="truncate text-sm font-medium">
+                        {it.toName || it.toEmail} <span className="font-normal text-ink-500">· {it.channel === "SMS" ? it.toPhone : it.toEmail}</span>
+                        {it.channel === "SMS" ? <Badge className="ml-2">SMS</Badge> : null}
+                        {it.isReminder ? <Badge className="ml-2" tone="star">Recordatorio</Badge> : null}
+                      </p>
                       <p className="truncate text-xs text-ink-500">
                         {it.sentAt ? `Enviado ${fmtDate(it.sentAt, true)}` : it.status === "SCHEDULED" ? `Programado para ${fmtDate(it.scheduledFor, true)}` : `Creado ${fmtDate(it.createdAt, true)}`}
                         {" · "}{it.campaign ? `Campaña «${it.campaign.name}»` : it.rule?.name ?? SOURCE_LABEL[it.event?.source ?? ""] ?? ""}
@@ -114,7 +118,7 @@ function Envios() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-semibold">{j.subject}</p>
-                <p className="text-sm text-ink-500">Para {j.toName} &lt;{j.toEmail}&gt;</p>
+                <p className="text-sm text-ink-500">Para {j.toName} &lt;{j.channel === "SMS" ? j.toPhone : j.toEmail}&gt;{j.channel === "SMS" ? " · SMS" : ""}{j.isReminder ? " · recordatorio" : ""}</p>
               </div>
               <Badge tone={JOB_STATUS[j.status]?.tone}>{JOB_STATUS[j.status]?.label}</Badge>
             </div>
@@ -138,6 +142,8 @@ function Envios() {
                   </li>
                 ))}
               </ol>
+            ) : j.channel === "SMS" ? (
+              <p className="whitespace-pre-wrap rounded-2xl bg-ink-100 p-4 text-sm">{j.bodyText}</p>
             ) : j.bodyHtml ? (
               <iframe title="Correo generado" sandbox="" srcDoc={j.bodyHtml} className="h-[480px] w-full rounded-lg border border-ink-200 bg-white" />
             ) : <p className="text-sm text-ink-500">El contenido se eliminó por la política de retención.</p>}

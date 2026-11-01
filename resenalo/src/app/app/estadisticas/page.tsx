@@ -74,6 +74,20 @@ export default function StatsPage() {
           </div>
 
           <Card className="mt-4">
+            <CardHeader title="Reseñas recibidas en Google" description={s.reviews ? `Datos reales de tu ficha · últimos ${s.days} días` : undefined} />
+            {s.reviews && !s.reviews.needsLocation ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div><p className="text-xs text-ink-500">Reseñas nuevas</p><p className="font-display text-2xl font-semibold">{s.reviews.recentCount}</p></div>
+                <div><p className="text-xs text-ink-500">Media del periodo</p><p className="font-display text-2xl font-semibold">{s.reviews.recentAverage?.toLocaleString("es-ES") ?? "—"}</p></div>
+                <div><p className="text-xs text-ink-500">Probablemente tras una solicitud</p><p className="font-display text-2xl font-semibold">{s.reviews.attributedRecent}</p></div>
+                <div><p className="text-xs text-ink-500">Valoración global</p><p className="font-display text-2xl font-semibold">{s.reviews.averageRating?.toLocaleString("es-ES", { maximumFractionDigits: 1 }) ?? "—"}</p></div>
+              </div>
+            ) : (
+              <p className="text-sm text-ink-500">Conecta tu ficha en <Link href="/app/resenas" className="font-medium underline">Reseñas de Google</Link> para medir las reseñas que recibes, no solo los clics.</p>
+            )}
+          </Card>
+
+          <Card className="mt-4">
             <CardHeader title="Rendimiento de las automatizaciones" description={s.advanced ? `Últimos ${s.days} días` : undefined} />
             {s.advanced ? (
               s.byRule.length ? (
@@ -100,7 +114,7 @@ export default function StatsPage() {
           </Card>
         </>
       )}
-      <p className="mt-6 flex gap-2 text-xs text-ink-500"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />Gmail y Microsoft Graph confirman la aceptación del mensaje, no su entrega en el buzón. Reseñalo no puede saber si un cliente ha publicado la reseña: ninguna plataforma lo comunica sin una integración específica, por lo que no mostramos ese dato.</p>
+      <p className="mt-6 flex gap-2 text-xs text-ink-500"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />Gmail y Microsoft Graph confirman la aceptación del mensaje, no su entrega en el buzón (los SMS sí informan de la entrega). Las reseñas proceden de tu ficha de Google; su relación con una solicitud concreta es una estimación por nombre, porque Google no indica a través de qué enlace llegó cada reseña.</p>
     </>
   );
 }

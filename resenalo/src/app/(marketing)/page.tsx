@@ -4,7 +4,7 @@ import { buttonClass } from "@/components/ui/button-class";
 import { StarMark } from "@/components/brand/Logo";
 import { DashboardShowcase, HeroComposition } from "@/components/marketing/ProductPreview";
 import { Pricing } from "@/components/marketing/Pricing";
-import { TRIAL_DAYS, TRIAL_EMAIL_CAP } from "@/config/plans";
+import { PLANS, TRIAL_DAYS, TRIAL_EMAIL_CAP } from "@/config/plans";
 
 const steps = [
   { icon: Mail, title: "Conecta tu correo", text: "Autoriza tu Gmail u Outlook con OAuth. Los correos salen desde tu propia dirección; nunca guardamos tu contraseña." },
@@ -42,9 +42,23 @@ const faqs = [
   { q: "¿Puedo cancelar cuando quiera?", a: "Sí. La suscripción es mensual y sin permanencia. Si cancelas, mantienes el servicio hasta el final del periodo ya pagado y no se renueva." },
 ];
 
+function JsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Reseñalo",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description: "Automatiza las solicitudes de reseña a tus clientes por correo y SMS desde tu propia cuenta, con estadísticas y reseñas de Google en un solo panel.",
+    offers: PLANS.map((p) => ({ "@type": "Offer", name: p.name, price: (p.priceCents / 100).toFixed(2), priceCurrency: "EUR" })),
+  };
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+}
+
 export default function Landing() {
   return (
     <>
+      <JsonLd />
       {/* HERO */}
       <section className="overflow-hidden">
         <div className="container-page grid items-center gap-12 pb-24 pt-14 sm:pt-20 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-28">

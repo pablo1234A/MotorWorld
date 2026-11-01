@@ -34,7 +34,7 @@ export const GET = tenantRoute(async (req, { business }) => {
       skip: (q.page - 1) * q.pageSize,
       take: q.pageSize,
       select: {
-        id: true, toName: true, toEmail: true, subject: true, status: true, statusReason: true, scheduledFor: true, sentAt: true,
+        id: true, channel: true, isReminder: true, toPhone: true, toName: true, toEmail: true, subject: true, status: true, statusReason: true, scheduledFor: true, sentAt: true,
         createdAt: true, attempts: true, lastError: true, clickCount: true, customerId: true,
         rule: { select: { name: true } }, campaign: { select: { name: true } }, event: { select: { source: true, serviceName: true } },
       },

@@ -13,14 +13,20 @@ import { Modal } from "@/components/ui/Modal";
 import { PageLoader } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 
-type Rule = { id: string; name: string; active: boolean; templateId: string; delayMinutes: number; serviceFilter: string | null; sources: string[]; sendWindowStart: number | null; sendWindowEnd: number | null; priority: number; template: { name: string } };
+type Rule = {
+  id: string; name: string; active: boolean; templateId: string; delayMinutes: number; serviceFilter: string | null; sources: string[];
+  sendWindowStart: number | null; sendWindowEnd: number | null; priority: number; channel: "EMAIL" | "SMS"; reminderEnabled: boolean; reminderDelayDays: number; template: { name: string };
+};
 type Form = Omit<Rule, "id" | "template">;
 const DELAYS = [
   [0, "Inmediatamente"], [60, "1 hora después"], [120, "2 horas después"], [240, "4 horas después"], [1440, "1 día después"], [2880, "2 días después"], [4320, "3 días después"], [10080, "1 semana después"],
 ] as const;
 const SOURCES = ["MANUAL", "CSV", "API", "WEBHOOK"];
 const delayLabel = (m: number) => DELAYS.find((d) => d[0] === m)?.[1] ?? (m >= 1440 ? `${Math.round(m / 1440)} días después` : `${Math.round(m / 60)} h después`);
-const empty = (templateId: string): Form => ({ name: "", active: true, templateId, delayMinutes: 120, serviceFilter: null, sources: [...SOURCES], sendWindowStart: null, sendWindowEnd: null, priority: 0 });
+const empty = (templateId: string): Form => ({
+  name: "", active: true, templateId, delayMinutes: 120, serviceFilter: null, sources: [...SOURCES], sendWindowStart: null, sendWindowEnd: null, priority: 0,
+  channel: "EMAIL", reminderEnabled: false, reminderDelayDays: 5,
+});
 
 export default function AutomationsPage() {
   const rules = useApi<{ rules: Rule[]; paused: boolean }>("/api/v1/automations");
@@ -101,6 +107,8 @@ export default function AutomationsPage() {
                   <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-600">
                     <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{delayLabel(r.delayMinutes)}</span>
                     <span>Plantilla: <strong className="font-medium text-ink-800">{r.template.name}</strong></span>
+                    <span>{r.channel === "SMS" ? "Por SMS" : "Por correo"}</span>
+                    {r.reminderEnabled ? <span>Recordatorio a los {r.reminderDelayDays} días si no abre el enlace</span> : null}
                     {r.serviceFilter ? <span>Servicio contiene «{r.serviceFilter}»</span> : null}
                     {r.sendWindowStart != null ? <span>Solo de {r.sendWindowStart}:00 a {r.sendWindowEnd}:00</span> : null}
                   </div>
@@ -142,6 +150,22 @@ export default function AutomationsPage() {
               </div>
               {err.fields?.sources ? <p className="mt-1 text-xs text-bad-600">{err.fields.sources}</p> : null}
             </fieldset>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Locked locked={!f.sms} label="SMS disponible a partir del plan Pro">
+                <Select label="Canal" value={editing.form.channel} onChange={(e) => setEditing({ ...editing, form: { ...editing.form, channel: e.target.value as "EMAIL" | "SMS" } })} help={editing.form.channel === "SMS" ? "Se envía al móvil del cliente. Los clientes sin móvil válido se omiten." : "Se envía desde tu cuenta de correo conectada."}>
+                  <option value="EMAIL">Correo electrónico</option>
+                  <option value="SMS" disabled={!f.sms}>SMS</option>
+                </Select>
+              </Locked>
+              <Locked locked={!f.reminders} label="Recordatorios disponibles a partir del plan Pro">
+                <div className="space-y-2">
+                  <Toggle label="Recordatorio si no abre el enlace" description="Un único mensaje más, solo a quien no hizo clic." checked={editing.form.reminderEnabled} disabled={!f.reminders} onChange={(v) => setEditing({ ...editing, form: { ...editing.form, reminderEnabled: v } })} />
+                  {editing.form.reminderEnabled ? (
+                    <Input label="Días de espera" type="number" min={1} max={30} value={editing.form.reminderDelayDays} onChange={(e) => setEditing({ ...editing, form: { ...editing.form, reminderDelayDays: Number(e.target.value) } })} error={err.fields?.reminderDelayDays} />
+                  ) : null}
+                </div>
+              </Locked>
+            </div>
             <Locked locked={!f.serviceFilters} label="Disponible a partir del plan Pro">
               <Input label="Aplicar solo si el servicio contiene" placeholder="Ej. tinte" disabled={!f.serviceFilters} value={editing.form.serviceFilter ?? ""} onChange={(e) => setEditing({ ...editing, form: { ...editing.form, serviceFilter: e.target.value } })} help="Déjalo vacío para todos los servicios." />
             </Locked>

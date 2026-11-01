@@ -49,7 +49,7 @@ export function CustomerForm({ initial, id, tagsEnabled, onDone }: { initial?: P
         <Input label="Correo electrónico" type="email" required value={v.email} onChange={(e) => set("email", e.target.value)} error={err.fields?.email} autoComplete="off" />
         <Input label="Servicio o producto" placeholder="Ej. Corte y peinado" value={v.serviceName} onChange={(e) => set("serviceName", e.target.value)} help="Se usa en {{nombre_servicio}}." />
         <Input label="Fecha de finalización" type="datetime-local" value={v.completedAt} onChange={(e) => set("completedAt", e.target.value)} />
-        <Input label="Teléfono (opcional)" value={v.phone} onChange={(e) => set("phone", e.target.value)} />
+        <Input label="Móvil (opcional)" type="tel" placeholder="+34 600 000 000" value={v.phone} onChange={(e) => set("phone", e.target.value)} error={err.fields?.phone} help="Necesario para las automatizaciones por SMS." />
         {tagsEnabled ? <Input label="Etiquetas" placeholder="vip, centro" value={v.tags} onChange={(e) => set("tags", e.target.value)} help="Separadas por comas." /> : null}
       </div>
       <Textarea label="Notas internas (opcional)" rows={2} value={v.notes} onChange={(e) => set("notes", e.target.value)} />

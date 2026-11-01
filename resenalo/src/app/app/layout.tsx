@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/server/db";
-import { requirePageTenant } from "@/server/auth/page-auth";
+import { isAdminEmail, requirePageTenant } from "@/server/auth/page-auth";
 import { subscriptionAllowsSending } from "@/server/modules/billing/entitlements";
 import { Sidebar } from "@/components/app/Sidebar";
 
@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-[100dvh]">
-      <Sidebar user={{ name: user.name, email: user.email }} business={{ name: business.name }} plan={sub && canSend ? sub.plan.name : null} />
+      <Sidebar user={{ name: user.name, email: user.email }} business={{ name: business.name }} plan={sub && canSend ? sub.plan.name : null} isAdmin={isAdminEmail(user.email)} />
       <div className="lg:pl-[264px]">
         {banners.length ? (
           <div className="space-y-px">

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import {
-  BarChart3, CreditCard, FileText, History, Home, LogOut, Mail, Megaphone, Menu, PlugZap, Settings, ShieldCheck, Users, Workflow, X,
+  BarChart3, CreditCard, Star, QrCode, FileText, History, Home, LogOut, Mail, Megaphone, Menu, PlugZap, Settings, ShieldCheck, Users, Workflow, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { api } from "@/lib/api";
@@ -17,17 +17,19 @@ const NAV: NavItem[] = [
   { href: "/app/plantillas", label: "Plantillas de correo", icon: FileText },
   { href: "/app/campanas", label: "Campañas", icon: Megaphone },
   { href: "/app/envios", label: "Historial de envíos", icon: History },
+  { href: "/app/resenas", label: "Reseñas de Google", icon: Star },
   { href: "/app/estadisticas", label: "Estadísticas", icon: BarChart3 },
 ];
 const NAV2: NavItem[] = [
   { href: "/app/conexion-correo", label: "Conexión de correo", icon: Mail },
+  { href: "/app/kit-qr", label: "Kit QR", icon: QrCode },
   { href: "/app/integraciones", label: "API e integraciones", icon: PlugZap },
   { href: "/app/negocio", label: "Configuración del negocio", icon: Settings },
   { href: "/app/facturacion", label: "Suscripción y facturación", icon: CreditCard },
   { href: "/app/perfil", label: "Perfil y seguridad", icon: ShieldCheck },
 ];
 
-export function Sidebar({ user, business, plan }: { user: { name: string; email: string }; business: { name: string }; plan: string | null }) {
+export function Sidebar({ user, business, plan, isAdmin }: { user: { name: string; email: string }; business: { name: string }; plan: string | null; isAdmin?: boolean }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [path]);
@@ -57,6 +59,9 @@ export function Sidebar({ user, business, plan }: { user: { name: string; email:
           })}
         </ul>
       ))}
+      {isAdmin ? (
+        <Link href="/admin" className="mx-3 rounded-lg border border-dashed border-ink-300 px-3 py-2 text-[13px] font-medium text-ink-600 hover:bg-white">Administración de la plataforma</Link>
+      ) : null}
     </nav>
   );
 

@@ -5,10 +5,12 @@ import { Input, Select, Checkbox } from "@/components/ui/Field";
 export type BusinessData = {
   name: string; legalName: string; taxId: string; addressLine: string; city: string; postalCode: string; country: string; phone: string; website: string;
   reviewUrl: string; reviewPlatform: string; senderName: string; replyToEmail: string; timezone: string; resendCooldownDays: number; trackClicks: boolean;
+  weeklyDigest: boolean; smsSenderId: string;
 };
 export const emptyBusiness: BusinessData = {
   name: "", legalName: "", taxId: "", addressLine: "", city: "", postalCode: "", country: "ES", phone: "", website: "",
   reviewUrl: "", reviewPlatform: "google", senderName: "", replyToEmail: "", timezone: "Europe/Madrid", resendCooldownDays: 30, trackClicks: true,
+  weeklyDigest: true, smsSenderId: "",
 };
 
 export const PLATFORMS = [
@@ -80,7 +82,10 @@ export function BusinessFields({ value, onChange, errors, sections = ["basic", "
             {TZ.map((t) => <option key={t} value={t}>{t}</option>)}
           </Select>
           <Input label="No repetir solicitud al mismo cliente durante (días)" type="number" min={0} max={365} value={value.resendCooldownDays} onChange={(e) => set("resendCooldownDays", Number(e.target.value))} help="Evita pedir reseña varias veces a la misma persona. 0 = sin límite." />
-          <Checkbox className="sm:col-span-2" checked={value.trackClicks} onChange={(e) => set("trackClicks", e.target.checked)} label="Medir los clics en el enlace de reseña (redirección a través de Reseñalo, sin cookies)." />
+          <Input label="Remitente de los SMS (opcional)" placeholder="Ej. PeluMarta" maxLength={11} value={value.smsSenderId} onChange={(e) => set("smsSenderId", e.target.value)} error={errors?.smsSenderId} help="Hasta 11 letras o números. Vacío = número de la plataforma." />
+          <div className="hidden sm:block" />
+          <Checkbox className="sm:col-span-2" checked={value.trackClicks} onChange={(e) => set("trackClicks", e.target.checked)} label="Medir los clics en el enlace de reseña (redirección a través de Reseñalo, sin cookies). Necesario para los recordatorios." />
+          <Checkbox className="sm:col-span-2" checked={value.weeklyDigest} onChange={(e) => set("weeklyDigest", e.target.checked)} label="Recibir cada lunes un resumen semanal por correo (envíos, clics y reseñas nuevas)." />
         </fieldset>
       ) : null}
     </div>

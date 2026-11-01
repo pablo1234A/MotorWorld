@@ -5,8 +5,9 @@ import { Monitor, Plus, Send, Smartphone, Star, Trash2 } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
 import { useEntitlements } from "@/lib/useEntitlements";
-import { DEFAULT_TEMPLATE, detectIncentiveLanguage, findUnknownVariables, renderTemplate, TEMPLATE_VARIABLES, templateHasReviewLink, type TemplateFields } from "@/lib/template";
+import { DEFAULT_REMINDER, DEFAULT_TEMPLATE, detectIncentiveLanguage, findUnknownVariables, renderTemplate, TEMPLATE_VARIABLES, templateHasReviewLink, type TemplateFields } from "@/lib/template";
 import { footerPreview } from "@/lib/footer-preview";
+import { DEFAULT_SMS, renderSms, smsSegments } from "@/lib/sms";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui/Display";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Field";
@@ -14,9 +15,16 @@ import { Modal } from "@/components/ui/Modal";
 import { PageLoader } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 
-type T = TemplateFields & { id: string; name: string; isDefault: boolean; updatedAt: string };
+type T = TemplateFields & { id: string; name: string; isDefault: boolean; updatedAt: string; reminderSubject: string | null; reminderBody: string | null; smsBody: string | null };
+type Draft = TemplateFields & { name: string; reminderSubject: string; reminderBody: string; smsBody: string };
+const toDraft = (c: T): Draft => ({
+  name: c.name, subject: c.subject, greeting: c.greeting, body: c.body, closing: c.closing, signature: c.signature, buttonLabel: c.buttonLabel,
+  reminderSubject: c.reminderSubject ?? "", reminderBody: c.reminderBody ?? "", smsBody: c.smsBody ?? "",
+});
 type Biz = { business: { name: string; reviewUrl: string | null; legalName: string | null; addressLine: string | null; postalCode: string | null; city: string | null } };
 
+type EditableKey = keyof TemplateFields | "reminderSubject" | "reminderBody" | "smsBody";
+const EXTRA_LABELS: Record<string, string> = { reminderSubject: "Asunto del recordatorio", reminderBody: "Mensaje del recordatorio", smsBody: "Texto del SMS" };
 const FIELDS: { k: keyof TemplateFields; label: string; rows?: number; help?: string }[] = [
   { k: "subject", label: "Asunto del correo" },
   { k: "greeting", label: "Saludo" },
@@ -32,14 +40,15 @@ export default function TemplatesPage() {
   const ent = useEntitlements();
   const toast = useToast();
   const [selected, setSelected] = useState<string | null>(null);
-  const [draft, setDraft] = useState<(TemplateFields & { name: string }) | null>(null);
-  const [focused, setFocused] = useState<keyof TemplateFields>("body");
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [previewKind, setPreviewKind] = useState<"request" | "reminder" | "sms">("request");
+  const [focused, setFocused] = useState<EditableKey>("body");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ msg?: string; fields?: Record<string, string> }>({});
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [sample, setSample] = useState({ customerName: "Laura", serviceName: "limpieza dental" });
   const [testOpen, setTestOpen] = useState(false);
-  const refs = useRef<Partial<Record<keyof TemplateFields, HTMLInputElement | HTMLTextAreaElement | null>>>({});
+  const refs = useRef<Partial<Record<EditableKey, HTMLInputElement | HTMLTextAreaElement | null>>>({});
 
   const current = list.data?.templates.find((t) => t.id === selected) ?? null;
   useEffect(() => {
@@ -48,14 +57,15 @@ export default function TemplatesPage() {
     setSelected(d.id);
   }, [list.data, selected]);
   useEffect(() => {
-    if (current) setDraft({ name: current.name, subject: current.subject, greeting: current.greeting, body: current.body, closing: current.closing, signature: current.signature, buttonLabel: current.buttonLabel });
+    if (current) setDraft(toDraft(current));
   }, [current]);
 
   const b = biz.data?.business;
   const preview = useMemo(() => {
     if (!draft) return null;
     try {
-      return renderTemplate(draft, {
+      const fields = previewKind === "reminder" ? { ...draft, subject: draft.reminderSubject || DEFAULT_REMINDER.subject, body: draft.reminderBody || DEFAULT_REMINDER.body } : draft;
+      return renderTemplate(fields, {
         customerName: sample.customerName,
         serviceName: sample.serviceName,
         businessName: b?.name ?? "Tu negocio",
@@ -66,22 +76,29 @@ export default function TemplatesPage() {
     } catch {
       return null;
     }
-  }, [draft, sample, b]);
+  }, [draft, sample, b, previewKind]);
+  const smsText = useMemo(
+    () =>
+      draft
+        ? renderSms(draft.smsBody || DEFAULT_SMS, { customerName: sample.customerName, businessName: b?.name ?? "Tu negocio", serviceName: sample.serviceName, reviewUrl: "https://resenalo.es/r/AbC123xYz", unsubscribeUrl: "https://resenalo.es/baja/AbC123xYz" })
+        : "",
+    [draft, sample, b],
+  );
 
   if (list.loading && !list.data) return <PageLoader />;
   if (list.error) return <Alert tone="bad">{list.error.message}</Alert>;
 
   const unknown = draft ? findUnknownVariables(draft) : [];
   const incentives = draft ? detectIncentiveLanguage(draft) : [];
-  const missingLink = draft ? !templateHasReviewLink(draft) : false;
-  const dirty = Boolean(current && draft && (Object.keys(draft) as (keyof typeof draft)[]).some((k) => draft[k] !== current[k]));
+  const missingLink = draft ? !templateHasReviewLink(draft) || Boolean(draft.reminderBody && !templateHasReviewLink({ body: draft.reminderBody })) || Boolean(draft.smsBody && !templateHasReviewLink({ body: draft.smsBody })) : false;
+  const dirty = Boolean(current && draft && (Object.keys(draft) as (keyof Draft)[]).some((k) => draft[k] !== toDraft(current)[k]));
   const canCreate = ent.data && (ent.data.maxTemplates === null || (list.data?.templates.length ?? 0) < (ent.data.maxTemplates ?? 1));
 
   const insertVar = (key: string) => {
     if (!draft) return;
     const el = refs.current[focused];
     const token = `{{${key}}}`;
-    const val = draft[focused];
+    const val = draft[focused] ?? "";
     const start = el?.selectionStart ?? val.length;
     const end = el?.selectionEnd ?? val.length;
     const next = val.slice(0, start) + token + val.slice(end);
@@ -156,7 +173,7 @@ export default function TemplatesPage() {
             </div>
 
             <div className="mb-4">
-              <p className="label">Insertar variable en «{FIELDS.find((f) => f.k === focused)?.label}»</p>
+              <p className="label">Insertar variable en «{FIELDS.find((f) => f.k === focused)?.label ?? EXTRA_LABELS[focused]}»</p>
               <div className="flex flex-wrap gap-1.5">
                 {TEMPLATE_VARIABLES.map((v) => (
                   <button key={v.key} type="button" onClick={() => insertVar(v.key)} className="rounded-md border border-ink-200 bg-cream-50 px-2 py-1 font-mono text-xs text-ink-700 hover:border-ink-400" title={v.label}>
@@ -176,6 +193,24 @@ export default function TemplatesPage() {
               )}
             </div>
 
+            <details className="mt-6 rounded-lg border border-ink-200 p-4" onToggle={(e) => (e.currentTarget.open ? setPreviewKind("reminder") : setPreviewKind("request"))}>
+              <summary className="cursor-pointer text-sm font-semibold">Recordatorio (Pro y Business)</summary>
+              <p className="mt-2 text-xs text-ink-500">Se envía una sola vez a quien no abrió el enlace, si lo activas en la automatización. Déjalo vacío para usar el texto predeterminado.</p>
+              <div className="mt-3 space-y-3">
+                <Input ref={(el) => { refs.current.reminderSubject = el; }} label="Asunto del recordatorio" placeholder={DEFAULT_REMINDER.subject} value={draft.reminderSubject} onFocus={() => setFocused("reminderSubject")} onChange={(e) => setDraft({ ...draft, reminderSubject: e.target.value })} />
+                <Textarea ref={(el) => { refs.current.reminderBody = el; }} label="Mensaje del recordatorio" rows={6} placeholder={DEFAULT_REMINDER.body} value={draft.reminderBody} onFocus={() => setFocused("reminderBody")} onChange={(e) => setDraft({ ...draft, reminderBody: e.target.value })} error={errors.fields?.reminderBody} />
+              </div>
+            </details>
+            <details className="mt-3 rounded-lg border border-ink-200 p-4" onToggle={(e) => (e.currentTarget.open ? setPreviewKind("sms") : setPreviewKind("request"))}>
+              <summary className="cursor-pointer text-sm font-semibold">SMS (Pro y Business)</summary>
+              <p className="mt-2 text-xs text-ink-500">Texto corto para las automatizaciones por SMS. Se añade siempre «Baja: enlace» al final. Déjalo vacío para usar el predeterminado.</p>
+              <Textarea wrapperClassName="mt-3" ref={(el) => { refs.current.smsBody = el; }} label="Texto del SMS" rows={3} placeholder={DEFAULT_SMS} value={draft.smsBody} onFocus={() => setFocused("smsBody")} onChange={(e) => setDraft({ ...draft, smsBody: e.target.value })} error={errors.fields?.smsBody} />
+              {(() => {
+                const seg = smsSegments(smsText);
+                return <p className={clsx("mt-2 text-xs", seg.segments > 2 ? "text-warn-700" : "text-ink-500")}>{seg.length} caracteres · {seg.segments} SMS por envío ({seg.encoding}){seg.segments > 2 ? " · acórtalo: cada segmento extra cuenta como otro SMS para el operador" : ""}</p>;
+              })()}
+            </details>
+
             <div className="mt-5 space-y-2">
               {unknown.length ? <Alert tone="bad">Variables desconocidas: {unknown.map((u) => `{{${u}}}`).join(", ")}</Alert> : null}
               {missingLink ? <Alert tone="bad">El mensaje principal debe incluir {"{{enlace_resena}}"}.</Alert> : null}
@@ -185,7 +220,7 @@ export default function TemplatesPage() {
             </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Button variant="ghost" disabled={!dirty} onClick={() => current && setDraft({ name: current.name, subject: current.subject, greeting: current.greeting, body: current.body, closing: current.closing, signature: current.signature, buttonLabel: current.buttonLabel })}>Descartar</Button>
+              <Button variant="ghost" disabled={!dirty} onClick={() => current && setDraft(toDraft(current))}>Descartar</Button>
               <Button variant="secondary" icon={<Send className="h-4 w-4" />} onClick={() => setTestOpen(true)} disabled={dirty}>Enviarme una prueba</Button>
               <Button loading={saving} disabled={!dirty || unknown.length > 0 || missingLink || incentives.length > 0} onClick={save}>Guardar plantilla</Button>
             </div>
@@ -194,7 +229,11 @@ export default function TemplatesPage() {
           <div className="xl:sticky xl:top-6 xl:self-start">
             <Card padded={false}>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 px-4 py-3">
-                <p className="text-sm font-semibold">Vista previa</p>
+                <div className="flex rounded-lg border border-ink-200 p-0.5 text-xs" role="group" aria-label="Qué previsualizar">
+                  {(["request", "reminder", "sms"] as const).map((k) => (
+                    <button key={k} onClick={() => setPreviewKind(k)} aria-pressed={previewKind === k} className={clsx("rounded-md px-2.5 py-1", previewKind === k && "bg-ink-100 font-semibold")}>{k === "request" ? "Solicitud" : k === "reminder" ? "Recordatorio" : "SMS"}</button>
+                  ))}
+                </div>
                 <div className="flex rounded-lg border border-ink-200 p-0.5">
                   <button className={clsx("rounded-md p-1.5", device === "desktop" && "bg-ink-100")} onClick={() => setDevice("desktop")} aria-label="Vista escritorio" aria-pressed={device === "desktop"}><Monitor className="h-4 w-4" /></button>
                   <button className={clsx("rounded-md p-1.5", device === "mobile" && "bg-ink-100")} onClick={() => setDevice("mobile")} aria-label="Vista móvil" aria-pressed={device === "mobile"}><Smartphone className="h-4 w-4" /></button>
@@ -204,7 +243,14 @@ export default function TemplatesPage() {
                 <Input aria-label="Nombre de ejemplo" value={sample.customerName} onChange={(e) => setSample({ ...sample, customerName: e.target.value })} className="py-1.5 text-sm" placeholder="Nombre de ejemplo" />
                 <Input aria-label="Servicio de ejemplo" value={sample.serviceName} onChange={(e) => setSample({ ...sample, serviceName: e.target.value })} className="py-1.5 text-sm" placeholder="Servicio de ejemplo" />
               </div>
-              {preview ? (
+              {previewKind === "sms" ? (
+                <div className="bg-cream-200/50 p-6">
+                  <div className="mx-auto max-w-[300px] rounded-2xl border border-ink-200 bg-white p-4 shadow-card">
+                    <p className="text-[11px] font-semibold text-ink-500">{b?.name ?? "Tu negocio"} · SMS</p>
+                    <p className="mt-2 whitespace-pre-wrap rounded-2xl rounded-tl-sm bg-ink-100 px-3 py-2 text-sm">{smsText}</p>
+                  </div>
+                </div>
+              ) : preview ? (
                 <div className="bg-cream-200/50 p-3 sm:p-4">
                   <div className="mb-2 rounded-lg bg-white px-3 py-2 text-xs">
                     <p className="text-ink-500">De: <span className="text-ink-800">{b?.name ?? "Tu negocio"}</span></p>

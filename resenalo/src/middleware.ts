@@ -15,4 +15,4 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/app/:path*", "/onboarding/:path*"] };
+export const config = { matcher: ["/app/:path*", "/onboarding/:path*", "/cartel-qr", "/admin/:path*"] };

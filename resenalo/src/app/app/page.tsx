@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, FileSpreadsheet, FileText, Mail, PauseCircle, PlayCircle, Send, UserPlus } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, FileSpreadsheet, FileText, Mail, PauseCircle, PlayCircle, Send, Star, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
@@ -113,6 +113,34 @@ export default function Dashboard() {
           </Button>
         </Card>
       </div>
+
+      <Card className="mt-4">
+        {s.reviews && !s.reviews.needsLocation ? (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-star-50"><Star className="h-6 w-6 fill-star-300 text-star-300" /></div>
+              <div>
+                <p className="text-sm text-ink-500">Tu valoración en Google{s.reviews.locationTitle ? ` · ${s.reviews.locationTitle}` : ""}</p>
+                <p className="font-display text-2xl font-semibold">
+                  {s.reviews.averageRating ? s.reviews.averageRating.toLocaleString("es-ES", { maximumFractionDigits: 1 }) : "—"} <span className="text-base font-normal text-ink-500">· {s.reviews.totalReviewCount ?? 0} reseñas</span>
+                </p>
+              </div>
+            </div>
+            <div className="text-sm text-ink-600 sm:text-right">
+              <p><strong className="text-ink-900">{s.reviews.recentCount}</strong> reseñas nuevas en 30 días{s.reviews.recentAverage ? ` (media ${s.reviews.recentAverage.toLocaleString("es-ES")} ★)` : ""}</p>
+              <Link href="/app/resenas" className="font-medium underline-offset-2 hover:underline">Ver y responder</Link>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Star className="h-5 w-5 text-star-500" />
+              <p className="text-sm text-ink-600">Conecta tu ficha de Google para ver aquí tu valoración y las reseñas nuevas que llegan tras tus solicitudes.</p>
+            </div>
+            <ButtonLink href="/app/resenas" variant="secondary" size="sm">{s.reviews?.needsLocation ? "Elegir ficha" : "Conectar Google"}</ButtonLink>
+          </div>
+        )}
+      </Card>
 
       {!hasActivity ? (
         <Card className="mt-4">

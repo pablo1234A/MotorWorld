@@ -24,3 +24,19 @@ export async function requirePageTenant(next = "/app") {
   if (!business || !business.onboardingCompletedAt) redirect("/onboarding");
   return { ...auth, business };
 }
+
+export function isAdminEmail(email: string) {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email.toLowerCase());
+}
+
+/** Acceso al panel de administración de la plataforma: solo emails listados en ADMIN_EMAILS. */
+export async function requirePageAdmin() {
+  const auth = await requirePageUser("/admin");
+  const { notFound } = await import("next/navigation");
+  if (!isAdminEmail(auth.user.email)) notFound();
+  return auth;
+}
