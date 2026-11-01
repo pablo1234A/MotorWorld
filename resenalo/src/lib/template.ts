@@ -43,6 +43,15 @@ export const DEFAULT_TEMPLATE: TemplateFields = {
   buttonLabel: "Dejar mi opinión",
 };
 
+/** Texto predeterminado del recordatorio (un único envío si el cliente no abrió el enlace). */
+export const DEFAULT_REMINDER = {
+  subject: "{{nombre_cliente}}, ¿nos cuentas qué tal fue?",
+  body:
+    "Hace unos días te escribimos desde {{nombre_negocio}} para conocer tu opinión sobre {{nombre_servicio}}. Si aún no has tenido ocasión, nos ayudaría mucho que dedicaras un minuto a contarnos tu experiencia, sea cual sea:\n\n" +
+    "{{enlace_resena}}\n\n" +
+    "Es el último mensaje que te enviaremos sobre esto.",
+};
+
 export const FIELD_LIMITS: Record<keyof TemplateFields, number> = {
   subject: 160,
   greeting: 200,

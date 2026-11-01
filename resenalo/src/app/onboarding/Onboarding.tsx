@@ -16,7 +16,7 @@ import { EmailConnectButtons } from "@/components/app/EmailConnect";
 
 const STEPS = ["Tu negocio", "Plan", "Correo", "Listo"];
 
-type Billing = { stripeConfigured: boolean; subscription: { planCode: string; canSend: boolean } | null; plans: PlanInfo[] };
+type Billing = { stripeConfigured: boolean; trialAvailable: boolean; subscription: { planCode: string; canSend: boolean } | null; plans: PlanInfo[] };
 type Conn = { connection: { emailAddress: string; status: string } | null; providers: { google: boolean; microsoft: boolean } };
 
 export function Onboarding({ userName, hasBusiness }: { userName: string; hasBusiness: boolean }) {
@@ -119,11 +119,11 @@ export function Onboarding({ userName, hasBusiness }: { userName: string; hasBus
             !billing ? <PageLoader /> : (
               <div>
                 <h2 className="text-lg font-semibold">Elige tu plan</h2>
-                <p className="mb-5 mt-1 text-sm text-ink-500">Pago mensual seguro con Stripe. Sin permanencia. IVA incluido.</p>
+                <p className="mb-5 mt-1 text-sm text-ink-500">Empieza con 14 días gratis. Pago seguro con Stripe, sin permanencia, IVA incluido.</p>
                 {sp.get("checkout") === "cancelado" ? <Alert tone="warn" className="mb-4">Has cancelado el pago. Puedes elegir un plan cuando quieras.</Alert> : null}
                 {sp.get("checkout") === "ok" && !sendReady ? <Alert tone="info" className="mb-4">Estamos confirmando el pago con Stripe… <button className="underline" onClick={() => load()}>Actualizar</button></Alert> : null}
                 {sendReady ? <Alert tone="ok" className="mb-4">Suscripción activa: plan {billing.subscription?.planCode}.</Alert> : (
-                  <PlanPicker plans={billing.plans} mode="checkout" returnTo="onboarding" stripeConfigured={billing.stripeConfigured} />
+                  <PlanPicker plans={billing.plans} mode="checkout" returnTo="onboarding" stripeConfigured={billing.stripeConfigured} trialAvailable={billing.trialAvailable} />
                 )}
                 <div className="mt-6 flex justify-between">
                   <Button variant="ghost" onClick={() => setStep(0)}>Atrás</Button>

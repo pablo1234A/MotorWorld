@@ -42,7 +42,7 @@ export async function makeTenant(opts: { plan?: PlanCode | null; connected?: boo
     name: `Negocio ${u.user.name}`,
     legalName: null, taxId: null, addressLine: "Calle Mayor 1", city: "Madrid", postalCode: "28001", country: "ES", phone: null, website: null,
     reviewUrl: "https://g.page/r/negocio-prueba/review", reviewPlatform: "google", senderName: null, replyToEmail: null,
-    timezone: "Europe/Madrid", resendCooldownDays: 30, trackClicks: true, acceptDpa: true,
+    timezone: "Europe/Madrid", resendCooldownDays: 30, trackClicks: true, weeklyDigest: true, smsSenderId: null, acceptDpa: true,
   });
   if (opts.plan !== null) await activatePlan(business.id, opts.plan ?? "STARTER", opts.status ?? "ACTIVE");
   if (opts.connected !== false) {

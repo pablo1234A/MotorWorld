@@ -10,21 +10,29 @@ async function main() {
     PRO: process.env.STRIPE_PRICE_PRO,
     BUSINESS: process.env.STRIPE_PRICE_BUSINESS,
   };
+  const annualEnv: Record<string, string | undefined> = {
+    STARTER: process.env.STRIPE_PRICE_STARTER_ANNUAL,
+    PRO: process.env.STRIPE_PRICE_PRO_ANNUAL,
+    BUSINESS: process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
+  };
   for (const p of PLANS) {
     const data = {
       name: p.name,
       priceCents: p.priceCents,
       vatRateBps: p.vatRateBps,
       monthlyEmailLimit: p.monthlyEmailLimit,
+      monthlySmsLimit: p.monthlySmsLimit,
+      annualPriceCents: p.annualPriceCents,
       maxTemplates: p.maxTemplates,
       maxAutomationRules: p.maxAutomationRules,
       features: p.features,
       sortOrder: p.sortOrder,
       active: true,
       ...(priceEnv[p.code] ? { stripePriceId: priceEnv[p.code] } : {}),
+      ...(annualEnv[p.code] ? { stripeAnnualPriceId: annualEnv[p.code] } : {}),
     };
     await prisma.plan.upsert({ where: { code: p.code as PlanCode }, create: { code: p.code as PlanCode, ...data }, update: data });
-    console.log(`plan ${p.code}: ${priceEnv[p.code] ? "vinculado a " + priceEnv[p.code] : "SIN precio de Stripe (configura STRIPE_PRICE_" + p.code + ")"}`);
+    console.log(`plan ${p.code}: ${priceEnv[p.code] ? "vinculado a " + priceEnv[p.code] : "SIN precio de Stripe (configura STRIPE_PRICE_" + p.code + ")"}${annualEnv[p.code] ? " · anual " + annualEnv[p.code] : " · sin precio anual"}`);
   }
 }
 

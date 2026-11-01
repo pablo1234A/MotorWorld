@@ -19,6 +19,12 @@ export const REASON_MESSAGES: Record<string, string> = {
   MAX_ATTEMPTS: "Se agotaron los reintentos.",
   PROVIDER_REJECTED: "El proveedor rechazó el mensaje.",
   INVALID_RECIPIENT: "El proveedor rechazó la dirección del destinatario.",
+  SMS_LIMIT_REACHED: "Has alcanzado el límite de SMS de tu plan para este periodo.",
+  SMS_NOT_CONFIGURED: "El envío de SMS no está configurado en la plataforma.",
+  INVALID_PHONE: "El cliente no tiene un móvil válido para recibir SMS.",
+  UNDELIVERED: "El operador no pudo entregar el SMS.",
+  NOT_NEEDED: "No hace falta recordatorio.",
+  NOT_FOUND: "No encontrado.",
 };
 
 export const reasonMessage = (code?: string | null) => (code ? (REASON_MESSAGES[code] ?? code) : null);

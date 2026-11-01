@@ -1,4 +1,5 @@
 import {
+  Channel,
   ConnectionStatus,
   CustomerEmailStatus,
   EmailJobStatus,
@@ -16,7 +17,9 @@ import { buildMime } from "../../email/mime";
 import { enqueueEmailJob } from "../../queue/queues";
 import { getAccessToken, markAuthFailure } from "../email-connection";
 import { getCurrentUsage, subscriptionAllowsSending } from "../billing/entitlements";
-import { lockBusiness, refreshCustomerRequestStatus, trackingUrls } from "./requests";
+import { lockBusiness, refreshCustomerRequestStatus, scheduleDueReminders, trackingUrls } from "./requests";
+import { getSmsProvider } from "../../sms/twilio";
+import { checkUsageAlerts } from "../notifications";
 
 /** Backoff exponencial con jitter: 1, 4, 16, 64 min… (máx. 6 h). */
 export function backoffMs(attempt: number, retryAfterSec?: number) {
@@ -40,11 +43,16 @@ async function log(db: Tx | typeof prisma, job: Pick<EmailJob, "id" | "businessI
 }
 
 /** Libera la reserva de cupo de un trabajo (si la tenía). */
-async function releaseReservation(tx: Tx, job: Pick<EmailJob, "id" | "businessId" | "usagePeriodStart">, opts: { countFailed?: boolean } = {}) {
+async function releaseReservation(tx: Tx, job: Pick<EmailJob, "id" | "businessId" | "usagePeriodStart" | "channel">, opts: { countFailed?: boolean } = {}) {
   if (!job.usagePeriodStart) return;
-  await tx.$executeRaw`
-    UPDATE monthly_usage SET reserved = GREATEST(reserved - 1, 0), failed = failed + ${opts.countFailed ? 1 : 0}, updated_at = now()
-    WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
+  if (job.channel === Channel.SMS)
+    await tx.$executeRaw`
+      UPDATE monthly_usage SET sms_reserved = GREATEST(sms_reserved - 1, 0), updated_at = now()
+      WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
+  else
+    await tx.$executeRaw`
+      UPDATE monthly_usage SET reserved = GREATEST(reserved - 1, 0), failed = failed + ${opts.countFailed ? 1 : 0}, updated_at = now()
+      WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
   await tx.emailJob.update({ where: { id: job.id }, data: { usagePeriodStart: null } });
 }
 
@@ -93,9 +101,26 @@ async function claim(emailJobId: string): Promise<Claim> {
         return block(EmailJobStatus.BLOCKED, "SUBSCRIPTION_INACTIVE", EmailLogEvent.BLOCKED, "Bloqueado: la suscripción no está activa.", "blocked");
       if (job.customer.unsubscribedAt)
         return block(EmailJobStatus.BLOCKED, "UNSUBSCRIBED", EmailLogEvent.BLOCKED, "Bloqueado: el cliente se dio de baja.", "blocked");
+      const usage = await getCurrentUsage(job.businessId, tx);
+      if (!usage) return block(EmailJobStatus.BLOCKED, "SUBSCRIPTION_INACTIVE", EmailLogEvent.BLOCKED, "Bloqueado: sin periodo de facturación.", "blocked");
+
+      if (job.channel === Channel.SMS) {
+        if (job.customer.phoneInvalidAt || !job.toPhone)
+          return block(EmailJobStatus.BLOCKED, "INVALID_PHONE", EmailLogEvent.BLOCKED, "Bloqueado: el número del cliente no es válido.", "blocked");
+        if (!getSmsProvider().isConfigured())
+          return block(EmailJobStatus.BLOCKED, "SMS_NOT_CONFIGURED", EmailLogEvent.BLOCKED, "Bloqueado: el envío de SMS no está configurado.", "blocked");
+        const reserved = await tx.$executeRaw`
+          UPDATE monthly_usage SET sms_reserved = sms_reserved + 1, updated_at = now()
+          WHERE id = ${usage.id} AND sms_sent + sms_reserved < sms_limit`;
+        if (!reserved)
+          return block(EmailJobStatus.BLOCKED, "SMS_LIMIT_REACHED", EmailLogEvent.BLOCKED_LIMIT, "Bloqueado: límite mensual de SMS alcanzado. No se ha enviado.", "blocked");
+        const updated = await tx.emailJob.update({ where: { id: job.id }, data: { usagePeriodStart: usage.periodStart } });
+        await log(tx, job, EmailLogEvent.SEND_ATTEMPT, `Intento de envío nº ${updated.attempts} por SMS.`);
+        return { kind: "go", job: updated };
+      }
+
       if (job.customer.emailStatus !== CustomerEmailStatus.VALID)
         return block(EmailJobStatus.BLOCKED, "INVALID_EMAIL", EmailLogEvent.BLOCKED, "Bloqueado: el correo del cliente no es válido o fue rechazado.", "blocked");
-
       const conn = await tx.emailConnection.findUnique({ where: { businessId: job.businessId } });
       if (!conn || conn.status === ConnectionStatus.DISCONNECTED)
         return block(EmailJobStatus.ON_HOLD, "EMAIL_DISCONNECTED", EmailLogEvent.ON_HOLD, "En espera: no hay cuenta de correo conectada.", "on_hold");
@@ -103,8 +128,6 @@ async function claim(emailJobId: string): Promise<Claim> {
         return block(EmailJobStatus.ON_HOLD, "NEEDS_REAUTH", EmailLogEvent.ON_HOLD, "En espera: la cuenta de correo necesita volver a autorizarse.", "on_hold");
 
       // Reserva atómica de cupo: solo tiene éxito si sent + reserved < límite.
-      const usage = await getCurrentUsage(job.businessId, tx);
-      if (!usage) return block(EmailJobStatus.BLOCKED, "SUBSCRIPTION_INACTIVE", EmailLogEvent.BLOCKED, "Bloqueado: sin periodo de facturación.", "blocked");
       const reserved = await tx.$executeRaw`
         UPDATE monthly_usage SET reserved = reserved + 1, updated_at = now()
         WHERE id = ${usage.id} AND sent + reserved < email_limit`;
@@ -134,6 +157,7 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
     return c.outcome;
   }
   const job = c.job;
+  if (job.channel === Channel.SMS) return processSms(job);
   const conn = await prisma.emailConnection.findUniqueOrThrow({ where: { id: job.connectionId! } });
   const business = await prisma.business.findUniqueOrThrow({ where: { id: job.businessId } });
 
@@ -176,16 +200,68 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
       providerMessageId,
     });
   });
+  await checkUsageAlerts(job.businessId);
   return "sent";
 }
 
-async function handleSendError(job: EmailJob, connectionId: string, err: unknown): Promise<SendOutcome> {
+async function processSms(job: EmailJob): Promise<SendOutcome> {
+  const business = await prisma.business.findUniqueOrThrow({ where: { id: job.businessId } });
+  let res: { providerMessageId: string; status: string };
+  try {
+    res = await getSmsProvider().send({
+      to: job.toPhone!,
+      body: job.bodyText,
+      from: business.smsSenderId,
+      statusCallback: `${env().APP_URL}/api/webhooks/twilio/${job.publicToken}`,
+    });
+  } catch (err) {
+    return handleSendError(job, null, err);
+  }
+  // Aceptado por Twilio → se contabiliza (fuera del try: no reintentar si falla el registro).
+  await prisma.$transaction(async (tx) => {
+    await tx.emailJob.update({
+      where: { id: job.id },
+      data: { status: EmailJobStatus.SENT, sentAt: new Date(), providerMessageId: res.providerMessageId, providerStatus: res.status, lastError: null, statusReason: null, sendingStartedAt: null },
+    });
+    if (job.usagePeriodStart)
+      await tx.$executeRaw`
+        UPDATE monthly_usage SET sms_reserved = GREATEST(sms_reserved - 1, 0), sms_sent = sms_sent + 1, updated_at = now()
+        WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
+    await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: RequestStatus.SENT } });
+    await log(tx, job, EmailLogEvent.SENT, `SMS aceptado por Twilio (${res.providerMessageId}, estado ${res.status}).`, { providerMessageId: res.providerMessageId });
+  });
+  return "sent";
+}
+
+/** Estado de entrega real informado por Twilio (StatusCallback). */
+export async function applySmsStatus(publicToken: string, status: string, errorCode?: string | null) {
+  const job = await prisma.emailJob.findUnique({ where: { publicToken } });
+  if (!job || job.channel !== Channel.SMS) return false;
+  if (status === "delivered") {
+    await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENT }, data: { status: EmailJobStatus.DELIVERED, deliveredAt: new Date(), providerStatus: status } });
+    await log(prisma, job, EmailLogEvent.DELIVERED, "El operador confirmó la entrega del SMS.");
+  } else if (status === "undelivered" || status === "failed") {
+    // El SMS ya fue cobrado por el operador: sigue contando en el cupo.
+    await prisma.emailJob.updateMany({
+      where: { id: job.id, status: { in: [EmailJobStatus.SENT, EmailJobStatus.DELIVERED] } },
+      data: { status: EmailJobStatus.BOUNCED, statusReason: "UNDELIVERED", providerStatus: status, failedAt: new Date(), lastError: errorCode ? `Código Twilio ${errorCode}` : null },
+    });
+    if (errorCode && ["30003", "30005", "30006"].includes(errorCode)) await prisma.customer.update({ where: { id: job.customerId }, data: { phoneInvalidAt: new Date() } });
+    await log(prisma, job, EmailLogEvent.BOUNCED, `El operador no pudo entregar el SMS (${status}${errorCode ? `, código ${errorCode}` : ""}).`);
+    await refreshCustomerRequestStatus(job.customerId);
+  } else {
+    await prisma.emailJob.update({ where: { id: job.id }, data: { providerStatus: status } });
+  }
+  return true;
+}
+
+async function handleSendError(job: EmailJob, connectionId: string | null, err: unknown): Promise<SendOutcome> {
   const perr =
     err instanceof ProviderError ? err : new ProviderError("transient", `Error interno al preparar el envío: ${(err as Error)?.message ?? String(err)}`);
   if (!(err instanceof ProviderError)) void reportError(err, { emailJobId: job.id });
   logger.warn({ emailJobId: job.id, kind: perr.kind, status: perr.status }, perr.message);
 
-  if (perr.kind === "auth") {
+  if (perr.kind === "auth" && connectionId) {
     await prisma.$transaction(async (tx) => {
       await releaseReservation(tx, job);
       await tx.emailJob.update({
@@ -217,7 +293,11 @@ async function handleSendError(job: EmailJob, connectionId: string, err: unknown
           sendingStartedAt: null,
         },
       });
-      if (bounced) await tx.customer.update({ where: { id: job.customerId }, data: { emailStatus: CustomerEmailStatus.BOUNCED } });
+      if (bounced)
+        await tx.customer.update({
+          where: { id: job.customerId },
+          data: job.channel === Channel.SMS ? { phoneInvalidAt: new Date() } : { emailStatus: CustomerEmailStatus.BOUNCED },
+        });
       await log(tx, job, bounced ? EmailLogEvent.BOUNCED : EmailLogEvent.FAILED, perr.message, { status: perr.status ?? null });
     });
     await refreshCustomerRequestStatus(job.customerId);
@@ -297,5 +377,6 @@ export async function sweep(now = new Date()) {
     });
     await refreshCustomerRequestStatus(job.customerId);
   }
-  return { due: due.length, orphan: orphan.length, stale: stale.length };
+  const reminders = await scheduleDueReminders(now);
+  return { due: due.length, orphan: orphan.length, stale: stale.length, reminders: reminders.created };
 }

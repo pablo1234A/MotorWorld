@@ -18,9 +18,9 @@ describe("IVA (precios con IVA incluido)", () => {
   });
   it("planes comerciales con los precios y límites acordados", () => {
     expect(PLANS.map((p) => [p.code, p.priceCents, p.monthlyEmailLimit])).toEqual([
-      ["STARTER", 1500, 30],
-      ["PRO", 3299, 70],
-      ["BUSINESS", 6997, 200],
+      ["STARTER", 1500, 100],
+      ["PRO", 3299, 300],
+      ["BUSINESS", 6997, 1000],
     ]);
     expect(formatEur(3299).replace(/\s/g, " ")).toBe("32,99 €");
   });

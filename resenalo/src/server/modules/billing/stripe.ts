@@ -1,11 +1,25 @@
 import Stripe from "stripe";
-import { PlanCode, SubscriptionStatus, type Prisma } from "@prisma/client";
+import { BillingInterval, PlanCode, SubscriptionStatus, type Plan, type Prisma } from "@prisma/client";
 import { prisma } from "../../db";
 import { env } from "../../env";
 import { AppError } from "../../http/errors";
 import { logger } from "../../logger";
 import { audit } from "../audit";
 import { sendSystemEmail } from "../../email/system-mailer";
+import { TRIAL_DAYS, TRIAL_EMAIL_CAP } from "@/config/plans";
+import { ensureUsageRow } from "./entitlements";
+
+export type IntervalT = "month" | "year";
+
+function priceFor(plan: Plan, interval: IntervalT) {
+  const id = interval === "year" ? plan.stripeAnnualPriceId : plan.stripePriceId;
+  if (!id)
+    throw new AppError(
+      "NOT_CONFIGURED",
+      interval === "year" ? "El pago anual no está configurado para este plan." : "El plan no está vinculado a un precio de Stripe (ejecuta npm run stripe:setup).",
+    );
+  return id;
+}
 
 let client: Stripe | null = null;
 
@@ -57,10 +71,13 @@ async function ensureStripeCustomer(businessId: string, ownerEmail: string) {
  * Crea la sesión de Stripe Checkout. El precio se toma SIEMPRE del plan en
  * servidor (nunca de la petición), así que manipular el frontend no tiene efecto.
  */
-export async function createCheckoutSession(p: { businessId: string; ownerEmail: string; planCode: PlanCode; returnTo?: "onboarding" | "billing" }) {
+export async function createCheckoutSession(p: { businessId: string; ownerEmail: string; planCode: PlanCode; interval?: IntervalT; returnTo?: "onboarding" | "billing" }) {
   const plan = await prisma.plan.findUnique({ where: { code: p.planCode } });
   if (!plan || !plan.active) throw new AppError("NOT_FOUND", "Plan no disponible");
-  if (!plan.stripePriceId) throw new AppError("NOT_CONFIGURED", "El plan no está vinculado a un precio de Stripe (ejecuta npm run stripe:setup).");
+  const priceId = priceFor(plan, p.interval ?? "month");
+  const business = await prisma.business.findUniqueOrThrow({ where: { id: p.businessId } });
+  // Prueba gratuita: solo una vez por negocio.
+  const trial = !business.trialUsedAt;
   const existing = await prisma.subscription.findUnique({ where: { businessId: p.businessId } });
   if (existing && !(["CANCELED", "INCOMPLETE_EXPIRED", "INCOMPLETE"] as SubscriptionStatus[]).includes(existing.status))
     throw new AppError("CONFLICT", "Ya tienes una suscripción. Usa «Cambiar de plan» o el portal de facturación.");
@@ -73,7 +90,7 @@ export async function createCheckoutSession(p: { businessId: string; ownerEmail:
     client_reference_id: p.businessId,
     line_items: [
       {
-        price: plan.stripePriceId,
+        price: priceId,
         quantity: 1,
         ...(!automaticTax && env().STRIPE_TAX_RATE_ID ? { tax_rates: [env().STRIPE_TAX_RATE_ID!] } : {}),
       },
@@ -84,7 +101,12 @@ export async function createCheckoutSession(p: { businessId: string; ownerEmail:
     customer_update: { address: "auto", name: "auto" },
     locale: "es",
     allow_promotion_codes: false,
-    subscription_data: { metadata: { businessId: p.businessId, planCode: plan.code } },
+    payment_method_collection: "always",
+    subscription_data: {
+      metadata: { businessId: p.businessId, planCode: plan.code },
+      ...(trial ? { trial_period_days: TRIAL_DAYS, trial_settings: { end_behavior: { missing_payment_method: "cancel" as const } } } : {}),
+    },
+    ...(trial ? { custom_text: { submit: { message: `Hoy no se te cobra nada. La prueba dura ${TRIAL_DAYS} días (hasta ${TRIAL_EMAIL_CAP} correos) y puedes cancelarla en cualquier momento antes de que termine.` } } } : {}),
     metadata: { businessId: p.businessId, planCode: plan.code },
     success_url: `${env().APP_URL}${p.returnTo === "onboarding" ? "/onboarding" : "/app/facturacion"}?checkout=ok`,
     cancel_url: `${env().APP_URL}${p.returnTo === "onboarding" ? "/onboarding" : "/app/facturacion"}?checkout=cancelado`,
@@ -101,24 +123,26 @@ export async function createPortalSession(businessId: string) {
 }
 
 /** Cambio de plan con prorrateo (Stripe calcula el importe proporcional). */
-export async function changePlan(businessId: string, planCode: PlanCode, userId: string) {
+export async function changePlan(businessId: string, planCode: PlanCode, userId: string, interval?: IntervalT) {
   const sub = await prisma.subscription.findUnique({ where: { businessId }, include: { plan: true } });
   if (!sub || !(["ACTIVE", "TRIALING"] as SubscriptionStatus[]).includes(sub.status))
     throw new AppError("CONFLICT", "Necesitas una suscripción activa para cambiar de plan.");
   const plan = await prisma.plan.findUnique({ where: { code: planCode } });
-  if (!plan?.stripePriceId) throw new AppError("NOT_CONFIGURED", "Plan no disponible en Stripe.");
-  if (plan.id === sub.planId) throw new AppError("CONFLICT", "Ya estás en ese plan.");
+  if (!plan) throw new AppError("NOT_FOUND", "Plan no disponible.");
+  const targetInterval: IntervalT = interval ?? (sub.billingInterval === BillingInterval.YEAR ? "year" : "month");
+  const newPrice = priceFor(plan, targetInterval);
+  if (newPrice === sub.stripePriceId) throw new AppError("CONFLICT", "Ya estás en ese plan.");
   const remote = await stripe().subscriptions.retrieve(sub.stripeSubscriptionId);
   const item = remote.items.data[0];
   const updated = await stripe().subscriptions.update(sub.stripeSubscriptionId, {
-    items: [{ id: item.id, price: plan.stripePriceId }],
+    items: [{ id: item.id, price: newPrice }],
     proration_behavior: "always_invoice",
     payment_behavior: "pending_if_incomplete",
     cancel_at_period_end: false,
     metadata: { businessId, planCode: plan.code },
   });
   await syncSubscription(updated, null);
-  await audit({ action: "billing.plan_changed", userId, businessId, meta: { from: sub.plan.code, to: plan.code } });
+  await audit({ action: "billing.plan_changed", userId, businessId, meta: { from: sub.plan.code, to: plan.code, interval: targetInterval } });
 }
 
 export async function setCancelAtPeriodEnd(businessId: string, cancel: boolean, userId: string) {
@@ -180,8 +204,9 @@ export async function syncSubscription(sub: Stripe.Subscription, eventCreated: D
     return null;
   }
   const priceId = sub.items.data[0]?.price?.id ?? null;
-  const plan = priceId ? await prisma.plan.findUnique({ where: { stripePriceId: priceId } }) : null;
+  const plan = priceId ? await prisma.plan.findFirst({ where: { OR: [{ stripePriceId: priceId }, { stripeAnnualPriceId: priceId }] } }) : null;
   if (!plan) throw new Error(`Precio de Stripe desconocido: ${priceId}`);
+  const billingInterval = plan.stripeAnnualPriceId === priceId || sub.items.data[0]?.price?.recurring?.interval === "year" ? BillingInterval.YEAR : BillingInterval.MONTH;
   const { start, end } = periodOf(sub);
   const status = STATUS_MAP[sub.status];
 
@@ -211,18 +236,18 @@ export async function syncSubscription(sub: Stripe.Subscription, eventCreated: D
     currentPeriodStart: start,
     currentPeriodEnd: end,
     cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+    billingInterval,
+    trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
     canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
     // Sincronización local (sin evento): no adelanta la marca, para no descartar webhooks posteriores del mismo segundo.
     lastStripeEventAt: eventCreated ?? (current?.stripeSubscriptionId === sub.id ? current.lastStripeEventAt : null),
   };
   const saved = await prisma.$transaction(async (tx) => {
     const s = await tx.subscription.upsert({ where: { businessId }, create: { businessId, ...data }, update: data });
-    // Fila de consumo del periodo vigente (se crea en cada renovación → contador a cero).
-    await tx.monthlyUsage.upsert({
-      where: { businessId_periodStart: { businessId, periodStart: start } },
-      create: { businessId, periodStart: start, periodEnd: end, emailLimit: plan.monthlyEmailLimit },
-      update: { periodEnd: end, emailLimit: plan.monthlyEmailLimit }, // cambio de plan a mitad de periodo
-    });
+    if (sub.trial_end) await tx.business.updateMany({ where: { id: businessId, trialUsedAt: null }, data: { trialUsedAt: new Date() } });
+    // Fila de consumo de la ventana vigente (nueva en cada renovación o mes → contador a cero);
+    // se reaplican los límites por si cambió el plan o terminó la prueba.
+    await ensureUsageRow(tx, s, plan, true);
     return s;
   });
   return saved;
@@ -301,6 +326,24 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<"processed
         const saved = await syncSubscription(sub, created);
         businessId = saved?.businessId ?? null;
         if (saved) await audit({ action: `billing.${event.type.replace("customer.", "")}`, businessId, meta: { status: saved.status } });
+        break;
+      }
+      case "customer.subscription.trial_will_end": {
+        const sub = event.data.object as Stripe.Subscription;
+        const bId = await resolveBusinessId(sub);
+        businessId = bId;
+        const b = bId ? await prisma.business.findUnique({ where: { id: bId }, include: { owner: true } }) : null;
+        if (b && sub.trial_end)
+          await sendSystemEmail({
+            to: b.owner.email,
+            subject: "Tu prueba gratuita de Reseñalo termina pronto",
+            heading: "Tu prueba termina en 3 días",
+            paragraphs: [
+              `El ${new Date(sub.trial_end * 1000).toLocaleDateString("es-ES", { dateStyle: "long" })} se activará tu suscripción y se realizará el primer cobro.`,
+              "Si quieres seguir, no tienes que hacer nada. Si no, puedes cancelarla antes de esa fecha sin coste.",
+            ],
+            action: { label: "Gestionar mi suscripción", url: `${env().APP_URL}/app/facturacion` },
+          }).catch(() => undefined);
         break;
       }
       case "invoice.finalized":

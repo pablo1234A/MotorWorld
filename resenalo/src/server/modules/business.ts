@@ -39,6 +39,16 @@ export const businessSchema = z.object({
   timezone: z.string().refine(isValidTimeZone, "Zona horaria no válida").default("Europe/Madrid"),
   resendCooldownDays: z.coerce.number().int().min(0).max(365).default(30),
   trackClicks: z.boolean().default(true),
+  weeklyDigest: z.boolean().default(true),
+  smsSenderId: z
+    .string()
+    .trim()
+    .max(11, "Máximo 11 caracteres")
+    .regex(/^(?=.*[A-Za-z])[A-Za-z0-9 ]*$/, "Solo letras, números y espacios, con al menos una letra")
+    .optional()
+    .nullable()
+    .or(z.literal(""))
+    .transform((v) => v || null),
 });
 
 export type BusinessInput = z.infer<typeof businessSchema>;

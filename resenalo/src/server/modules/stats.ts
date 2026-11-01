@@ -18,6 +18,9 @@ export async function usageSummary(businessId: string) {
     // Disponibles = límite − enviados − pendientes (los pendientes ya tienen cupo comprometido)
     available: Math.max(0, usage.emailLimit - committed),
     percentUsed: usage.emailLimit ? Math.min(100, Math.round((usage.sent / usage.emailLimit) * 100)) : 0,
+    smsLimit: usage.smsLimit,
+    smsSent: usage.smsSent,
+    smsAvailable: Math.max(0, usage.smsLimit - usage.smsSent - usage.smsReserved),
   };
 }
 

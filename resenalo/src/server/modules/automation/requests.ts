@@ -1,5 +1,6 @@
 import {
   AutomationEventStatus,
+  Channel,
   ConnectionStatus,
   CustomerEmailStatus,
   EmailJobStatus,
@@ -14,7 +15,11 @@ import { randomToken, sha256 } from "../../crypto";
 import { AppError } from "../../http/errors";
 import { enqueueEmailJob } from "../../queue/queues";
 import { getCurrentUsage, getEntitlements } from "../billing/entitlements";
-import { renderTemplate, type TemplateFields } from "@/lib/template";
+import { DEFAULT_REMINDER, renderTemplate, type TemplateFields } from "@/lib/template";
+import { DEFAULT_SMS, renderSms } from "@/lib/sms";
+import { isMobileForSms, normalizePhone } from "@/lib/phone";
+import { getSmsProvider } from "../../sms/twilio";
+import { checkUsageAlerts } from "../notifications";
 import { isValidEmail } from "@/lib/email";
 import { applySendWindow } from "./schedule";
 import { footerPreview } from "@/lib/footer-preview";
@@ -56,8 +61,8 @@ export async function lockBusiness(tx: Tx, businessId: string) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${businessId}, 0))`;
 }
 
-export async function countPendingJobs(tx: Tx, businessId: string) {
-  return tx.emailJob.count({ where: { businessId, status: { in: PENDING_JOB_STATUSES } } });
+export async function countPendingJobs(tx: Tx, businessId: string, channel: Channel = Channel.EMAIL) {
+  return tx.emailJob.count({ where: { businessId, channel, status: { in: PENDING_JOB_STATUSES } } });
 }
 
 export function trackingUrls(publicToken: string) {
@@ -72,11 +77,47 @@ export function trackingUrls(publicToken: string) {
 
 export const footerLinesFor = footerPreview;
 
+type TemplateRow = TemplateFields & { reminderSubject: string | null; reminderBody: string | null; smsBody: string | null };
+
+/** Genera el contenido final (correo o SMS) de una solicitud o recordatorio. */
+function renderFor(
+  channel: Channel,
+  template: TemplateRow,
+  ctx: { customerName: string; businessName: string; serviceName: string | null; reviewUrl: string; publicToken: string; business: Parameters<typeof footerPreview>[0] },
+  reminder: boolean,
+) {
+  const urls = trackingUrls(ctx.publicToken);
+  if (channel === Channel.SMS) {
+    const text = renderSms(template.smsBody || DEFAULT_SMS, { ...ctx, unsubscribeUrl: urls.unsubscribe });
+    return { subject: reminder ? "SMS (recordatorio)" : "SMS", text, html: "" };
+  }
+  const fields: TemplateFields = reminder
+    ? { ...template, subject: template.reminderSubject || DEFAULT_REMINDER.subject, body: template.reminderBody || DEFAULT_REMINDER.body }
+    : template;
+  return renderTemplate(fields, {
+    customerName: ctx.customerName,
+    businessName: ctx.businessName,
+    serviceName: ctx.serviceName,
+    reviewUrl: ctx.reviewUrl,
+    unsubscribeUrl: urls.unsubscribe,
+    footerLines: footerLinesFor(ctx.business),
+  });
+}
+
+/** Comprueba que hay cupo del canal: enviados + pendientes < límite (dentro del bloqueo del negocio). */
+async function hasQuota(tx: Tx, businessId: string, channel: Channel) {
+  const usage = await getCurrentUsage(businessId, tx);
+  if (!usage) return { ok: false as const, reason: "SUBSCRIPTION_INACTIVE" };
+  const pending = await countPendingJobs(tx, businessId, channel);
+  if (channel === Channel.SMS) return usage.smsSent + pending >= usage.smsLimit ? { ok: false as const, reason: "SMS_LIMIT_REACHED" } : { ok: true as const };
+  return usage.sent + pending >= usage.emailLimit ? { ok: false as const, reason: "LIMIT_REACHED" } : { ok: true as const };
+}
+
 /**
  * Crea una solicitud de reseña a partir de un evento "servicio finalizado".
- * Ejecuta todas las comprobaciones (suscripción, cupo, conexión, email, duplicados),
- * genera el correo final y lo deja en la cola. Todo dentro de una transacción con
- * bloqueo por negocio para que el cupo no pueda superarse por concurrencia.
+ * Ejecuta todas las comprobaciones (suscripción, cupo, conexión, email/teléfono,
+ * duplicados), genera el mensaje final y lo deja en la cola. Todo dentro de una
+ * transacción con bloqueo por negocio para que el cupo no pueda superarse por concurrencia.
  */
 export async function createReviewRequest(businessId: string, input: CreateRequestInput): Promise<CreateRequestResult> {
   const result = await prisma.$transaction(
@@ -120,7 +161,7 @@ export async function createReviewRequest(businessId: string, input: CreateReque
             payload: { ...(input.payload ? { data: input.payload } : {}), externalId: input.externalId ?? null } as Prisma.InputJsonValue,
           },
         });
-        if (reason === "LIMIT_REACHED" || reason === "SUBSCRIPTION_INACTIVE")
+        if (reason === "LIMIT_REACHED" || reason === "SMS_LIMIT_REACHED" || reason === "SUBSCRIPTION_INACTIVE")
           await tx.customer.update({ where: { id: customer.id }, data: { lastRequestStatus: RequestStatus.BLOCKED } });
         return { status, reason, message: reasonMessage(reason)!, eventId: ev.id };
       };
@@ -129,22 +170,15 @@ export async function createReviewRequest(businessId: string, input: CreateReque
       const ent = await getEntitlements(businessId, tx);
       if (!ent.canSend || !ent.plan) return finish("REJECTED", "SUBSCRIPTION_INACTIVE");
       if (!business.reviewUrl) return finish("REJECTED", "NO_REVIEW_URL");
-
-      // 3. Conexión de correo
-      const connection = await tx.emailConnection.findUnique({ where: { businessId } });
-      if (!connection || connection.status === ConnectionStatus.DISCONNECTED) return finish("REJECTED", "NO_EMAIL_CONNECTION");
-
-      // 4. Email válido y no dado de baja
       if (customer.unsubscribedAt) return finish("SKIPPED", "UNSUBSCRIBED");
-      if (customer.emailStatus === CustomerEmailStatus.BOUNCED) return finish("SKIPPED", "BOUNCED");
-      if (customer.emailStatus !== CustomerEmailStatus.VALID || !isValidEmail(customer.email)) return finish("SKIPPED", "INVALID_EMAIL");
 
-      // Regla / plantilla
+      // Regla / plantilla / canal
       let templateId: string;
       let ruleId: string | null = null;
       let delayMinutes = 0;
       let windowStart: number | null = null;
       let windowEnd: number | null = null;
+      let channel: Channel = Channel.EMAIL;
 
       if (input.campaignId) {
         const campaign = await tx.campaign.findFirst({ where: { id: input.campaignId, businessId } });
@@ -167,13 +201,28 @@ export async function createReviewRequest(businessId: string, input: CreateReque
         templateId = rule.templateId;
         ruleId = rule.id;
         delayMinutes = rule.delayMinutes;
+        channel = rule.channel === Channel.SMS && ent.features?.sms ? Channel.SMS : Channel.EMAIL;
         if (ent.features?.sendWindow) {
           windowStart = rule.sendWindowStart;
           windowEnd = rule.sendWindowEnd;
         }
       }
 
-      // 5. Duplicados: misma clave o envío reciente al mismo destinatario
+      // 3-4. Canal: conexión de correo + email válido, o proveedor SMS + móvil válido
+      let connection: Awaited<ReturnType<typeof tx.emailConnection.findUnique>> = null;
+      let phone: string | null = null;
+      if (channel === Channel.EMAIL) {
+        connection = await tx.emailConnection.findUnique({ where: { businessId } });
+        if (!connection || connection.status === ConnectionStatus.DISCONNECTED) return finish("REJECTED", "NO_EMAIL_CONNECTION");
+        if (customer.emailStatus === CustomerEmailStatus.BOUNCED) return finish("SKIPPED", "BOUNCED");
+        if (customer.emailStatus !== CustomerEmailStatus.VALID || !isValidEmail(customer.email)) return finish("SKIPPED", "INVALID_EMAIL");
+      } else {
+        if (!getSmsProvider().isConfigured()) return finish("REJECTED", "SMS_NOT_CONFIGURED");
+        phone = normalizePhone(customer.phone, business.country);
+        if (!phone || !isMobileForSms(phone) || customer.phoneInvalidAt) return finish("SKIPPED", "INVALID_PHONE");
+      }
+
+      // 5. Duplicados: misma clave o solicitud reciente al mismo cliente
       const dedupeKey = input.externalId
         ? `ext:${sha256(input.externalId)}`
         : input.campaignId
@@ -185,7 +234,8 @@ export async function createReviewRequest(businessId: string, input: CreateReque
         const recent = await tx.emailJob.findFirst({
           where: {
             businessId,
-            toEmail: customer.email,
+            customerId: customer.id,
+            isReminder: false,
             status: { in: COOLDOWN_STATUSES },
             createdAt: { gte: new Date(now.getTime() - business.resendCooldownDays * 86400_000) },
           },
@@ -194,31 +244,27 @@ export async function createReviewRequest(businessId: string, input: CreateReque
         if (recent) return finish("SKIPPED", "COOLDOWN");
       }
 
-      // 2. Cupo disponible (enviados + pendientes < límite)
-      const usage = await getCurrentUsage(businessId, tx);
-      if (!usage) return finish("REJECTED", "SUBSCRIPTION_INACTIVE");
-      const pending = await countPendingJobs(tx, businessId);
-      if (usage.sent + pending >= usage.emailLimit) return finish("REJECTED", "LIMIT_REACHED");
+      // 2. Cupo disponible del canal
+      const quota = await hasQuota(tx, businessId, channel);
+      if (!quota.ok) return finish("REJECTED", quota.reason);
 
-      // 6-8. Plantilla + variables + correo final
+      // 6-8. Plantilla + variables + mensaje final
       const template = await tx.emailTemplate.findFirst({ where: { id: templateId, businessId } });
       if (!template) throw new AppError("NOT_FOUND", "La plantilla asociada ya no existe");
       const publicToken = randomToken(18);
       const urls = trackingUrls(publicToken);
-      const rendered = renderTemplate(template as TemplateFields, {
-        customerName: customer.name,
-        businessName: business.name,
-        serviceName,
-        reviewUrl: business.trackClicks ? urls.click : business.reviewUrl,
-        unsubscribeUrl: urls.unsubscribe,
-        footerLines: footerLinesFor(business),
-      });
+      const rendered = renderFor(
+        channel,
+        template,
+        { customerName: customer.name, businessName: business.name, serviceName, reviewUrl: business.trackClicks ? urls.click : business.reviewUrl, publicToken, business },
+        false,
+      );
 
       let scheduledFor = input.sendNow || input.campaignId ? now : new Date(Math.max(now.getTime(), completedAt.getTime() + delayMinutes * 60_000));
       scheduledFor = applySendWindow(scheduledFor, business.timezone, windowStart, windowEnd);
       const immediate = scheduledFor.getTime() <= now.getTime() + 5_000;
-      const status =
-        connection.status === ConnectionStatus.NEEDS_REAUTH ? EmailJobStatus.ON_HOLD : immediate ? EmailJobStatus.QUEUED : EmailJobStatus.SCHEDULED;
+      const onHold = channel === Channel.EMAIL && connection?.status === ConnectionStatus.NEEDS_REAUTH;
+      const status = onHold ? EmailJobStatus.ON_HOLD : immediate ? EmailJobStatus.QUEUED : EmailJobStatus.SCHEDULED;
 
       const event = await tx.automationEvent.create({
         data: {
@@ -242,17 +288,19 @@ export async function createReviewRequest(businessId: string, input: CreateReque
           ruleId,
           templateId,
           campaignId: input.campaignId ?? null,
-          connectionId: connection.id,
+          connectionId: connection?.id ?? null,
+          channel,
           dedupeKey,
           publicToken,
           toEmail: customer.email,
+          toPhone: phone,
           toName: customer.name,
           subject: rendered.subject,
           bodyText: rendered.text,
           bodyHtml: rendered.html,
           reviewUrl: business.reviewUrl,
           status,
-          statusReason: status === EmailJobStatus.ON_HOLD ? "NEEDS_REAUTH" : null,
+          statusReason: onHold ? "NEEDS_REAUTH" : null,
           scheduledFor,
         },
       });
@@ -260,14 +308,11 @@ export async function createReviewRequest(businessId: string, input: CreateReque
         data: {
           emailJobId: job.id,
           businessId,
-          event: status === EmailJobStatus.ON_HOLD ? EmailLogEvent.ON_HOLD : immediate ? EmailLogEvent.QUEUED : EmailLogEvent.SCHEDULED,
-          message:
-            status === EmailJobStatus.ON_HOLD
-              ? "En espera: la cuenta de correo necesita volver a autorizarse."
-              : immediate
-                ? "Solicitud creada y añadida a la cola de envío."
-                : `Solicitud programada para ${scheduledFor.toISOString()}.`,
-          meta: { source: input.source, ruleId, campaignId: input.campaignId ?? null },
+          event: onHold ? EmailLogEvent.ON_HOLD : immediate ? EmailLogEvent.QUEUED : EmailLogEvent.SCHEDULED,
+          message: onHold
+            ? "En espera: la cuenta de correo necesita volver a autorizarse."
+            : `${channel === Channel.SMS ? "SMS" : "Solicitud"} ${immediate ? "creada y añadida a la cola de envío." : `programada para ${scheduledFor.toISOString()}.`}`,
+          meta: { source: input.source, ruleId, campaignId: input.campaignId ?? null, channel },
         },
       });
       await tx.customer.update({ where: { id: customer.id }, data: { lastRequestStatus: RequestStatus.PENDING } });
@@ -287,7 +332,108 @@ export async function createReviewRequest(businessId: string, input: CreateReque
   if (result.status === "CREATED" && result.jobStatus === EmailJobStatus.QUEUED && result.jobId) {
     await enqueueEmailJob(result.jobId);
   }
+  if (result.reason === "LIMIT_REACHED") await checkUsageAlerts(businessId);
   return result;
+}
+
+/**
+ * Recordatorio único: si una solicitud enviada no ha tenido ningún clic tras los
+ * días configurados en su regla, se envía un segundo mensaje (nunca más de uno).
+ * Cuenta en el cupo del plan y respeta bajas, rebotes y suscripción.
+ */
+export async function createReminder(parentId: string): Promise<CreateRequestResult> {
+  const out = await prisma.$transaction(
+    async (tx) => {
+      const pre = await tx.emailJob.findUnique({ where: { id: parentId }, select: { businessId: true } });
+      if (!pre) return { status: "SKIPPED" as const, reason: "NOT_FOUND", message: "Envío no encontrado" };
+      await lockBusiness(tx, pre.businessId);
+      const parent = await tx.emailJob.findUniqueOrThrow({ where: { id: parentId }, include: { customer: true, business: true, rule: true, reminder: true } });
+      const skip = (reason: string) => ({ status: "SKIPPED" as const, reason, message: reasonMessage(reason) ?? reason });
+      if (parent.reminder || parent.isReminder) return skip("DUPLICATE");
+      if (!([EmailJobStatus.SENT, EmailJobStatus.DELIVERED] as EmailJobStatus[]).includes(parent.status) || parent.firstClickedAt) return skip("NOT_NEEDED");
+      if (!parent.rule?.reminderEnabled) return skip("NOT_NEEDED");
+      const ent = await getEntitlements(parent.businessId, tx);
+      if (!ent.canSend || !ent.features?.reminders) return skip("SUBSCRIPTION_INACTIVE");
+      if (parent.customer.unsubscribedAt) return skip("UNSUBSCRIBED");
+      if (parent.business.automationPaused) return skip("AUTOMATION_PAUSED");
+      const channel = parent.channel;
+      let connectionId: string | null = null;
+      if (channel === Channel.EMAIL) {
+        if (parent.customer.emailStatus !== CustomerEmailStatus.VALID) return skip("INVALID_EMAIL");
+        const conn = await tx.emailConnection.findUnique({ where: { businessId: parent.businessId } });
+        if (!conn || conn.status !== ConnectionStatus.ACTIVE) return skip("NO_EMAIL_CONNECTION");
+        connectionId = conn.id;
+      } else if (parent.customer.phoneInvalidAt || !parent.toPhone) return skip("INVALID_PHONE");
+      const quota = await hasQuota(tx, parent.businessId, channel);
+      if (!quota.ok) return skip(quota.reason);
+      const template = parent.templateId ? await tx.emailTemplate.findUnique({ where: { id: parent.templateId } }) : null;
+      if (!template) return skip("NOT_FOUND");
+      const publicToken = randomToken(18);
+      const urls = trackingUrls(publicToken);
+      const ev = parent.eventId ? await tx.automationEvent.findUnique({ where: { id: parent.eventId }, select: { serviceName: true } }) : null;
+      const rendered = renderFor(
+        channel,
+        template,
+        {
+          customerName: parent.customer.name,
+          businessName: parent.business.name,
+          serviceName: ev?.serviceName ?? parent.customer.serviceName,
+          reviewUrl: parent.business.trackClicks ? urls.click : parent.reviewUrl,
+          publicToken,
+          business: parent.business,
+        },
+        true,
+      );
+      const now = new Date();
+      const scheduledFor = applySendWindow(now, parent.business.timezone, parent.rule.sendWindowStart, parent.rule.sendWindowEnd);
+      const immediate = scheduledFor.getTime() <= now.getTime() + 5_000;
+      const job = await tx.emailJob.create({
+        data: {
+          businessId: parent.businessId,
+          customerId: parent.customerId,
+          ruleId: parent.ruleId,
+          templateId: parent.templateId,
+          connectionId,
+          channel,
+          isReminder: true,
+          reminderOfId: parent.id,
+          dedupeKey: `rem:${parent.id}`,
+          publicToken,
+          toEmail: parent.toEmail,
+          toPhone: parent.toPhone,
+          toName: parent.toName,
+          subject: rendered.subject,
+          bodyText: rendered.text,
+          bodyHtml: rendered.html,
+          reviewUrl: parent.reviewUrl,
+          status: immediate ? EmailJobStatus.QUEUED : EmailJobStatus.SCHEDULED,
+          scheduledFor,
+        },
+      });
+      await tx.emailLog.create({ data: { emailJobId: parent.id, businessId: parent.businessId, event: EmailLogEvent.REMINDER_CREATED, message: "Sin clics en el enlace: se ha programado un recordatorio." } });
+      await tx.emailLog.create({ data: { emailJobId: job.id, businessId: parent.businessId, event: immediate ? EmailLogEvent.QUEUED : EmailLogEvent.SCHEDULED, message: "Recordatorio creado (único)." } });
+      return { status: "CREATED" as const, message: "Recordatorio creado.", jobId: job.id, jobStatus: job.status, scheduledFor };
+    },
+    { timeout: 15_000, maxWait: 10_000 },
+  );
+  if (out.status === "CREATED" && out.jobStatus === EmailJobStatus.QUEUED && out.jobId) await enqueueEmailJob(out.jobId);
+  return out;
+}
+
+/** Barrido de recordatorios: solicitudes enviadas sin clic cuyo plazo ha vencido (máx. 30 días atrás). */
+export async function scheduleDueReminders(now = new Date()) {
+  const candidates = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT j.id FROM email_jobs j
+    JOIN automation_rules r ON r.id = j.rule_id
+    WHERE j.status IN ('SENT','DELIVERED') AND j.is_reminder = false AND j.first_clicked_at IS NULL
+      AND r.reminder_enabled = true
+      AND j.sent_at <= ${now}::timestamp - make_interval(days => r.reminder_delay_days)
+      AND j.sent_at >= ${now}::timestamp - interval '30 days'
+      AND NOT EXISTS (SELECT 1 FROM email_jobs x WHERE x.reminder_of_id = j.id)
+    LIMIT 200`;
+  let created = 0;
+  for (const c of candidates) if ((await createReminder(c.id)).status === "CREATED") created++;
+  return { candidates: candidates.length, created };
 }
 
 /** Cancela un envío pendiente. */
@@ -312,17 +458,20 @@ export async function retryJob(businessId: string, jobId: string) {
     if (!([EmailJobStatus.FAILED, EmailJobStatus.BOUNCED, EmailJobStatus.BLOCKED] as EmailJobStatus[]).includes(job.status))
       throw new AppError("CONFLICT", "Solo se pueden reintentar envíos fallidos o bloqueados.");
     if (job.customer.unsubscribedAt) throw new AppError("CONFLICT", "El cliente se dio de baja; no se puede reenviar.");
-    if (job.customer.emailStatus !== CustomerEmailStatus.VALID) throw new AppError("CONFLICT", "El correo del cliente está marcado como no válido o rechazado.");
     const ent = await getEntitlements(businessId, tx);
     if (!ent.canSend) throw new AppError("PAYMENT_REQUIRED", "Necesitas una suscripción activa.");
-    const usage = await getCurrentUsage(businessId, tx);
-    const pending = await countPendingJobs(tx, businessId);
-    if (!usage || usage.sent + pending >= usage.emailLimit) throw new AppError("PLAN_LIMIT", reasonMessage("LIMIT_REACHED")!);
-    const conn = await tx.emailConnection.findUnique({ where: { businessId } });
-    if (!conn || conn.status !== ConnectionStatus.ACTIVE) throw new AppError("CONFLICT", "Conecta tu cuenta de correo antes de reintentar.");
+    let connectionId: string | null = null;
+    if (job.channel === Channel.EMAIL) {
+      if (job.customer.emailStatus !== CustomerEmailStatus.VALID) throw new AppError("CONFLICT", "El correo del cliente está marcado como no válido o rechazado.");
+      const conn = await tx.emailConnection.findUnique({ where: { businessId } });
+      if (!conn || conn.status !== ConnectionStatus.ACTIVE) throw new AppError("CONFLICT", "Conecta tu cuenta de correo antes de reintentar.");
+      connectionId = conn.id;
+    } else if (job.customer.phoneInvalidAt) throw new AppError("CONFLICT", "El número del cliente fue rechazado. Corrígelo antes de reintentar.");
+    const quota = await hasQuota(tx, businessId, job.channel);
+    if (!quota.ok) throw new AppError("PLAN_LIMIT", reasonMessage(quota.reason)!);
     await tx.emailJob.update({
       where: { id: job.id },
-      data: { status: EmailJobStatus.QUEUED, statusReason: null, scheduledFor: new Date(), attempts: 0, lastError: null, connectionId: conn.id },
+      data: { status: EmailJobStatus.QUEUED, statusReason: null, scheduledFor: new Date(), attempts: 0, lastError: null, connectionId },
     });
     await tx.emailLog.create({ data: { emailJobId: job.id, businessId, event: EmailLogEvent.REQUEUED, message: "Reintento manual solicitado." } });
     return job;

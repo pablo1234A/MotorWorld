@@ -3,8 +3,8 @@ import { ArrowRight, BarChart3, CalendarClock, Check, FileSpreadsheet, Link2, Lo
 import { buttonClass } from "@/components/ui/button-class";
 import { StarMark } from "@/components/brand/Logo";
 import { DashboardShowcase, HeroComposition } from "@/components/marketing/ProductPreview";
-import { PLANS } from "@/config/plans";
-import { formatEur, vatBreakdown } from "@/lib/money";
+import { Pricing } from "@/components/marketing/Pricing";
+import { TRIAL_DAYS, TRIAL_EMAIL_CAP } from "@/config/plans";
 
 const steps = [
   { icon: Mail, title: "Conecta tu correo", text: "Autoriza tu Gmail u Outlook con OAuth. Los correos salen desde tu propia dirección; nunca guardamos tu contraseña." },
@@ -71,7 +71,7 @@ export default function Landing() {
               </a>
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-600">
-              {["Desde 15 € al mes, IVA incluido", "Sin permanencia", "Envíos desde tu propio correo"].map((t) => (
+              {[`${TRIAL_DAYS} días gratis`, "Desde 12,50 €/mes, IVA incluido", "Sin permanencia", "Envíos desde tu propio correo"].map((t) => (
                 <li key={t} className="inline-flex items-center gap-1.5">
                   <Check className="h-4 w-4 text-ok-600" /> {t}
                 </li>
@@ -154,40 +154,10 @@ export default function Landing() {
       <section id="precios" className="scroll-mt-20 border-t border-ink-200 bg-white py-20 sm:py-24">
         <div className="container-page">
           <SectionHead kicker="Precios" title="Un plan para cada volumen de clientes" />
-          <p className="mx-auto mt-4 max-w-xl text-center text-ink-600">Suscripción mensual, sin permanencia. Todos los precios incluyen el 21 % de IVA.</p>
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {PLANS.map((p) => {
-              const vat = vatBreakdown(p.priceCents, p.vatRateBps);
-              const featured = p.code === "PRO";
-              return (
-                <div key={p.code} className={`relative flex flex-col rounded-xl border p-6 sm:p-7 ${featured ? "border-ink-800 ring-1 ring-ink-800" : "border-ink-200"}`}>
-                  {featured ? <span className="absolute -top-3 left-6 rounded-full bg-star-300 px-3 py-0.5 text-xs font-semibold text-ink-900">Más elegido</span> : null}
-                  <h3 className="text-lg font-semibold">{p.name}</h3>
-                  <p className="mt-1 text-sm text-ink-500">{p.tagline}</p>
-                  <p className="mt-6 flex items-baseline gap-1">
-                    <span className="font-display text-[40px] font-bold tabular-nums leading-none">{formatEur(p.priceCents)}</span>
-                    <span className="text-sm text-ink-500">/mes</span>
-                  </p>
-                  <p className="mt-2 text-xs text-ink-500">
-                    IVA incluido · Base {formatEur(vat.baseCents)} + IVA {formatEur(vat.vatCents)}
-                  </p>
-                  <p className="mt-5 rounded-lg bg-cream-200 px-3 py-2 text-sm font-semibold">Hasta {p.monthlyEmailLimit} correos al mes</p>
-                  <ul className="mt-5 flex-1 space-y-2.5 text-sm text-ink-700">
-                    {p.highlights.slice(1).map((h) => (
-                      <li key={h} className="flex gap-2">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-ok-600" /> {h}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href={`/registro?plan=${p.code}`} className={buttonClass(featured ? "primary" : "secondary", "lg", "mt-7 w-full")}>
-                    Elegir {p.name}
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
+          <p className="mx-auto mt-4 max-w-xl text-center text-ink-600">Empieza con {TRIAL_DAYS} días gratis. Mensual o anual (2 meses gratis), sin permanencia. Todos los precios incluyen el 21 % de IVA.</p>
+          <Pricing />
           <p className="mt-6 text-center text-xs text-ink-500">
-            El límite se aplica por periodo de facturación y se reinicia en cada renovación. Consulta <Link className="underline" href="/legal/precios-e-impuestos">precios e impuestos</Link> y <Link className="underline" href="/legal/cancelacion">cancelación</Link>.
+            El cupo es mensual (también en el plan anual) y se reinicia cada mes. Durante la prueba gratuita el cupo es de {TRIAL_EMAIL_CAP} correos. Consulta <Link className="underline" href="/legal/precios-e-impuestos">precios e impuestos</Link> y <Link className="underline" href="/legal/cancelacion">cancelación</Link>.
           </p>
         </div>
       </section>

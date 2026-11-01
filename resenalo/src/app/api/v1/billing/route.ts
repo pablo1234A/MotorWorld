@@ -12,6 +12,7 @@ export const GET = tenantRoute(async (_req, { business }) => {
   return Response.json({
     stripeConfigured: integrationStatus().stripe,
     hasStripeCustomer: Boolean(business.stripeCustomerId),
+    trialAvailable: !business.trialUsedAt,
     subscription: ent.subscription
       ? {
           status: ent.subscription.status,
@@ -19,6 +20,8 @@ export const GET = tenantRoute(async (_req, { business }) => {
           currentPeriodStart: ent.subscription.currentPeriodStart,
           currentPeriodEnd: ent.subscription.currentPeriodEnd,
           cancelAtPeriodEnd: ent.subscription.cancelAtPeriodEnd,
+          interval: ent.subscription.billingInterval === "YEAR" ? "year" : "month",
+          trialEnd: ent.subscription.trialEnd,
           canSend: ent.canSend,
         }
       : null,
@@ -27,8 +30,11 @@ export const GET = tenantRoute(async (_req, { business }) => {
       code: p.code,
       name: p.name,
       monthlyEmailLimit: p.monthlyEmailLimit,
+      monthlySmsLimit: p.monthlySmsLimit,
       available: Boolean(p.stripePriceId),
+      annualAvailable: Boolean(p.stripeAnnualPriceId),
       price: vatBreakdown(p.priceCents, p.vatRateBps),
+      annualPrice: vatBreakdown(p.annualPriceCents, p.vatRateBps),
       features: p.features,
     })),
     invoices,

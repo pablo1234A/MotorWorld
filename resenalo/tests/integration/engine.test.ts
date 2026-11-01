@@ -71,8 +71,9 @@ describe("motor de automatización — flujo completo", () => {
 });
 
 describe("límites mensuales (backend, atómicos)", () => {
-  it("Starter: 35 solicitudes concurrentes → exactamente 30 aceptadas y 5 rechazadas por límite", async () => {
+  it("cupo de 30: 35 solicitudes concurrentes → exactamente 30 aceptadas y 5 rechazadas por límite", async () => {
     const t = await makeTenant({ plan: "STARTER" });
+    await prisma.monthlyUsage.updateMany({ where: { businessId: t.business.id }, data: { emailLimit: 30 } });
     const customers = await Promise.all(Array.from({ length: 35 }, (_, i) => makeCustomer(t.business.id, i)));
     const results = await Promise.all(customers.map((c) => createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true })));
     expect(results.filter((r) => r.status === "CREATED")).toHaveLength(30);
@@ -99,8 +100,8 @@ describe("límites mensuales (backend, atómicos)", () => {
     expect(blocked).toBe(27);
   });
 
-  it("límites de cada plan: Starter 30, Pro 70, Business 200", async () => {
-    for (const [code, limit] of [["STARTER", 30], ["PRO", 70], ["BUSINESS", 200]] as const) {
+  it("límites de cada plan: Starter 100, Pro 300, Business 1000", async () => {
+    for (const [code, limit] of [["STARTER", 100], ["PRO", 300], ["BUSINESS", 1000]] as const) {
       const t = await makeTenant({ plan: code });
       const u = await usageOf(t.business.id);
       expect(u.emailLimit).toBe(limit);
@@ -114,7 +115,7 @@ describe("límites mensuales (backend, atómicos)", () => {
   it("el contador se reinicia en el nuevo periodo de facturación", async () => {
     const t = await makeTenant({ plan: "STARTER" });
     const u = await usageOf(t.business.id);
-    await prisma.monthlyUsage.update({ where: { id: u.id }, data: { sent: 30 } });
+    await prisma.monthlyUsage.update({ where: { id: u.id }, data: { sent: u.emailLimit } });
     const c1 = await makeCustomer(t.business.id, 1);
     expect((await createReviewRequest(t.business.id, { customerId: c1.id, source: EventSource.MANUAL, sendNow: true })).reason).toBe("LIMIT_REACHED");
     // Renovación (lo haría el webhook de Stripe): nuevo periodo

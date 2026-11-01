@@ -4,6 +4,7 @@ import { prisma } from "../db";
 import { AppError, notFound } from "../http/errors";
 import { isValidEmail, normalizeEmailAddress } from "@/lib/email";
 import { parseCsv, parseFlexibleDate } from "@/lib/csv";
+import { normalizePhone } from "@/lib/phone";
 import { audit } from "./audit";
 import { createReviewRequest, type CreateRequestResult } from "./automation/requests";
 
@@ -15,7 +16,21 @@ export const customerSchema = z.object({
     .toLowerCase()
     .max(254)
     .refine(isValidEmail, "Correo electrónico no válido"),
-  phone: z.string().trim().max(30).optional().nullable().transform((v) => v || null),
+  phone: z
+    .string()
+    .trim()
+    .max(30)
+    .optional()
+    .nullable()
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const n = normalizePhone(v);
+      if (!n) {
+        ctx.addIssue({ code: "custom", message: "Teléfono no válido (usa formato +34 600 000 000)" });
+        return z.NEVER;
+      }
+      return n;
+    }),
   serviceName: z.string().trim().max(160).optional().nullable().transform((v) => v || null),
   completedAt: z.coerce.date().optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable().transform((v) => v || null),
@@ -100,6 +115,7 @@ export async function updateCustomer(businessId: string, userId: string, id: str
       data.emailStatus = CustomerEmailStatus.VALID; // nueva dirección → se vuelve a permitir
     }
   }
+  if (input.phone !== undefined && input.phone !== c.phone) data.phoneInvalidAt = null; // nuevo número → se vuelve a permitir
   const updated = await prisma.customer.update({ where: { id: c.id }, data });
   await audit({ action: "customer.updated", userId, businessId, targetId: id, req });
   return updated;
@@ -192,7 +208,7 @@ export async function importCustomersCsv(
     const externalId = cell(r, "externalId").slice(0, 120) || null;
     const base = {
       name: name.slice(0, 120),
-      phone: cell(r, "phone").slice(0, 30) || null,
+      phone: normalizePhone(cell(r, "phone")),
       notes: cell(r, "notes").slice(0, 2000) || null,
       serviceName,
       completedAt,

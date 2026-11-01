@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EventSource } from "@prisma/client";
+import { Channel, EventSource } from "@prisma/client";
 import { prisma } from "../../db";
 import { AppError, notFound } from "../../http/errors";
 import { getEntitlements } from "../billing/entitlements";
@@ -16,6 +16,9 @@ export const ruleSchema = z
     sendWindowStart: z.coerce.number().int().min(0).max(23).optional().nullable(),
     sendWindowEnd: z.coerce.number().int().min(1).max(24).optional().nullable(),
     priority: z.coerce.number().int().min(0).max(100).default(0),
+    channel: z.nativeEnum(Channel).default(Channel.EMAIL),
+    reminderEnabled: z.boolean().default(false),
+    reminderDelayDays: z.coerce.number().int().min(1, "Mínimo 1 día").max(30, "Máximo 30 días").default(5),
   })
   .refine((r) => (r.sendWindowStart == null) === (r.sendWindowEnd == null), { message: "Indica inicio y fin de la ventana", path: ["sendWindowEnd"] })
   .refine((r) => r.sendWindowStart == null || r.sendWindowEnd! > r.sendWindowStart, { message: "El fin debe ser posterior al inicio", path: ["sendWindowEnd"] });
@@ -25,6 +28,8 @@ async function checkPlan(businessId: string, input: RuleInput) {
   const ent = await getEntitlements(businessId);
   if (input.serviceFilter && !ent.features?.serviceFilters) throw new AppError("PLAN_FEATURE", "Las reglas por servicio están disponibles a partir del plan Pro.");
   if (input.sendWindowStart != null && !ent.features?.sendWindow) throw new AppError("PLAN_FEATURE", "Las ventanas horarias de envío están disponibles en el plan Business.");
+  if (input.channel === Channel.SMS && !ent.features?.sms) throw new AppError("PLAN_FEATURE", "El envío por SMS está disponible a partir del plan Pro.");
+  if (input.reminderEnabled && !ent.features?.reminders) throw new AppError("PLAN_FEATURE", "Los recordatorios automáticos están disponibles a partir del plan Pro.");
   const tpl = await prisma.emailTemplate.findFirst({ where: { id: input.templateId, businessId } });
   if (!tpl) throw new AppError("VALIDATION", "La plantilla seleccionada no existe.");
   return ent;

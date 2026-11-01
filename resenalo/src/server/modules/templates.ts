@@ -15,14 +15,21 @@ export const templateSchema = z.object({
   closing: field("closing"),
   signature: field("signature"),
   buttonLabel: field("buttonLabel", 2),
+  reminderSubject: z.string().max(FIELD_LIMITS.subject).optional().nullable().transform((v) => v?.trim() || null),
+  reminderBody: z.string().max(FIELD_LIMITS.body).optional().nullable().transform((v) => v?.trim() || null),
+  smsBody: z.string().max(320, "Máximo 320 caracteres").optional().nullable().transform((v) => v?.trim() || null),
 });
 export type TemplateInput = z.infer<typeof templateSchema>;
 
 /** Validaciones de contenido: variables conocidas, enlace presente y solicitud neutral. */
-export function validateTemplateContent(t: TemplateFields) {
+export function validateTemplateContent(t: TemplateFields & { reminderBody?: string | null; smsBody?: string | null; reminderSubject?: string | null }) {
   const unknown = findUnknownVariables(t);
   if (unknown.length) throw new AppError("VALIDATION", `Variables desconocidas: ${unknown.map((u) => `{{${u}}}`).join(", ")}`);
   if (!templateHasReviewLink(t)) throw new AppError("VALIDATION", "El mensaje principal debe incluir {{enlace_resena}}.", { details: { fields: { body: "Falta {{enlace_resena}}" } } });
+  if (t.reminderBody && !templateHasReviewLink({ body: t.reminderBody }))
+    throw new AppError("VALIDATION", "El texto del recordatorio debe incluir {{enlace_resena}}.", { details: { fields: { reminderBody: "Falta {{enlace_resena}}" } } });
+  if (t.smsBody && !templateHasReviewLink({ body: t.smsBody }))
+    throw new AppError("VALIDATION", "El SMS debe incluir {{enlace_resena}}.", { details: { fields: { smsBody: "Falta {{enlace_resena}}" } } });
   const incentives = detectIncentiveLanguage(t);
   if (incentives.length)
     throw new AppError(
@@ -40,7 +47,7 @@ export async function getTemplate(businessId: string, id: string) {
 }
 
 export async function createTemplate(businessId: string, userId: string, input: TemplateInput, req?: Request) {
-  validateTemplateContent(input);
+  validateTemplateContent(input as TemplateInput & TemplateFields);
   const ent = await getEntitlements(businessId);
   const max = ent.plan?.maxTemplates ?? 1;
   const count = await prisma.emailTemplate.count({ where: { businessId } });
@@ -53,7 +60,7 @@ export async function createTemplate(businessId: string, userId: string, input: 
 
 export async function updateTemplate(businessId: string, userId: string, id: string, input: TemplateInput, req?: Request) {
   await getTemplate(businessId, id);
-  validateTemplateContent(input);
+  validateTemplateContent(input as TemplateInput & TemplateFields);
   const t = await prisma.emailTemplate.update({ where: { id }, data: input });
   await audit({ action: "template.updated", userId, businessId, targetId: id, req });
   return t;

@@ -56,7 +56,7 @@ describe("webhooks de Stripe", () => {
     expect(sub.status).toBe("ACTIVE");
     expect(sub.plan.code).toBe("STARTER");
     let usage = await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } });
-    expect(usage.emailLimit).toBe(30);
+    expect(usage.emailLimit).toBe(100);
     await prisma.monthlyUsage.update({ where: { id: usage.id }, data: { sent: 12 } });
 
     // 2. Idempotencia: el mismo evento dos veces
@@ -65,10 +65,10 @@ describe("webhooks de Stripe", () => {
     r = await send("customer.subscription.updated", subscriptionObject({ ...base, price: "price_test_starter", status: "active", ...p1 }), now + 1, dupId);
     expect(r.body.result).toBe("duplicate");
 
-    // 3. Cambio a Pro a mitad de periodo → límite 70 sin perder lo consumido
+    // 3. Cambio a Pro a mitad de periodo → límite 300 sin perder lo consumido
     await send("customer.subscription.updated", subscriptionObject({ ...base, price: "price_test_pro", status: "active", ...p1 }), now + 2);
     usage = await prisma.monthlyUsage.findUniqueOrThrow({ where: { id: usage.id } });
-    expect(usage.emailLimit).toBe(70);
+    expect(usage.emailLimit).toBe(300);
     expect(usage.sent).toBe(12);
 
     // 4. Evento antiguo que llega tarde → ignorado
@@ -82,7 +82,7 @@ describe("webhooks de Stripe", () => {
     const rows = await prisma.monthlyUsage.findMany({ where: { businessId: t.business.id }, orderBy: { periodStart: "asc" } });
     expect(rows).toHaveLength(2);
     expect(rows[1].sent).toBe(0);
-    expect(rows[1].emailLimit).toBe(70);
+    expect(rows[1].emailLimit).toBe(300);
 
     // 6. Pago fallido → PAST_DUE (bloquea envíos)
     await send("customer.subscription.updated", subscriptionObject({ ...base, price: "price_test_pro", status: "past_due", ...p2 }), now + 4);
@@ -96,7 +96,7 @@ describe("webhooks de Stripe", () => {
     sub = await prisma.subscription.findUniqueOrThrow({ where: { businessId: t.business.id }, include: { plan: true } });
     expect(sub.plan.code).toBe("BUSINESS");
     expect(sub.cancelAtPeriodEnd).toBe(true);
-    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id }, orderBy: { periodStart: "desc" } })).emailLimit).toBe(200);
+    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id }, orderBy: { periodStart: "desc" } })).emailLimit).toBe(1000);
     await send("customer.subscription.deleted", subscriptionObject({ ...base, price: "price_test_business", status: "canceled", ...p2 }), now + 6);
     sub = await prisma.subscription.findUniqueOrThrow({ where: { businessId: t.business.id }, include: { plan: true } });
     expect(sub.status).toBe("CANCELED");

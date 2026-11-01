@@ -115,6 +115,7 @@ describe("plantillas y automatizaciones", () => {
     expect((await campaignRoute(req("/api/v1/campaigns", { method: "POST", cookie: s.cookie, json: { name: "c", templateId: tplS.id, customerIds: [cS.id] } }), ctx())).status).toBe(403);
 
     const p = await makeTenant({ plan: "PRO" });
+    await prisma.monthlyUsage.updateMany({ where: { businessId: p.business.id }, data: { emailLimit: 70 } });
     const tpl = await prisma.emailTemplate.findFirstOrThrow({ where: { businessId: p.business.id } });
     const cs = await Promise.all(Array.from({ length: 75 }, (_, i) => makeCustomer(p.business.id, i)));
     const r = await campaignRoute(req("/api/v1/campaigns", { method: "POST", cookie: p.cookie, json: { name: "Otoño", templateId: tpl.id, customerIds: cs.map((c) => c.id) } }), ctx());

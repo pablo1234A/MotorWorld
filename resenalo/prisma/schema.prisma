@@ -97,6 +97,10 @@ model Business {
   resendCooldownDays    Int       @default(30) @map("resend_cooldown_days")
   trackClicks           Boolean   @default(true) @map("track_clicks")
   automationPaused      Boolean   @default(false) @map("automation_paused")
+  weeklyDigest          Boolean   @default(true) @map("weekly_digest")
+  // Remitente alfanumérico para SMS (máx. 11 caracteres). null = número de la plataforma.
+  smsSenderId           String?   @map("sms_sender_id")
+  trialUsedAt           DateTime? @map("trial_used_at")
   stripeCustomerId      String?   @unique @map("stripe_customer_id")
   onboardingCompletedAt DateTime? @map("onboarding_completed_at")
   dpaAcceptedAt         DateTime? @map("dpa_accepted_at")
@@ -120,6 +124,8 @@ model Business {
   billingEvents    BillingEvent[]
   auditLogs        AuditLog[]
   oauthStates      OAuthState[]
+  reviewSource     ReviewSource?
+  reviews          Review[]
 
   @@index([ownerId])
   @@map("businesses")
@@ -144,6 +150,9 @@ model Plan {
   monthlyEmailLimit Int      @map("monthly_email_limit")
   maxTemplates      Int?     @map("max_templates") // null = ilimitado
   maxAutomationRules Int     @map("max_automation_rules")
+  monthlySmsLimit   Int      @default(0) @map("monthly_sms_limit")
+  annualPriceCents  Int      @default(0) @map("annual_price_cents")
+  stripeAnnualPriceId String? @unique @map("stripe_annual_price_id")
   features          Json
   stripePriceId     String?  @unique @map("stripe_price_id")
   active            Boolean  @default(true)
@@ -167,6 +176,11 @@ enum SubscriptionStatus {
   PAUSED
 }
 
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
 model Subscription {
   id                   String             @id @default(cuid())
   businessId           String             @unique @map("business_id")
@@ -177,6 +191,8 @@ model Subscription {
   currentPeriodStart   DateTime           @map("current_period_start")
   currentPeriodEnd     DateTime           @map("current_period_end")
   cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  billingInterval      BillingInterval    @default(MONTH) @map("billing_interval")
+  trialEnd             DateTime?          @map("trial_end")
   canceledAt           DateTime?          @map("canceled_at")
   lastStripeEventAt    DateTime?          @map("last_stripe_event_at")
   createdAt            DateTime           @default(now()) @map("created_at")
@@ -202,6 +218,11 @@ model MonthlyUsage {
   // Envíos en curso: reserva temporal mientras el proveedor responde.
   reserved    Int      @default(0)
   failed      Int      @default(0)
+  smsLimit    Int      @default(0) @map("sms_limit")
+  smsSent     Int      @default(0) @map("sms_sent")
+  smsReserved Int      @default(0) @map("sms_reserved")
+  alert80At   DateTime? @map("alert_80_at")
+  alert100At  DateTime? @map("alert_100_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -294,6 +315,7 @@ model Customer {
   source            CustomerSource      @default(MANUAL)
   emailStatus       CustomerEmailStatus @default(VALID) @map("email_status")
   unsubscribedAt    DateTime?           @map("unsubscribed_at")
+  phoneInvalidAt    DateTime?           @map("phone_invalid_at")
   lastRequestAt     DateTime?           @map("last_request_at")
   lastRequestStatus RequestStatus       @default(NONE) @map("last_request_status")
   createdAt         DateTime            @default(now()) @map("created_at")
@@ -355,6 +377,7 @@ model OAuthState {
   provider        EmailProvider
   codeVerifierEnc String        @map("code_verifier_enc")
   returnTo        String?       @map("return_to")
+  purpose         String        @default("email")
   expiresAt       DateTime      @map("expires_at")
   createdAt       DateTime      @default(now()) @map("created_at")
 
@@ -374,6 +397,10 @@ model EmailTemplate {
   closing     String
   signature   String
   buttonLabel String   @default("Dejar mi opinión") @map("button_label")
+  // Texto del recordatorio (si es null se usa el predeterminado) y del SMS.
+  reminderSubject String? @map("reminder_subject")
+  reminderBody    String? @map("reminder_body")
+  smsBody         String? @map("sms_body")
   isDefault   Boolean  @default(false) @map("is_default")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -388,6 +415,11 @@ model EmailTemplate {
 }
 
 // ───────────────────────────── Automatización ─────────────────────────────
+
+enum Channel {
+  EMAIL
+  SMS
+}
 
 enum EventSource {
   MANUAL
@@ -411,6 +443,10 @@ model AutomationRule {
   sendWindowStart Int?          @map("send_window_start")
   sendWindowEnd   Int?          @map("send_window_end")
   priority        Int           @default(0)
+  channel         Channel       @default(EMAIL)
+  // Un único recordatorio si el cliente no ha abierto el enlace tras N días.
+  reminderEnabled   Boolean     @default(false) @map("reminder_enabled")
+  reminderDelayDays Int         @default(5) @map("reminder_delay_days")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
@@ -508,7 +544,13 @@ model EmailJob {
   dedupeKey         String         @map("dedupe_key")
   // Token público para el enlace de seguimiento de clic y la baja.
   publicToken       String         @unique @map("public_token")
+  channel           Channel        @default(EMAIL)
   toEmail           String         @map("to_email")
+  toPhone           String?        @map("to_phone")
+  isReminder        Boolean        @default(false) @map("is_reminder")
+  reminderOfId      String?        @unique @map("reminder_of_id")
+  deliveredAt       DateTime?      @map("delivered_at")
+  providerStatus    String?        @map("provider_status")
   toName            String         @map("to_name")
   subject           String
   bodyText          String         @map("body_text")
@@ -541,12 +583,16 @@ model EmailJob {
   campaign   Campaign?        @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   connection EmailConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
   logs       EmailLog[]
+  reminderOf EmailJob?        @relation("Reminder", fields: [reminderOfId], references: [id], onDelete: SetNull)
+  reminder   EmailJob?        @relation("Reminder")
+  reviews    Review[]
 
   @@unique([businessId, dedupeKey])
   @@index([businessId, status])
   @@index([businessId, createdAt])
   @@index([status, scheduledFor])
   @@index([businessId, toEmail, sentAt])
+  @@index([status, sentAt])
   @@map("email_jobs")
 }
 
@@ -567,6 +613,8 @@ enum EmailLogEvent {
   CLICKED
   UNSUBSCRIBED
   REQUEUED
+  DELIVERED
+  REMINDER_CREATED
 }
 
 model EmailLog {
@@ -662,4 +710,55 @@ model DataRightsRequest {
 
   @@index([createdAt])
   @@map("data_rights_requests")
+}
+
+// ───────────────────────────── Reseñas (Google Business Profile) ─────────────────────────────
+
+model ReviewSource {
+  id                 String           @id @default(cuid())
+  businessId         String           @unique @map("business_id")
+  provider           String           @default("GOOGLE_BUSINESS")
+  googleEmail        String           @map("google_email")
+  accessTokenEnc     String?          @map("access_token_enc")
+  refreshTokenEnc    String?          @map("refresh_token_enc")
+  tokenExpiresAt     DateTime?        @map("token_expires_at")
+  scopes             String
+  status             ConnectionStatus @default(ACTIVE)
+  accountName        String?          @map("account_name")   // accounts/123
+  locationName       String?          @map("location_name")  // locations/456
+  locationTitle      String?          @map("location_title")
+  lastSyncAt         DateTime?        @map("last_sync_at")
+  lastError          String?          @map("last_error")
+  connectedAt        DateTime         @default(now()) @map("connected_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reviews  Review[]
+
+  @@map("review_sources")
+}
+
+model Review {
+  id                String    @id @default(cuid())
+  businessId        String    @map("business_id")
+  sourceId          String    @map("source_id")
+  externalId        String    @unique @map("external_id")
+  reviewerName      String    @map("reviewer_name")
+  starRating        Int       @map("star_rating")
+  comment           String?
+  createTime        DateTime  @map("create_time")
+  updateTime        DateTime  @map("update_time")
+  replyComment      String?   @map("reply_comment")
+  replyTime         DateTime? @map("reply_time")
+  // Atribución estimada a una solicitud (coincidencia de nombre en una ventana de días). Nunca se presenta como confirmada.
+  attributedJobId   String?   @map("attributed_job_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  business Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  source   ReviewSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  job      EmailJob?     @relation(fields: [attributedJobId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, createTime])
+  @@map("reviews")
 }

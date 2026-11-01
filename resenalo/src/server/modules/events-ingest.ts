@@ -3,6 +3,7 @@ import { CustomerSource, EventSource, type Business, type Prisma } from "@prisma
 import { prisma } from "../db";
 import { AppError } from "../http/errors";
 import { isValidEmail, normalizeEmailAddress } from "@/lib/email";
+import { normalizePhone } from "@/lib/phone";
 import { getEntitlements, subscriptionAllowsSending } from "./billing/entitlements";
 import { createReviewRequest } from "./automation/requests";
 
@@ -33,13 +34,14 @@ export async function ingestEvent(business: Business, ev: InboundEvent, source: 
       businessId: business.id,
       email,
       name: ev.customer.name,
-      phone: ev.customer.phone ?? null,
+      phone: normalizePhone(ev.customer.phone),
       serviceName: ev.serviceName ?? null,
       completedAt: ev.completedAt ?? new Date(),
       source: source === "API" ? CustomerSource.API : CustomerSource.WEBHOOK,
     },
     update: {
       name: ev.customer.name,
+      ...(ev.customer.phone && normalizePhone(ev.customer.phone) ? { phone: normalizePhone(ev.customer.phone) } : {}),
       ...(ev.serviceName ? { serviceName: ev.serviceName } : {}),
       completedAt: ev.completedAt ?? new Date(),
     },

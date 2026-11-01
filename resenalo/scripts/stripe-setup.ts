@@ -12,28 +12,35 @@ async function main() {
   if (!key) throw new Error("Falta STRIPE_SECRET_KEY");
   const stripe = new Stripe(key);
   for (const p of PLANS) {
-    const lookup = `resenalo_${p.code.toLowerCase()}_monthly_eur_v1`;
-    const existing = await stripe.prices.list({ lookup_keys: [lookup], expand: ["data.product"] });
-    if (existing.data[0]) {
-      console.log(`STRIPE_PRICE_${p.code}=${existing.data[0].id}   (ya existía)`);
-      continue;
+    let productId: string | null = null;
+    for (const [interval, amount, suffix] of [["month", p.priceCents, ""], ["year", p.annualPriceCents, "_ANNUAL"]] as const) {
+      const lookup = `resenalo_${p.code.toLowerCase()}_${interval}ly_eur_v2`;
+      const existing = await stripe.prices.list({ lookup_keys: [lookup] });
+      if (existing.data[0]) {
+        console.log(`STRIPE_PRICE_${p.code}${suffix}=${existing.data[0].id}   (ya existía)`);
+        productId ??= typeof existing.data[0].product === "string" ? existing.data[0].product : existing.data[0].product.id;
+        continue;
+      }
+      if (!productId) {
+        const product = await stripe.products.create({
+          name: `Reseñalo ${p.name}`,
+          description: `Hasta ${p.monthlyEmailLimit} correos${p.monthlySmsLimit ? ` y ${p.monthlySmsLimit} SMS` : ""} de solicitud de reseña al mes`,
+          tax_code: "txcd_10103001", // Software as a Service (SaaS) - uso empresarial
+          metadata: { planCode: p.code },
+        });
+        productId = product.id;
+      }
+      const price = await stripe.prices.create({
+        product: productId,
+        currency: "eur",
+        unit_amount: amount,
+        recurring: { interval },
+        tax_behavior: "inclusive",
+        lookup_key: lookup,
+        metadata: { planCode: p.code, interval },
+      });
+      console.log(`STRIPE_PRICE_${p.code}${suffix}=${price.id}`);
     }
-    const product = await stripe.products.create({
-      name: `Reseñalo ${p.name}`,
-      description: `Hasta ${p.monthlyEmailLimit} solicitudes de reseña por correo al mes`,
-      tax_code: "txcd_10103001", // Software as a Service (SaaS) - uso empresarial
-      metadata: { planCode: p.code },
-    });
-    const price = await stripe.prices.create({
-      product: product.id,
-      currency: "eur",
-      unit_amount: p.priceCents,
-      recurring: { interval: "month" },
-      tax_behavior: "inclusive",
-      lookup_key: lookup,
-      metadata: { planCode: p.code },
-    });
-    console.log(`STRIPE_PRICE_${p.code}=${price.id}`);
   }
   console.log("\nSiguientes pasos: activa Stripe Tax con tu registro de IVA (ES), configura el portal de cliente y crea el webhook (ver docs/CREDENCIALES.md).");
 }

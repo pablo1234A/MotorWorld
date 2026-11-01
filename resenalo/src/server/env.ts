@@ -30,6 +30,24 @@ const schema = z.object({
   STRIPE_PRICE_STARTER: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
   STRIPE_PRICE_BUSINESS: z.string().optional(),
+  STRIPE_PRICE_STARTER_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_PRO_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_BUSINESS_ANNUAL: z.string().optional(),
+
+  // Twilio (canal SMS)
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_MESSAGING_SERVICE_SID: z.string().optional(),
+  TWILIO_FROM: z.string().optional(),
+  TWILIO_API_URL: z.string().url().default("https://api.twilio.com"),
+
+  // Google Business Profile (reseñas). Por defecto usa el mismo cliente OAuth de Google.
+  GOOGLE_BUSINESS_API_URL: z.string().url().default("https://mybusiness.googleapis.com"),
+  GOOGLE_ACCOUNT_MGMT_API_URL: z.string().url().default("https://mybusinessaccountmanagement.googleapis.com"),
+  GOOGLE_BUSINESS_INFO_API_URL: z.string().url().default("https://mybusinessbusinessinformation.googleapis.com"),
+
+  // Administradores de la plataforma (acceso a /admin), separados por comas
+  ADMIN_EMAILS: z.string().default(""),
   STRIPE_AUTOMATIC_TAX: z.enum(["true", "false"]).default("true"),
   STRIPE_TAX_RATE_ID: z.string().optional(),
 
@@ -83,5 +101,6 @@ export function integrationStatus() {
     google: Boolean(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET),
     microsoft: Boolean(e.MICROSOFT_CLIENT_ID && e.MICROSOFT_CLIENT_SECRET),
     smtp: Boolean(e.SMTP_HOST),
+    twilio: Boolean(e.TWILIO_ACCOUNT_SID && e.TWILIO_AUTH_TOKEN && (e.TWILIO_MESSAGING_SERVICE_SID || e.TWILIO_FROM)),
   };
 }

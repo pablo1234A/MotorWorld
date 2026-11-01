@@ -15,9 +15,9 @@ import { useToast } from "@/components/ui/Toast";
 import { PlanPicker, type PlanInfo } from "@/components/app/PlanPicker";
 
 type B = {
-  stripeConfigured: boolean; hasStripeCustomer: boolean;
-  subscription: { status: string; planCode: string; currentPeriodStart: string; currentPeriodEnd: string; cancelAtPeriodEnd: boolean; canSend: boolean } | null;
-  usage: { sent: number; limit: number; percentUsed: number; available: number; pending: number } | null;
+  stripeConfigured: boolean; hasStripeCustomer: boolean; trialAvailable: boolean;
+  subscription: { status: string; planCode: string; currentPeriodStart: string; currentPeriodEnd: string; cancelAtPeriodEnd: boolean; canSend: boolean; interval: "month" | "year"; trialEnd: string | null } | null;
+  usage: { sent: number; limit: number; percentUsed: number; available: number; pending: number; periodEnd: string; smsLimit: number; smsSent: number } | null;
   plans: PlanInfo[];
   invoices: { id: string; number: string | null; status: string; subtotalCents: number; taxCents: number; totalCents: number; issuedAt: string; hostedInvoiceUrl: string | null; invoicePdfUrl: string | null }[];
 };
@@ -61,11 +61,16 @@ function Billing() {
               <div>
                 <p className="text-sm text-ink-500">Plan actual</p>
                 <p className="mt-1 font-display text-2xl font-semibold">{plan?.name ?? s.planCode}</p>
-                {plan ? <p className="mt-1 text-sm text-ink-600">{formatEur(plan.price.totalCents)}/mes IVA incluido · {plan.monthlyEmailLimit} correos/mes</p> : null}
+                {plan ? (
+                  <p className="mt-1 text-sm text-ink-600">
+                    {s.interval === "year" ? `${formatEur(plan.annualPrice.totalCents)}/año` : `${formatEur(plan.price.totalCents)}/mes`} IVA incluido · {plan.monthlyEmailLimit.toLocaleString("es-ES")} correos/mes{plan.monthlySmsLimit ? ` · ${plan.monthlySmsLimit} SMS/mes` : ""}
+                  </p>
+                ) : null}
               </div>
               <Badge tone={SUB_STATUS[s.status]?.tone} dot>{SUB_STATUS[s.status]?.label ?? s.status}</Badge>
             </div>
             {s.status === "PAST_DUE" || s.status === "UNPAID" ? <Alert tone="bad" className="mt-4" title="Pago pendiente">No hemos podido cobrar la última cuota. Los envíos están en pausa hasta que se regularice. Actualiza tu método de pago.</Alert> : null}
+            {s.status === "TRIALING" && s.trialEnd ? <Alert tone="info" className="mt-4" title="Prueba gratuita">Tu prueba termina el {fmtDate(s.trialEnd)}. Hasta entonces el cupo está limitado a {b.usage?.limit} correos. Ese día se hará el primer cobro, salvo que canceles antes.</Alert> : null}
             {s.cancelAtPeriodEnd ? <Alert tone="warn" className="mt-4">Tu suscripción finalizará el {fmtDate(s.currentPeriodEnd)} y no se renovará.</Alert> : null}
             <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
               <div className="rounded-lg border border-ink-100 p-3"><dt className="text-ink-500">Periodo actual</dt><dd className="font-medium">{fmtDate(s.currentPeriodStart)} – {fmtDate(s.currentPeriodEnd)}</dd></div>
@@ -82,7 +87,8 @@ function Billing() {
               <>
                 <p className="font-display text-2xl font-semibold tabular-nums">{b.usage.sent} <span className="text-base font-normal text-ink-500">/ {b.usage.limit}</span></p>
                 <div className="mt-3"><Progress value={b.usage.percentUsed} tone={b.usage.percentUsed >= 100 ? "bad" : b.usage.percentUsed >= 80 ? "warn" : "ink"} /></div>
-                <p className="mt-2 text-xs text-ink-500">{b.usage.available} disponibles · {b.usage.pending} pendientes. El contador se reinicia el {fmtDate(s.currentPeriodEnd)}.</p>
+                <p className="mt-2 text-xs text-ink-500">{b.usage.available} disponibles · {b.usage.pending} pendientes. El contador se reinicia el {fmtDate(b.usage.periodEnd)}.</p>
+                {b.usage.smsLimit ? <p className="mt-3 text-sm"><strong className="tabular-nums">{b.usage.smsSent}</strong> / {b.usage.smsLimit} SMS</p> : null}
               </>
             ) : null}
           </Card>
@@ -92,7 +98,7 @@ function Billing() {
       <section className="mt-8">
         <h2 className="mb-1 text-lg font-semibold">{live ? "Cambiar de plan" : "Elige tu plan"}</h2>
         <p className="mb-4 text-sm text-ink-500">{live ? "El cambio se aplica al instante; Stripe prorratea el importe del periodo en curso." : "Pago mensual seguro con Stripe. Sin permanencia."}</p>
-        <PlanPicker plans={b.plans} currentPlan={live ? s?.planCode : null} mode={live ? "change" : "checkout"} stripeConfigured={b.stripeConfigured} onChanged={() => { toast("ok", "Plan actualizado"); void d.reload(); }} />
+        <PlanPicker plans={b.plans} currentPlan={live ? s?.planCode : null} currentInterval={live ? s?.interval : undefined} mode={live ? "change" : "checkout"} stripeConfigured={b.stripeConfigured} trialAvailable={b.trialAvailable} onChanged={() => { toast("ok", "Plan actualizado"); void d.reload(); }} />
       </section>
 
       <Card className="mt-8" padded={false}>
