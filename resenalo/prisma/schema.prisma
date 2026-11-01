@@ -728,6 +728,8 @@ model ReviewSource {
   locationName       String?          @map("location_name")  // locations/456
   locationTitle      String?          @map("location_title")
   lastSyncAt         DateTime?        @map("last_sync_at")
+  averageRating      Float?           @map("average_rating")
+  totalReviewCount   Int?             @map("total_review_count")
   lastError          String?          @map("last_error")
   connectedAt        DateTime         @default(now()) @map("connected_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")

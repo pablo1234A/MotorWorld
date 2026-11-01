@@ -68,8 +68,8 @@ export async function activatePlan(businessId: string, code: PlanCode, status: "
   });
   await prisma.monthlyUsage.upsert({
     where: { businessId_periodStart: { businessId, periodStart: start } },
-    create: { businessId, periodStart: start, periodEnd: end, emailLimit: plan.monthlyEmailLimit },
-    update: { emailLimit: plan.monthlyEmailLimit },
+    create: { businessId, periodStart: start, periodEnd: end, emailLimit: plan.monthlyEmailLimit, smsLimit: plan.monthlySmsLimit },
+    update: { emailLimit: plan.monthlyEmailLimit, smsLimit: plan.monthlySmsLimit },
   });
 }
 

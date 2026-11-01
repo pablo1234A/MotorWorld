@@ -2,6 +2,7 @@ import { EmailJobStatus } from "@prisma/client";
 import { prisma } from "../db";
 import { getCurrentUsage, getEntitlements } from "./billing/entitlements";
 import { PENDING_JOB_STATUSES } from "./automation/requests";
+import { reviewSummary } from "./reviews";
 
 export async function usageSummary(businessId: string) {
   const usage = await getCurrentUsage(businessId);
@@ -95,9 +96,9 @@ export async function getStats(businessId: string, opts: { days?: number } = {})
     byRule,
     bySource,
     recent: recent.map((l) => ({ id: l.id, event: l.event, message: l.message, createdAt: l.createdAt, to: l.job.toName || l.job.toEmail })),
-    // Gmail y Microsoft Graph no informan de entregas ni de reseñas publicadas:
-    deliveryTracking: false,
-    reviewsTracking: false,
+    // Reseñas reales de Google Business Profile (si la ficha está conectada).
+    reviews: await reviewSummary(businessId, days),
+    sms: { sent: await prisma.emailJob.count({ where: { businessId, channel: "SMS", status: { in: ["SENT", "DELIVERED"] } } }), delivered: totals.DELIVERED },
   };
 }
 

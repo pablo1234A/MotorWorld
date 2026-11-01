@@ -16,6 +16,7 @@ import { processEmailJob, sweep } from "../server/modules/automation/sender";
 import { checkConnection } from "../server/modules/email-connection";
 import { runRetention } from "../server/modules/retention";
 import { sendWeeklyDigests } from "../server/modules/notifications";
+import { syncAllReviewSources } from "../server/modules/reviews";
 
 async function connectionHealth() {
   const stale = await prisma.emailConnection.findMany({
@@ -57,6 +58,7 @@ async function main() {
       if (job.name === "connection-health") return connectionHealth();
       if (job.name === "retention") return runRetention();
       if (job.name === "weekly-digest") return sendWeeklyDigests();
+      if (job.name === "reviews-sync") return syncAllReviewSources();
       return null;
     },
     { connection, concurrency: 1 },
@@ -71,6 +73,7 @@ async function main() {
   await mq.upsertJobScheduler("sweep", { every: 30_000 }, { name: "sweep" });
   await mq.upsertJobScheduler("connection-health", { every: 6 * 3600_000 }, { name: "connection-health" });
   await mq.upsertJobScheduler("retention", { pattern: "17 3 * * *", tz: "Europe/Madrid" }, { name: "retention" });
+  await mq.upsertJobScheduler("reviews-sync", { every: 6 * 3600_000 }, { name: "reviews-sync" });
   await mq.upsertJobScheduler("weekly-digest", { pattern: "7 9 * * 1", tz: "Europe/Madrid" }, { name: "weekly-digest" });
   await sweep(); // recupera trabajos pendientes al arrancar
 
