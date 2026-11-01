@@ -15,6 +15,7 @@ const PUBLIC_PAGES = [
   "/textos-legales-pagina-web",
   "/documentos-legales-tienda-online",
   "/agencias-y-gestorias",
+  "/comprobador",
   "/guias",
   "/guias/aviso-legal-que-es-y-que-debe-incluir",
   "/guias/politica-de-privacidad-que-debe-incluir",
@@ -95,13 +96,36 @@ test.describe("Web pública", () => {
   test("la página de agencias explica el modelo y preselecciona la cuenta de agencia al registrarse", async ({ page }) => {
     await page.goto("/agencias-y-gestorias");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("webs de tus clientes");
-    for (const price of ["5,99 €", "9,99 €", "19,99 €"]) await expect(page.getByText(price).first()).toBeVisible();
-    await expect(page.getByText("Unos 16 clientes completos al mes")).toBeVisible();
+    await expect(page.getByText("49,00 €").first()).toBeVisible();
+    await expect(page.getByText("Clientes ilimitados").first()).toBeVisible();
+    await expect(page.getByRole("table", { name: /Coste mensual por cliente/ })).toContainText("4,90 €");
     await expect(page.locator("body")).not.toContainText(/cumplimiento legal garantizado/i);
-    await page.getByRole("link", { name: /Crear cuenta de agencia/ }).click();
+    await page.getByRole("link", { name: /Crear cuenta de agencia/ }).first().click();
     await expect(page).toHaveURL(/\/registro\?tipo=agencia/);
     await expect(page.getByRole("radio", { name: /Agencia o gestoría/ })).toBeChecked();
     await expect(page.getByRole("radio", { name: /Mi negocio/ })).not.toBeChecked();
+  });
+
+  test("el comprobador gratuito analiza una web y propone soluciones sin prometer cumplimiento", async ({ page, baseURL }) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: "Comprueba tu web gratis" }).click();
+    await expect(page).toHaveURL(/\/comprobador$/);
+    await page.getByRole("button", { name: /Comprobar gratis/ }).click();
+    await expect(page.locator("#url-error")).toContainText("Escribe la dirección");
+    await page.getByLabel("Dirección de la web").fill("http://169.254.169.254/latest/meta-data");
+    await page.getByRole("button", { name: /Comprobar gratis/ }).click();
+    await expect(page.locator("#url-error")).toContainText(/no pública/);
+    // Analiza la propia web servida en local: tiene enlaces legales y no carga rastreadores.
+    await page.getByLabel("Dirección de la web").fill(`${baseURL}/precios`);
+    await page.getByRole("button", { name: /Comprobar gratis/ }).click();
+    const result = page.getByRole("region", { name: "localhost" });
+    await expect(result).toBeVisible({ timeout: 20_000 });
+    await expect(result.getByText("Enlace a aviso legal")).toBeVisible();
+    await expect(result.getByText(/No hemos detectado analítica/)).toBeVisible();
+    await expect(result.getByText("Conexión segura (HTTPS)")).toBeVisible();
+    await expect(result.getByRole("link", { name: /Crear mis documentos/ })).toBeVisible();
+    await expect(result).toContainText("No revisa el contenido jurídico ni garantiza el cumplimiento");
+    await expectAccessible(page);
   });
 
   test("la portada enlaza a las guías y tiene URL canónica", async ({ page }) => {

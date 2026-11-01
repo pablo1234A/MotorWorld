@@ -111,7 +111,7 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
     it("anónimo no ve datos personales pero sí el catálogo público", async () => {
       await as(db.pool, "anon", null, async (q) => {
         await expect(q("select * from public.profiles")).rejects.toThrow(/permission denied/);
-        expect((await q("select code from public.products")).rowCount).toBe(4); // pago único + 3 planes
+        expect((await q("select code from public.products")).rowCount).toBe(5); // pago único + 3 planes + Agencia
         expect((await q("select id from public.faqs")).rowCount).toBeGreaterThan(5);
       });
     });
@@ -407,8 +407,8 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
 
     it("el cupo de la suscripción de la agencia se comparte entre clientes y se aplica en base de datos", async () => {
       const product = await db.pool.query(
-        `insert into public.products (code, name, kind, price_cents, billing_interval, included_document_types, documents_per_period, active)
-         values ('test_quota_3', 'Prueba', 'subscription', 100, 'month', array['aviso_legal'], 3, false) returning id`,
+        `insert into public.products (code, name, kind, price_cents, billing_interval, included_document_types, documents_per_period, allows_clients, active)
+         values ('test_quota_3', 'Prueba', 'subscription', 100, 'month', array['aviso_legal'], 3, true, false) returning id`,
       );
       const sub = await db.pool.query(
         `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, status, current_period_start)
@@ -421,6 +421,10 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
           `select * from public.record_document_version($1, $2, 'aviso_legal', 'Aviso legal', $3, null, '{}', 'subscription', $4, null, $5, true, 'a.html', 'a.pdf', $6, $7)`,
           [randomUUID(), org, tvId, sid, key, "b".repeat(64), agency.userId],
         );
+      // Sin un plan con clientes, solo la cuenta principal puede generar.
+      await db.pool.query("update public.products set allows_clients = false where code = 'test_quota_3'");
+      await expect(gen(clientA, "ag:0")).rejects.toThrow(/plan_without_clients/);
+      await db.pool.query("update public.products set allows_clients = true where code = 'test_quota_3'");
       await gen(clientA, "ag:1");
       await gen(clientB, "ag:2");
       await gen(agency.orgId, "ag:3");

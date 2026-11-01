@@ -30,6 +30,17 @@ export default async function CookieBannerPage() {
         </Panel>
       )}
 
+      {data.state === "needs_agency_plan" && (
+        <Panel>
+          <EmptyState
+            icon={<Lock className="h-5 w-5" />}
+            title="El banner de tus clientes está en el plan Agencia"
+            description="Tu plan actual cubre tu propia web. Con el plan Agencia (49 €/mes) generas los documentos y el banner de cookies de todos tus clientes."
+            action={<LinkButton href="/agencias-y-gestorias#planes">Ver el plan Agencia</LinkButton>}
+          />
+        </Panel>
+      )}
+
       {data.state === "no_form" && (
         <Panel>
           <EmptyState

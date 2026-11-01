@@ -16,6 +16,8 @@ Micro-SaaS para generar el **aviso legal**, la **política de privacidad** y la 
 | Emails transaccionales (Resend) | Construidos (requiere dominio verificado en Resend) |
 | Modo agencia / gestoría (varios clientes por cuenta, cupo compartido) | Construido y probado |
 | Banner de consentimiento de cookies (incluido en suscripciones) | Construido y probado |
+| Plan Agencia (49 €/mes, clientes y documentos ilimitados) | Construido y probado |
+| Comprobador gratuito de textos legales (`/comprobador`) | Construido y probado |
 | Guías SEO y página para agencias | Construidas |
 | Panel de administración | Construido |
 | Plantillas jurídicas aprobadas | **Pendiente: revisión profesional** |

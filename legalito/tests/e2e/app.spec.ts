@@ -231,7 +231,7 @@ test("agencia: clientes, formulario propio, generación con cupo compartido y ar
   await page.getByRole("button", { name: "Generar mis documentos" }).click();
   await expect(page).toHaveURL(/\/panel\/documentos\?generado=1/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Documentos de Panadería Sol" })).toBeVisible();
-  await expect(page.getByText("3 de 50")).toBeVisible();
+  await expect(page.getByText("3 · ilimitados")).toBeVisible();
   await shot(page, "17-agencia-documentos-cliente");
 
   // Segundo cliente: sus documentos están vacíos y el cupo es el mismo.
@@ -260,8 +260,8 @@ test("agencia: clientes, formulario propio, generación con cupo compartido y ar
 
   // La facturación es la de la agencia.
   await page.goto("/panel/suscripcion");
-  await expect(page.getByText("Medium").first()).toBeVisible();
-  await expect(page.getByText("3 de 50").first()).toBeVisible();
+  await expect(page.getByText("Agencia", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("3 · ilimitados").first()).toBeVisible();
 });
 
 test("banner de cookies: categorías del formulario y consentimiento real en el navegador", async ({ page, isMobile, baseURL }) => {

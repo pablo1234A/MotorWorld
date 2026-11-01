@@ -38,7 +38,7 @@ async function main() {
   for (const [email, name] of users) {
     await db.query("insert into auth.users (email, raw_user_meta_data, email_confirmed_at) values ($1, $2, now())", [email, JSON.stringify({ full_name: name })]);
   }
-  // Agencias (registro con tipo de cuenta «agency») con plan Medium activo.
+  // Agencias (registro con tipo de cuenta «agency») con plan Agencia activo.
   for (const [email, name] of [
     ["agencia-desktop@legalito.test", "Estudio Norte"],
     ["agencia-mobile@legalito.test", "Gestoría Sur"],
@@ -47,7 +47,7 @@ async function main() {
   }
   await db.query("insert into public.user_roles (user_id, role) select id, 'admin' from auth.users where email = 'admin@legalito.test'");
   await db.query("update public.products set stripe_price_id = 'price_qa_one' where code = 'one_time_pack'");
-  for (const code of ["subscription_basic", "subscription_medium", "subscription_business"]) {
+  for (const code of ["subscription_basic", "subscription_medium", "subscription_business", "subscription_agency"]) {
     await db.query("update public.products set stripe_price_id = $1 where code = $2", [`price_qa_${code}`, code]);
   }
   // Suscriptores del plan Básico con el formulario completado (para probar el cupo).
@@ -71,7 +71,7 @@ async function main() {
     await db.query("update public.organizations set stripe_customer_id = $1, legal_name = $2 where id = $3", [`cus_qa_${key}`, key === "agencia-desktop" ? "Estudio Norte SL" : "Gestoría Sur SL", org.id]);
     await db.query(
       `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, stripe_price_id, status, amount_cents, currency, billing_interval, current_period_start, current_period_end)
-       select $1, id, $2, $3, stripe_price_id, 'active', 999, 'eur', 'month', now() - interval '3 days', now() + interval '27 days' from public.products where code = 'subscription_medium'`,
+       select $1, id, $2, $3, stripe_price_id, 'active', 4900, 'eur', 'month', now() - interval '3 days', now() + interval '27 days' from public.products where code = 'subscription_agency'`,
       [org.id, `sub_qa_${key}`, `cus_qa_${key}`],
     );
   }

@@ -7,6 +7,7 @@ import { bannerVersion, categoriesFromCookieList, type BannerCategory } from "@/
 
 export type BannerData =
   | { state: "no_subscription" }
+  | { state: "needs_agency_plan" }
   | { state: "no_form" }
   | {
       state: "ready";
@@ -26,6 +27,7 @@ export async function loadBannerData(): Promise<BannerData> {
   const [ent, form] = await Promise.all([getMyEntitlements(), getFormStatus()]);
   const subscribed = Boolean(ent.subscription && ["active", "trialing"].includes(ent.subscription.status));
   if (!subscribed) return { state: "no_subscription" };
+  if (org.parent_organization_id && !ent.allowsClients) return { state: "needs_agency_plan" };
   if (!form.completed) return { state: "no_form" };
   const { context } = prepareInput(form.completed.answers);
   const categories = categoriesFromCookieList(context.cookies.list);

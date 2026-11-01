@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 const title = "Textos legales para las webs de tus clientes";
 const metaTitle = "Aviso legal y privacidad para agencias web y gestorías";
 const description =
-  "Gestiona el aviso legal, la política de privacidad y la de cookies de todas las webs de tus clientes desde una sola cuenta. Un formulario por cliente, cupo compartido y documentos sin marca de Legalito.";
+  "Plan Agencia a 49 €/mes: aviso legal, política de privacidad, política de cookies y banner de consentimiento para todas las webs de tus clientes. Clientes ilimitados y sin la marca de Legalito.";
 
 export const metadata: Metadata = {
   title: metaTitle,
@@ -29,7 +29,7 @@ const AUDIENCES = [
 
 const FEATURES = [
   { icon: Users, title: "Un espacio por cliente", body: "Cada cliente tiene sus datos, su formulario y sus documentos. Nunca se mezclan." },
-  { icon: Wallet, title: "Una sola suscripción", body: "Pagas un plan y el cupo de documentos se comparte entre todos tus clientes." },
+  { icon: Wallet, title: "Una sola suscripción", body: "Un único pago mensual, sin límite de clientes ni de documentos." },
   { icon: FileCode2, title: "PDF y HTML sin nuestra marca", body: "Los documentos no llevan el logo ni el nombre de Legalito: entrégalos como parte de tu trabajo." },
   { icon: RefreshCw, title: "Regenera cuando cambie algo", body: "¿El cliente añade una tienda o una newsletter? Edita sus respuestas y regenera solo el documento afectado." },
   { icon: ShieldCheck, title: "Plantillas con versión y revisión", body: "Cada documento registra la versión de la plantilla con la que se generó." },
@@ -46,7 +46,7 @@ const STEPS = [
 const FAQ = [
   {
     q: "¿Cuántos clientes puedo gestionar?",
-    a: "No hay un límite de clientes en los planes de suscripción: lo que se cuenta son los documentos generados al mes. Cada cliente suele necesitar 3 (aviso legal, privacidad y cookies), así que el Básico da para unos 6 clientes al mes, el Medium para unos 16 y el Business no tiene límite.",
+    a: "Con el plan Agencia no hay límite de clientes ni de documentos. Los planes Básico, Medium y Business son para la web propia de un negocio y no incluyen la gestión de clientes.",
   },
   {
     q: "¿Mis clientes necesitan una cuenta?",
@@ -62,16 +62,16 @@ const FAQ = [
   },
   {
     q: "¿Puedo pasar de una cuenta normal a una de agencia?",
-    a: "Sí. Desde «Clientes» en tu panel puedes activar el modo agencia en cualquier momento. Tu propia web sigue disponible como cuenta principal.",
+    a: "Sí. Desde «Clientes» en tu panel puedes activar el modo agencia en cualquier momento y cambiar al plan Agencia desde «Mi suscripción». Tu propia web sigue disponible como cuenta principal.",
   },
   {
     q: "¿Cómo se factura?",
-    a: "Con una única suscripción mensual a nombre de tu agencia o gestoría, con factura y NIF. Puedes cambiar de plan o cancelar desde el portal de facturación.",
+    a: "Con una única suscripción mensual de 49 € (IVA incluido) a nombre de tu agencia o gestoría, con factura y NIF. Puedes cancelar cuando quieras desde el portal de facturación.",
   },
 ];
 
 export default async function AgenciesPage() {
-  const plans = (await getPublicPlans()).filter((p) => p.kind === "subscription");
+  const agency = (await getPublicPlans()).find((p) => p.allowsClients);
   return (
     <>
       <JsonLd
@@ -104,7 +104,7 @@ export default async function AgenciesPage() {
                 Crear cuenta de agencia <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="#planes" className={buttonClass("secondary", "lg")}>
-                Ver planes
+                Ver precio
               </Link>
             </div>
           </div>
@@ -163,43 +163,60 @@ export default async function AgenciesPage() {
 
       <section id="planes" className="scroll-mt-20 border-t border-line bg-white py-20">
         <Container>
-          <SectionHeading center eyebrow="Planes" title="Un plan según cuántos clientes atiendes al mes" lead="Cada documento generado cuenta 1. Un cliente con sus tres textos son 3 documentos." />
-          <div className="mx-auto mt-12 grid max-w-5xl gap-5 md:grid-cols-3">
-            {plans.map((p) => {
-              const perClient = p.documentsPerPeriod ? Math.floor(p.documentsPerPeriod / 3) : null;
-              const recommended = p.code === "subscription_business";
-              return (
-                <div key={p.code} className={cn("relative flex flex-col rounded-2xl border bg-white p-6", recommended ? "border-navy ring-1 ring-navy" : "border-line")}>
-                  {recommended && <span className="absolute -top-2.5 left-6 rounded-md bg-navy px-2 py-0.5 text-[11px] font-medium text-white">Recomendado para agencias</span>}
-                  <p className="font-semibold text-navy-950">{p.name}</p>
-                  <p className="mt-3 flex items-baseline gap-1.5">
-                    <span className="text-3xl font-semibold tabular-nums text-navy-950">{formatPrice(p.priceCents, p.currency)}</span>
-                    <span className="text-sm text-muted">/ mes</span>
-                  </p>
-                  <ul className="mt-5 space-y-2 text-sm text-ink-soft">
-                    <li className="flex gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
-                      {p.documentsPerPeriod ? `Hasta ${p.documentsPerPeriod} documentos al mes` : "Documentos ilimitados"}
+          <SectionHeading center eyebrow="Precio" title="Un solo plan, todos tus clientes" lead="Sin límite de clientes ni de documentos. Cuantas más webs gestionas, menos cuesta cada una." />
+          {agency && (
+            <div className="mx-auto mt-12 grid max-w-5xl gap-6 lg:grid-cols-[1.1fr_1fr]">
+              <div className="relative flex flex-col rounded-2xl border border-navy bg-white p-7 shadow-[var(--shadow-lift)] ring-1 ring-navy sm:p-8">
+                <span className="absolute -top-3 left-7 rounded-md bg-navy px-2.5 py-1 text-xs font-medium text-white">Para agencias y gestorías</span>
+                <p className="text-lg font-semibold text-navy-950">Plan {agency.name}</p>
+                <p className="mt-1 text-[15px] text-muted">{agency.description}</p>
+                <p className="mt-5 flex items-baseline gap-1.5">
+                  <span className="text-5xl font-semibold tracking-tight tabular-nums text-navy-950">{formatPrice(agency.priceCents, agency.currency)}</span>
+                  <span className="text-muted">/ mes</span>
+                </p>
+                <p className="mt-1 text-xs text-subtle">IVA incluido · Cancela cuando quieras</p>
+                <ul className="mt-6 grid gap-2.5 text-[15px] text-ink-soft sm:grid-cols-2">
+                  {agency.features.map((f) => (
+                    <li key={f} className="flex gap-2.5">
+                      <Check className="mt-0.5 h-4.5 w-4.5 shrink-0 text-success" aria-hidden />
+                      {f}
                     </li>
-                    <li className="flex gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
-                      {perClient ? `Unos ${perClient} clientes completos al mes` : "Todos los clientes que necesites"}
-                    </li>
-                    <li className="flex gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
-                      Clientes ilimitados en tu cuenta
-                    </li>
-                  </ul>
-                  <Link href="/registro?tipo=agencia" className={cn(buttonClass(recommended ? "primary" : "secondary", "md"), "mt-6")}>
-                    Empezar con {p.name}
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-          <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted">
-            Precios con IVA incluido. Puedes rellenar formularios y ver vistas previas antes de pagar. <Link href="/precios" className="text-link">Comparar todos los planes</Link>
-          </p>
+                  ))}
+                </ul>
+                <Link href="/registro?tipo=agencia" className={cn(buttonClass("primary", "lg"), "mt-8")}>
+                  Crear cuenta de agencia <ArrowRight className="h-4 w-4" />
+                </Link>
+                <p className="mt-3 text-center text-xs text-muted">Da de alta clientes y revisa sus vistas previas antes de contratar.</p>
+              </div>
+              <div className="rounded-2xl border border-line bg-sand/50 p-7 sm:p-8">
+                <p className="font-semibold text-navy-950">Lo que te cuesta cada web</p>
+                <p className="mt-1 text-sm text-muted">Precio del plan repartido entre los clientes que gestionas.</p>
+                <table className="mt-5 w-full text-left text-[15px]">
+                  <caption className="sr-only">Coste mensual por cliente según el número de clientes</caption>
+                  <thead>
+                    <tr className="border-b border-line-strong text-sm text-muted">
+                      <th scope="col" className="py-2 font-medium">Clientes</th>
+                      <th scope="col" className="py-2 text-right font-medium">Por cliente y mes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {[5, 10, 25, 50].map((n) => (
+                      <tr key={n}>
+                        <td className="py-2.5 text-ink">{n} webs</td>
+                        <td className="py-2.5 text-right font-semibold tabular-nums text-navy-950">{formatPrice(Math.round(agency.priceCents / n), agency.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-5 text-sm leading-relaxed text-ink-soft">
+                  Si cobras a cada cliente el mantenimiento de su web, los textos legales y el banner de cookies pueden ir incluidos en ese servicio.
+                </p>
+                <p className="mt-4 text-sm text-muted">
+                  ¿Solo necesitas tu propia web? <Link href="/precios" className="text-link">Planes desde 5,99 €/mes</Link>.
+                </p>
+              </div>
+            </div>
+          )}
         </Container>
       </section>
 
@@ -235,7 +252,7 @@ function ClientsMock() {
     <div aria-hidden className="rounded-2xl border border-line bg-white p-5 shadow-[var(--shadow-lift)]">
       <div className="flex items-center justify-between border-b border-line pb-3">
         <p className="text-sm font-semibold text-navy-950">Tus clientes</p>
-        <p className="text-xs text-muted">Plan Business · ilimitados</p>
+        <p className="text-xs text-muted">Plan Agencia · 12 clientes</p>
       </div>
       <ul className="divide-y divide-line">
         {rows.map((r) => (

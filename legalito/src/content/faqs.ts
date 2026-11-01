@@ -37,7 +37,7 @@ export const DEFAULT_FAQS: Faq[] = [
   },
   {
     question: "¿Puedo gestionar las webs de mis clientes?",
-    answer: "Sí. Las agencias web, gestorías y consultores pueden activar el modo agencia: cada cliente tiene su propio formulario y sus documentos, y el cupo de la suscripción se comparte entre todos. Los documentos no llevan la marca de Legalito.",
+    answer: "Sí, con el plan Agencia (49 €/mes): clientes y documentos ilimitados, un formulario y unos documentos por cliente, y banner de cookies para cada web. Los documentos no llevan la marca de Legalito.",
     category: "suscripcion",
   },
   {

@@ -158,3 +158,28 @@ Objetivo: abrir el canal con más potencial (agencias web, gestorías y consulto
 ## Pendiente para el propietario
 - Revisión jurídica de los textos del banner y de la página de agencias, y valorar una cláusula de encargo de tratamiento en las condiciones para agencias (ver `docs/LAUNCH_CHECKLIST.md`).
 - Aplicar las migraciones 0700 y 0800 en Supabase.
+
+---
+
+# Ronda 6 · Plan Agencia y comprobador gratuito
+
+## Cambios
+| Área | Cambio |
+| --- | --- |
+| **Plan Agencia · 49 €/mes** | Clientes y documentos ilimitados, banner por cliente y marca blanca. La gestión de clientes pasa a ser exclusiva de este plan (columna `products.allows_clients`); Básico, Medium y Business cubren la web propia. La regla se aplica en la aplicación **y en la base de datos** (`record_document_version` rechaza documentos de clientes con otros planes). Migración `0900_agency_plan`. |
+| Compra | Las agencias ven el plan Agencia recomendado y pueden contratarlo sin formulario propio; desde un cliente solo se ofrece este plan. Administración permite marcar qué planes admiten clientes. |
+| Página de agencias | Precio único destacado y tabla de coste por web (49 € entre 5, 10, 25 o 50 clientes). El plan Agencia se muestra aparte en precios para no confundir a los negocios. |
+| **Comprobador gratuito** (`/comprobador`) | Cualquiera analiza una web sin registro: enlaces a aviso legal, privacidad y cookies; NIF y email del titular; derechos y AEPD; referencias a la antigua LOPD; analítica, píxeles y contenidos de terceros; banner de consentimiento; HTTPS; Google Fonts. Resultado con recomendaciones y llamada a crear los documentos. Enlazado en cabecera, portada, guías, pie y sitemap, con datos estructurados. |
+
+## Defectos encontrados y corregidos en esta ronda
+| Gravedad | Defecto | Corrección |
+| --- | --- | --- |
+| Alta (solo entorno de pruebas) | La excepción de pruebas del comprobador permitía acceder a toda la red interna, incluida la dirección de metadatos de la nube | Restringida a loopback; prueba que lo verifica |
+| Media | El comprobador tomaba «Generador de aviso legal» como enlace al aviso legal | Puntuación de candidatos que descarta guías, generadores y modelos |
+
+## Resultado de las pruebas
+| Suite | Resultado |
+| --- | --- |
+| Unitarias + base de datos + flujos (incluye plan Agencia en BD y aplicación, SSRF con DNS manipulado, redirecciones y descargas reales) | **137 / 137** |
+| E2E pública con accesibilidad (incluye el comprobador analizando una web real servida en local) | **91 / 91** |
+| E2E área privada con accesibilidad (agencia con plan Agencia, banner, aislamiento) | **18 / 18** |

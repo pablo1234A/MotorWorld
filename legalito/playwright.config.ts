@@ -40,6 +40,8 @@ export default defineConfig({
               SUPABASE_SERVICE_ROLE_KEY: "e2e-service-role-key-not-real-000000",
               STRIPE_SECRET_KEY: "sk_test_e2e_not_real",
               STRIPE_WEBHOOK_SECRET: "whsec_e2e_not_real",
+              // El comprobador puede analizar el propio servidor local (nunca con APP_ENV=production).
+              CHECKER_ALLOW_PRIVATE: "1",
             },
       },
 });

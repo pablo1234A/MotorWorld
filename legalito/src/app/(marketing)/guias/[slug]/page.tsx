@@ -172,10 +172,13 @@ export default async function GuidePage({ params }: PageProps<"/guias/[slug]">) 
                   <Link href="/registro" className={buttonClass("primary", "md")}>
                     Crear mis documentos <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <Link href={g.relatedLanding.href} className={buttonClass("secondary", "md")}>
-                    {g.relatedLanding.label}
+                  <Link href="/comprobador" className={buttonClass("secondary", "md")}>
+                    Comprobar mi web gratis
                   </Link>
                 </div>
+                <p className="mt-4 text-sm text-muted">
+                  Más información: <Link href={g.relatedLanding.href} className="text-link">{g.relatedLanding.label}</Link>
+                </p>
               </aside>
 
               <section id="preguntas" className="scroll-mt-24">

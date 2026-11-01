@@ -190,6 +190,9 @@ export async function generateDocuments(input: GenerateInput): Promise<Generated
         .single();
       if (error) {
         // El cupo también se comprueba en base de datos (generaciones simultáneas).
+        if (/plan_without_clients/.test(error.message)) {
+          throw new DocumentGenerationError("Para generar los documentos de tus clientes necesitas el plan Agencia.", "not_entitled");
+        }
         if (/quota_exceeded/.test(error.message)) {
           throw new DocumentGenerationError(
             results.length

@@ -51,6 +51,7 @@ export default async function AdminProductsPage() {
                 )}
                 <div className="flex flex-col justify-end gap-3 pb-1">
                   <Checkbox name="includes_updates" defaultChecked={p.includes_updates} label="Incluye nuevas versiones de plantillas" />
+                  {p.kind === "subscription" && <Checkbox name="allows_clients" defaultChecked={p.allows_clients} label="Permite gestionar clientes (plan para agencias)" />}
                   <Checkbox name="active" defaultChecked={p.active} label="Plan activo" />
                 </div>
               </div>

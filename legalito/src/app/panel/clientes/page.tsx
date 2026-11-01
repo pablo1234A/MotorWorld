@@ -57,23 +57,28 @@ export default async function ClientsPage({ searchParams }: PageProps<"/panel/cl
   const active = account.clients.filter((c) => !c.archived_at);
   const archived = account.clients.filter((c) => c.archived_at);
   const stats = active.map(summary);
-  const hasSubscription = ent.plan === "subscription" && ent.subscription && ["active", "trialing"].includes(ent.subscription.status);
+  const hasSubscription = Boolean(ent.subscription && ["active", "trialing"].includes(ent.subscription.status));
+  const hasAgencyPlan = hasSubscription && ent.allowsClients;
 
   return (
     <>
       <PageHeader
         title="Clientes"
-        description="Gestiona los textos legales de las webs de tus clientes. Cada cliente tiene su propio formulario y sus documentos; el cupo de tu plan se comparte entre todos."
+        description="Gestiona los textos legales de las webs de tus clientes. Cada cliente tiene su propio formulario, sus documentos y su banner de cookies."
       />
 
       <div className="mb-6 space-y-3">
         {error && <Alert tone="danger">{error}</Alert>}
         {sp.archivado && <Alert tone="info">Cliente archivado. Sus documentos se conservan y puedes restaurarlo cuando quieras.</Alert>}
         {sp.restaurado && <Alert tone="success">Cliente restaurado.</Alert>}
-        {!hasSubscription && (
-          <Alert tone="warning" title="Necesitas una suscripción para generar documentos de clientes">
-            Puedes dar de alta clientes y completar sus formularios ya. Para generar sus documentos, elige un plan: el Medium (50 documentos al mes) o el Business (ilimitados) son los
-            más adecuados para agencias y gestorías. <Link href="/precios" className="text-link">Ver planes</Link>
+        {!hasAgencyPlan && (
+          <Alert tone="warning" title="Para generar los documentos de tus clientes necesitas el plan Agencia">
+            Puedes dar de alta clientes y completar sus formularios ya. El plan Agencia (49 €/mes) incluye clientes y documentos ilimitados y el banner de cookies de cada web.{" "}
+            {hasSubscription ? (
+              <>Tu plan actual cubre solo tu propia web: cámbialo desde <Link href="/panel/suscripcion" className="text-link">Mi suscripción</Link>.</>
+            ) : (
+              <Link href="/panel/precompra?plan=subscription_agency" className="text-link">Contratar el plan Agencia</Link>
+            )}
           </Alert>
         )}
       </div>
@@ -93,7 +98,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/panel/cl
             <div className="space-y-3 text-sm">
               <p className="font-medium text-ink">Plan {ent.planName ?? "suscripción"}</p>
               <QuotaMeter quota={ent.quota} />
-              <p className="text-muted">Cada documento generado cuenta 1 (un cliente con sus tres textos son 3).</p>
+              <p className="text-muted">{ent.quota.limit === null ? "Sin límite de documentos." : "Cada documento generado cuenta 1 (un cliente con sus tres textos son 3)."}</p>
             </div>
           ) : (
             <p className="text-sm text-muted">Sin suscripción activa.</p>
@@ -241,12 +246,12 @@ function AgencyIntro({ error }: { error?: string }) {
             <p className="mt-3 text-xs text-muted">Puedes volver a una cuenta de negocio mientras no tengas clientes activos.</p>
           </div>
           <div className="rounded-xl border border-line bg-sand/50 p-5 text-sm text-ink-soft">
-            <p className="font-semibold text-ink">¿Qué plan necesito?</p>
-            <p className="mt-2">Cada cliente suele necesitar 3 documentos (aviso legal, privacidad y cookies).</p>
+            <p className="font-semibold text-ink">Plan Agencia · 49 €/mes</p>
             <ul className="mt-3 space-y-1.5">
-              <li><strong className="font-medium text-ink">Básico:</strong> hasta 20 documentos/mes · unos 6 clientes al mes.</li>
-              <li><strong className="font-medium text-ink">Medium:</strong> hasta 50 documentos/mes · unos 16 clientes al mes.</li>
-              <li><strong className="font-medium text-ink">Business:</strong> documentos ilimitados.</li>
+              <li>Clientes y documentos ilimitados.</li>
+              <li>Banner de cookies para cada cliente.</li>
+              <li>Documentos y banner sin la marca Legalito.</li>
+              <li>Con 10 clientes, unos 4,90 € por web al mes.</li>
             </ul>
             <LinkButton href="/agencias-y-gestorias" variant="secondary" size="sm" className="mt-4">
               Cómo funciona para agencias

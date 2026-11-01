@@ -26,6 +26,11 @@
 - Columnas de jerarquía (`parent_organization_id`, `owner_id`) no editables por el usuario; anidar agencias, mover clientes o archivar la cuenta principal lo impide la base de datos.
 - El banner de cookies escapa la configuración incrustada (`<`, U+2028/2029), valida color y URL de la política y no incluye la marca Legalito.
 
+### Comprobador gratuito (ronda 6)
+- Descarga páginas de terceros con protección SSRF: solo http/https y puertos 80/443, sin credenciales en la URL, nombres internos rechazados y **toda IP resuelta comprobada en el `lookup` de la propia conexión** (evita el DNS rebinding). Redirecciones manuales (máx. 4) validadas igual; límite de 1,5 MB, 8 s y solo HTML.
+- Excepción de pruebas `CHECKER_ALLOW_PRIVATE=1`: permite **solo loopback** y se ignora con `APP_ENV=production`. Al probarla se detectó que la primera versión abría toda la red interna (incluida la dirección de metadatos 169.254.169.254) y se restringió.
+- Límite de 15 análisis por hora e IP seudonimizada; no se guardan direcciones ni contenido.
+
 ## Pendiente / recomendado antes de producción
 - Revisión de seguridad externa (pentest básico) y de la configuración de Supabase (Security Advisor).
 - Activar MFA para las cuentas de administración de Supabase, Stripe, Vercel, Resend y GitHub.

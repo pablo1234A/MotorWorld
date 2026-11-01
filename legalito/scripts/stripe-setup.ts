@@ -22,6 +22,7 @@ const PLANS = [
   { code: "subscription_basic", name: "Legalito · Plan Básico", amount: 599, recurring: { interval: "month" as const } },
   { code: "subscription_medium", name: "Legalito · Plan Medium", amount: 999, recurring: { interval: "month" as const } },
   { code: "subscription_business", name: "Legalito · Plan Business", amount: 1999, recurring: { interval: "month" as const } },
+  { code: "subscription_agency", name: "Legalito · Plan Agencia", amount: 4900, recurring: { interval: "month" as const } },
 ];
 
 async function main() {

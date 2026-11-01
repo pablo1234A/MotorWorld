@@ -3,9 +3,10 @@ import { canDownloadVersion, computeEntitlements, formatPrice } from "@/lib/bill
 import type { ProductRow, PurchaseRow, SubscriptionRow } from "@/lib/db/types";
 
 const products: ProductRow[] = [
-  { id: "p1", code: "one_time_pack", name: "Pago único", description: null, kind: "one_time", price_cents: 3900, currency: "eur", billing_interval: null, stripe_price_id: "price_1", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: 3, includes_updates: false, documents_per_period: null, features: [], active: true, sort_order: 1 },
-  { id: "p2", code: "subscription_basic", name: "Básico", description: null, kind: "subscription", price_cents: 599, currency: "eur", billing_interval: "month", stripe_price_id: "price_2", included_document_types: ["aviso_legal", "privacidad"], generations_limit: null, includes_updates: true, documents_per_period: 20, features: [], active: true, sort_order: 2 },
-  { id: "p3", code: "subscription_business", name: "Business", description: null, kind: "subscription", price_cents: 1999, currency: "eur", billing_interval: "month", stripe_price_id: "price_3", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: null, includes_updates: true, documents_per_period: null, features: [], active: true, sort_order: 4 },
+  { id: "p1", code: "one_time_pack", name: "Pago único", description: null, kind: "one_time", price_cents: 3900, currency: "eur", billing_interval: null, stripe_price_id: "price_1", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: 3, includes_updates: false, documents_per_period: null, allows_clients: false, features: [], active: true, sort_order: 1 },
+  { id: "p2", code: "subscription_basic", name: "Básico", description: null, kind: "subscription", price_cents: 599, currency: "eur", billing_interval: "month", stripe_price_id: "price_2", included_document_types: ["aviso_legal", "privacidad"], generations_limit: null, includes_updates: true, documents_per_period: 20, allows_clients: false, features: [], active: true, sort_order: 2 },
+  { id: "p3", code: "subscription_business", name: "Business", description: null, kind: "subscription", price_cents: 1999, currency: "eur", billing_interval: "month", stripe_price_id: "price_3", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: null, includes_updates: true, documents_per_period: null, allows_clients: false, features: [], active: true, sort_order: 4 },
+  { id: "p4", code: "subscription_agency", name: "Agencia", description: null, kind: "subscription", price_cents: 4900, currency: "eur", billing_interval: "month", stripe_price_id: "price_4", included_document_types: ["aviso_legal", "privacidad", "cookies"], generations_limit: null, includes_updates: true, documents_per_period: null, allows_clients: true, features: [], active: true, sort_order: 5 },
 ];
 
 const sub = (status: SubscriptionRow["status"], created = "2026-10-01"): SubscriptionRow => ({
@@ -23,6 +24,15 @@ describe("Permisos según el estado de pago", () => {
     expect(e.plan).toBe("none");
     expect(e.canGenerate).toBe(false);
     expect(e.source).toBeNull();
+  });
+
+  it("solo el plan Agencia permite gestionar clientes", () => {
+    expect(computeEntitlements({ subscriptions: [sub("active")], purchases: [], products }).allowsClients).toBe(false);
+    const agency = { ...sub("active"), product_id: "p4" };
+    const e = computeEntitlements({ subscriptions: [agency], purchases: [], products });
+    expect(e.allowsClients).toBe(true);
+    expect(e.quota).toMatchObject({ limit: null });
+    expect(computeEntitlements({ subscriptions: [{ ...agency, status: "past_due" }], purchases: [], products }).allowsClients).toBe(false);
   });
 
   it("una suscripción activa permite generar los documentos de su plan", () => {

@@ -161,6 +161,7 @@ const productSchema = z.object({
   generations_limit: z.string().regex(/^\d*$/),
   documents_per_period: z.string().regex(/^\d*$/).optional(),
   includes_updates: z.string().optional(),
+  allows_clients: z.string().optional(),
   features: z.string().max(3000),
   active: z.string().optional(),
 });
@@ -178,6 +179,7 @@ export async function updateProduct(productId: string, _prev: FormState, formDat
     generations_limit: d.generations_limit ? Number(d.generations_limit) : null,
     documents_per_period: d.documents_per_period ? Number(d.documents_per_period) : null,
     includes_updates: d.includes_updates === "on",
+    allows_clients: d.allows_clients === "on",
     features: d.features.split("\n").map((f) => f.trim()).filter(Boolean),
     active: d.active === "on",
   };

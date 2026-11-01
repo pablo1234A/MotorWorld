@@ -19,7 +19,8 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
   const { org, account } = await requireOrganization();
   const isClient = org.id !== account.root.id;
   const [form, ent, sp] = await Promise.all([getFormStatus(), getMyEntitlements(), searchParams]);
-  if (!form.completed) redirect("/panel/generador");
+  // Una agencia puede contratar su plan sin rellenar un formulario propio (trabaja para sus clientes).
+  if (!form.completed && !account.isAgency) redirect("/panel/generador");
   // Un suscriptor activo no necesita comprar; quien tiene un pago único sí puede pasarse a la suscripción.
   if (ent.subscription && ["active", "trialing"].includes(ent.subscription.status)) redirect("/panel/suscripcion");
   const hasPurchase = ent.activePurchases.length > 0;
@@ -28,7 +29,11 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
   const all = await listActiveProducts(db);
   // Mismo orden que en la web pública: suscripciones primero y el pago único como alternativa.
   // Los clientes de una agencia se generan con la suscripción de la agencia: no se ofrece el pago único.
-  const products = [...all.filter((p) => p.kind === "subscription"), ...(isClient ? [] : all.filter((p) => p.kind === "one_time"))];
+  // Agencias: el plan Agencia primero; desde un cliente solo los planes que permiten clientes.
+  const subs = all.filter((p) => p.kind === "subscription" && (!isClient || p.allows_clients));
+  const ordered = account.isAgency ? [...subs.filter((p) => p.allows_clients), ...subs.filter((p) => !p.allows_clients)] : subs.filter((p) => !p.allows_clients);
+  const products = [...ordered, ...(isClient || !form.completed ? [] : all.filter((p) => p.kind === "one_time"))];
+  const recommendedCode = account.isAgency ? products.find((p) => p.allows_clients)?.code : "subscription_medium";
   const plans: CheckoutPlan[] = await Promise.all(
     products.map(async (p) => ({
       code: p.code,
@@ -37,7 +42,7 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
       period: p.kind === "subscription" ? (p.billing_interval === "year" ? "/ año" : "/ mes") : "pago único",
       description: p.description ?? "",
       features: p.features.filter((f) => !/^sin /i.test(f)).slice(0, 4),
-      recommended: p.code === "subscription_medium",
+      recommended: p.code === recommendedCode,
       available: Boolean(p.stripe_price_id) && (await templatesAvailable(db, p.included_document_types)).ok,
     })),
   );
@@ -50,7 +55,7 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
       <div className="mb-6 space-y-3">
         {isClient && (
           <Alert tone="info" title="Suscripción de tu agencia">
-            La suscripción se contrata en tu cuenta principal y su cupo se comparte entre todos tus clientes. Al activarla generaremos los documentos de este cliente.
+            El plan Agencia se contrata en tu cuenta principal y sirve para todos tus clientes. Al activarlo generaremos los documentos de este cliente.
           </Alert>
         )}
         {hasPurchase && (
@@ -79,7 +84,7 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
           </Alert>
         )}
       </div>
-      <CheckoutForm plans={plans} defaultPlan={typeof sp.plan === "string" ? sp.plan : "subscription_medium"} />
+      <CheckoutForm plans={plans} defaultPlan={typeof sp.plan === "string" && plans.some((p) => p.code === sp.plan) ? sp.plan : recommendedCode} />
       <p className="mt-8 text-xs leading-relaxed text-subtle">{DISCLAIMER}</p>
     </>
   );

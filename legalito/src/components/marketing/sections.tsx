@@ -85,7 +85,8 @@ const quotaLabel = (p: PublicPlan) =>
 
 /** Planes: las suscripciones en primer plano (Medium recomendado) y el pago único como alternativa. */
 export function PlanCards({ plans, ctaHref = "/registro" }: { plans: PublicPlan[]; ctaHref?: string }) {
-  const subs = plans.filter((p) => p.kind === "subscription");
+  // El plan Agencia se presenta aparte (página para agencias y bloque en precios).
+  const subs = plans.filter((p) => p.kind === "subscription" && !p.allowsClients);
   const oneTime = plans.find((p) => p.kind === "one_time");
   const featuredCode = subs.length >= 3 ? subs[1].code : subs[0]?.code;
   return (
@@ -146,7 +147,7 @@ export function PlanCards({ plans, ctaHref = "/registro" }: { plans: PublicPlan[
 }
 
 export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
-  const ordered = [...plans.filter((p) => p.kind === "subscription"), ...plans.filter((p) => p.kind === "one_time")];
+  const ordered = [...plans.filter((p) => p.kind === "subscription" && !p.allowsClients), ...plans.filter((p) => p.kind === "one_time")];
   if (ordered.length < 2) return null;
   const rows: [string, (p: PublicPlan) => React.ReactNode][] = [
     ["Precio", (p) => `${formatPrice(p.priceCents, p.currency)}${p.kind === "subscription" ? " / mes" : ""}`],
@@ -156,7 +157,6 @@ export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
     ["PDF y código HTML", () => true],
     ["Regenerar un solo documento", (p) => p.kind === "subscription"],
     ["Banner de consentimiento de cookies", (p) => p.kind === "subscription"],
-    ["Gestión de varios clientes (agencias)", (p) => p.kind === "subscription"],
     ["Nuevas versiones revisadas", (p) => p.includesUpdates],
     ["Avisos de cambios relevantes", (p) => p.includesUpdates],
   ];

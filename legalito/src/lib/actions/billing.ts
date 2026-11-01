@@ -41,12 +41,13 @@ export async function startCheckout(_prev: FormState, formData: FormData): Promi
   const { data: productRow } = await db.from("products").select("*").eq("code", parsed.data.product).eq("active", true).maybeSingle();
   const product = productRow as ProductRow | null;
   if (!product) return { error: "El plan seleccionado no está disponible." };
+  if (active.id !== org.id && !product.allows_clients) {
+    return { error: "Para generar los documentos de tus clientes necesitas el plan Agencia." };
+  }
   if (!product.stripe_price_id) return { error: "Este plan todavía no tiene un precio de Stripe configurado." };
 
-  if (product.kind === "one_time" && active.id !== org.id) {
-    return { error: "El pago único es para un solo negocio. Para generar los documentos de tus clientes elige una suscripción." };
-  }
-  if (!(await latestCompletedResponse(active.id))) return { error: "Completa el formulario antes de pagar." };
+  // El plan Agencia se puede contratar sin formulario propio; el resto, tras completar el formulario.
+  if (!(product.allows_clients && account.isAgency) && !(await latestCompletedResponse(active.id))) return { error: "Completa el formulario antes de pagar." };
 
   // No se vende nada cuyas plantillas no estén disponibles (en producción: aprobadas jurídicamente).
   const availability = await templatesAvailable(db, product.included_document_types);

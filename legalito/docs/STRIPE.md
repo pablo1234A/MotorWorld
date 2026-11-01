@@ -6,7 +6,7 @@
 ```bash
 STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-setup.ts
 ```
-Crea «Pago único» (39 €) y los planes «Básico» (5,99 €/mes), «Medium» (9,99 €/mes) y «Business» (19,99 €/mes) con IVA incluido (`tax_behavior: inclusive`) y muestra los `price_…`. Pégalos en **/admin/productos**: al guardar se verifica el precio en Stripe y se sincroniza el importe mostrado.
+Crea «Pago único» (39 €) y los planes «Básico» (5,99 €/mes), «Medium» (9,99 €/mes) y «Business» (19,99 €/mes), además del plan «Agencia» (49 €/mes, clientes ilimitados), con IVA incluido (`tax_behavior: inclusive`) y muestra los `price_…`. Pégalos en **/admin/productos**: al guardar se verifica el precio en Stripe y se sincroniza el importe mostrado.
 
 ## 2. Webhook
 Developers → Webhooks → Add endpoint: `https://tudominio.es/api/stripe/webhook`
@@ -30,7 +30,7 @@ Copia el *signing secret* en `STRIPE_WEBHOOK_SECRET`.
 En local: `stripe listen --forward-to localhost:3000/api/stripe/webhook` y usa el `whsec_` que muestra.
 
 ## 3. Customer Portal
-Settings → Billing → Customer portal: activa actualizar método de pago, ver facturas, **cancelar al final del periodo** y **cambio de plan** entre los productos Básico, Medium y Business (con prorrateo). Legalito sincroniza el plan y su cupo mediante el webhook `customer.subscription.updated`. Indica las URLs de condiciones y privacidad.
+Settings → Billing → Customer portal: activa actualizar método de pago, ver facturas, **cancelar al final del periodo** y **cambio de plan** entre los productos Básico, Medium, Business y Agencia (con prorrateo; así una agencia que empezó con otro plan puede pasar al de Agencia). Legalito sincroniza el plan y su cupo mediante el webhook `customer.subscription.updated`. Indica las URLs de condiciones y privacidad.
 
 ## 4. Facturación y reintentos
 - Settings → Billing → Subscriptions and emails: activa **Smart Retries** y la acción final tras impago (cancelar o marcar como impagada).

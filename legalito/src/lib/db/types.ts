@@ -63,6 +63,8 @@ export interface ProductRow {
   includes_updates: boolean;
   /** Suscripciones: documentos por periodo de facturación (null = ilimitados). */
   documents_per_period: number | null;
+  /** Permite generar documentos de clientes de una agencia (plan Agencia). */
+  allows_clients: boolean;
   features: string[];
   active: boolean;
   sort_order: number;

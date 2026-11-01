@@ -19,6 +19,8 @@ export interface PublicPlan {
   generationsLimit: number | null;
   /** Suscripciones: documentos al mes (null = ilimitados). */
   documentsPerPeriod: number | null;
+  /** Plan para agencias y gestorías (gestión de clientes). */
+  allowsClients: boolean;
   includesUpdates: boolean;
 }
 
@@ -35,6 +37,7 @@ export const DEFAULT_PLANS: PublicPlan[] = [
     interval: null,
     generationsLimit: 3,
     documentsPerPeriod: null,
+    allowsClients: false,
     includesUpdates: false,
     features: [
       "Aviso legal, política de privacidad y política de cookies",
@@ -54,6 +57,7 @@ export const DEFAULT_PLANS: PublicPlan[] = [
     interval: "month",
     generationsLimit: null,
     documentsPerPeriod: 20,
+    allowsClients: false,
     includesUpdates: true,
     features: ["Hasta 20 documentos al mes", ...SUB_FEATURES],
   },
@@ -67,6 +71,7 @@ export const DEFAULT_PLANS: PublicPlan[] = [
     interval: "month",
     generationsLimit: null,
     documentsPerPeriod: 50,
+    allowsClients: false,
     includesUpdates: true,
     features: ["Hasta 50 documentos al mes", ...SUB_FEATURES],
   },
@@ -80,8 +85,31 @@ export const DEFAULT_PLANS: PublicPlan[] = [
     interval: "month",
     generationsLimit: null,
     documentsPerPeriod: null,
+    allowsClients: false,
     includesUpdates: true,
     features: ["Documentos ilimitados", ...SUB_FEATURES],
+  },
+  {
+    code: "subscription_agency",
+    name: "Agencia",
+    description: "Para agencias web, gestorías y consultores que gestionan las webs de sus clientes.",
+    kind: "subscription",
+    priceCents: 4900,
+    currency: "eur",
+    interval: "month",
+    generationsLimit: null,
+    documentsPerPeriod: null,
+    allowsClients: true,
+    includesUpdates: true,
+    features: [
+      "Clientes ilimitados",
+      "Documentos ilimitados",
+      "Un formulario y unos documentos por cliente",
+      "Banner de cookies para cada cliente",
+      "Documentos y banner sin la marca Legalito",
+      "Nuevas versiones revisadas de las plantillas",
+      "Cancela cuando quieras",
+    ],
   },
 ];
 
@@ -127,6 +155,7 @@ export async function getPublicPlans(): Promise<PublicPlan[]> {
       features: Array.isArray(p.features) ? p.features : [],
       generationsLimit: p.generations_limit,
       documentsPerPeriod: p.documents_per_period ?? null,
+      allowsClients: Boolean(p.allows_clients),
       includesUpdates: p.includes_updates,
     }));
   } catch {

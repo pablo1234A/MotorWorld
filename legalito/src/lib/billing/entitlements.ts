@@ -35,6 +35,8 @@ export interface Entitlements {
   planName: string | null;
   /** Cupo del periodo de la suscripción activa (null si no aplica). */
   quota: { limit: number | null; used: number; remaining: number | null; periodEnd: string | null } | null;
+  /** El plan activo permite gestionar clientes (plan Agencia). */
+  allowsClients: boolean;
 }
 
 const ACTIVE: SubscriptionStatus[] = ["active", "trialing"];
@@ -60,6 +62,9 @@ export function computeEntitlements(input: {
   let quotaReason: string | null = null;
   let quotaExhausted: Entitlements["quota"] = null;
   const subProductName = subscription?.product_id ? (productById.get(subscription.product_id)?.name ?? null) : null;
+  const subAllowsClients = Boolean(
+    subscription && ACTIVE.includes(subscription.status) && subscription.product_id && productById.get(subscription.product_id)?.allows_clients,
+  );
   if (subscription && ACTIVE.includes(subscription.status)) {
     const product = subscription.product_id ? productById.get(subscription.product_id) : undefined;
     const limit = product?.documents_per_period ?? null;
@@ -85,6 +90,7 @@ export function computeEntitlements(input: {
         paymentIssue: false,
         planName: product?.name ?? null,
         quota: { limit, used, remaining, periodEnd: subscription.current_period_end },
+        allowsClients: product?.allows_clients ?? false,
       };
     }
     quotaExhausted = { limit, used, remaining: 0, periodEnd: subscription.current_period_end };
@@ -111,6 +117,7 @@ export function computeEntitlements(input: {
       paymentIssue,
       planName: subProductName,
       quota: quotaExhausted,
+      allowsClients: subAllowsClients,
     };
   }
 
@@ -129,6 +136,7 @@ export function computeEntitlements(input: {
     paymentIssue,
     planName: subProductName,
     quota: quotaExhausted,
+    allowsClients: subAllowsClients,
   };
 }
 

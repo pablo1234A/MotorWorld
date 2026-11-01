@@ -82,6 +82,12 @@ export default async function HomePage() {
                 Ver cómo funciona
               </Link>
             </div>
+            <p className="mt-4 text-sm text-muted">
+              ¿Ya tienes textos legales?{" "}
+              <Link href="/comprobador" className="text-link font-medium">
+                Comprueba tu web gratis
+              </Link>
+            </p>
             <ul className="mt-10 grid max-w-[34rem] gap-4 border-t border-line pt-6 sm:grid-cols-3">
               {[
                 { icon: ListChecks, t: "Solo lo que te aplica", d: "Preguntas según tu actividad" },

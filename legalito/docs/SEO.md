@@ -36,6 +36,12 @@ Cada búsqueda tiene **una sola página** responsable (evita que dos páginas pr
 | textos legales tienda online | Informativa | `/guias/textos-legales-tienda-online` |
 | RGPD autónomos | Informativa | `/guias/rgpd-para-autonomos` |
 | precio aviso legal / cuánto cuesta | Transaccional | `/precios` |
+| comprobar aviso legal / revisar cookies de mi web | Herramienta | `/comprobador` |
+| aviso legal para agencias / textos legales clientes | Comercial (B2B) | `/agencias-y-gestorias` |
+
+## 2.b Comprobador gratuito (captación)
+
+`/comprobador` analiza cualquier web sin registro (enlaces legales, NIF y email en el aviso legal, derechos y AEPD en privacidad, rastreadores, banner, HTTPS). Es la pieza con más potencial de enlaces y difusión: compártelo en foros de emprendedores, grupos de WordPress y asociaciones, y ofrécelo a agencias para revisar las webs de sus clientes. No guarda las direcciones analizadas.
 
 ## 3. Pasos del propietario al lanzar (imprescindibles)
 

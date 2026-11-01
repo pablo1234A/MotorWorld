@@ -495,6 +495,7 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
       agency = await createAuthUser(state.db!.pool, "agencia@example.com", { full_name: "Agencia", account_type: "agency" });
       await q("update public.organizations set stripe_customer_id = 'cus_agency' where id = $1", [agency.orgId]);
       await q("update public.products set stripe_price_id = 'price_med' where code = 'subscription_medium'");
+      await q("update public.products set stripe_price_id = 'price_agency' where code = 'subscription_agency'");
     });
 
     beforeEach(() => {
@@ -529,25 +530,36 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
       const { createAdminClient } = await import("@/lib/supabase/server");
       const before = await loadEntitlements(createAdminClient(), clientId);
       expect(before.canGenerate).toBe(false);
-      expect(before.blockedReason).toMatch(/cuenta de agencia/);
+      expect(before.blockedReason).toMatch(/plan Agencia/);
 
+      // Un plan para la web propia (Medium) no sirve para clientes.
       const sub = await q(
         `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, status, current_period_start)
          select $1, id, 'sub_agency', 'cus_agency', 'active', now() - interval '1 day' from public.products where code = 'subscription_medium' returning id`,
         [agency.orgId],
       );
+      const medium = await loadEntitlements(createAdminClient(), clientId);
+      expect(medium.canGenerate).toBe(false);
+      expect(medium.blockedReason).toMatch(/plan Agencia/);
+      expect((await forms.generateNow({})).error).toMatch(/plan Agencia/);
+
+      // Con el plan Agencia (cambio de plan) sí, sin límite de documentos.
+      await q("update public.subscriptions set product_id = (select id from public.products where code = 'subscription_agency') where id = $1", [sub.rows[0].id]);
       expect(await redirectOf(forms.generateNow({}))).toBe("/panel/documentos?generado=1");
       const v = await q("select organization_id, subscription_id from public.document_versions where organization_id = $1", [clientId]);
       expect(v.rows).toHaveLength(3);
       expect(v.rows.every((r) => r.subscription_id === sub.rows[0].id)).toBe(true);
       const ent = await loadEntitlements(createAdminClient(), agency.orgId);
-      expect(ent.quota).toMatchObject({ limit: 50, used: 3, remaining: 47 });
+      expect(ent.quota).toMatchObject({ limit: null, used: 3, remaining: null });
+      expect(ent.allowsClients).toBe(true);
     });
 
     it("el pago único no se ofrece para clientes y la facturación usa la cuenta de la agencia", async () => {
       const billing = await import("@/lib/actions/billing");
-      const r = await billing.startCheckout({}, fd({ product: "one_time_pack", terms: "on", immediate: "on" }));
-      expect(r.error).toMatch(/pago único es para un solo negocio/);
+      for (const product of ["one_time_pack", "subscription_business"]) {
+        const r = await billing.startCheckout({}, fd({ product, terms: "on", immediate: "on" }));
+        expect(r.error).toMatch(/plan Agencia/);
+      }
     });
 
     it("no se puede cambiar a una cuenta ajena ni a un cliente archivado", async () => {
@@ -595,7 +607,7 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
         ended_at: null,
         trial_end: null,
         latest_invoice: null,
-        items: { data: [{ current_period_start: Math.floor(Date.now() / 1000) - 3600, current_period_end: 1901440000, price: { id: "price_med", unit_amount: 999, currency: "eur", recurring: { interval: "month" } } }] },
+        items: { data: [{ current_period_start: Math.floor(Date.now() / 1000) - 3600, current_period_end: 1901440000, price: { id: "price_agency", unit_amount: 4900, currency: "eur", recurring: { interval: "month" } } }] },
       });
       const { syncSubscription } = await import("@/lib/billing/fulfillment");
       // Un identificador ajeno en los metadatos se ignora (la agencia no tiene formulario propio: no se genera nada).

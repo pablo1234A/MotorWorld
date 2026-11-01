@@ -16,7 +16,8 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 ## Bloqueantes técnicos / configuración
 - [ ] Proyectos Supabase staging y producción (UE), migraciones aplicadas, plantillas de email, SMTP con Resend, primer admin.
 - [ ] Stripe: productos y precios (pago único, Básico, Medium y Business), webhook de producción, portal **con cambio de plan entre los tres planes**, Smart Retries, email de próxima renovación.
-- [ ] Aplicar las migraciones `0700_agency_clients` y `0800_cookie_banner_feature` (en Supabase: `supabase db push`).
+- [ ] Aplicar las migraciones `0700_agency_clients`, `0800_cookie_banner_feature` y `0900_agency_plan` (en Supabase: `supabase db push`).
+- [ ] Crear el precio del plan **Agencia (49 €/mes)** en Stripe, asignarlo en /admin/productos e incluirlo en el portal de cliente para cambiar de plan.
 - [ ] Confirmar los cupos de documentos de cada plan (Básico 20, Medium 50, Business ilimitados) en /admin/productos.
 - [ ] Resend: dominio verificado (SPF/DKIM/DMARC).
 - [ ] Vercel Pro con dominio, variables de producción y `APP_ENV=production`.

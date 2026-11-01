@@ -27,7 +27,7 @@ export const mainNav = [
   { href: "/precios", label: "Precios" },
   { href: "/agencias-y-gestorias", label: "Agencias" },
   { href: "/guias", label: "Guías" },
-  { href: "/preguntas-frecuentes", label: "Preguntas frecuentes" },
+  { href: "/comprobador", label: "Comprobador gratis" },
 ];
 
 /** Enlaces de producto del pie (incluye los que no caben en la cabecera). */
@@ -35,6 +35,7 @@ export const footerNav = [
   { href: "/como-funciona", label: "Cómo funciona" },
   { href: "/precios", label: "Precios" },
   { href: "/agencias-y-gestorias", label: "Agencias y gestorías" },
+  { href: "/comprobador", label: "Comprobador gratuito" },
   { href: "/guias", label: "Guías" },
   { href: "/preguntas-frecuentes", label: "Preguntas frecuentes" },
   { href: "/contacto", label: "Contacto" },

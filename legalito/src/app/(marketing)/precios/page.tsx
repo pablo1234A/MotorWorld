@@ -6,6 +6,7 @@ import { DISCLAIMER } from "@/config/site";
 import Link from "next/link";
 import { Building2 } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
+import { formatPrice } from "@/lib/billing/entitlements";
 
 export const metadata: Metadata = {
   title: "Precios",
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 export default async function PricingPage() {
   const [plans, faqs] = await Promise.all([getPublicPlans(), getPublicFaqs()]);
   const billingFaqs = faqs.filter((f) => ["pagos", "suscripcion"].includes(f.category));
+  const agency = plans.find((p) => p.allowsClients);
   return (
     <section className="pt-16 pb-24">
       <Container>
@@ -29,14 +31,17 @@ export default async function PricingPage() {
                 <Building2 className="h-5 w-5" aria-hidden />
               </span>
               <div>
-                <h2 className="text-lg font-semibold">¿Agencia web o gestoría?</h2>
+                <h2 className="text-lg font-semibold">
+                  ¿Agencia web o gestoría? Plan {agency?.name ?? "Agencia"}
+                  {agency && <span className="ml-1.5 font-normal text-muted">· {formatPrice(agency.priceCents, agency.currency)} / mes</span>}
+                </h2>
                 <p className="mt-1 max-w-xl text-[15px] text-muted">
-                  Gestiona los textos legales de todos tus clientes con una sola suscripción. Cada cliente tiene su propio formulario y sus documentos, sin la marca de Legalito.
+                  Clientes y documentos ilimitados con una sola suscripción. Cada cliente tiene su propio formulario, sus documentos y su banner de cookies, sin la marca de Legalito.
                 </p>
               </div>
             </div>
             <Link href="/agencias-y-gestorias" className={buttonClass("secondary", "md", "shrink-0")}>
-              Ver cómo funciona
+              Ver el plan Agencia
             </Link>
           </div>
           <div>

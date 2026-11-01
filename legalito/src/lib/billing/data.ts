@@ -30,8 +30,17 @@ export async function loadEntitlements(db: SupabaseClient, organizationId: strin
     products: (products.data ?? []) as ProductRow[],
     usage,
   });
+  if (isClient && ent.subscription && ["active", "trialing"].includes(ent.subscription.status) && !ent.allowsClients) {
+    // Básico, Medium y Business cubren la web propia: los clientes exigen el plan Agencia.
+    return {
+      ...ent,
+      canGenerate: false,
+      source: null,
+      blockedReason: "Para generar los documentos de tus clientes necesitas el plan Agencia. Tu plan actual cubre solo tu propia web.",
+    };
+  }
   if (isClient && !ent.canGenerate && !ent.quota && !ent.paymentIssue) {
-    ent.blockedReason = "Para generar los documentos de tus clientes necesitas una suscripción activa en tu cuenta de agencia.";
+    ent.blockedReason = "Para generar los documentos de tus clientes necesitas el plan Agencia en tu cuenta principal.";
   }
   return ent;
 }
