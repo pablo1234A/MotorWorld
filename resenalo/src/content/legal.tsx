@@ -1,7 +1,8 @@
+import { fmtNum } from "@/lib/format";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { legalInfo } from "@/config/legal";
-import { PLANS } from "@/config/plans";
+import { PLANS, TRIAL_DAYS, TRIAL_EMAIL_CAP, TRIAL_SMS_CAP } from "@/config/plans";
 import { formatEur, vatBreakdown } from "@/lib/money";
 
 /** Marca visible para datos que el titular aún debe completar. Nunca se inventan. */
@@ -68,6 +69,7 @@ const pages: Record<string, () => ReactNode> = {
             <tr><td>Datos del negocio y de facturación, NIF</td><td>Prestación del servicio, facturación y obligaciones fiscales</td><td>Contrato (6.1.b) y obligación legal (6.1.c)</td></tr>
             <tr><td>Datos de pago</td><td>Cobro de la suscripción (los procesa Stripe; no almacenamos tarjetas)</td><td>Contrato (6.1.b)</td></tr>
             <tr><td>Dirección de la cuenta de correo conectada y tokens OAuth cifrados</td><td>Enviar los correos en nombre del negocio</td><td>Contrato (6.1.b)</td></tr>
+            <tr><td>Ficha de Google Business Profile conectada (tokens cifrados) y reseñas públicas de la ficha</td><td>Mostrar las reseñas y la valoración en el panel, permitir responderlas y estimar qué reseñas siguen a una solicitud</td><td>Contrato (6.1.b)</td></tr>
             <tr><td>IP, navegador, registros de actividad y seguridad</td><td>Seguridad, prevención de fraude y abusos, auditoría</td><td>Interés legítimo (6.1.f)</td></tr>
             <tr><td>Datos de solicitudes de derechos</td><td>Atender el ejercicio de derechos</td><td>Obligación legal (6.1.c)</td></tr>
           </tbody>
@@ -81,13 +83,14 @@ const pages: Record<string, () => ReactNode> = {
         <h2>5. Destinatarios y encargados</h2>
         <ul>
           <li>Stripe Payments Europe, Ltd. (pagos y facturación).</li>
-          <li>Google LLC / Microsoft Corporation, únicamente a través de la cuenta de correo que el propio usuario conecta (API de Gmail / Microsoft Graph).</li>
+          <li>Google LLC / Microsoft Corporation, únicamente a través de la cuenta de correo y la ficha de empresa que el propio usuario conecta (API de Gmail, Microsoft Graph y Google Business Profile).</li>
+          <li>Twilio Inc. (envío de SMS, solo si el negocio usa automatizaciones por SMS).</li>
           <li>Proveedor de alojamiento: <P v={null} label="proveedor de hosting y ubicación de los servidores" />.</li>
           <li>Proveedor de correo transaccional: <P v={null} label="proveedor SMTP (p. ej. Amazon SES, Postmark)" />.</li>
         </ul>
         <p>Algunas de estas entidades pueden realizar transferencias internacionales, amparadas en el Marco de Privacidad de Datos UE‑EE. UU. o en cláusulas contractuales tipo de la Comisión Europea. <P v={null} label="verificar y documentar las garantías de cada proveedor" /></p>
         <h2>6. Uso de datos de Google</h2>
-        <p>El uso que hace Reseñalo de la información recibida de las API de Google se ajusta a la <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener noreferrer" target="_blank">Política de datos de usuario de los servicios de API de Google</a>, incluidos los requisitos de uso limitado. Solo solicitamos el permiso de envío (<code>gmail.send</code>) y la dirección de correo; no leemos tu bandeja de entrada.</p>
+        <p>El uso que hace Reseñalo de la información recibida de las API de Google se ajusta a la <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener noreferrer" target="_blank">Política de datos de usuario de los servicios de API de Google</a>, incluidos los requisitos de uso limitado. Para el correo solo solicitamos el permiso de envío (<code>gmail.send</code>) y la dirección de correo; no leemos tu bandeja de entrada. Si conectas tu ficha de empresa, solicitamos <code>business.manage</code> únicamente para leer las reseñas de la ficha elegida y publicar las respuestas que escribas.</p>
         <h2>7. Derechos</h2>
         <p>Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad desde tu panel (exportar o eliminar la cuenta) o mediante el <Link href="/legal/derechos">formulario de derechos</Link>. También puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).</p>
         <h2>8. Seguridad</h2>
@@ -121,7 +124,7 @@ const pages: Record<string, () => ReactNode> = {
       <h2>2. Descripción del servicio</h2>
       <p>Reseñalo permite conectar una cuenta de correo mediante OAuth, configurar plantillas, registrar clientes (manualmente, por CSV o por API/webhook) y enviar automáticamente solicitudes de reseña. Los correos se envían desde la cuenta del cliente, sujetos a los límites y políticas de su proveedor (Google o Microsoft).</p>
       <h2>3. Planes, límites y precio</h2>
-      <p>Cada plan incluye un número máximo de correos por periodo de facturación (Starter 30, Pro 70, Business 200). Al alcanzarlo, no se envían más correos hasta la renovación o un cambio de plan. Precios e impuestos en <Link href="/legal/precios-e-impuestos">Precios e impuestos</Link>.</p>
+      <p>Cada plan incluye un cupo mensual (Starter 100 correos; Pro 300 correos y 50 SMS; Business 1.000 correos y 200 SMS), también en la modalidad de pago anual. Al alcanzarlo, no se envían más mensajes hasta el siguiente mes o un cambio de plan. Precios, prueba gratuita e impuestos en <Link href="/legal/precios-e-impuestos">Precios e impuestos</Link>.</p>
       <h2>4. Proceso de contratación</h2>
       <p>1) Registro y verificación del email; 2) elección de plan; 3) pago en la pasarela segura de Stripe; 4) confirmación por correo y acceso al panel; 5) emisión de factura electrónica. El contrato y las facturas quedan disponibles en el apartado de Facturación. Idioma del contrato: español.</p>
       <h2>5. Obligaciones del cliente</h2>
@@ -147,7 +150,9 @@ const pages: Record<string, () => ReactNode> = {
   cancelacion: () => (
     <>
       <h2>Renovación automática</h2>
-      <p>La suscripción se renueva cada mes en la misma fecha de alta y se cobra al método de pago guardado. El contador de correos del plan se reinicia en cada renovación.</p>
+      <p>La suscripción se renueva cada mes o cada año (según la modalidad elegida) en la misma fecha de alta y se cobra al método de pago guardado. El cupo de mensajes se reinicia cada mes.</p>
+      <h2>Prueba gratuita</h2>
+      <p>Si empiezas con la prueba gratuita de {TRIAL_DAYS} días, no se cobra nada hasta que termine. Te avisamos por correo 3 días antes. Si cancelas durante la prueba, no se realiza ningún cobro.</p>
       <h2>Cómo cancelar</h2>
       <p>Desde <strong>Panel → Suscripción y facturación → Cancelar renovación</strong>, o desde el portal de facturación de Stripe. La cancelación es efectiva al final del periodo ya pagado: hasta entonces mantienes el servicio. Puedes revertirla antes de esa fecha.</p>
       <h2>Cambios de plan</h2>
@@ -164,16 +169,28 @@ const pages: Record<string, () => ReactNode> = {
       <h2>Precios vigentes</h2>
       <p>Todos los precios mostrados al cliente son <strong>finales, con IVA incluido</strong> (tipo general del 21 %, art. 90 Ley 37/1992).</p>
       <table>
-        <thead><tr><th>Plan</th><th>Correos/mes</th><th>Base imponible</th><th>IVA 21 %</th><th>Total</th></tr></thead>
+        <thead><tr><th>Plan</th><th>Cupo mensual</th><th>Pago</th><th>Base imponible</th><th>IVA 21 %</th><th>Total</th></tr></thead>
         <tbody>
-          {PLANS.map((p) => {
-            const v = vatBreakdown(p.priceCents, p.vatRateBps);
-            return (
-              <tr key={p.code}><td>{p.name}</td><td>{p.monthlyEmailLimit}</td><td>{formatEur(v.baseCents)}</td><td>{formatEur(v.vatCents)}</td><td><strong>{formatEur(v.totalCents)}</strong></td></tr>
-            );
-          })}
+          {PLANS.flatMap((p) =>
+            (["mensual", "anual"] as const).map((k) => {
+              const v = vatBreakdown(k === "anual" ? p.annualPriceCents : p.priceCents, p.vatRateBps);
+              return (
+                <tr key={p.code + k}>
+                  <td>{p.name}</td>
+                  <td>{fmtNum(p.monthlyEmailLimit)} correos{p.monthlySmsLimit ? ` + ${p.monthlySmsLimit} SMS` : ""}</td>
+                  <td>{k === "anual" ? "Anual (2 meses gratis)" : "Mensual"}</td>
+                  <td>{formatEur(v.baseCents)}</td>
+                  <td>{formatEur(v.vatCents)}</td>
+                  <td><strong>{formatEur(v.totalCents)}</strong></td>
+                </tr>
+              );
+            }),
+          )}
         </tbody>
       </table>
+      <p>En el pago anual el cupo sigue siendo mensual: se reinicia cada mes desde la fecha de alta.</p>
+      <h2>Prueba gratuita</h2>
+      <p>Cada negocio puede disfrutar una sola vez de {TRIAL_DAYS} días de prueba gratuita de cualquier plan, con un cupo de hasta {TRIAL_EMAIL_CAP} correos y {TRIAL_SMS_CAP} SMS. Se solicita un método de pago al inicio, pero el primer cobro se realiza al terminar la prueba. Puede cancelarse antes sin coste.</p>
       <h2>Clientes fuera de España</h2>
       <p>La facturación se gestiona con Stripe Tax. Para empresas de otros Estados miembros de la UE con NIF‑IVA válido (VIES) se aplica la inversión del sujeto pasivo; para particulares de la UE, el IVA del país del cliente mediante el régimen OSS; para clientes de fuera de la UE, en general no se repercute IVA español. En estos casos el importe final puede diferir del mostrado.</p>
       <h2>Facturas</h2>
@@ -187,7 +204,7 @@ const pages: Record<string, () => ReactNode> = {
       <h2>1. Objeto</h2>
       <p>El Encargado tratará los datos de los clientes del Responsable únicamente para prestar el servicio: almacenarlos, generar y enviar solicitudes de reseña desde la cuenta de correo del Responsable y registrar el resultado de los envíos.</p>
       <h2>2. Datos y categorías de interesados</h2>
-      <p>Clientes del Responsable: nombre, email, teléfono (opcional), servicio adquirido, fecha, notas y etiquetas que el Responsable introduzca, historial de envíos, clics en el enlace de reseña y bajas. No deben incluirse categorías especiales de datos (art. 9 RGPD).</p>
+      <p>Clientes del Responsable: nombre, email, teléfono móvil (opcional, para SMS), servicio adquirido, fecha, notas y etiquetas que el Responsable introduzca, historial de envíos, clics en el enlace de reseña y bajas. No deben incluirse categorías especiales de datos (art. 9 RGPD).</p>
       <h2>3. Obligaciones del Encargado</h2>
       <ul>
         <li>Tratar los datos solo siguiendo instrucciones documentadas del Responsable (la configuración que este realiza en la plataforma).</li>
@@ -197,7 +214,7 @@ const pages: Record<string, () => ReactNode> = {
         <li>Al finalizar el servicio, suprimir los datos o devolverlos (exportación) a elección del Responsable.</li>
       </ul>
       <h2>4. Subencargados autorizados</h2>
-      <p>Proveedor de alojamiento <P v={null} label="nombre y país" />; Google/Microsoft (únicamente como proveedor de correo elegido por el propio Responsable). El Encargado informará de cualquier cambio con antelación para que el Responsable pueda oponerse.</p>
+      <p>Proveedor de alojamiento <P v={null} label="nombre y país" />; Google/Microsoft (únicamente como proveedor de correo elegido por el propio Responsable); Twilio Inc. (envío de SMS, si el Responsable activa ese canal; transferencia internacional amparada en <P v={null} label="verificar garantías: DPF o cláusulas contractuales tipo" />). El Encargado informará de cualquier cambio con antelación para que el Responsable pueda oponerse.</p>
       <h2>5. Obligaciones del Responsable</h2>
       <p>Contar con base jurídica para el tratamiento y para el envío de las comunicaciones, informar a sus clientes y atender sus derechos.</p>
     </>

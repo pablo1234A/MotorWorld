@@ -70,7 +70,10 @@ Estados: `SCHEDULED`, `QUEUED`, `SENDING`, `SENT` (aceptado por el proveedor), `
 
 | | Starter | Pro | Business |
 |---|---|---|---|
-| Correos/periodo | 30 | 70 | 200 |
+| Correos/mes | 100 | 300 | 1.000 |
+| SMS/mes | – | 50 | 200 |
+| Recordatorio si no abre el enlace | – | ✓ | ✓ |
+| Responder reseñas de Google | – | ✓ | ✓ |
 | Plantillas | 1 | 10 | ilimitadas |
 | Automatizaciones | 1 | 3 | 20 |
 | Reglas por servicio | – | ✓ | ✓ |
@@ -79,6 +82,19 @@ Estados: `SCHEDULED`, `QUEUED`, `SENDING`, `SENT` (aceptado por el proveedor), `
 | Estadísticas avanzadas (por regla y origen, 1 año) | – | ✓ | ✓ |
 | Exportación de estadísticas y clientes, etiquetas | – | – | ✓ |
 | API y webhook entrante | – | ✓ | ✓ |
+
+## Funciones de crecimiento
+
+| Función | Dónde | Notas |
+|---|---|---|
+| Prueba gratuita de 14 días | `billing/stripe.ts` (Checkout `trial_period_days`) | Una vez por negocio (`trial_used_at`); cupo limitado a 50 correos y 10 SMS; aviso 3 días antes (`trial_will_end`) |
+| Pago anual | precios `_ANNUAL`, `subscriptions.billing_interval` | El cupo sigue siendo **mensual**: `usageWindow()` divide el año en 12 ventanas |
+| Canal SMS | `sms/twilio.ts`, `automation/sender.ts` | Cupo propio (`sms_sent/sms_reserved/sms_limit`), reserva atómica, estado de entrega real por StatusCallback firmado |
+| Recordatorio único | `scheduleDueReminders()` en el barrido | Solo si no hubo clic, tras N días, como máximo uno por solicitud; cuenta en el cupo |
+| Reseñas de Google | `modules/reviews.ts` | OAuth `business.manage`, sincronización cada 6 h, respuestas desde el panel, atribución **estimada** por nombre (ventana de 30 días) |
+| Avisos de consumo y resumen semanal | `modules/notifications.ts` | 80 % y 100 % una vez por ventana; resumen los lunes solo si hubo actividad |
+| Kit QR | `/api/v1/qr`, `/cartel-qr` | QR del enlace de reseñas en SVG/PNG y cartel imprimible |
+| Administración | `/admin` | Solo `ADMIN_EMAILS`; ingresos recurrentes, pruebas, impagos, bajas, integraciones, RGPD |
 
 ## Escalabilidad
 

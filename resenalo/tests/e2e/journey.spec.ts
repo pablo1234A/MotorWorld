@@ -110,7 +110,7 @@ test.describe.serial("recorrido completo de un negocio", () => {
     await expect(page.getByText("Aceptado por Gmail")).toBeVisible();
 
     await page.goto("/app");
-    await expect(page.getByText("de 70 del plan este periodo")).toBeVisible();
+    await expect(page.getByText("de 300 del plan este periodo")).toBeVisible();
     const usage = await db.monthlyUsage.findFirstOrThrow({ where: { businessId } });
     expect(usage.sent).toBe(1);
 
@@ -122,7 +122,7 @@ test.describe.serial("recorrido completo de un negocio", () => {
 
   test("14-15. límite mensual: bloquea el envío adicional", async ({ page, request }) => {
     await login(page, email, password);
-    await db.monthlyUsage.updateMany({ where: { businessId }, data: { sent: 70 } });
+    await db.monthlyUsage.updateMany({ where: { businessId }, data: { sent: 300 } });
     const c = await db.customer.create({ data: { businessId, name: "Pedro Límite", email: "pedro.limite@cliente-e2e.es", serviceName: "corte" } });
     await page.goto(`/app/clientes/${c.id}`);
     await page.getByRole("button", { name: "Solicitar reseña ahora" }).click();
@@ -143,10 +143,10 @@ test.describe.serial("recorrido completo de un negocio", () => {
     await activateSubscription(request, businessId, "starter");
     await page.goto("/app/facturacion");
     await expect(page.getByText("Plan actual", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("15,00 €/mes IVA incluido · 30 correos/mes")).toBeVisible();
+    await expect(page.getByText("15,00 €/mes IVA incluido · 100 correos/mes")).toBeVisible();
     await activateSubscription(request, businessId, "business");
     await page.reload();
-    await expect(page.getByText("69,97 €/mes IVA incluido · 200 correos/mes")).toBeVisible();
+    await expect(page.getByText("69,97 €/mes IVA incluido · 1.000 correos/mes · 200 SMS/mes")).toBeVisible();
     await activateSubscription(request, businessId, "business", "past_due");
     await page.reload();
     await expect(page.getByText("Pago pendiente", { exact: true }).first()).toBeVisible();
@@ -168,6 +168,37 @@ test.describe.serial("recorrido completo de un negocio", () => {
     await connectGmail(page, "app");
     await expect(page.getByText("Cuenta conectada correctamente")).toBeVisible();
     await expect(page.getByText("Conectada", { exact: true })).toBeVisible();
+  });
+
+  test("nuevas secciones: reseñas, kit QR, recordatorio y SMS en automatizaciones", async ({ page }) => {
+    await login(page, email, password);
+    await page.goto("/app/resenas");
+    await expect(page.getByRole("heading", { name: "Conecta tu ficha de Google Business Profile" })).toBeVisible();
+    await page.goto("/app/kit-qr");
+    await expect(page.getByRole("img", { name: "Código QR del enlace de reseñas" })).toBeVisible();
+    const qr = await page.request.get("/api/v1/qr?format=png");
+    expect(qr.status()).toBe(200);
+    expect(qr.headers()["content-type"]).toBe("image/png");
+    const poster = await page.context().newPage();
+    await poster.goto("/cartel-qr");
+    await expect(poster.getByRole("heading", { name: "¿Qué tal ha ido?" })).toBeVisible();
+    await poster.close();
+    await page.goto("/app/automatizaciones");
+    await page.getByRole("button", { name: "Editar" }).first().click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByLabel("Canal").selectOption("SMS");
+    await dlg.getByRole("switch", { name: "Recordatorio si no abre el enlace" }).click();
+    await dlg.getByLabel("Días de espera").fill("4");
+    await dlg.getByRole("button", { name: "Guardar" }).click();
+    await expect(page.getByText("Recordatorio a los 4 días si no abre el enlace")).toBeVisible();
+    await expect(page.getByText("Por SMS")).toBeVisible();
+    // vuelve a correo para no afectar al resto
+    await page.getByRole("button", { name: "Editar" }).first().click();
+    await page.getByRole("dialog").getByLabel("Canal").selectOption("EMAIL");
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
+    await expect(page.getByText("Por correo")).toBeVisible();
+    // /admin no existe para quien no es administrador
+    expect((await page.goto("/admin"))!.status()).toBe(404);
   });
 
   test("4. recuperar contraseña", async ({ page, request }) => {

@@ -1,4 +1,5 @@
 "use client";
+import { fmtNum } from "@/lib/format";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, ExternalLink, FileText } from "lucide-react";
@@ -63,7 +64,7 @@ function Billing() {
                 <p className="mt-1 font-display text-2xl font-semibold">{plan?.name ?? s.planCode}</p>
                 {plan ? (
                   <p className="mt-1 text-sm text-ink-600">
-                    {s.interval === "year" ? `${formatEur(plan.annualPrice.totalCents)}/año` : `${formatEur(plan.price.totalCents)}/mes`} IVA incluido · {plan.monthlyEmailLimit.toLocaleString("es-ES")} correos/mes{plan.monthlySmsLimit ? ` · ${plan.monthlySmsLimit} SMS/mes` : ""}
+                    {s.interval === "year" ? `${formatEur(plan.annualPrice.totalCents)}/año` : `${formatEur(plan.price.totalCents)}/mes`} IVA incluido · {fmtNum(plan.monthlyEmailLimit)} correos/mes{plan.monthlySmsLimit ? ` · ${plan.monthlySmsLimit} SMS/mes` : ""}
                   </p>
                 ) : null}
               </div>

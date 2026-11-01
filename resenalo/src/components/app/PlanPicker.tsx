@@ -1,4 +1,5 @@
 "use client";
+import { fmtNum } from "@/lib/format";
 import { useState } from "react";
 import { Check } from "lucide-react";
 import clsx from "clsx";
@@ -80,7 +81,7 @@ export function PlanPicker({
                 {interval === "year" ? `${formatEur(price.totalCents)} al año · ` : ""}IVA incl. · Base {formatEur(price.baseCents)} + IVA {formatEur(price.vatCents)}
               </p>
               <p className="mt-4 text-sm font-semibold">
-                {p.monthlyEmailLimit.toLocaleString("es-ES")} correos{p.monthlySmsLimit ? ` + ${p.monthlySmsLimit} SMS` : ""}/mes
+                {fmtNum(p.monthlyEmailLimit)} correos{p.monthlySmsLimit ? ` + ${p.monthlySmsLimit} SMS` : ""}/mes
               </p>
               <ul className="mt-3 flex-1 space-y-2 text-[13px] text-ink-600">
                 {def?.highlights.slice(1, 6).map((h) => (

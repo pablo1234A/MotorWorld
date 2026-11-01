@@ -3,7 +3,8 @@ export const fmtDate = (d: string | Date | null | undefined, withTime = false) =
   const date = typeof d === "string" ? new Date(d) : d;
   return new Intl.DateTimeFormat("es-ES", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(date);
 };
-export const fmtNum = (n: number) => new Intl.NumberFormat("es-ES").format(n);
+/** Entero con separador de miles siempre («1.000»; es-ES no agrupa 4 cifras por defecto). */
+export const fmtNum = (n: number) => new Intl.NumberFormat("es-ES", { useGrouping: "always" } as unknown as Intl.NumberFormatOptions).format(n);
 export const relTime = (d: string | Date) => {
   const diff = (new Date(d).getTime() - Date.now()) / 1000;
   const rtf = new Intl.RelativeTimeFormat("es", { numeric: "auto" });

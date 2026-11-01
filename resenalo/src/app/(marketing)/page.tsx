@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, CalendarClock, Check, FileSpreadsheet, Link2, Lock, Mail, MessageSquareText, PlugZap, Send, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, BarChart3, CalendarClock, Check, FileSpreadsheet, Link2, Lock, Mail, MessageSquareText, PlugZap, QrCode, RefreshCw, Send, ShieldCheck, Star, Users } from "lucide-react";
 import { buttonClass } from "@/components/ui/button-class";
 import { StarMark } from "@/components/brand/Logo";
 import { DashboardShowcase, HeroComposition } from "@/components/marketing/ProductPreview";
@@ -29,6 +29,10 @@ const features = [
   { icon: BarChart3, title: "Estadísticas reales", text: "Enviados, pendientes, fallidos y clics en el enlace. Sin cifras infladas." },
   { icon: ShieldCheck, title: "Protección anti‑duplicados", text: "Nunca se envía dos veces la misma solicitud ni se supera el límite de tu plan." },
   { icon: Link2, title: "Cualquier plataforma", text: "Google, Tripadvisor, Trustpilot, Facebook… pega el enlace de tu perfil de reseñas." },
+  { icon: MessageSquareText, title: "También por SMS", text: "Para clientes que no miran el correo: SMS con confirmación de entrega real del operador." },
+  { icon: RefreshCw, title: "Recordatorio inteligente", text: "Si alguien no abre el enlace, le enviamos un único recordatorio amable. Nunca más de uno." },
+  { icon: Star, title: "Tus reseñas de Google", text: "Valoración media, reseñas nuevas y respuestas desde el panel, conectando tu ficha." },
+  { icon: QrCode, title: "Kit QR para el mostrador", text: "Cartel listo para imprimir con el QR de tu perfil de reseñas." },
 ];
 
 const faqs = [
@@ -37,7 +41,9 @@ const faqs = [
   { q: "¿Cómo sabe Reseñalo que un cliente ha terminado un servicio?", a: "Tú se lo indicas: añadiendo el cliente a mano, importando un CSV o conectando tu software (CRM, agenda, tienda) mediante nuestra API o webhook. No adivinamos nada ni accedemos a tu bandeja de entrada." },
   { q: "¿Qué pasa si llego al límite de correos de mi plan?", a: "Reseñalo deja de enviar: las nuevas solicitudes se bloquean y te avisamos en el panel. El contador se reinicia al comenzar tu siguiente periodo de facturación, o puedes cambiar a un plan superior en cualquier momento." },
   { q: "¿Puedo pedir solo reseñas a clientes satisfechos?", a: "No. Reseñalo envía solicitudes neutrales a todos los clientes que registres. Filtrar opiniones negativas u ofrecer premios por reseñas positivas puede infringir la normativa de consumo y las políticas de Google, y daña la confianza en tu negocio." },
-  { q: "¿Sabéis si el cliente ha dejado la reseña?", a: "No podemos confirmarlo: Google y el resto de plataformas no lo comunican. Te mostramos datos verificables: correos enviados y aceptados por tu proveedor, fallidos y clics en el enlace de reseña." },
+  { q: "¿Sabéis si el cliente ha dejado la reseña?", a: "Si conectas tu ficha de Google Business Profile, verás en el panel cada reseña nueva, tu valoración media y cuáles llegaron probablemente tras una solicitud (por coincidencia de nombre en los días siguientes al envío). Google no indica a través de qué enlace llegó cada reseña, así que esa relación es una estimación y así te la mostramos." },
+  { q: "¿Cómo funciona la prueba gratuita?", a: `Tienes ${TRIAL_DAYS} días para probar cualquier plan, con hasta ${TRIAL_EMAIL_CAP} correos. Pedimos la tarjeta al empezar, pero no se cobra nada hasta el final de la prueba; si cancelas antes, no pagas. Te avisamos por correo 3 días antes.` },
+  { q: "¿Puedo enviar las solicitudes por SMS?", a: "Sí, en los planes Pro (50 SMS al mes) y Business (200). Eliges el canal en cada automatización. El SMS lleva siempre un enlace de baja y verás si el operador lo ha entregado." },
   { q: "¿Los precios incluyen IVA?", a: "Sí. Los precios mostrados incluyen el IVA del 21 %. En cada factura verás desglosados la base imponible, la cuota de IVA y el total." },
   { q: "¿Puedo cancelar cuando quiera?", a: "Sí. La suscripción es mensual y sin permanencia. Si cancelas, mantienes el servicio hasta el final del periodo ya pagado y no se renueva." },
 ];

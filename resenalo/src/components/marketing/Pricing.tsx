@@ -1,4 +1,5 @@
 "use client";
+import { fmtNum } from "@/lib/format";
 import Link from "next/link";
 import { useState } from "react";
 import { Check } from "lucide-react";
@@ -30,7 +31,7 @@ export function Pricing() {
                 {interval === "year" ? `${formatEur(total)} al año · ` : ""}IVA incluido · Base {formatEur(vat.baseCents)} + IVA {formatEur(vat.vatCents)}
               </p>
               <p className="mt-5 rounded-lg bg-cream-200 px-3 py-2 text-sm font-semibold">
-                {p.monthlyEmailLimit.toLocaleString("es-ES")} correos{p.monthlySmsLimit ? ` + ${p.monthlySmsLimit} SMS` : ""} al mes
+                {fmtNum(p.monthlyEmailLimit)} correos{p.monthlySmsLimit ? ` + ${p.monthlySmsLimit} SMS` : ""} al mes
               </p>
               <ul className="mt-5 flex-1 space-y-2.5 text-sm text-ink-700">
                 {p.highlights.slice(1).map((h) => (

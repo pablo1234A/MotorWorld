@@ -4,8 +4,8 @@ Ejecutadas el 31/10/2026 en el entorno de desarrollo (PostgreSQL 16, Redis 7, No
 
 | Batería | Comando | Resultado |
 |---|---|---|
-| Unitarias + integración (BD y Redis reales) | `npm test` | **79/79 superadas** (10 archivos, incluidas las regresiones de la revisión de código) |
-| E2E en navegador (app de producción `next start` + worker real) | `npm run test:e2e` | **11/11 superadas** (escritorio + móvil Pixel 7) |
+| Unitarias + integración (BD y Redis reales) | `npm test` | **92/92 superadas** (12 archivos) |
+| E2E en navegador (app de producción `next start` + worker real) | `npm run test:e2e` | **12/12 superadas** (escritorio + móvil Pixel 7) |
 | Tipos / lint / build | `npm run typecheck`, `npm run lint`, `npm run build` | Sin errores |
 | Dependencias de producción | `npm audit --omit=dev` | 0 vulnerabilidades |
 
@@ -42,6 +42,18 @@ Ejecutadas el 31/10/2026 en el entorno de desarrollo (PostgreSQL 16, Redis 7, No
 | 18 | Dos usuarios no acceden a los datos del otro | Integración (todas las rutas por id → 404, listados vacíos) y E2E con dos sesiones de navegador | ✅ |
 | 19 | Errores de conexión del correo | E2E: token revocado (`invalid_grant`) → NEEDS_REAUTH, banner, correo de aviso al propietario y reconexión. Integración: 401 en envío → trabajos en espera sin contabilizar y reanudación al reconectar; 429/5xx → reintentos con backoff; destinatario rechazado → REBOTADO | ✅ |
 | 20 | Funcionamiento en móvil | E2E en Pixel 7: landing, menú móvil y las 9 secciones del panel sin scroll horizontal; capturas en `tests/e2e/.artifacts/screens/` | ✅ |
+
+## Funciones de crecimiento (pruebas añadidas)
+
+- Plan anual: el cupo se divide en ventanas mensuales (incluido fin de mes, 31 ene → 28 feb).
+- Prueba gratuita: cupo limitado (50 correos / 10 SMS), se marca como usada y al activarse se aplica el cupo completo.
+- SMS: envío con cupo propio, texto con baja, StatusCallback de Twilio con firma válida (→ Entregado) y firma falsa (→ 401), móvil no válido, cupo SMS agotado, número rechazado marcado; Starter no puede usar SMS.
+- Recordatorio: exactamente uno tras el plazo, nunca a quien hizo clic, nunca en Starter, cuenta en el cupo.
+- Avisos de consumo del 80 % y 100 %: una sola vez por periodo, se reinician en el siguiente.
+- Google Business Profile (contra un servidor local que reproduce la API): OAuth con state, selección automática de ficha, sincronización idempotente, valoración y total, atribución estimada por nombre, respuesta publicada, Starter no puede responder y otro negocio no puede acceder.
+- E2E: Reseñas, Kit QR (PNG/SVG y cartel), canal SMS y recordatorio en el editor de automatizaciones, `/admin` oculto para no administradores.
+
+> ⏳ Pendiente con credenciales reales: Twilio (SMS a un móvil propio) y Google Business Profile (requiere que Google apruebe el acceso a la API).
 
 ## Otras comprobaciones automatizadas
 

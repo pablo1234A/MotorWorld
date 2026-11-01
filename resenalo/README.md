@@ -44,11 +44,11 @@ Sin `SMTP_HOST`, en desarrollo los enlaces de verificación y recuperación apar
 ## Pruebas
 
 ```bash
-npm test            # 79 pruebas unitarias e integración (PostgreSQL y Redis reales; BD resenalo_test)
+npm test            # 92 pruebas unitarias e integración (PostgreSQL y Redis reales; BD resenalo_test)
 ```
 
 ```bash
-npx next build && npm run test:e2e   # 11 pruebas E2E en Chromium (escritorio y móvil) contra next start + worker
+npx next build && npm run test:e2e   # 12 pruebas E2E en Chromium (escritorio y móvil) contra next start + worker
 ```
 
 Las pruebas de integración usan la base `resenalo_test` y Redis db 5; las E2E usan `resenalo_e2e` y Redis db 6 (créalas antes con `createdb`).

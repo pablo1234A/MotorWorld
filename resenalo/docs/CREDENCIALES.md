@@ -8,11 +8,11 @@ El código de todas las integraciones está terminado. Sin estas credenciales, l
 2. **Stripe Tax**: Settings → Tax → activa y añade tu registro de IVA en España (y en OSS si vendes a particulares de la UE). Deja `STRIPE_AUTOMATIC_TAX=true`.
    - Alternativa sin Stripe Tax: crea una Tax Rate **inclusiva** del 21 % (ES), pon su ID en `STRIPE_TAX_RATE_ID` y `STRIPE_AUTOMATIC_TAX=false`.
 3. `STRIPE_SECRET_KEY` (Developers → API keys). Empieza con la clave de **modo de prueba** (`sk_test_…`).
-4. Ejecuta `npm run stripe:setup` → copia `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS` al `.env` y ejecuta `npm run db:seed`.
+4. Ejecuta `npm run stripe:setup` → crea los precios mensuales y anuales (2 meses gratis). Copia `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS` y sus variantes `_ANNUAL` al `.env` y ejecuta `npm run db:seed`. La prueba gratuita de 14 días la aplica el código en el Checkout (no hay que configurarla en Stripe).
 5. Webhook: Developers → Webhooks → endpoint `https://TU_DOMINIO/api/webhooks/stripe` con los eventos:
-   `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`, `invoice.finalized`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`, `invoice.marked_uncollectible`.
+   `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`, `customer.subscription.trial_will_end`, `invoice.finalized`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`, `invoice.marked_uncollectible`.
    Copia el *signing secret* en `STRIPE_WEBHOOK_SECRET`.
-6. Portal de cliente: Settings → Billing → Customer portal → activa actualizar método de pago, ver facturas, cancelar (al final del periodo) y cambiar entre los 3 precios.
+6. Portal de cliente: Settings → Billing → Customer portal → activa actualizar método de pago, ver facturas, cancelar (al final del periodo) y cambiar entre los 6 precios (mensuales y anuales).
 7. Settings → Billing → Subscriptions and emails: activa los reintentos inteligentes y, al agotarse, **cancelar la suscripción**.
 8. Prueba local de webhooks: `stripe listen --forward-to localhost:3000/api/webhooks/stripe` y paga con la tarjeta `4242 4242 4242 4242`; prueba un pago fallido con `4000 0000 0000 0341`.
 
@@ -24,6 +24,13 @@ El código de todas las integraciones está terminado. Sin estas credenciales, l
 4. Copia `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.
 5. **Verificación de Google**: `gmail.send` es un ámbito *sensible*. Mientras la app esté en modo «Prueba» solo funcionará con hasta 100 usuarios de prueba que añadas manualmente, y los tokens caducan a los 7 días. Para producción debes **solicitar la verificación de la app** (Google revisa la política de privacidad, el vídeo de demostración y el uso del ámbito). Plazo habitual: de días a varias semanas.
 
+### 2b. Google Business Profile (reseñas reales en el panel)
+
+1. En el mismo proyecto de Google Cloud habilita **My Business Account Management API**, **My Business Business Information API** y **Google My Business API** (reseñas).
+2. **Solicita acceso** a las APIs de Business Profile con el formulario de Google (https://developers.google.com/my-business/content/prereqs). Sin la aprobación, las llamadas devuelven cuota 0. Suele tardar unos días.
+3. Añade el ámbito `https://www.googleapis.com/auth/business.manage` a la pantalla de consentimiento y el URI de redirección `https://TU_DOMINIO/api/v1/reviews/callback`.
+4. No hacen falta credenciales nuevas: se usa el mismo `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+
 ## 3. Microsoft (Outlook / Microsoft 365) — opcional
 
 1. https://entra.microsoft.com → *Registros de aplicaciones* → Nuevo registro → *Cuentas de cualquier directorio organizativo y cuentas Microsoft personales*.
@@ -31,6 +38,14 @@ El código de todas las integraciones está terminado. Sin estas credenciales, l
 3. *Permisos de API* → Microsoft Graph → delegados: `Mail.Send`, `User.Read`, `offline_access`, `openid`, `email`.
 4. *Certificados y secretos* → nuevo secreto de cliente. Copia `MICROSOFT_CLIENT_ID` (ID de la aplicación) y `MICROSOFT_CLIENT_SECRET` (valor). `MICROSOFT_TENANT=common`.
 5. Recomendado: verificación de editor (*Publisher verification*) para que los clientes no vean el aviso de «editor no verificado»; algunas organizaciones exigen el consentimiento de su administrador.
+
+## 3b. Twilio (SMS, planes Pro y Business)
+
+1. Crea la cuenta en https://www.twilio.com y añade saldo.
+2. Crea un **Messaging Service** con un número o un remitente alfanumérico válido para España (y los países donde vayas a enviar). Copia `TWILIO_MESSAGING_SERVICE_SID` (o `TWILIO_FROM` si usas un número directamente).
+3. Copia `TWILIO_ACCOUNT_SID` y `TWILIO_AUTH_TOKEN`.
+4. No hay que configurar webhooks: Reseñalo indica en cada SMS su URL de estado (`/api/webhooks/twilio/…`) y verifica la firma de Twilio.
+5. Revisa los precios por SMS en España: cada SMS incluido en los planes es un coste tuyo (Pro: 50/mes, Business: 200/mes).
 
 ## 4. Correo transaccional de la plataforma (SMTP) — obligatorio en producción
 
@@ -41,6 +56,7 @@ Para los correos de verificación, recuperación de contraseña y avisos (no se 
 - `ENCRYPTION_KEYS`: `node -e "console.log('v1:'+require('crypto').randomBytes(32).toString('base64'))"`. **Guárdala fuera del servidor**: sin ella no se pueden descifrar los tokens OAuth (los clientes tendrían que reconectar).
 - `APP_URL`: URL pública con https. PostgreSQL y Redis gestionados o los del `docker-compose.yml`.
 - `ERROR_WEBHOOK_URL` (opcional): webhook (p. ej. Slack) que recibe los errores críticos.
+- `ADMIN_EMAILS`: tu email (o varios separados por comas) para acceder a `/admin`: ingresos recurrentes, pruebas, impagos, bajas, fallos y solicitudes RGPD.
 
 ## 6. Datos legales del titular (no los he inventado)
 
