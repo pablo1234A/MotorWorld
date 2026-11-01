@@ -10,7 +10,12 @@ import { freelancerAnswers, shopAnswers } from "@/lib/documents/samples";
  */
 const available = await databaseAvailable();
 
-const state: { db: TestDb | null; userId: string | null; storage: MemoryStorage } = { db: null, userId: null, storage: createMemoryStorage() };
+const state: { db: TestDb | null; userId: string | null; storage: MemoryStorage; cookies: Map<string, string> } = {
+  db: null,
+  userId: null,
+  storage: createMemoryStorage(),
+  cookies: new Map(),
+};
 const stripe = {
   checkout: { sessions: { retrieve: vi.fn(), create: vi.fn() } },
   subscriptions: { retrieve: vi.fn() },
@@ -26,7 +31,15 @@ vi.mock("@/lib/supabase/server", () => ({
   ServiceNotConfiguredError: class extends Error {},
 }));
 vi.mock("@/lib/billing/stripe", async (orig) => ({ ...(await orig<typeof import("@/lib/billing/stripe")>()), getStripe: () => stripe }));
-vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-real-ip": "203.0.113.7" }), cookies: async () => ({ getAll: () => [], set: () => {} }) }));
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ "x-real-ip": "203.0.113.7" }),
+  cookies: async () => ({
+    getAll: () => [...state.cookies].map(([name, value]) => ({ name, value })),
+    get: (name: string) => (state.cookies.has(name) ? { name, value: state.cookies.get(name)! } : undefined),
+    set: (name: string, value: string) => void state.cookies.set(name, value),
+    delete: (name: string) => void state.cookies.delete(name),
+  }),
+}));
 vi.mock("next/cache", () => ({ revalidatePath: () => {}, updateTag: () => {}, revalidateTag: () => {}, cacheLife: () => {}, cacheTag: () => {} }));
 vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/server")>()), connection: async () => {} }));
 
@@ -466,6 +479,136 @@ describe.skipIf(!available)("Flujos de negocio completos", () => {
         .order("generated_at", { ascending: false })
         .limit(200);
       expect(r.error).toBeNull();
+    });
+  });
+
+  describe("Agencias y gestorías", () => {
+    let agency: { userId: string; orgId: string };
+    let clientId: string;
+    const fd = (o: Record<string, string>) => {
+      const f = new FormData();
+      for (const [k, v] of Object.entries(o)) f.set(k, v);
+      return f;
+    };
+
+    beforeAll(async () => {
+      agency = await createAuthUser(state.db!.pool, "agencia@example.com", { full_name: "Agencia", account_type: "agency" });
+      await q("update public.organizations set stripe_customer_id = 'cus_agency' where id = $1", [agency.orgId]);
+      await q("update public.products set stripe_price_id = 'price_med' where code = 'subscription_medium'");
+    });
+
+    beforeEach(() => {
+      as(agency);
+    });
+
+    it("un negocio no puede dar de alta clientes; una agencia sí y pasa a trabajar en el cliente", async () => {
+      const clients = await import("@/lib/actions/clients");
+      as(alice);
+      expect((await clients.createClient({}, fd({ name: "Cliente" }))).error).toMatch(/modo agencia/);
+      as(agency);
+      expect(await redirectOf(clients.createClient({}, fd({ name: "Panadería Sol", notes: "WordPress" })))).toBe("/panel/generador?cliente=nuevo");
+      const row = await q("select id, client_notes, parent_organization_id from public.organizations where client_name = 'Panadería Sol'");
+      clientId = row.rows[0].id;
+      expect(row.rows[0]).toMatchObject({ client_notes: "WordPress", parent_organization_id: agency.orgId });
+      expect(state.cookies.get("lg_cuenta")).toBe(clientId);
+      const { requireOrganization } = await import("@/lib/auth");
+      const { org, account } = await requireOrganization();
+      expect(org.id).toBe(clientId);
+      expect(account.root.id).toBe(agency.orgId);
+    });
+
+    it("el formulario y los documentos son del cliente; el cupo y la suscripción, de la agencia", async () => {
+      const forms = await import("@/lib/actions/forms");
+      const draft = await forms.getOrCreateDraft();
+      expect(draft.organization_id).toBe(clientId);
+      expect(draft.answers).not.toHaveProperty("contact_email"); // no hereda el email de la agencia
+      expect(await redirectOf(forms.completeForm(draft.id, freelancerAnswers))).toBe("/panel/generador/revision");
+
+      // Sin suscripción de la agencia no se puede generar.
+      const { loadEntitlements } = await import("@/lib/billing/data");
+      const { createAdminClient } = await import("@/lib/supabase/server");
+      const before = await loadEntitlements(createAdminClient(), clientId);
+      expect(before.canGenerate).toBe(false);
+      expect(before.blockedReason).toMatch(/cuenta de agencia/);
+
+      const sub = await q(
+        `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, status, current_period_start)
+         select $1, id, 'sub_agency', 'cus_agency', 'active', now() - interval '1 day' from public.products where code = 'subscription_medium' returning id`,
+        [agency.orgId],
+      );
+      expect(await redirectOf(forms.generateNow({}))).toBe("/panel/documentos?generado=1");
+      const v = await q("select organization_id, subscription_id from public.document_versions where organization_id = $1", [clientId]);
+      expect(v.rows).toHaveLength(3);
+      expect(v.rows.every((r) => r.subscription_id === sub.rows[0].id)).toBe(true);
+      const ent = await loadEntitlements(createAdminClient(), agency.orgId);
+      expect(ent.quota).toMatchObject({ limit: 50, used: 3, remaining: 47 });
+    });
+
+    it("el pago único no se ofrece para clientes y la facturación usa la cuenta de la agencia", async () => {
+      const billing = await import("@/lib/actions/billing");
+      const r = await billing.startCheckout({}, fd({ product: "one_time_pack", terms: "on", immediate: "on" }));
+      expect(r.error).toMatch(/pago único es para un solo negocio/);
+    });
+
+    it("no se puede cambiar a una cuenta ajena ni a un cliente archivado", async () => {
+      const clients = await import("@/lib/actions/clients");
+      expect(await redirectOf(clients.switchAccount(fd({ org: alice.orgId, next: "/panel" })))).toBe("/panel/clientes?error=cliente");
+      expect(state.cookies.get("lg_cuenta")).toBe(clientId);
+      // Una cookie manipulada con una cuenta ajena se ignora.
+      state.cookies.set("lg_cuenta", alice.orgId);
+      const { requireOrganization } = await import("@/lib/auth");
+      expect((await requireOrganization()).org.id).toBe(agency.orgId);
+      expect(await redirectOf(clients.switchAccount(fd({ org: clientId, next: "https://evil.example" })))).toBe("/panel");
+      expect(state.cookies.get("lg_cuenta")).toBe(clientId);
+    });
+
+    it("al archivar el cliente activo se vuelve a la cuenta principal y sus documentos se conservan", async () => {
+      const clients = await import("@/lib/actions/clients");
+      expect(await redirectOf(clients.setClientArchived(fd({ id: clientId, archive: "1" })))).toBe("/panel/clientes?archivado=1");
+      expect(state.cookies.has("lg_cuenta")).toBe(false);
+      expect((await q("select count(*)::int as n from public.document_versions where organization_id = $1", [clientId])).rows[0].n).toBe(3);
+      expect(await redirectOf(clients.switchAccount(fd({ org: clientId })))).toBe("/panel/clientes?error=cliente");
+      expect(await redirectOf(clients.disableAgencyMode())).toBe("/panel"); // sin clientes activos se permite
+      await q("update public.organizations set account_type = 'agency' where id = $1", [agency.orgId]);
+      expect(await redirectOf(clients.setClientArchived(fd({ id: clientId })))).toBe("/panel/clientes?restaurado=1");
+    });
+
+    it("al activar la suscripción se generan los documentos del cliente indicado, solo si es de la agencia", async () => {
+      const second = await q(
+        "insert into public.organizations (owner_id, parent_organization_id, client_name) values ($1, $2, 'Clínica Mar') returning id",
+        [agency.userId, agency.orgId],
+      );
+      await q("insert into public.organization_members (organization_id, user_id, role) values ($1, $2, 'owner')", [second.rows[0].id, agency.userId]);
+      await q(
+        "insert into public.form_responses (organization_id, created_by, questionnaire_version, answers, status, completed_at) values ($1, $2, 1, $3, 'completed', now())",
+        [second.rows[0].id, agency.userId, JSON.stringify(freelancerAnswers)],
+      );
+      await q("delete from public.subscriptions where stripe_subscription_id = 'sub_agency'");
+      const subObj = (id: string, generateFor: string) => ({
+        id,
+        customer: "cus_agency",
+        status: "active",
+        metadata: { organization_id: agency.orgId, generate_for: generateFor },
+        cancel_at_period_end: false,
+        cancel_at: null,
+        canceled_at: null,
+        ended_at: null,
+        trial_end: null,
+        latest_invoice: null,
+        items: { data: [{ current_period_start: Math.floor(Date.now() / 1000) - 3600, current_period_end: 1901440000, price: { id: "price_med", unit_amount: 999, currency: "eur", recurring: { interval: "month" } } }] },
+      });
+      const { syncSubscription } = await import("@/lib/billing/fulfillment");
+      // Un identificador ajeno en los metadatos se ignora (la agencia no tiene formulario propio: no se genera nada).
+      const count = async (org: string) => (await q("select count(*)::int as n from public.document_versions where organization_id = $1", [org])).rows[0].n;
+      const aliceBefore = await count(alice.orgId);
+      stripe.subscriptions.retrieve.mockResolvedValueOnce(subObj("sub_agency_2", alice.orgId));
+      await syncSubscription("sub_agency_2");
+      expect(await count(alice.orgId)).toBe(aliceBefore);
+      expect(await count(agency.orgId)).toBe(0);
+      await q("update public.subscriptions set status = 'canceled' where stripe_subscription_id = 'sub_agency_2'");
+      stripe.subscriptions.retrieve.mockResolvedValueOnce(subObj("sub_agency_3", second.rows[0].id));
+      await syncSubscription("sub_agency_3");
+      expect((await q("select count(*)::int as n from public.document_versions where organization_id = $1", [second.rows[0].id])).rows[0].n).toBe(3);
     });
   });
 });

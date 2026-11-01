@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   ArrowLeft,
+  Building2,
+  Cookie,
   BarChart3,
   Bell,
   Bug,
@@ -43,6 +45,8 @@ export interface NavItem {
 
 const ICONS = {
   dashboard: LayoutDashboard,
+  clients: Building2,
+  cookie: Cookie,
   generator: PenLine,
   documents: FileText,
   account: UserRound,

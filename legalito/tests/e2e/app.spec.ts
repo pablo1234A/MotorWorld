@@ -197,6 +197,139 @@ test("suscripción Básico: generación, cupo mensual y regeneración de un docu
   await shot(page, "15-suscripcion-plan");
 });
 
+test("agencia: clientes, formulario propio, generación con cupo compartido y archivo", async ({ page, isMobile }) => {
+  const email = isMobile ? "agencia-mobile@legalito.test" : "agencia-desktop@legalito.test";
+  await login(page, email);
+  await expect(page.getByText("Añade tu primer cliente")).toBeVisible();
+  await expect(page.getByLabel("Trabajando en")).toBeVisible();
+
+  // Alta de un cliente: se crea y se abre su formulario.
+  await page.goto("/panel/clientes");
+  await expect(page.getByRole("heading", { name: "Clientes", level: 1 })).toBeVisible();
+  await page.getByLabel(/Nombre del cliente/).fill("Panadería Sol");
+  await page.getByLabel(/Notas internas/).fill("WordPress");
+  await page.getByRole("button", { name: /Añadir y rellenar su formulario/ }).click();
+  await expect(page).toHaveURL(/\/panel\/generador\?cliente=nuevo/);
+  await expect(page.getByRole("heading", { name: "Formulario de Panadería Sol" })).toBeVisible();
+  await expect(page.getByLabel("Trabajando en el cliente")).toHaveValue(/[0-9a-f-]{36}/);
+  await shot(page, "16-agencia-formulario-cliente");
+
+  // El formulario del cliente se completa (el asistente ya se prueba en otro recorrido).
+  const client = (
+    await db.query(
+      "select o.id, o.owner_id from public.organizations o join auth.users u on u.id = o.owner_id where u.email = $1 and o.client_name = 'Panadería Sol'",
+      [email],
+    )
+  ).rows[0];
+  const answers = (await import("../../src/lib/documents/samples")).freelancerAnswers;
+  await db.query("delete from public.form_responses where organization_id = $1", [client.id]);
+  await db.query(
+    "insert into public.form_responses (organization_id, created_by, questionnaire_version, answers, status, completed_at) values ($1, $2, 1, $3, 'completed', now())",
+    [client.id, client.owner_id, JSON.stringify(answers)],
+  );
+  await page.goto("/panel/generador/revision");
+  await page.getByRole("button", { name: "Generar mis documentos" }).click();
+  await expect(page).toHaveURL(/\/panel\/documentos\?generado=1/, { timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: "Documentos de Panadería Sol" })).toBeVisible();
+  await expect(page.getByText("3 de 50")).toBeVisible();
+  await shot(page, "17-agencia-documentos-cliente");
+
+  // Segundo cliente: sus documentos están vacíos y el cupo es el mismo.
+  await page.goto("/panel/clientes");
+  await page.getByLabel(/Nombre del cliente/).fill("Clínica Mar");
+  await page.getByRole("button", { name: /Añadir y rellenar su formulario/ }).click();
+  await expect(page.getByRole("heading", { name: "Formulario de Clínica Mar" })).toBeVisible();
+  await page.goto("/panel/documentos");
+  await expect(page.getByRole("heading", { name: "Documentos de Clínica Mar" })).toBeVisible();
+  await expect(page.getByText("Panadería Sol")).toHaveCount(1); // solo en el selector
+
+  // Cambio de cliente desde el selector.
+  await page.getByLabel("Trabajando en el cliente").selectOption({ label: "Panadería Sol" });
+  await expect(page.getByRole("heading", { name: "Documentos de Panadería Sol" })).toBeVisible();
+
+  // Listado: estados y archivo.
+  await page.goto("/panel/clientes");
+  await expect(page.getByText("Documentos generados").first()).toBeVisible();
+  await shot(page, "18-agencia-clientes");
+  const row = page.getByRole("listitem").filter({ hasText: "Clínica Mar" }).first();
+  await row.getByText("Editar", { exact: true }).click();
+  await row.getByRole("button", { name: "Archivar cliente" }).click();
+  await expect(page.getByText(/Cliente archivado/)).toBeVisible();
+  await expect(page.getByText("Clientes archivados (1)")).toBeVisible();
+  await expect(page.getByRole("combobox", { name: /Trabajando en/ }).locator("option", { hasText: "Clínica Mar" })).toHaveCount(0);
+
+  // La facturación es la de la agencia.
+  await page.goto("/panel/suscripcion");
+  await expect(page.getByText("Medium").first()).toBeVisible();
+  await expect(page.getByText("3 de 50").first()).toBeVisible();
+});
+
+test("banner de cookies: categorías del formulario y consentimiento real en el navegador", async ({ page, isMobile, baseURL }) => {
+  const email = isMobile ? "agencia-mobile@legalito.test" : "agencia-desktop@legalito.test";
+  const client = (
+    await db.query("select o.id from public.organizations o join auth.users u on u.id = o.owner_id where u.email = $1 and o.client_name = 'Panadería Sol'", [email])
+  ).rows[0];
+  const shop = (await import("../../src/lib/documents/samples")).shopAnswers;
+  await db.query("update public.form_responses set answers = $2 where organization_id = $1 and status = 'completed'", [client.id, JSON.stringify(shop)]);
+  await login(page, email);
+  await page.context().addCookies([{ name: "lg_cuenta", value: client.id, url: baseURL! }]);
+  await page.goto("/panel/banner-cookies");
+  await expect(page.getByRole("heading", { name: "Banner de cookies", level: 1 })).toBeVisible();
+  await expect(page.getByText("Publicidad", { exact: true })).toBeVisible();
+  await expect(page.getByText(/ya usas/)).toBeVisible(); // indicó que tiene una herramienta de consentimiento
+  await expect(page.getByLabel(/Código para pegar/)).toHaveValue(/data-cookie-settings/);
+  await shot(page, "19-banner-cookies");
+
+  await page.goto("/panel/banner-cookies/vista-previa?color=%230F766E&pos=box");
+  const banner = page.getByRole("region", { name: "Consentimiento de cookies" });
+  await expect(banner).toBeVisible();
+  await expect(page.locator("#estado-analitica")).toHaveText("Bloqueado");
+  await expectAccessible(page);
+
+  // Rechazar: nada se activa y la elección se recuerda.
+  await banner.getByRole("button", { name: "Rechazar" }).click();
+  await expect(banner).toBeHidden();
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Consentimiento de cookies" })).toHaveCount(0);
+  await expect(page.locator("#estado-analitica")).toHaveText("Bloqueado");
+
+  // Configurar: aceptar solo analítica.
+  await page.getByRole("link", { name: "Configurar cookies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Configuración de cookies" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Analítica").check();
+  await dialog.getByRole("button", { name: "Guardar selección" }).click();
+  await expect(page.locator("#estado-analitica")).toHaveText("Activado");
+  await expect(page.locator("#estado-publicitaria")).toHaveText("Bloqueado");
+
+  // Retirar el consentimiento recarga la página sin activar la analítica.
+  await page.getByRole("link", { name: "Configurar cookies" }).click();
+  await page.getByRole("dialog").getByLabel("Analítica").uncheck();
+  await Promise.all([page.waitForEvent("load"), page.getByRole("dialog").getByRole("button", { name: "Guardar selección" }).click()]);
+  await expect(page.locator("#estado-analitica")).toHaveText("Bloqueado");
+});
+
+test("aislamiento de agencias: la cookie de cliente no da acceso a cuentas ajenas", async ({ page, isMobile, baseURL }) => {
+  const agency = isMobile ? "agencia-mobile@legalito.test" : "agencia-desktop@legalito.test";
+  const other = isMobile ? "suscriptora@legalito.test" : "cliente@legalito.test";
+  const client = (
+    await db.query(
+      "select o.id from public.organizations o join auth.users u on u.id = o.owner_id where u.email = $1 and o.client_name = 'Panadería Sol'",
+      [agency],
+    )
+  ).rows[0];
+  const version = (await db.query("select id from public.document_versions where organization_id = $1 limit 1", [client.id])).rows[0];
+  await login(page, other);
+  await page.context().addCookies([{ name: "lg_cuenta", value: client.id, url: baseURL! }]);
+  await page.goto("/panel/documentos");
+  await expect(page.getByRole("heading", { name: "Mis documentos" })).toBeVisible();
+  await expect(page.getByText("Panadería Sol")).toHaveCount(0);
+  const dl = await page.request.get(`/api/documentos/${version.id}/descargar?formato=pdf`, { maxRedirects: 0 });
+  expect(dl.status()).toBe(404);
+  await page.goto("/panel/clientes");
+  await expect(page.getByRole("button", { name: "Activar modo agencia" })).toBeVisible();
+});
+
 test("mis datos, suscripción y ayuda", async ({ page, isMobile }) => {
   await login(page, isMobile ? "suscriptora@legalito.test" : "cliente@legalito.test");
   await page.goto("/panel/datos");
@@ -209,6 +342,9 @@ test("mis datos, suscripción y ayuda", async ({ page, isMobile }) => {
   await expect(page.getByRole("heading", { name: "Historial de pagos" })).toBeVisible();
   await expect(page.getByText("39,00 €").first()).toBeVisible();
   await shot(page, "12-suscripcion");
+
+  await page.goto("/panel/banner-cookies");
+  await expect(page.getByText("Incluido en las suscripciones")).toBeVisible(); // pago único: sin banner
 
   await page.goto("/panel/ayuda");
   await page.getByLabel("Asunto").fill("Duda sobre cookies");

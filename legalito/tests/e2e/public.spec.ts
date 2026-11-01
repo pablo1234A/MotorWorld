@@ -14,6 +14,7 @@ const PUBLIC_PAGES = [
   "/generador-politica-de-cookies",
   "/textos-legales-pagina-web",
   "/documentos-legales-tienda-online",
+  "/agencias-y-gestorias",
   "/guias",
   "/guias/aviso-legal-que-es-y-que-debe-incluir",
   "/guias/politica-de-privacidad-que-debe-incluir",
@@ -91,6 +92,18 @@ test.describe("Web pública", () => {
     await expect(page.locator("body")).not.toContainText(/cumplimiento legal garantizado/i);
   });
 
+  test("la página de agencias explica el modelo y preselecciona la cuenta de agencia al registrarse", async ({ page }) => {
+    await page.goto("/agencias-y-gestorias");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("webs de tus clientes");
+    for (const price of ["5,99 €", "9,99 €", "19,99 €"]) await expect(page.getByText(price).first()).toBeVisible();
+    await expect(page.getByText("Unos 16 clientes completos al mes")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(/cumplimiento legal garantizado/i);
+    await page.getByRole("link", { name: /Crear cuenta de agencia/ }).click();
+    await expect(page).toHaveURL(/\/registro\?tipo=agencia/);
+    await expect(page.getByRole("radio", { name: /Agencia o gestoría/ })).toBeChecked();
+    await expect(page.getByRole("radio", { name: /Mi negocio/ })).not.toBeChecked();
+  });
+
   test("la portada enlaza a las guías y tiene URL canónica", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
@@ -104,6 +117,7 @@ test.describe("Web pública", () => {
     const sitemap = await (await request.get("/sitemap.xml")).text();
     expect(sitemap).toContain("/generador-aviso-legal");
     expect(sitemap).toContain("/guias/rgpd-para-autonomos");
+    expect(sitemap).toContain("/agencias-y-gestorias");
     expect(sitemap).toContain("<lastmod>");
     expect(sitemap).not.toContain("/panel");
     const robots = await (await request.get("/robots.txt")).text();

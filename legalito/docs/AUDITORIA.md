@@ -124,3 +124,37 @@ Los cupos de 20 y 50 documentos al mes cobran todo su sentido si una cuenta pued
 | Exportación HTML abierta desde disco | Sin enlaces rotos; fuentes y menú móvil funcionando |
 
 El área privada no se ha modificado en esta ronda (solo precios por defecto, ya cubiertos por las pruebas unitarias).
+
+---
+
+# Ronda 5 · Agencias y gestorías, banner de cookies y correcciones
+
+Objetivo: abrir el canal con más potencial (agencias web, gestorías y consultores que gestionan muchas webs) y añadir valor recurrente que justifique la suscripción.
+
+## Nuevas funciones
+| Función | Detalle |
+| --- | --- |
+| **Modo agencia / gestoría** | Registro como «Agencia o gestoría» o activación desde el panel. Alta de clientes (nombre y notas internas), un formulario y unos documentos por cliente, selector de cliente en todo el panel, estados por cliente (sin empezar, en curso, listo, generado), archivar y restaurar sin perder documentos. La facturación y el cupo son de la agencia y se comparten entre clientes; al contratar desde un cliente se generan sus documentos. El pago único no se ofrece para clientes. |
+| **Marca blanca** | Los PDF, el HTML y el banner no muestran la marca Legalito: la agencia los entrega como parte de su trabajo. |
+| **Banner de consentimiento de cookies** | Incluido en las suscripciones. Categorías deducidas del formulario (preferencias, analítica, publicidad), color y posición configurables, código autónomo para pegar en la web, página de ejemplo para probarlo, instrucciones para marcar scripts e iframes, enlace para cambiar la elección, actualización del modo de consentimiento de Google. «Rechazar» con el mismo nivel y estilo que «Aceptar». |
+| **Página /agencias-y-gestorias** | Propuesta, casos de uso, pasos, funciones, planes con equivalencia en clientes al mes y FAQ con datos estructurados. Enlazada en la cabecera, el pie, precios y el sitemap. |
+| Administración | Las agencias aparecen con su número de clientes; los documentos indican a qué agencia pertenece cada cliente. |
+
+## Defectos corregidos
+| Gravedad | Defecto | Corrección |
+| --- | --- | --- |
+| Media | **Generaciones simultáneas podían superar el cupo** (limitación conocida de la ronda 3) | Cupo comprobado en `record_document_version` con bloqueo de la suscripción. Prueba con 8 generaciones concurrentes: solo entran las que caben. |
+| Media | `record_document_version` aceptaba una suscripción o compra de otra cuenta (solo lo impedía la aplicación) | Ahora lo rechaza la base de datos. |
+| Baja | Al activarse una suscripción sin formulario completado se registraba un error falso | Se omite la generación inicial si no hay formulario. |
+| Baja | Botones «Abrir cliente» con nombre accesible distinto del texto visible (WCAG 2.5.3) | Detectado por las pruebas de accesibilidad y corregido. |
+
+## Resultado de las pruebas
+| Suite | Resultado |
+| --- | --- |
+| Unitarias + base de datos + flujos (incluye jerarquía de agencias, aislamiento, cupo compartido y concurrencia, metadatos de Stripe manipulados, banner) | **125 / 125** |
+| E2E área privada con accesibilidad (incluye recorrido completo de agencia, cookie de cliente manipulada y banner funcionando en el navegador: rechazar, aceptar por categoría y retirar) | **18 / 18** |
+| E2E pública con accesibilidad (incluye la página de agencias y el registro como agencia) | **87 / 87** |
+
+## Pendiente para el propietario
+- Revisión jurídica de los textos del banner y de la página de agencias, y valorar una cláusula de encargo de tratamiento en las condiciones para agencias (ver `docs/LAUNCH_CHECKLIST.md`).
+- Aplicar las migraciones 0700 y 0800 en Supabase.

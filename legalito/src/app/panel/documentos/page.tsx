@@ -11,13 +11,16 @@ import { PublishGuideList } from "@/components/app/publish-guide";
 import { QuotaMeter } from "@/components/app/quota-meter";
 import { listDocuments, getMyEntitlements } from "@/lib/data/panel";
 import { documentTypeName, DOCUMENT_TYPES } from "@/lib/documents/registry";
+import { requireOrganization } from "@/lib/auth";
+import { accountLabel } from "@/lib/accounts";
 
 export const metadata: Metadata = { title: "Mis documentos" };
 
 const ICON = { aviso_legal: FileCheck2, privacidad: ShieldCheck, cookies: Cookie } as Record<string, typeof FileText>;
 
 export default async function DocumentsPage({ searchParams }: PageProps<"/panel/documentos">) {
-  const [docs, ent, sp] = await Promise.all([listDocuments(), getMyEntitlements(), searchParams]);
+  const [docs, ent, sp, { org, account }] = await Promise.all([listDocuments(), getMyEntitlements(), searchParams, requireOrganization()]);
+  const client = org.id !== account.root.id ? accountLabel(org) : null;
   const anyUpdate = docs.some((d) => d.updateAvailable);
   const anyDemo = docs.some((d) => d.current?.template?.is_demo);
   const ordered = DOCUMENT_TYPES.map((t) => docs.find((d) => d.document_type === t.code)).filter((d): d is NonNullable<typeof d> => Boolean(d));
@@ -25,8 +28,8 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/panel/
   return (
     <>
       <PageHeader
-        title="Mis documentos"
-        description="Descárgalos, copia el código para tu web y regenéralos cuando cambie tu negocio."
+        title={client ? `Documentos de ${client}` : "Mis documentos"}
+        description={client ? "Descárgalos para entregárselos o copia el código HTML para publicarlos en su web." : "Descárgalos, copia el código para tu web y regenéralos cuando cambie tu negocio."}
         actions={docs.length > 0 ? <LinkButton href="/panel/generador" variant="secondary">Actualizar respuestas</LinkButton> : undefined}
       />
 

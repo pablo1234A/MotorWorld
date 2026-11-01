@@ -188,7 +188,18 @@ export async function generateDocuments(input: GenerateInput): Promise<Generated
           p_generated_by: input.userId,
         })
         .single();
-      if (error) throw error;
+      if (error) {
+        // El cupo también se comprueba en base de datos (generaciones simultáneas).
+        if (/quota_exceeded/.test(error.message)) {
+          throw new DocumentGenerationError(
+            results.length
+              ? `Has alcanzado el cupo de tu plan: se han generado ${results.length} de ${composed.length} documentos. El resto podrás generarlo cuando se renueve el cupo o si cambias de plan.`
+              : "Has alcanzado el cupo de documentos de tu plan en este periodo. Se renueva con tu próxima factura o puedes cambiar a un plan superior.",
+            "limit_reached",
+          );
+        }
+        throw error;
+      }
       results.push({
         documentType: c.documentType,
         versionId,
@@ -202,7 +213,7 @@ export async function generateDocuments(input: GenerateInput): Promise<Generated
     if (consumed && results.length === 0 && source.type === "purchase") {
       await db.rpc("release_purchase_generation", { p_purchase_id: source.purchaseId });
     }
-    await logError("documents.generate", e, { organizationId: input.organizationId, batchKey: input.batchKey });
+    if (!(e instanceof DocumentGenerationError)) await logError("documents.generate", e, { organizationId: input.organizationId, batchKey: input.batchKey });
     throw e instanceof DocumentGenerationError
       ? e
       : new DocumentGenerationError("No hemos podido generar tus documentos. Inténtalo de nuevo en unos minutos.", "internal");

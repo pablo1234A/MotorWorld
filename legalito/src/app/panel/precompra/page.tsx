@@ -16,7 +16,8 @@ import { DISCLAIMER } from "@/config/site";
 export const metadata: Metadata = { title: "Elige tu modalidad" };
 
 export default async function PrePurchasePage({ searchParams }: PageProps<"/panel/precompra">) {
-  await requireOrganization();
+  const { org, account } = await requireOrganization();
+  const isClient = org.id !== account.root.id;
   const [form, ent, sp] = await Promise.all([getFormStatus(), getMyEntitlements(), searchParams]);
   if (!form.completed) redirect("/panel/generador");
   // Un suscriptor activo no necesita comprar; quien tiene un pago único sí puede pasarse a la suscripción.
@@ -26,7 +27,8 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
   const db = createAdminClient();
   const all = await listActiveProducts(db);
   // Mismo orden que en la web pública: suscripciones primero y el pago único como alternativa.
-  const products = [...all.filter((p) => p.kind === "subscription"), ...all.filter((p) => p.kind === "one_time")];
+  // Los clientes de una agencia se generan con la suscripción de la agencia: no se ofrece el pago único.
+  const products = [...all.filter((p) => p.kind === "subscription"), ...(isClient ? [] : all.filter((p) => p.kind === "one_time"))];
   const plans: CheckoutPlan[] = await Promise.all(
     products.map(async (p) => ({
       code: p.code,
@@ -46,6 +48,11 @@ export default async function PrePurchasePage({ searchParams }: PageProps<"/pane
       <TrackEvent name="purchase_view" />
       <PageHeader title="Elige cómo quieres obtener tus documentos" description="Después del pago generaremos tus documentos automáticamente con las respuestas que has revisado." />
       <div className="mb-6 space-y-3">
+        {isClient && (
+          <Alert tone="info" title="Suscripción de tu agencia">
+            La suscripción se contrata en tu cuenta principal y su cupo se comparte entre todos tus clientes. Al activarla generaremos los documentos de este cliente.
+          </Alert>
+        )}
         {hasPurchase && (
           <Alert tone="info" title="Ya tienes una compra de pago único">
             Puedes seguir usando tus generaciones disponibles. Con la suscripción recibirás además las nuevas versiones revisadas de las plantillas.

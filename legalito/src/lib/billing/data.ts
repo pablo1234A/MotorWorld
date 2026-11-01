@@ -3,11 +3,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProductRow, PurchaseRow, SubscriptionRow } from "@/lib/db/types";
 import { computeEntitlements, type Entitlements } from "./entitlements";
 
-/** Carga los datos económicos de una organización y calcula sus permisos. */
+/**
+ * Carga los datos económicos de una organización y calcula sus permisos.
+ * Los clientes de una agencia usan la suscripción (y el cupo compartido) de la
+ * cuenta principal; las compras de pago único solo sirven a la cuenta que las pagó.
+ */
 export async function loadEntitlements(db: SupabaseClient, organizationId: string): Promise<Entitlements> {
+  const billingOrg = await billingOrganizationId(db, organizationId);
+  const isClient = billingOrg !== organizationId;
   const [subs, purchases, products] = await Promise.all([
-    db.from("subscriptions").select("*").eq("organization_id", organizationId),
-    db.from("purchases").select("*").eq("organization_id", organizationId),
+    db.from("subscriptions").select("*").eq("organization_id", billingOrg),
+    isClient ? Promise.resolve({ data: [], error: null }) : db.from("purchases").select("*").eq("organization_id", organizationId),
     db.from("products").select("*"),
   ]);
   for (const r of [subs, purchases, products]) if (r.error) throw r.error;
@@ -18,12 +24,23 @@ export async function loadEntitlements(db: SupabaseClient, organizationId: strin
   for (const s of subscriptions.filter((x) => ["active", "trialing"].includes(x.status))) {
     usage[s.id] = await documentsUsedInPeriod(db, s);
   }
-  return computeEntitlements({
+  const ent = computeEntitlements({
     subscriptions,
     purchases: (purchases.data ?? []) as PurchaseRow[],
     products: (products.data ?? []) as ProductRow[],
     usage,
   });
+  if (isClient && !ent.canGenerate && !ent.quota && !ent.paymentIssue) {
+    ent.blockedReason = "Para generar los documentos de tus clientes necesitas una suscripción activa en tu cuenta de agencia.";
+  }
+  return ent;
+}
+
+/** Cuenta que factura: la agencia para sus clientes, la propia cuenta en el resto de casos. */
+export async function billingOrganizationId(db: SupabaseClient, organizationId: string): Promise<string> {
+  const { data, error } = await db.from("organizations").select("parent_organization_id").eq("id", organizationId).maybeSingle();
+  if (error) throw error;
+  return (data?.parent_organization_id as string | null) ?? organizationId;
 }
 
 /** Inicio del periodo de facturación actual (o los últimos 30 días si Stripe no lo informa). */

@@ -26,6 +26,8 @@ Navegador ──► Next.js 16 (Vercel) ──► Supabase (PostgreSQL + Auth + 
 ## Modelo de datos
 
 - `profiles` (1:1 `auth.users`) → `organizations` (creada automáticamente al registrarse) ← `organization_members`.
+- **Agencias y gestorías**: `organizations.account_type` (`business` | `agency`). Los clientes de una agencia son organizaciones hijas (`parent_organization_id`) con sus propios datos, formularios y documentos. La facturación (cliente de Stripe, suscripción, cupo) vive siempre en la cuenta principal; `loadEntitlements` resuelve la cuenta que paga. Disparador `organizations_hierarchy_guard` y función `create_client_organization` protegen la jerarquía en base de datos.
+- **Cuenta activa**: la cookie `lg_cuenta` solo indica en qué cliente se trabaja; `getAccount()` la valida contra las membresías del usuario (RLS) y la ignora si no corresponde.
 - `user_roles` (`admin`, `support`, `legal_reviewer`).
 - Comercial: `products` (alcance configurable), `subscriptions`, `payments`, `purchases` (pago único con versiones de plantilla congeladas y límite de generaciones), `stripe_events` (idempotencia).
 - Documental: `document_types`, `templates` → `template_versions` (estado, revisión jurídica, contenido inmutable tras revisión), `form_responses` (borrador/completado), `documents` → `document_versions` (versión de plantilla usada, hash, rutas privadas, revocación).

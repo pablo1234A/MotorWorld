@@ -284,10 +284,11 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
          values ($1, '0.2.0-demo', '{"title":"x","sections":[]}', 1, true) returning id`,
         [templateId],
       );
+      const purchase = await db.pool.query("select id from public.purchases where organization_id = $1", [bob.orgId]);
       const call = (key: string) =>
         db.pool.query(
-          `select * from public.record_document_version($1, $2, 'aviso_legal', 'Aviso legal', $3, null, '{}', 'purchase', null, null, $4, true, 'a.html', 'a.pdf', $5, $6)`,
-          [randomUUID(), bob.orgId, tv.rows[0].id, key, "a".repeat(64), bob.userId],
+          `select * from public.record_document_version($1, $2, 'aviso_legal', 'Aviso legal', $3, null, '{}', 'purchase', null, $7, $4, true, 'a.html', 'a.pdf', $5, $6)`,
+          [randomUUID(), bob.orgId, tv.rows[0].id, key, "a".repeat(64), bob.userId, purchase.rows[0].id],
         );
       const v1 = await call("k1");
       const v2 = await call("k2");
@@ -318,6 +319,142 @@ describe.skipIf(!available)("Base de datos: RLS, privilegios y reglas de negocio
           "insert into public.legal_updates (title, summary, status, published_at) values ('Cambio', 'Resumen del cambio', 'published', now())",
         ),
       ).rejects.toThrow(/legal_updates_review_required/);
+    });
+  });
+
+  describe("Modo agencia / gestoría", () => {
+    let agency: { userId: string; orgId: string };
+    let clientA: string;
+    let clientB: string;
+    let subId: string;
+    let tvId: string;
+
+    beforeAll(async () => {
+      agency = await createAuthUser(db.pool, "agencia@example.com", { full_name: "Agencia", account_type: "agency" });
+      const tv = await db.pool.query(
+        `insert into public.template_versions (template_id, version_label, content, questionnaire_version, is_demo)
+         values ($1, '0.3.0-demo', '{"title":"x","sections":[]}', 1, true) returning id`,
+        [templateId],
+      );
+      tvId = tv.rows[0].id;
+      // Alta real (confirmada) de dos clientes con la sesión de la agencia.
+      const create = async (name: string) => {
+        const c = await db.pool.connect();
+        try {
+          await c.query("begin");
+          await c.query("set local role authenticated");
+          await c.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: agency.userId, role: "authenticated" })]);
+          const r = await c.query("select public.create_client_organization($1) as id", [name]);
+          await c.query("commit");
+          return r.rows[0].id as string;
+        } finally {
+          c.release();
+        }
+      };
+      clientA = await create("Panadería Sol");
+      clientB = await create("Clínica Mar");
+    });
+
+    it("el registro como agencia crea una cuenta principal de tipo agencia", async () => {
+      const r = await db.pool.query("select account_type, parent_organization_id from public.organizations where id = $1", [agency.orgId]);
+      expect(r.rows[0]).toEqual({ account_type: "agency", parent_organization_id: null });
+      const other = await db.pool.query("select account_type from public.organizations where id = $1", [alice.orgId]);
+      expect(other.rows[0].account_type).toBe("business");
+    });
+
+    it("solo una agencia puede dar de alta clientes", async () => {
+      await as(db.pool, "authenticated", alice.userId, async (q) => {
+        await expect(q("select public.create_client_organization('Cliente')")).rejects.toThrow(/modo agencia/);
+      });
+      await as(db.pool, "authenticated", agency.userId, async (q) => {
+        await expect(q("select public.create_client_organization('   ')")).rejects.toThrow(/entre 1 y 120/);
+        const tmp = (await q("select public.create_client_organization('Taller Norte') as id")).rows[0].id;
+        const visible = (await q("select id, parent_organization_id, client_name from public.organizations order by created_at")).rows;
+        expect(visible.map((r) => r.id)).toEqual([agency.orgId, clientA, clientB, tmp]);
+        expect(visible[1]).toMatchObject({ parent_organization_id: agency.orgId, client_name: "Panadería Sol" });
+        const member = await q("select role from public.organization_members where organization_id = $1", [tmp]);
+        expect(member.rows).toEqual([{ role: "owner" }]);
+      });
+      await as(db.pool, "anon", null, async (q) => {
+        await expect(q("select public.create_client_organization('X')")).rejects.toThrow(/permission denied/);
+      });
+    });
+
+    it("los clientes de una agencia son invisibles para otros usuarios", async () => {
+      await as(db.pool, "authenticated", alice.userId, async (q) => {
+        expect((await q("select id from public.organizations where id = any($1)", [[clientA, clientB, agency.orgId]])).rowCount).toBe(0);
+        const upd = await q("update public.organizations set client_name = 'Hackeado' where id = $1", [clientA]);
+        expect(upd.rowCount).toBe(0);
+      });
+    });
+
+    it("protege la jerarquía: no se puede mover un cliente, archivar la cuenta principal ni anidar agencias", async () => {
+      await as(db.pool, "authenticated", agency.userId, async (q) => {
+        await expect(q("update public.organizations set parent_organization_id = null where id = $1", [clientA])).rejects.toThrow(/permission denied/);
+        await expect(q("update public.organizations set archived_at = now() where id = $1", [agency.orgId])).rejects.toThrow(/organizations_root_not_archived/);
+        await expect(q("update public.organizations set account_type = 'agency' where id = $1", [clientA])).rejects.toThrow(/no puede ser a su vez una agencia/);
+        await expect(q("update public.organizations set account_type = 'business' where id = $1", [agency.orgId])).rejects.toThrow(/Archiva primero/);
+        const ok = await q("update public.organizations set client_name = 'Panadería Sol SL', client_notes = 'Web en WordPress' where id = $1", [clientA]);
+        expect(ok.rowCount).toBe(1);
+      });
+      await expect(
+        db.pool.query("insert into public.organizations (owner_id, parent_organization_id, client_name) values ($1, $2, 'X')", [alice.userId, agency.orgId]),
+      ).rejects.toThrow(/titular de la agencia/);
+      await expect(
+        db.pool.query("insert into public.organizations (owner_id, parent_organization_id, client_name) values ($1, $2, 'X')", [agency.userId, clientA]),
+      ).rejects.toThrow(/cuenta principal de tipo agencia/);
+    });
+
+    it("el cupo de la suscripción de la agencia se comparte entre clientes y se aplica en base de datos", async () => {
+      const product = await db.pool.query(
+        `insert into public.products (code, name, kind, price_cents, billing_interval, included_document_types, documents_per_period, active)
+         values ('test_quota_3', 'Prueba', 'subscription', 100, 'month', array['aviso_legal'], 3, false) returning id`,
+      );
+      const sub = await db.pool.query(
+        `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, status, current_period_start)
+         values ($1, $2, 'sub_agency', 'cus_agency', 'active', now() - interval '1 day') returning id`,
+        [agency.orgId, product.rows[0].id],
+      );
+      subId = sub.rows[0].id;
+      const gen = (org: string, key: string, sid = subId) =>
+        db.pool.query(
+          `select * from public.record_document_version($1, $2, 'aviso_legal', 'Aviso legal', $3, null, '{}', 'subscription', $4, null, $5, true, 'a.html', 'a.pdf', $6, $7)`,
+          [randomUUID(), org, tvId, sid, key, "b".repeat(64), agency.userId],
+        );
+      await gen(clientA, "ag:1");
+      await gen(clientB, "ag:2");
+      await gen(agency.orgId, "ag:3");
+      await expect(gen(clientA, "ag:4")).rejects.toThrow(/quota_exceeded/);
+      // La suscripción de la agencia no sirve para cuentas ajenas.
+      await expect(gen(alice.orgId, "ag:5")).rejects.toThrow(/no corresponde/);
+      await as(db.pool, "authenticated", agency.userId, async (q) => {
+        const docs = await q("select organization_id from public.documents where organization_id = any($1)", [[clientA, clientB, agency.orgId]]);
+        expect(docs.rowCount).toBe(3);
+      });
+    });
+
+    it("las generaciones simultáneas nunca superan el cupo", async () => {
+      await db.pool.query("update public.products set documents_per_period = 6 where code = 'test_quota_3'");
+      const attempts = Array.from({ length: 8 }, (_, i) =>
+        db.pool.query(
+          `select * from public.record_document_version($1, $2, 'aviso_legal', 'Aviso legal', $3, null, '{}', 'subscription', $4, null, $5, true, 'a.html', 'a.pdf', $6, $7)`,
+          [randomUUID(), i % 2 ? clientA : clientB, tvId, subId, `race:${i}`, "c".repeat(64), agency.userId],
+        ),
+      );
+      const results = await Promise.allSettled(attempts);
+      expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(3);
+      const used = await db.pool.query("select count(*)::int as n from public.document_versions where subscription_id = $1", [subId]);
+      expect(used.rows[0].n).toBe(6);
+    });
+
+    it("una compra de pago único no se puede usar en otra cuenta", async () => {
+      const purchase = await db.pool.query("select id from public.purchases where organization_id = $1", [bob.orgId]);
+      await expect(
+        db.pool.query(
+          `select * from public.record_document_version($1, $2, 'aviso_legal', 'Aviso legal', $3, null, '{}', 'purchase', null, $4, 'steal:1', true, 'a.html', 'a.pdf', $5, null)`,
+          [randomUUID(), clientA, tvId, purchase.rows[0].id, "d".repeat(64)],
+        ),
+      ).rejects.toThrow(/no corresponde/);
     });
   });
 });

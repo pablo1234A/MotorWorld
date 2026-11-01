@@ -70,7 +70,7 @@ function ResendConfirmation() {
   );
 }
 
-export function SignUpForm({ acquisition }: { acquisition: Record<string, string> }) {
+export function SignUpForm({ acquisition, defaultAccountType = "business" }: { acquisition: Record<string, string>; defaultAccountType?: "business" | "agency" }) {
   const [state, action] = useActionState(signUp, initialFormState);
   const fe = state.fieldErrors ?? {};
 
@@ -94,6 +94,24 @@ export function SignUpForm({ acquisition }: { acquisition: Record<string, string
       {Object.entries(acquisition).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
+      <fieldset>
+        <legend className="mb-2 block text-sm font-medium text-ink">Tipo de cuenta</legend>
+        <div className="grid grid-cols-2 gap-2.5">
+          {[
+            { value: "business", title: "Mi negocio", body: "Textos legales de tu web" },
+            { value: "agency", title: "Agencia o gestoría", body: "Webs de tus clientes" },
+          ].map((o) => (
+            <label
+              key={o.value}
+              className="relative cursor-pointer rounded-xl border border-line-strong bg-white px-3.5 py-3 transition-colors has-[:checked]:border-navy has-[:checked]:ring-1 has-[:checked]:ring-navy has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-blue/25"
+            >
+              <input type="radio" name="account_type" value={o.value} defaultChecked={o.value === defaultAccountType} className="sr-only" />
+              <span className="block text-sm font-semibold text-navy-950">{o.title}</span>
+              <span className="mt-0.5 block text-xs text-muted">{o.body}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <Field id="full_name" label="Nombre" required error={fe.full_name}>
         <Input id="full_name" name="full_name" autoComplete="name" required aria-invalid={!!fe.full_name} />
       </Field>

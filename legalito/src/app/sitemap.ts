@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "", priority: 1, changeFrequency: "weekly" },
     { path: "/como-funciona", priority: 0.8, changeFrequency: "monthly" },
     { path: "/precios", priority: 0.9, changeFrequency: "monthly" },
+    { path: "/agencias-y-gestorias", priority: 0.9, changeFrequency: "monthly" },
     { path: "/preguntas-frecuentes", priority: 0.7, changeFrequency: "monthly" },
     { path: "/contacto", priority: 0.5, changeFrequency: "yearly" },
     ...LANDINGS.map((l) => ({ path: `/${l.slug}`, priority: 0.8, changeFrequency: "monthly" as const })),

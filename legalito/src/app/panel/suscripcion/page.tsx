@@ -16,7 +16,9 @@ import type { PaymentRow, ProductRow } from "@/lib/db/types";
 export const metadata: Metadata = { title: "Mi suscripción" };
 
 export default async function BillingPage({ searchParams }: PageProps<"/panel/suscripcion">) {
-  const { org } = await requireOrganization();
+  const { account, org: active } = await requireOrganization();
+  const org = account.root;
+  const inClient = active.id !== org.id;
   const db = await createSessionClient();
   const [ent, { data: payments }, { data: products }, sp] = await Promise.all([
     getMyEntitlements(),
@@ -33,6 +35,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/panel/su
       <PageHeader title="Mi suscripción" description="Consulta tu plan, tus pagos y gestiona tu método de pago o la cancelación." />
 
       <div className="mb-6 space-y-3">
+        {inClient && <Alert tone="info">La suscripción y los pagos son de tu cuenta de agencia; el cupo se comparte entre todos tus clientes.</Alert>}
         {sp.portal === "no-disponible" && <Alert tone="info">Todavía no tienes datos de facturación en Stripe. Aparecerán tras tu primera compra.</Alert>}
         {sp.portal === "error" && <Alert tone="danger">No hemos podido abrir el portal de facturación. Inténtalo de nuevo en unos minutos.</Alert>}
         {ent.quota && ent.quota.remaining === 0 && (

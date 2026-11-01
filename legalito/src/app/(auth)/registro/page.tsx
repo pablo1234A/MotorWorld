@@ -29,7 +29,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/registro"
           Accede
         </Link>
       </p>
-      <SignUpForm acquisition={acquisition} />
+      <SignUpForm acquisition={acquisition} defaultAccountType={sp.tipo === "agencia" ? "agency" : "business"} />
     </>
   );
 }

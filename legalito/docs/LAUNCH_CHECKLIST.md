@@ -7,6 +7,8 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 - [ ] Revisión del **catálogo de cookies** y de las reglas de adaptación (qué bloque aplica a qué caso).
 - [ ] Revisión de las **páginas legales propias** (`src/content/legal-pages.ts`): completar datos del titular, regiones de proveedores, política de reembolsos, desistimiento en suscripción y límites de responsabilidad. Después `NEXT_PUBLIC_LEGAL_PAGES_REVIEWED=true`.
 - [ ] Revisión de textos comerciales (sin promesas de cumplimiento) y de la cláusula de consentimiento de contenido digital en la precompra.
+- [ ] Revisión de los **textos del banner de cookies** (`src/lib/cookie-banner/index.ts`) junto con la plantilla de la política de cookies.
+- [ ] Revisión de los textos de la página **para agencias** y de las condiciones de contratación para el uso por cuenta de terceros (la agencia introduce datos de sus clientes: valorar cláusula de encargo de tratamiento).
 - [ ] Revisión jurídica de las **guías** (`src/content/guides.ts`) antes de indexarlas.
 - [ ] Registro de actividades de tratamiento y contratos de encargo con Supabase, Vercel, Stripe y Resend.
 - [ ] Confirmar con gestoría: IVA, facturación de pagos únicos y suscripciones, alta censal de la actividad.
@@ -14,6 +16,7 @@ Legalito **no está listo para cobrar a clientes reales** hasta completar los pu
 ## Bloqueantes técnicos / configuración
 - [ ] Proyectos Supabase staging y producción (UE), migraciones aplicadas, plantillas de email, SMTP con Resend, primer admin.
 - [ ] Stripe: productos y precios (pago único, Básico, Medium y Business), webhook de producción, portal **con cambio de plan entre los tres planes**, Smart Retries, email de próxima renovación.
+- [ ] Aplicar las migraciones `0700_agency_clients` y `0800_cookie_banner_feature` (en Supabase: `supabase db push`).
 - [ ] Confirmar los cupos de documentos de cada plan (Básico 20, Medium 50, Business ilimitados) en /admin/productos.
 - [ ] Resend: dominio verificado (SPF/DKIM/DMARC).
 - [ ] Vercel Pro con dominio, variables de producción y `APP_ENV=production`.

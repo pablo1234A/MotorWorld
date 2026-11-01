@@ -11,7 +11,7 @@ export default async function AdminDocumentsPage() {
   const db = await createSessionClient();
   const [{ data: versions }, { data: orgs }, { data: tvs }] = await Promise.all([
     db.from("document_versions").select("id, organization_id, version_number, template_version_id, entitlement_source, is_demo, generated_at, revoked_at, documents!document_versions_document_id_fkey(document_type)").order("generated_at", { ascending: false }).limit(200),
-    db.from("organizations").select("id, legal_name"),
+    db.from("organizations").select("id, legal_name, client_name, parent_organization_id"),
     db.from("template_versions").select("id, version_label"),
   ]);
   return (
@@ -22,7 +22,20 @@ export default async function AdminDocumentsPage() {
           {(versions ?? []).map((v) => (
             <tr key={v.id}>
               <td className="text-muted">{fmtDate(v.generated_at, true)}</td>
-              <td>{orgs?.find((o) => o.id === v.organization_id)?.legal_name ?? "—"}</td>
+              <td>
+                {(() => {
+                  const o = orgs?.find((x) => x.id === v.organization_id);
+                  if (!o) return "—";
+                  return o.parent_organization_id ? (
+                    <>
+                      {o.client_name ?? o.legal_name}
+                      <span className="block text-xs text-muted">Cliente de {orgs?.find((x) => x.id === o.parent_organization_id)?.legal_name ?? "agencia"}</span>
+                    </>
+                  ) : (
+                    (o.legal_name ?? "—")
+                  );
+                })()}
+              </td>
               <td>{documentTypeName((v.documents as unknown as { document_type: string }).document_type)}</td>
               <td>v{v.version_number}</td>
               <td className="text-muted">{tvs?.find((t) => t.id === v.template_version_id)?.version_label ?? "—"}</td>

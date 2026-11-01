@@ -22,7 +22,7 @@ export interface PublicPlan {
   includesUpdates: boolean;
 }
 
-const SUB_FEATURES = ["Aviso legal, privacidad y cookies", "Descarga en PDF y código HTML", "Nuevas versiones revisadas de las plantillas", "Avisos de cambios relevantes", "Cancela cuando quieras"];
+const SUB_FEATURES = ["Aviso legal, privacidad y cookies", "Descarga en PDF y código HTML", "Banner de consentimiento de cookies", "Nuevas versiones revisadas de las plantillas", "Avisos de cambios relevantes", "Cancela cuando quieras"];
 
 export const DEFAULT_PLANS: PublicPlan[] = [
   {

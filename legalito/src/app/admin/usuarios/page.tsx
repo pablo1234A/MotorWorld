@@ -16,7 +16,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
   const { data: profiles } = await query;
   const ids = (profiles ?? []).map((p) => p.id);
   const [{ data: orgs }, { data: subs }, { data: purchases }] = await Promise.all([
-    db.from("organizations").select("id, owner_id, legal_name, nif, business_type").in("owner_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
+    db.from("organizations").select("id, owner_id, legal_name, nif, business_type, account_type, parent_organization_id, archived_at").in("owner_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
     db.from("subscriptions").select("organization_id, status"),
     db.from("purchases").select("organization_id, status"),
   ]);
@@ -30,7 +30,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       <Panel>
         <DataTable headers={["Cliente", "Negocio", "NIF", "Plan", "Alta", "Comunicaciones"]}>
           {(profiles ?? []).map((p) => {
-            const org = orgs?.find((o) => o.owner_id === p.id);
+            const org = orgs?.find((o) => o.owner_id === p.id && !o.parent_organization_id);
+            const clientCount = orgs?.filter((o) => o.parent_organization_id === org?.id && !o.archived_at).length ?? 0;
             const sub = subs?.find((s) => s.organization_id === org?.id);
             const pur = purchases?.find((x) => x.organization_id === org?.id && x.status === "active");
             return (
@@ -42,6 +43,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                 <td className="text-muted">
                   {org?.legal_name ?? "—"}
                   {org?.business_type && <span className="block text-xs">{org.business_type}</span>}
+                  {org?.account_type === "agency" && (
+                    <Badge tone="info" className="mt-1">
+                      Agencia · {clientCount} {clientCount === 1 ? "cliente" : "clientes"}
+                    </Badge>
+                  )}
                 </td>
                 <td className="font-mono text-xs text-muted">{maskTaxId(org?.nif)}</td>
                 <td>{sub ? <Badge tone="info">Suscripción · {sub.status}</Badge> : pur ? <Badge tone="success">Pago único</Badge> : <Badge>Sin plan</Badge>}</td>

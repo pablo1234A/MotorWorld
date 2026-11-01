@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { DISCLAIMER, legalNav, mainNav } from "@/config/site";
+import { DISCLAIMER, footerNav, legalNav } from "@/config/site";
 import { LANDINGS } from "@/content/landings";
 import { GUIDES } from "@/content/guides";
 
@@ -14,7 +14,7 @@ export function SiteFooter() {
             Aviso legal, política de privacidad y política de cookies para tu web, adaptados a tu negocio.
           </p>
         </div>
-        <FooterColumn title="Producto" links={mainNav} />
+        <FooterColumn title="Producto" links={footerNav} />
         <FooterColumn title="Soluciones" links={LANDINGS.map((l) => ({ href: `/${l.slug}`, label: l.navLabel }))} />
         <FooterColumn title="Guías" links={[...GUIDES.slice(0, 5).map((g) => ({ href: `/guias/${g.slug}`, label: g.navLabel })), { href: "/guias", label: "Todas las guías" }]} />
         <FooterColumn title="Legal" links={legalNav} />

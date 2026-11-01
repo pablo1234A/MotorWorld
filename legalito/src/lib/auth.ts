@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect, notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { createSessionClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -62,26 +63,60 @@ export const getProfile = cache(async (): Promise<ProfileRow | null> => {
   return (data as ProfileRow) ?? null;
 });
 
-/** Organización del usuario actual (resuelta por RLS a partir de su membresía). */
-export const getOrganization = cache(async (): Promise<OrganizationRow | null> => {
+/** Cookie con la cuenta en la que trabaja una agencia. Solo es una preferencia: se valida siempre contra las membresías. */
+export const ACTIVE_ORG_COOKIE = "lg_cuenta";
+
+export interface Account {
+  /** Cuenta principal: la que factura (cliente de Stripe, suscripción y cupo). */
+  root: OrganizationRow;
+  /** Cuenta en la que se trabaja ahora: la principal o uno de sus clientes. */
+  active: OrganizationRow;
+  isAgency: boolean;
+  /** Clientes de la agencia (incluidos los archivados), por nombre. */
+  clients: OrganizationRow[];
+}
+
+/**
+ * Cuentas visibles para el usuario (resueltas por RLS a partir de sus
+ * membresías). Nunca se confía en el identificador de la cookie: solo se usa
+ * si corresponde a una cuenta del propio usuario que no esté archivada.
+ */
+export const getAccount = cache(async (): Promise<Account | null> => {
   const user = await getSessionUser();
   if (!user) return null;
   const supabase = await createSessionClient();
-  const { data: membership } = await supabase
+  const { data: memberships } = await supabase
     .from("organization_members")
-    .select("organization_id")
+    .select("organization_id, created_at")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!membership) return null;
-  const { data } = await supabase.from("organizations").select("*").eq("id", membership.organization_id).maybeSingle();
-  return (data as OrganizationRow) ?? null;
+    .order("created_at", { ascending: true });
+  const ids = (memberships ?? []).map((m) => m.organization_id as string);
+  if (ids.length === 0) return null;
+  const { data } = await supabase.from("organizations").select("*").in("id", ids);
+  const orgs = (data ?? []) as OrganizationRow[];
+  const root = ids.map((id) => orgs.find((o) => o.id === id)).find((o): o is OrganizationRow => Boolean(o && !o.parent_organization_id));
+  if (!root) return null;
+  const isAgency = root.account_type === "agency";
+  const clients = orgs
+    .filter((o) => o.parent_organization_id === root.id)
+    .sort((a, b) => (a.client_name ?? "").localeCompare(b.client_name ?? "", "es"));
+  let active = root;
+  if (isAgency) {
+    const wanted = (await cookies()).get(ACTIVE_ORG_COOKIE)?.value;
+    const match = clients.find((c) => c.id === wanted && !c.archived_at);
+    if (match) active = match;
+  }
+  return { root, active, isAgency, clients };
 });
 
-export async function requireOrganization(): Promise<{ user: SessionUser; org: OrganizationRow }> {
+/** Cuenta activa del usuario actual. */
+export const getOrganization = cache(async (): Promise<OrganizationRow | null> => {
+  return (await getAccount())?.active ?? null;
+});
+
+export async function requireOrganization(): Promise<{ user: SessionUser; org: OrganizationRow; account: Account }> {
   const user = await requireUser();
-  const org = await getOrganization();
-  if (!org) throw new Error("La cuenta no tiene una organización asociada.");
-  return { user, org };
+  const account = await getAccount();
+  if (!account) throw new Error("La cuenta no tiene una organización asociada.");
+  return { user, org: account.active, account };
 }

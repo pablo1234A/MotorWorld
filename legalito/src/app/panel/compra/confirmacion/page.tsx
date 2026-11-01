@@ -19,7 +19,8 @@ export const metadata: Metadata = { title: "Confirmación de compra" };
  * El cumplimiento es idempotente y compatible con el webhook.
  */
 export default async function ConfirmationPage({ searchParams }: PageProps<"/panel/compra/confirmacion">) {
-  const { org } = await requireOrganization();
+  const { account } = await requireOrganization();
+  const org = account.root;
   const sp = await searchParams;
   const sessionId = typeof sp.session_id === "string" && /^cs_(test|live)_[A-Za-z0-9]+$/.test(sp.session_id) ? sp.session_id : null;
 

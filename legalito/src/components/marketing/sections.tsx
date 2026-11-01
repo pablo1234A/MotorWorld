@@ -155,6 +155,8 @@ export function PlanComparison({ plans }: { plans: PublicPlan[] }) {
     ["Vista previa antes de pagar", () => true],
     ["PDF y código HTML", () => true],
     ["Regenerar un solo documento", (p) => p.kind === "subscription"],
+    ["Banner de consentimiento de cookies", (p) => p.kind === "subscription"],
+    ["Gestión de varios clientes (agencias)", (p) => p.kind === "subscription"],
     ["Nuevas versiones revisadas", (p) => p.includesUpdates],
     ["Avisos de cambios relevantes", (p) => p.includesUpdates],
   ];

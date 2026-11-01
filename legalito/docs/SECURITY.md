@@ -20,6 +20,12 @@
 | Errores | `app_errors` sin trazas sensibles para el usuario; códigos de error visibles |
 | Privacidad | Analítica sin cookies; IP seudonimizada con sal; payloads de Stripe no almacenados; solicitud de supresión desde el panel |
 
+### Agencias (ronda 5)
+- La cuenta activa (cookie `lg_cuenta`) nunca autoriza nada: se valida contra las membresías del usuario y una cookie manipulada se ignora (probado en E2E).
+- El cupo de documentos se comprueba **dentro** de `record_document_version` con bloqueo de la suscripción: generaciones simultáneas no pueden superarlo (probado con 8 llamadas concurrentes). La función también exige que la suscripción sea de la cuenta que paga y que una compra de pago único sea de la propia cuenta.
+- Columnas de jerarquía (`parent_organization_id`, `owner_id`) no editables por el usuario; anidar agencias, mover clientes o archivar la cuenta principal lo impide la base de datos.
+- El banner de cookies escapa la configuración incrustada (`<`, U+2028/2029), valida color y URL de la política y no incluye la marca Legalito.
+
 ## Pendiente / recomendado antes de producción
 - Revisión de seguridad externa (pentest básico) y de la configuración de Supabase (Security Advisor).
 - Activar MFA para las cuentas de administración de Supabase, Stripe, Vercel, Resend y GitHub.

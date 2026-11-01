@@ -13,11 +13,15 @@ import { progress } from "@/lib/documents/questionnaire";
 import { prepareInput } from "@/lib/documents/compose";
 import { formatPrice } from "@/lib/billing/entitlements";
 import { documentTypeName } from "@/lib/documents/registry";
+import { accountLabel } from "@/lib/accounts";
+import { Building2 } from "lucide-react";
 
 export const metadata: Metadata = { title: "Inicio" };
 
 export default async function DashboardPage() {
-  const { user } = await requireOrganization();
+  const { user, org, account } = await requireOrganization();
+  const client = org.id !== account.root.id ? accountLabel(org) : null;
+  const activeClients = account.clients.filter((c) => !c.archived_at).length;
   const [profile, ent, docs, form, feed] = await Promise.all([getProfile(), getMyEntitlements(), listDocuments(), getFormStatus(), getUpdatesAndNotices()]);
   const firstName = profile?.full_name?.split(" ")[0];
   const draftProgress = form.draft ? progress(form.draft.answers).percent : null;
@@ -25,7 +29,11 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader title={firstName ? `Hola, ${firstName}` : "Tu panel"} description="Aquí tienes el estado de tu cuenta y de tus documentos legales." />
+      {client ? (
+        <PageHeader title={client} description="Estado del formulario y de los documentos legales de este cliente." />
+      ) : (
+        <PageHeader title={firstName ? `Hola, ${firstName}` : "Tu panel"} description="Aquí tienes el estado de tu cuenta y de tus documentos legales." />
+      )}
 
       <div className="space-y-4">
         {!user.emailConfirmed && (
@@ -37,6 +45,20 @@ export default async function DashboardPage() {
           <Alert tone="danger" title="Hay un problema con el pago de tu suscripción">
             Actualiza tu método de pago desde <Link href="/panel/suscripcion">Mi suscripción</Link> para seguir generando documentos.
           </Alert>
+        )}
+        {account.isAgency && !client && (
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue">
+                <Building2 className="h-5 w-5" aria-hidden />
+              </span>
+              <div>
+                <p className="font-semibold text-ink">{activeClients === 0 ? "Añade tu primer cliente" : `${activeClients} ${activeClients === 1 ? "cliente activo" : "clientes activos"}`}</p>
+                <p className="text-sm text-muted">Estás en tu cuenta principal. Elige un cliente arriba o gestiónalos desde Clientes.</p>
+              </div>
+            </div>
+            <LinkButton href="/panel/clientes" variant="secondary">Ir a clientes</LinkButton>
+          </div>
         )}
         {feed.notices.map((n) => (
           <Alert key={n.id} tone={n.level === "important" ? "warning" : "info"} title={n.title}>

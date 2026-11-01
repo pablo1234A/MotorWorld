@@ -38,6 +38,13 @@ async function main() {
   for (const [email, name] of users) {
     await db.query("insert into auth.users (email, raw_user_meta_data, email_confirmed_at) values ($1, $2, now())", [email, JSON.stringify({ full_name: name })]);
   }
+  // Agencias (registro con tipo de cuenta «agency») con plan Medium activo.
+  for (const [email, name] of [
+    ["agencia-desktop@legalito.test", "Estudio Norte"],
+    ["agencia-mobile@legalito.test", "Gestoría Sur"],
+  ]) {
+    await db.query("insert into auth.users (email, raw_user_meta_data, email_confirmed_at) values ($1, $2, now())", [email, JSON.stringify({ full_name: name, account_type: "agency" })]);
+  }
   await db.query("insert into public.user_roles (user_id, role) select id, 'admin' from auth.users where email = 'admin@legalito.test'");
   await db.query("update public.products set stripe_price_id = 'price_qa_one' where code = 'one_time_pack'");
   for (const code of ["subscription_basic", "subscription_medium", "subscription_business"]) {
@@ -56,6 +63,16 @@ async function main() {
       `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, stripe_price_id, status, amount_cents, currency, billing_interval, current_period_start, current_period_end)
        select $1, id, $2, $3, stripe_price_id, 'active', 599, 'eur', 'month', now() - interval '3 days', now() + interval '27 days' from public.products where code = 'subscription_basic'`,
       [org.id, `sub_qa_${email.split("@")[0]}`, `cus_qa_${email.split("@")[0]}`],
+    );
+  }
+  for (const email of ["agencia-desktop@legalito.test", "agencia-mobile@legalito.test"]) {
+    const key = email.split("@")[0];
+    const org = (await db.query("select o.id from public.organizations o join auth.users u on u.id = o.owner_id where u.email = $1 and o.parent_organization_id is null", [email])).rows[0];
+    await db.query("update public.organizations set stripe_customer_id = $1, legal_name = $2 where id = $3", [`cus_qa_${key}`, key === "agencia-desktop" ? "Estudio Norte SL" : "Gestoría Sur SL", org.id]);
+    await db.query(
+      `insert into public.subscriptions (organization_id, product_id, stripe_subscription_id, stripe_customer_id, stripe_price_id, status, amount_cents, currency, billing_interval, current_period_start, current_period_end)
+       select $1, id, $2, $3, stripe_price_id, 'active', 999, 'eur', 'month', now() - interval '3 days', now() + interval '27 days' from public.products where code = 'subscription_medium'`,
+      [org.id, `sub_qa_${key}`, `cus_qa_${key}`],
     );
   }
   await db.end();

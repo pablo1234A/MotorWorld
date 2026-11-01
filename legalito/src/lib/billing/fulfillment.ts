@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import type { ProductRow, SubscriptionRow } from "@/lib/db/types";
 import { audit, logError } from "@/lib/observability";
 import { sendEmail } from "@/lib/email/send";
-import { generateDocuments } from "@/lib/documents/service";
+import { generateDocuments, latestCompletedResponse } from "@/lib/documents/service";
 import { resolveActiveTemplate } from "@/lib/documents/templates-repo";
 import { formatPrice } from "./entitlements";
 import { customerId, getStripe, invoiceSubscriptionId, subscriptionPeriod, toIso } from "./stripe";
@@ -143,12 +143,24 @@ export async function fulfillCheckoutSession(sessionId: string): Promise<{ statu
 }
 
 async function tryInitialGeneration(organizationId: string, batchKey: string, email: string | null, purchaseId?: string) {
+  // Sin formulario completado no hay nada que generar (p. ej. una agencia que aún no ha dado de alta clientes).
+  if (!(await latestCompletedResponse(organizationId))) return;
   try {
     await generateDocuments({ organizationId, userId: null, batchKey, purchaseId, notifyEmail: email });
   } catch (e) {
     // No interrumpe el webhook: el cliente puede generar desde su panel y el error queda registrado.
     await logError("billing.initial_generation", e, { organizationId, batchKey });
   }
+}
+
+/**
+ * Cuenta cuyos documentos se generan al activar una suscripción: la indicada
+ * al iniciar el pago solo si es la propia cuenta o un cliente suyo.
+ */
+async function initialGenerationTarget(rootId: string, requested: string | undefined): Promise<string> {
+  if (!requested || requested === rootId || !/^[0-9a-f-]{36}$/i.test(requested)) return rootId;
+  const { data } = await createAdminClient().from("organizations").select("id").eq("id", requested).eq("parent_organization_id", rootId).is("archived_at", null).maybeSingle();
+  return (data?.id as string | undefined) ?? rootId;
 }
 
 // ---------------------------------------------------------------------------
@@ -209,7 +221,8 @@ export async function syncSubscription(subscriptionId: string): Promise<Subscrip
         organizationId: org.id,
       });
     }
-    await tryInitialGeneration(org.id, `subscription:${current.id}:initial`, org.owner_email);
+    const target = await initialGenerationTarget(org.id, sub.metadata?.generate_for);
+    await tryInitialGeneration(target, `subscription:${current.id}:initial`, org.owner_email);
   }
 
   const cancelScheduled = current.cancel_at_period_end || Boolean(current.cancel_at);

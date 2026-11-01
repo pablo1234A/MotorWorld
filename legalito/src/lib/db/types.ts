@@ -38,6 +38,13 @@ export interface OrganizationRow {
   website_url: string | null;
   activity: string | null;
   stripe_customer_id: string | null;
+  /** business: un negocio · agency: agencia o gestoría con clientes. */
+  account_type: "business" | "agency";
+  /** Solo clientes de una agencia: cuenta principal que los gestiona y paga. */
+  parent_organization_id: string | null;
+  client_name: string | null;
+  client_notes: string | null;
+  archived_at: string | null;
   created_at: string;
 }
 

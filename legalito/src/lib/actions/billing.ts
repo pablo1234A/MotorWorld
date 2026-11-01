@@ -26,7 +26,9 @@ const checkoutSchema = z.object({
  * precio, cliente y organización. El navegador solo elige el código del plan.
  */
 export async function startCheckout(_prev: FormState, formData: FormData): Promise<FormState> {
-  const { user, org } = await requireOrganization();
+  // Se factura siempre a la cuenta principal; «active» es la cuenta (o cliente) cuyo formulario se ha completado.
+  const { user, org: active, account } = await requireOrganization();
+  const org = account.root;
   const parsed = checkoutSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos no válidos." };
 
@@ -41,7 +43,10 @@ export async function startCheckout(_prev: FormState, formData: FormData): Promi
   if (!product) return { error: "El plan seleccionado no está disponible." };
   if (!product.stripe_price_id) return { error: "Este plan todavía no tiene un precio de Stripe configurado." };
 
-  if (!(await latestCompletedResponse(org.id))) return { error: "Completa el formulario antes de pagar." };
+  if (product.kind === "one_time" && active.id !== org.id) {
+    return { error: "El pago único es para un solo negocio. Para generar los documentos de tus clientes elige una suscripción." };
+  }
+  if (!(await latestCompletedResponse(active.id))) return { error: "Completa el formulario antes de pagar." };
 
   // No se vende nada cuyas plantillas no estén disponibles (en producción: aprobadas jurídicamente).
   const availability = await templatesAvailable(db, product.included_document_types);
@@ -71,7 +76,8 @@ export async function startCheckout(_prev: FormState, formData: FormData): Promi
       customer = (fresh?.stripe_customer_id as string) ?? customer;
     }
 
-    const metadata = { organization_id: org.id, product_code: product.code, user_id: user.id };
+    // generate_for: cuenta cuyos documentos se generan al activarse el pago (se valida de nuevo al cumplirlo).
+    const metadata = { organization_id: org.id, product_code: product.code, user_id: user.id, generate_for: active.id };
     const base = siteUrl();
     const session = await stripe.checkout.sessions.create({
       mode: product.kind === "subscription" ? "subscription" : "payment",
@@ -116,7 +122,8 @@ export async function startCheckout(_prev: FormState, formData: FormData): Promi
 }
 
 export async function openBillingPortal(): Promise<void> {
-  const { user, org } = await requireOrganization();
+  const { user, account } = await requireOrganization();
+  const org = account.root;
   if (!org.stripe_customer_id || stripeMode() === "disabled") redirect("/panel/suscripcion?portal=no-disponible");
   let url: string;
   try {

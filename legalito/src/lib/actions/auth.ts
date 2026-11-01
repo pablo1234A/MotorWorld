@@ -24,6 +24,7 @@ const signUpSchema = z.object({
   password,
   terms: z.literal("on", { message: "Debes aceptar las condiciones y la política de privacidad." }),
   marketing: z.string().optional(),
+  account_type: z.enum(["business", "agency"]).catch("business"),
   utm_source: z.string().max(100).optional(),
   utm_medium: z.string().max(100).optional(),
   utm_campaign: z.string().max(100).optional(),
@@ -46,6 +47,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
       emailRedirectTo: `${siteUrl()}/auth/confirm?next=/panel`,
       data: {
         full_name: d.full_name,
+        account_type: d.account_type,
         marketing_consent: d.marketing === "on",
         acquisition: Object.fromEntries(
           Object.entries({ utm_source: d.utm_source, utm_medium: d.utm_medium, utm_campaign: d.utm_campaign, ref: d.ref }).filter(([, v]) => v),
