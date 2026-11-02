@@ -14,7 +14,9 @@ async function main() {
   for (const p of PLANS) {
     let productId: string | null = null;
     for (const [interval, amount, suffix] of [["month", p.priceCents, ""], ["year", p.annualPriceCents, "_ANNUAL"]] as const) {
-      const lookup = `resenalo_${p.code.toLowerCase()}_${interval}ly_eur_v2`;
+      // Mismas claves que los precios ya creados (v1): si no, se duplicarían los precios mensuales y las
+      // suscripciones existentes dejarían de corresponder a un plan («Precio de Stripe desconocido»).
+      const lookup = `resenalo_${p.code.toLowerCase()}_${interval}ly_eur_v1`;
       const existing = await stripe.prices.list({ lookup_keys: [lookup] });
       if (existing.data[0]) {
         console.log(`STRIPE_PRICE_${p.code}${suffix}=${existing.data[0].id}   (ya existía)`);

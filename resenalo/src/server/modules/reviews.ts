@@ -200,7 +200,11 @@ export async function syncReviews(businessId: string) {
 
 /** Atribución ESTIMADA: reseña de alguien con el mismo nombre que recibió una solicitud en los 30 días previos. */
 export async function attributeReviews(businessId: string) {
-  const pending = await prisma.review.findMany({ where: { businessId, attributedJobId: null, reviewerName: { not: "Anónimo" } }, take: 500 });
+  // Solo reseñas recientes: para las antiguas ya existían todas las solicitudes posibles y se evaluaron.
+  const pending = await prisma.review.findMany({
+    where: { businessId, attributedJobId: null, reviewerName: { not: "Anónimo" }, createTime: { gte: new Date(Date.now() - 45 * 86400_000) } },
+    take: 500,
+  });
   for (const r of pending) {
     const jobs = await prisma.emailJob.findMany({
       where: { businessId, status: { in: ["SENT", "DELIVERED"] }, sentAt: { gte: new Date(r.createTime.getTime() - 30 * 86400_000), lte: r.createTime } },

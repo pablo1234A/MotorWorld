@@ -242,17 +242,17 @@ async function processSms(job: EmailJob): Promise<SendOutcome> {
   await withBookkeepingRetry(job.id, res.providerMessageId, () => prisma.$transaction(async (tx) => {
     const current = await tx.emailJob.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, providerStatus: true } });
     if (current.status !== EmailJobStatus.SENDING) return; // ya registrado en un intento anterior
-    // El aviso de entrega de Twilio puede llegar antes que este registro.
+    // El aviso de Twilio (entregado o no entregado) puede llegar antes que este registro.
     const delivered = current.providerStatus === "delivered";
+    const undelivered = SMS_FAILED_STATUSES.includes(current.providerStatus ?? "");
     await tx.emailJob.update({
       where: { id: job.id },
       data: {
-        status: delivered ? EmailJobStatus.DELIVERED : EmailJobStatus.SENT,
+        status: delivered ? EmailJobStatus.DELIVERED : undelivered ? EmailJobStatus.BOUNCED : EmailJobStatus.SENT,
         sentAt: new Date(),
         providerMessageId: res.providerMessageId,
-        providerStatus: delivered ? "delivered" : res.status,
-        lastError: null,
-        statusReason: null,
+        providerStatus: delivered || undelivered ? current.providerStatus : res.status,
+        ...(undelivered ? { statusReason: "UNDELIVERED", failedAt: new Date() } : { lastError: null, statusReason: null }),
         sendingStartedAt: null,
       },
     });
@@ -260,32 +260,44 @@ async function processSms(job: EmailJob): Promise<SendOutcome> {
       await tx.$executeRaw`
         UPDATE monthly_usage SET sms_reserved = GREATEST(sms_reserved - 1, 0), sms_sent = sms_sent + 1, updated_at = now()
         WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
-    await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: RequestStatus.SENT } });
+    await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: undelivered ? RequestStatus.FAILED : RequestStatus.SENT } });
     await log(tx, job, EmailLogEvent.SENT, `SMS aceptado por Twilio (${res.providerMessageId}, estado ${res.status}).`, { providerMessageId: res.providerMessageId });
   }));
   return "sent";
 }
+
+/** Estados finales de Twilio que indican que el SMS no llegó. */
+const SMS_FAILED_STATUSES = ["undelivered", "failed"];
+/** Códigos de Twilio que indican un número no válido de forma permanente (30003 «inalcanzable» es transitorio). */
+const SMS_INVALID_NUMBER_CODES = ["30005", "30006"];
 
 /** Estado de entrega real informado por Twilio (StatusCallback). */
 export async function applySmsStatus(publicToken: string, status: string, errorCode?: string | null) {
   const job = await prisma.emailJob.findUnique({ where: { publicToken } });
   if (!job || job.channel !== Channel.SMS) return false;
   if (status === "delivered") {
-    await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENT }, data: { status: EmailJobStatus.DELIVERED, deliveredAt: new Date(), providerStatus: status } });
+    const d = await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENT }, data: { status: EmailJobStatus.DELIVERED, deliveredAt: new Date(), providerStatus: status } });
     // Si aún se está registrando el envío, se anota para que el registro lo marque como entregado.
-    await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { deliveredAt: new Date(), providerStatus: status } });
-    await log(prisma, job, EmailLogEvent.DELIVERED, "El operador confirmó la entrega del SMS.");
-  } else if (status === "undelivered" || status === "failed") {
+    const p = await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { deliveredAt: new Date(), providerStatus: status } });
+    if (d.count || p.count) await log(prisma, job, EmailLogEvent.DELIVERED, "El operador confirmó la entrega del SMS.");
+  } else if (SMS_FAILED_STATUSES.includes(status)) {
     // El SMS ya fue cobrado por el operador: sigue contando en el cupo.
+    const lastError = errorCode ? `Código Twilio ${errorCode}` : null;
     await prisma.emailJob.updateMany({
       where: { id: job.id, status: { in: [EmailJobStatus.SENT, EmailJobStatus.DELIVERED] } },
-      data: { status: EmailJobStatus.BOUNCED, statusReason: "UNDELIVERED", providerStatus: status, failedAt: new Date(), lastError: errorCode ? `Código Twilio ${errorCode}` : null },
+      data: { status: EmailJobStatus.BOUNCED, statusReason: "UNDELIVERED", providerStatus: status, failedAt: new Date(), lastError },
     });
-    if (errorCode && ["30003", "30005", "30006"].includes(errorCode)) await prisma.customer.update({ where: { id: job.customerId }, data: { phoneInvalidAt: new Date() } });
+    // Si aún se está registrando el envío, se anota para que el registro lo marque como no entregado.
+    await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { providerStatus: status, lastError } });
+    if (errorCode && SMS_INVALID_NUMBER_CODES.includes(errorCode)) await prisma.customer.update({ where: { id: job.customerId }, data: { phoneInvalidAt: new Date() } });
     await log(prisma, job, EmailLogEvent.BOUNCED, `El operador no pudo entregar el SMS (${status}${errorCode ? `, código ${errorCode}` : ""}).`);
     await refreshCustomerRequestStatus(job.customerId);
-  } else {
-    await prisma.emailJob.update({ where: { id: job.id }, data: { providerStatus: status } });
+  } else if (status) {
+    // Estados intermedios (queued, sent…): pueden llegar desordenados; nunca sustituyen a uno final.
+    await prisma.emailJob.updateMany({
+      where: { id: job.id, OR: [{ providerStatus: null }, { providerStatus: { notIn: ["delivered", ...SMS_FAILED_STATUSES] } }] },
+      data: { providerStatus: status },
+    });
   }
   return true;
 }
@@ -307,7 +319,7 @@ async function handleSendError(job: EmailJob, connectionId: string | null, err: 
     });
     await markAuthFailure(connectionId, perr.message);
     await prisma.emailJob.updateMany({
-      where: { businessId: job.businessId, status: { in: [EmailJobStatus.QUEUED] }, id: { not: job.id } },
+      where: { businessId: job.businessId, channel: Channel.EMAIL, status: { in: [EmailJobStatus.QUEUED] }, id: { not: job.id } },
       data: { status: EmailJobStatus.ON_HOLD, statusReason: "NEEDS_REAUTH" },
     });
     await refreshCustomerRequestStatus(job.customerId);

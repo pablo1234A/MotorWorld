@@ -222,3 +222,59 @@ describe("avisos de consumo", () => {
     expect(fresh.alert80At).toBeNull();
   });
 });
+
+describe("regresiones de la segunda revisión", () => {
+  it("sin medición de clics no hay recordatorio; tampoco si ya se envió una solicitud más reciente", async () => {
+    const t = await makeTenant({ plan: "PRO" });
+    await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { reminderEnabled: true, reminderDelayDays: 1 } });
+    fakeProvider(async (n) => ({ providerMessageId: `g${n}` }));
+    const c = await makeCustomer(t.business.id);
+    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
+    await processEmailJob(r.jobId!);
+    await prisma.emailJob.update({ where: { id: r.jobId! }, data: { sentAt: new Date(Date.now() - 3 * 86400_000) } });
+    await prisma.business.update({ where: { id: t.business.id }, data: { trackClicks: false } });
+    expect((await scheduleDueReminders()).created).toBe(0);
+    await prisma.business.update({ where: { id: t.business.id }, data: { trackClicks: true, resendCooldownDays: 0 } });
+    const r2 = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true, serviceName: "otro" });
+    await processEmailJob(r2.jobId!);
+    await prisma.emailJob.update({ where: { id: r2.jobId! }, data: { sentAt: new Date(Date.now() - 2 * 86400_000) } });
+    const created = await prisma.emailJob.count({ where: { businessId: t.business.id, isReminder: true } });
+    await scheduleDueReminders();
+    // como mucho uno, para la solicitud más reciente; nunca para la antigua
+    expect(await prisma.emailJob.count({ where: { reminderOfId: r.jobId! } })).toBe(0);
+    expect((await prisma.emailJob.count({ where: { businessId: t.business.id, isReminder: true } })) - created).toBeLessThanOrEqual(1);
+  });
+
+  it("desconectar el correo no retiene los SMS pendientes", async () => {
+    const t = await makeTenant({ plan: "PRO" });
+    await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { channel: "SMS", delayMinutes: 600 } });
+    fakeSms();
+    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Ana Sms", email: "ana.sms@correo-cliente.es", phone: "+34600555444" } });
+    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.API });
+    const { disconnect } = await import("@/server/modules/email-connection");
+    await disconnect(t.business.id, t.user.id);
+    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } })).status).toBe("SCHEDULED");
+  });
+
+  it("un aviso de 'no entregado' que llega antes del registro del envío no se pierde", async () => {
+    const t = await makeTenant({ plan: "PRO" });
+    await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { channel: "SMS", delayMinutes: 0 } });
+    const { applySmsStatus } = await import("@/server/modules/automation/sender");
+    fakeSms(); // proveedor configurado al crear la solicitud
+    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Eva Sms", email: "eva.sms@correo-cliente.es", phone: "+34600555333" } });
+    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
+    const job = await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } });
+    setSmsProviderOverride({
+      isConfigured: () => true,
+      send: async () => {
+        await applySmsStatus(job.publicToken, "undelivered", "30007");
+        return { providerMessageId: "SMx", status: "queued" };
+      },
+    });
+    await processEmailJob(job.id);
+    const after = await prisma.emailJob.findUniqueOrThrow({ where: { id: job.id } });
+    expect(after.status).toBe("BOUNCED");
+    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } })).smsSent).toBe(1);
+  });
+});
+

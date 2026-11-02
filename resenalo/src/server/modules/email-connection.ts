@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ConnectionStatus, EmailJobStatus, EmailLogEvent, type EmailConnection, type EmailProvider } from "@prisma/client";
+import { Channel, ConnectionStatus, EmailJobStatus, EmailLogEvent, type EmailConnection, type EmailProvider } from "@prisma/client";
 import { prisma } from "../db";
 import { env } from "../env";
 import { decrypt, encrypt, randomToken, sha256 } from "../crypto";
@@ -63,7 +63,7 @@ export async function startOAuth(p: { businessId: string; userId: string; provid
 export async function completeOAuth(p: { provider: EmailProvider; state: string; code: string; userId: string }, req?: Request) {
   const row = await prisma.oAuthState.findUnique({ where: { stateHash: sha256(p.state) } });
   if (row) await prisma.oAuthState.delete({ where: { id: row.id } }).catch(() => undefined); // un solo uso
-  if (!row || row.expiresAt < new Date() || row.provider !== p.provider || row.userId !== p.userId)
+  if (!row || row.expiresAt < new Date() || row.purpose !== "email" || row.provider !== p.provider || row.userId !== p.userId)
     throw new AppError("BAD_REQUEST", "La solicitud de conexión ha caducado o no es válida. Vuelve a intentarlo.");
 
   const provider = getProvider(p.provider);
@@ -194,7 +194,8 @@ export async function disconnect(businessId: string, userId: string, req?: Reque
   });
   // Los envíos pendientes se retienen hasta que haya una nueva conexión.
   await prisma.emailJob.updateMany({
-    where: { businessId, status: { in: [EmailJobStatus.QUEUED, EmailJobStatus.SCHEDULED] } },
+    // Solo los correos: los SMS no dependen de la cuenta de correo.
+    where: { businessId, channel: Channel.EMAIL, status: { in: [EmailJobStatus.QUEUED, EmailJobStatus.SCHEDULED] } },
     data: { status: EmailJobStatus.ON_HOLD, statusReason: "EMAIL_DISCONNECTED" },
   });
   await audit({ action: "email_connection.disconnected", userId, businessId, targetId: c.id, req });

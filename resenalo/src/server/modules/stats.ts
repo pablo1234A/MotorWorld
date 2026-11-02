@@ -6,7 +6,10 @@ import { reviewSummary } from "./reviews";
 
 export async function usageSummary(businessId: string) {
   const usage = await getCurrentUsage(businessId);
-  const pending = await prisma.emailJob.count({ where: { businessId, status: { in: PENDING_JOB_STATUSES } } });
+  const [pending, smsPending] = await Promise.all([
+    prisma.emailJob.count({ where: { businessId, channel: "EMAIL", status: { in: PENDING_JOB_STATUSES } } }),
+    prisma.emailJob.count({ where: { businessId, channel: "SMS", status: { in: PENDING_JOB_STATUSES } } }),
+  ]);
   if (!usage) return null;
   const committed = usage.sent + pending;
   return {
@@ -21,7 +24,9 @@ export async function usageSummary(businessId: string) {
     percentUsed: usage.emailLimit ? Math.min(100, Math.round((usage.sent / usage.emailLimit) * 100)) : 0,
     smsLimit: usage.smsLimit,
     smsSent: usage.smsSent,
-    smsAvailable: Math.max(0, usage.smsLimit - usage.smsSent - usage.smsReserved),
+    smsPending,
+    // Los SMS pendientes ya tienen cupo comprometido (incluyen los reservados en curso).
+    smsAvailable: Math.max(0, usage.smsLimit - usage.smsSent - smsPending),
   };
 }
 

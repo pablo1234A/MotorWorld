@@ -352,6 +352,11 @@ export async function createReminder(parentId: string): Promise<CreateRequestRes
       if (parent.reminder || parent.isReminder) return skip("DUPLICATE");
       if (!([EmailJobStatus.SENT, EmailJobStatus.DELIVERED] as EmailJobStatus[]).includes(parent.status) || parent.firstClickedAt) return skip("NOT_NEEDED");
       if (!parent.rule?.reminderEnabled) return skip("NOT_NEEDED");
+      // Sin seguimiento de clics no se sabe si el cliente abrió el enlace: no se le insiste.
+      if (!parent.business.trackClicks) return skip("NOT_NEEDED");
+      // Si ya se le pidió otra reseña después, el recordatorio de la anterior sobra.
+      const newer = await tx.emailJob.findFirst({ where: { customerId: parent.customerId, isReminder: false, createdAt: { gt: parent.createdAt } }, select: { id: true } });
+      if (newer) return skip("NOT_NEEDED");
       const ent = await getEntitlements(parent.businessId, tx);
       if (!ent.canSend || !ent.features?.reminders) return skip("SUBSCRIPTION_INACTIVE");
       if (parent.customer.unsubscribedAt) return skip("UNSUBSCRIBED");
@@ -422,17 +427,33 @@ export async function createReminder(parentId: string): Promise<CreateRequestRes
 
 /** Barrido de recordatorios: solicitudes enviadas sin clic cuyo plazo ha vencido (máx. 30 días atrás). */
 export async function scheduleDueReminders(now = new Date()) {
-  const candidates = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT j.id FROM email_jobs j
+  const candidates = await prisma.$queryRaw<{ id: string; businessId: string }[]>`
+    SELECT j.id, j.business_id AS "businessId" FROM email_jobs j
     JOIN automation_rules r ON r.id = j.rule_id
+    JOIN businesses b ON b.id = j.business_id
+    JOIN customers c ON c.id = j.customer_id
     WHERE j.status IN ('SENT','DELIVERED') AND j.is_reminder = false AND j.first_clicked_at IS NULL
       AND r.reminder_enabled = true
       AND j.sent_at <= ${now}::timestamp - make_interval(days => r.reminder_delay_days)
       AND j.sent_at >= ${now}::timestamp - interval '30 days'
       AND NOT EXISTS (SELECT 1 FROM email_jobs x WHERE x.reminder_of_id = j.id)
+      -- Descartes definitivos fuera de la consulta: si no, ocuparían el LIMIT en cada barrido y nunca llegarían los demás.
+      AND b.automation_paused = false AND b.track_clicks = true
+      AND c.unsubscribed_at IS NULL
+      AND (CASE WHEN j.channel = 'SMS' THEN c.phone_invalid_at IS NULL ELSE c.email_status = 'VALID' END)
+      AND NOT EXISTS (SELECT 1 FROM email_jobs y WHERE y.customer_id = j.customer_id AND y.is_reminder = false AND y.created_at > j.created_at)
+    ORDER BY j.sent_at
     LIMIT 200`;
+  // Motivos que afectan a todo el negocio: tras el primero no se reintentan sus demás candidatos en este barrido.
+  const BUSINESS_WIDE = new Set(["SUBSCRIPTION_INACTIVE", "AUTOMATION_PAUSED", "NO_EMAIL_CONNECTION", "LIMIT_REACHED", "SMS_LIMIT_REACHED"]);
+  const blocked = new Set<string>();
   let created = 0;
-  for (const c of candidates) if ((await createReminder(c.id)).status === "CREATED") created++;
+  for (const c of candidates) {
+    if (blocked.has(c.businessId)) continue;
+    const r = await createReminder(c.id);
+    if (r.status === "CREATED") created++;
+    else if (r.reason && BUSINESS_WIDE.has(r.reason)) blocked.add(c.businessId);
+  }
   return { candidates: candidates.length, created };
 }
 
@@ -453,7 +474,7 @@ export async function cancelJob(businessId: string, jobId: string) {
 export async function retryJob(businessId: string, jobId: string) {
   const out = await prisma.$transaction(async (tx) => {
     await lockBusiness(tx, businessId);
-    const job = await tx.emailJob.findFirst({ where: { id: jobId, businessId }, include: { customer: true } });
+    const job = await tx.emailJob.findFirst({ where: { id: jobId, businessId }, include: { customer: true, business: { select: { country: true } } } });
     if (!job) throw new AppError("NOT_FOUND", "Envío no encontrado");
     if (!([EmailJobStatus.FAILED, EmailJobStatus.BOUNCED, EmailJobStatus.BLOCKED] as EmailJobStatus[]).includes(job.status))
       throw new AppError("CONFLICT", "Solo se pueden reintentar envíos fallidos o bloqueados.");
@@ -466,12 +487,19 @@ export async function retryJob(businessId: string, jobId: string) {
       const conn = await tx.emailConnection.findUnique({ where: { businessId } });
       if (!conn || conn.status !== ConnectionStatus.ACTIVE) throw new AppError("CONFLICT", "Conecta tu cuenta de correo antes de reintentar.");
       connectionId = conn.id;
-    } else if (job.customer.phoneInvalidAt) throw new AppError("CONFLICT", "El número del cliente fue rechazado. Corrígelo antes de reintentar.");
+    }
+    // SMS: se envía al número ACTUAL del cliente (si lo corrigió tras un rechazo, no se repite el número antiguo).
+    let toPhone = job.toPhone;
+    if (job.channel === Channel.SMS) {
+      if (job.customer.phoneInvalidAt) throw new AppError("CONFLICT", "El número del cliente fue rechazado. Corrígelo antes de reintentar.");
+      toPhone = normalizePhone(job.customer.phone, job.business.country);
+      if (!toPhone || !isMobileForSms(toPhone)) throw new AppError("CONFLICT", reasonMessage("INVALID_PHONE")!);
+    }
     const quota = await hasQuota(tx, businessId, job.channel);
     if (!quota.ok) throw new AppError("PLAN_LIMIT", reasonMessage(quota.reason)!);
     await tx.emailJob.update({
       where: { id: job.id },
-      data: { status: EmailJobStatus.QUEUED, statusReason: null, scheduledFor: new Date(), attempts: 0, lastError: null, connectionId },
+      data: { status: EmailJobStatus.QUEUED, statusReason: null, scheduledFor: new Date(), attempts: 0, lastError: null, connectionId, toPhone },
     });
     await tx.emailLog.create({ data: { emailJobId: job.id, businessId, event: EmailLogEvent.REQUEUED, message: "Reintento manual solicitado." } });
     return job;

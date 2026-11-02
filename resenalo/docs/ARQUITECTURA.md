@@ -102,3 +102,8 @@ Estados: `SCHEDULED`, `QUEUED`, `SENDING`, `SENT` (aceptado por el proveedor), `
 - Worker con réplicas: la reclamación atómica impide dobles envíos.
 - Índices por `(business_id, status)`, `(status, scheduled_for)` y `(business_id, created_at)` para colas, historial y estadísticas.
 - Límite global prudente de 10 envíos/s en la cola, más los reintentos con `Retry-After` de los proveedores (no se eluden sus límites).
+
+## Decisiones conocidas
+
+- Cambiar de pago mensual a anual inicia un periodo nuevo en Stripe y, con él, una ventana de cupo nueva (el cliente paga el año completo prorrateado).
+- Tras un cambio de plan o cancelación desde el panel, la sincronización local usa una marca con 2 minutos de margen para tolerar desfases de reloj con Stripe; el webhook del propio cambio confirma el estado final.

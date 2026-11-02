@@ -123,11 +123,13 @@ export async function createPortalSession(businessId: string) {
 }
 
 /**
- * Marca para sincronizaciones locales tras una llamada a Stripe: el segundo (truncado, como
- * `event.created`) en que se lanzó la petición. Los webhooks de ese cambio tienen created ≥ esta
- * marca y se aplican; los de eventos anteriores que lleguen tarde se descartan.
+ * Marca para sincronizaciones locales tras una llamada a Stripe. Se usa nuestro reloj con un
+ * margen de 2 minutos hacia atrás para tolerar desfases con el reloj de Stripe: así nunca se
+ * descarta un webhook real posterior al cambio. Un evento anterior que llegue tarde dentro de ese
+ * margen se aplicaría, pero el webhook del propio cambio (más reciente) lo corrige después.
  */
-const stripeSecond = () => new Date(Math.floor(Date.now() / 1000) * 1000);
+const CLOCK_SKEW_MARGIN_MS = 120_000;
+const stripeSecond = () => new Date(Math.floor((Date.now() - CLOCK_SKEW_MARGIN_MS) / 1000) * 1000);
 
 /** Cambio de plan con prorrateo (Stripe calcula el importe proporcional). */
 export async function changePlan(businessId: string, planCode: PlanCode, userId: string, interval?: IntervalT) {

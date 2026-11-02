@@ -44,7 +44,7 @@ Sin `SMTP_HOST`, en desarrollo los enlaces de verificación y recuperación apar
 ## Pruebas
 
 ```bash
-npm test            # 92 pruebas unitarias e integración (PostgreSQL y Redis reales; BD resenalo_test)
+npm test            # 98 pruebas unitarias e integración (PostgreSQL y Redis reales; BD resenalo_test)
 ```
 
 ```bash

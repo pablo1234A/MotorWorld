@@ -4,7 +4,7 @@ Ejecutadas el 31/10/2026 en el entorno de desarrollo (PostgreSQL 16, Redis 7, No
 
 | Batería | Comando | Resultado |
 |---|---|---|
-| Unitarias + integración (BD y Redis reales) | `npm test` | **92/92 superadas** (12 archivos) |
+| Unitarias + integración (BD y Redis reales) | `npm test` | **98/98 superadas** (12 archivos) |
 | E2E en navegador (app de producción `next start` + worker real) | `npm run test:e2e` | **12/12 superadas** (escritorio + móvil Pixel 7) |
 | Tipos / lint / build | `npm run typecheck`, `npm run lint`, `npm run build` | Sin errores |
 | Dependencias de producción | `npm audit --omit=dev` | 0 vulnerabilidades |
