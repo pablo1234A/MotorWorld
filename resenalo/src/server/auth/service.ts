@@ -48,7 +48,7 @@ export async function sendVerificationEmail(user: Pick<User, "id" | "email" | "n
   });
 }
 
-export async function register(input: { name: string; email: string; password: string; acceptTerms: boolean }, req?: Request) {
+export async function register(input: { name: string; email: string; password: string; phone?: string | null; acceptTerms: boolean }, req?: Request) {
   const email = normalizeEmail(input.email);
   if (!input.acceptTerms) throw new AppError("VALIDATION", "Debes aceptar las condiciones y la política de privacidad.");
   const policy = passwordPolicyError(input.password, email);
@@ -63,6 +63,7 @@ export async function register(input: { name: string; email: string; password: s
     data: {
       email,
       name: input.name.trim(),
+      phone: input.phone ?? null,
       passwordHash: await hashPassword(input.password),
       termsAcceptedAt: new Date(),
       termsVersion: TERMS_VERSION,

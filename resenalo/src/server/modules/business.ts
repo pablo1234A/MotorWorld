@@ -40,15 +40,6 @@ const businessFields = {
   resendCooldownDays: z.coerce.number().int().min(0).max(365),
   trackClicks: z.boolean(),
   weeklyDigest: z.boolean(),
-  smsSenderId: z
-    .string()
-    .trim()
-    .max(11, "Máximo 11 caracteres")
-    .regex(/^(?=.*[A-Za-z])[A-Za-z0-9 ]*$/, "Solo letras, números y espacios, con al menos una letra")
-    .optional()
-    .nullable()
-    .or(z.literal(""))
-    .transform((v) => v || null),
 };
 
 /** Actualización parcial: sin valores por defecto (en zod 4, .partial() aplicaría los .default() y
@@ -75,7 +66,9 @@ export async function createBusiness(userId: string, input: BusinessInput & { ac
   const { acceptDpa: _acceptDpa, ...data } = input;
   void _acceptDpa;
   const business = await prisma.$transaction(async (tx) => {
-    const b = await tx.business.create({ data: { ...data, ownerId: userId, dpaAcceptedAt: new Date() } });
+    // Si no se indica, el teléfono del negocio es el del registro.
+    const owner = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { phone: true } });
+    const b = await tx.business.create({ data: { ...data, phone: data.phone ?? owner.phone, ownerId: userId, dpaAcceptedAt: new Date() } });
     const t = await tx.emailTemplate.create({ data: { businessId: b.id, name: "Plantilla principal", isDefault: true, ...DEFAULT_TEMPLATE } });
     await tx.automationRule.create({
       data: {

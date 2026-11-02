@@ -14,6 +14,7 @@ import { logger, reportError } from "../server/logger";
 import { EMAIL_QUEUE, MAINTENANCE_QUEUE, maintenanceQueue } from "../server/queue/queues";
 import { processEmailJob, sweep } from "../server/modules/automation/sender";
 import { checkConnection } from "../server/modules/email-connection";
+import { checkSmsDevice } from "../server/modules/sms-device";
 import { runRetention } from "../server/modules/retention";
 import { sendWeeklyDigests } from "../server/modules/notifications";
 import { syncAllReviewSources } from "../server/modules/reviews";
@@ -24,6 +25,9 @@ async function connectionHealth() {
     select: { businessId: true },
     take: 200,
   });
+  // Móviles de SMS: credenciales válidas y última conexión del dispositivo.
+  const smsDevices = await prisma.smsDevice.findMany({ where: { status: ConnectionStatus.ACTIVE }, select: { businessId: true } });
+  for (const d of smsDevices) await checkSmsDevice(d.businessId).catch(() => undefined);
   let failed = 0;
   for (const c of stale) {
     const r = await checkConnection(c.businessId).catch(() => ({ ok: false }));

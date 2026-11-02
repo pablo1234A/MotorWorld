@@ -56,7 +56,7 @@ function Envios() {
   return (
     <>
       <PageHeader title="Historial de envíos" description="Cada solicitud generada, su estado y el registro detallado de lo ocurrido." />
-      <Alert tone="info" className="mb-4">«Enviado» significa que Gmail, Outlook o el operador de SMS <strong>aceptó</strong> el mensaje. En los SMS también verás «Entregado» cuando el operador lo confirme; los correos no informan de la entrega. Registramos los clics en el enlace y, si conectas tu ficha de Google, las reseñas reales.</Alert>
+      <Alert tone="info" className="mb-4">«Enviado» significa que Gmail u Outlook <strong>aceptó</strong> el correo, o que tu móvil <strong>envió</strong> el SMS. En los SMS también verás «Entregado» cuando el operador lo confirme; los correos no informan de la entrega. Registramos los clics en el enlace y, si conectas tu ficha de Google, las reseñas reales.</Alert>
       <Card padded={false}>
         <div className="flex flex-col gap-3 border-b border-ink-100 p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="-mx-1 flex gap-1 overflow-x-auto px-1" role="tablist">

@@ -18,7 +18,8 @@ import { enqueueEmailJob, isStillQueued } from "../../queue/queues";
 import { getAccessToken, markAuthFailure } from "../email-connection";
 import { getCurrentUsage, subscriptionAllowsSending } from "../billing/entitlements";
 import { lockBusiness, refreshCustomerRequestStatus, scheduleDueReminders, trackingUrls } from "./requests";
-import { getSmsProvider } from "../../sms/twilio";
+import { getSmsGateway, type GatewayState } from "../../sms/smsgate";
+import { credsOf, markSmsDeviceAuthFailure } from "../sms-device";
 import { checkUsageAlerts } from "../notifications";
 
 /** Backoff exponencial con jitter: 1, 4, 16, 64 min… (máx. 6 h). */
@@ -107,8 +108,11 @@ async function claim(emailJobId: string): Promise<Claim> {
       if (job.channel === Channel.SMS) {
         if (job.customer.phoneInvalidAt || !job.toPhone)
           return block(EmailJobStatus.BLOCKED, "INVALID_PHONE", EmailLogEvent.BLOCKED, "Bloqueado: el número del cliente no es válido.", "blocked");
-        if (!getSmsProvider().isConfigured())
-          return block(EmailJobStatus.BLOCKED, "SMS_NOT_CONFIGURED", EmailLogEvent.BLOCKED, "Bloqueado: el envío de SMS no está configurado.", "blocked");
+        const device = await tx.smsDevice.findUnique({ where: { businessId: job.businessId } });
+        if (!device || !device.deviceId)
+          return block(EmailJobStatus.ON_HOLD, "NO_SMS_DEVICE", EmailLogEvent.ON_HOLD, "En espera: no hay ningún móvil vinculado para los SMS.", "on_hold");
+        if (device.status !== ConnectionStatus.ACTIVE)
+          return block(EmailJobStatus.ON_HOLD, "SMS_DEVICE_AUTH", EmailLogEvent.ON_HOLD, "En espera: hay que volver a vincular el móvil.", "on_hold");
         const reserved = await tx.$executeRaw`
           UPDATE monthly_usage SET sms_reserved = sms_reserved + 1, updated_at = now()
           WHERE id = ${usage.id} AND sms_sent + sms_reserved < sms_limit`;
@@ -225,81 +229,143 @@ export async function processEmailJob(emailJobId: string): Promise<SendOutcome> 
   return "sent";
 }
 
+/** Tiempo máximo que un SMS puede esperar a que el móvil del negocio lo envíe (p. ej. si está apagado). */
+export const SMS_DEVICE_TTL_SECONDS = 24 * 3600;
+
+/**
+ * SMS desde el móvil Android del negocio (SMS Gate). La API acepta el mensaje y el
+ * móvil lo envía después: aquí el trabajo queda en SENDING esperando al móvil, y solo
+ * se contabiliza como enviado cuando el móvil confirma que salió (estado «Sent»).
+ */
 async function processSms(job: EmailJob): Promise<SendOutcome> {
-  const business = await prisma.business.findUniqueOrThrow({ where: { id: job.businessId } });
-  let res: { providerMessageId: string; status: string };
-  try {
-    res = await getSmsProvider().send({
-      to: job.toPhone!,
-      body: job.bodyText,
-      from: business.smsSenderId,
-      statusCallback: `${env().APP_URL}/api/webhooks/twilio/${job.publicToken}`,
+  const device = await prisma.smsDevice.findUnique({ where: { businessId: job.businessId } });
+  if (!device || device.status !== "ACTIVE" || !device.deviceId) {
+    await prisma.$transaction(async (tx) => {
+      await releaseReservation(tx, job);
+      await tx.emailJob.update({ where: { id: job.id }, data: { status: EmailJobStatus.ON_HOLD, statusReason: "NO_SMS_DEVICE", sendingStartedAt: null, attempts: { decrement: 1 } } });
+      await log(tx, job, EmailLogEvent.ON_HOLD, "En espera: no hay ningún móvil vinculado para los SMS.");
     });
+    return "on_hold";
+  }
+  let res: { messageId: string; state: GatewayState };
+  try {
+    // El id del mensaje es el del trabajo: si se repite la petición, SMS Gate no lo duplica.
+    res = await getSmsGateway().send(credsOf(device), { to: job.toPhone!, text: job.bodyText, id: job.id, ttlSeconds: SMS_DEVICE_TTL_SECONDS });
   } catch (err) {
     return handleSendError(job, null, err);
   }
-  // Aceptado por Twilio → se contabiliza (fuera del try: no reenviar si falla el registro).
-  await withBookkeepingRetry(job.id, res.providerMessageId, () => prisma.$transaction(async (tx) => {
-    const current = await tx.emailJob.findUniqueOrThrow({ where: { id: job.id }, select: { status: true, providerStatus: true } });
-    if (current.status !== EmailJobStatus.SENDING) return; // ya registrado en un intento anterior
-    // El aviso de Twilio (entregado o no entregado) puede llegar antes que este registro.
-    const delivered = current.providerStatus === "delivered";
-    const undelivered = SMS_FAILED_STATUSES.includes(current.providerStatus ?? "");
-    await tx.emailJob.update({
-      where: { id: job.id },
-      data: {
-        status: delivered ? EmailJobStatus.DELIVERED : undelivered ? EmailJobStatus.BOUNCED : EmailJobStatus.SENT,
-        sentAt: new Date(),
-        providerMessageId: res.providerMessageId,
-        providerStatus: delivered || undelivered ? current.providerStatus : res.status,
-        ...(undelivered ? { statusReason: "UNDELIVERED", failedAt: new Date() } : { lastError: null, statusReason: null }),
-        sendingStartedAt: null,
-      },
-    });
-    if (job.usagePeriodStart)
-      await tx.$executeRaw`
-        UPDATE monthly_usage SET sms_reserved = GREATEST(sms_reserved - 1, 0), sms_sent = sms_sent + 1, updated_at = now()
-        WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
-    await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: undelivered ? RequestStatus.FAILED : RequestStatus.SENT } });
-    await log(tx, job, EmailLogEvent.SENT, `SMS aceptado por Twilio (${res.providerMessageId}, estado ${res.status}).`, { providerMessageId: res.providerMessageId });
-  }));
+  await withBookkeepingRetry(job.id, res.messageId, () =>
+    prisma.$transaction(async (tx) => {
+      const upd = await tx.emailJob.updateMany({
+        where: { id: job.id, status: EmailJobStatus.SENDING },
+        data: { providerMessageId: res.messageId, providerStatus: res.state, statusReason: "WAITING_DEVICE", lastError: null },
+      });
+      if (upd.count) await log(tx, job, EmailLogEvent.SEND_ATTEMPT, `SMS entregado a tu móvil (${device.deviceName ?? "Android"}) para que lo envíe.`, { providerMessageId: res.messageId });
+    }),
+  );
+  if (res.state !== "Pending" && res.state !== "Processed") await applyGatewayState(job.id, res.state, null);
   return "sent";
 }
 
-/** Estados finales de Twilio que indican que el SMS no llegó. */
-const SMS_FAILED_STATUSES = ["undelivered", "failed"];
-/** Códigos de Twilio que indican un número no válido de forma permanente (30003 «inalcanzable» es transitorio). */
-const SMS_INVALID_NUMBER_CODES = ["30005", "30006"];
+/**
+ * Aplica el estado real del SMS informado por el móvil. Idempotente: cada transición
+ * es condicional, así que avisos repetidos o desordenados no cuentan dos veces.
+ */
+export async function applyGatewayState(jobId: string, state: GatewayState, error: string | null) {
+  const job = await prisma.emailJob.findUnique({ where: { id: jobId } });
+  if (!job || job.channel !== Channel.SMS) return;
+  await prisma.$transaction(async (tx) => {
+    const commit = async () => {
+      if (job.usagePeriodStart)
+        await tx.$executeRaw`
+          UPDATE monthly_usage SET sms_reserved = GREATEST(sms_reserved - 1, 0), sms_sent = sms_sent + 1, updated_at = now()
+          WHERE business_id = ${job.businessId} AND period_start = ${job.usagePeriodStart}`;
+      await tx.customer.update({ where: { id: job.customerId }, data: { lastRequestAt: new Date(), lastRequestStatus: RequestStatus.SENT } });
+    };
+    if (state === "Sent" || state === "Delivered") {
+      const delivered = state === "Delivered";
+      const fromSending = await tx.emailJob.updateMany({
+        where: { id: job.id, status: EmailJobStatus.SENDING },
+        data: {
+          status: delivered ? EmailJobStatus.DELIVERED : EmailJobStatus.SENT,
+          sentAt: new Date(),
+          ...(delivered ? { deliveredAt: new Date() } : {}),
+          providerStatus: state,
+          statusReason: null,
+          sendingStartedAt: null,
+        },
+      });
+      if (fromSending.count) {
+        await commit();
+        await log(tx, job, EmailLogEvent.SENT, "Tu móvil ha enviado el SMS.");
+      }
+      if (delivered) {
+        const d = await tx.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENT }, data: { status: EmailJobStatus.DELIVERED, deliveredAt: new Date(), providerStatus: state } });
+        if (d.count || fromSending.count) await log(tx, job, EmailLogEvent.DELIVERED, "El operador confirmó la entrega del SMS.");
+      }
+    } else if (state === "Failed" || state === "Cancelled") {
+      const msg = error ? `El móvil no pudo enviar el SMS: ${error}` : state === "Cancelled" ? "Envío cancelado en el móvil." : "El móvil no pudo enviar el SMS.";
+      // Aún no salió del móvil → no cuenta en el cupo.
+      const fromSending = await tx.emailJob.updateMany({
+        where: { id: job.id, status: EmailJobStatus.SENDING },
+        data: { status: EmailJobStatus.FAILED, statusReason: "SMS_FAILED", providerStatus: state, lastError: msg.slice(0, 500), failedAt: new Date(), sendingStartedAt: null },
+      });
+      if (fromSending.count) {
+        await releaseReservation(tx, job, { countFailed: true });
+        await log(tx, job, EmailLogEvent.FAILED, msg);
+      } else {
+        // Ya había salido del móvil pero el operador no lo entregó: sigue contando (la SIM lo envió).
+        const after = await tx.emailJob.updateMany({
+          where: { id: job.id, status: { in: [EmailJobStatus.SENT, EmailJobStatus.DELIVERED] } },
+          data: { status: EmailJobStatus.BOUNCED, statusReason: "UNDELIVERED", providerStatus: state, lastError: msg.slice(0, 500), failedAt: new Date() },
+        });
+        if (after.count) await log(tx, job, EmailLogEvent.BOUNCED, msg);
+      }
+    } else {
+      await tx.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { providerStatus: state } });
+    }
+  });
+  await refreshCustomerRequestStatus(job.customerId);
+  if (state === "Sent" || state === "Delivered") await checkUsageAlerts(job.businessId);
+}
 
-/** Estado de entrega real informado por Twilio (StatusCallback). */
-export async function applySmsStatus(publicToken: string, status: string, errorCode?: string | null) {
-  const job = await prisma.emailJob.findUnique({ where: { publicToken } });
-  if (!job || job.channel !== Channel.SMS) return false;
-  if (status === "delivered") {
-    const d = await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENT }, data: { status: EmailJobStatus.DELIVERED, deliveredAt: new Date(), providerStatus: status } });
-    // Si aún se está registrando el envío, se anota para que el registro lo marque como entregado.
-    const p = await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { deliveredAt: new Date(), providerStatus: status } });
-    if (d.count || p.count) await log(prisma, job, EmailLogEvent.DELIVERED, "El operador confirmó la entrega del SMS.");
-  } else if (SMS_FAILED_STATUSES.includes(status)) {
-    // El SMS ya fue cobrado por el operador: sigue contando en el cupo.
-    const lastError = errorCode ? `Código Twilio ${errorCode}` : null;
-    await prisma.emailJob.updateMany({
-      where: { id: job.id, status: { in: [EmailJobStatus.SENT, EmailJobStatus.DELIVERED] } },
-      data: { status: EmailJobStatus.BOUNCED, statusReason: "UNDELIVERED", providerStatus: status, failedAt: new Date(), lastError },
-    });
-    // Si aún se está registrando el envío, se anota para que el registro lo marque como no entregado.
-    await prisma.emailJob.updateMany({ where: { id: job.id, status: EmailJobStatus.SENDING }, data: { providerStatus: status, lastError } });
-    if (errorCode && SMS_INVALID_NUMBER_CODES.includes(errorCode)) await prisma.customer.update({ where: { id: job.customerId }, data: { phoneInvalidAt: new Date() } });
-    await log(prisma, job, EmailLogEvent.BOUNCED, `El operador no pudo entregar el SMS (${status}${errorCode ? `, código ${errorCode}` : ""}).`);
-    await refreshCustomerRequestStatus(job.customerId);
-  } else if (status) {
-    // Estados intermedios (queued, sent…): pueden llegar desordenados; nunca sustituyen a uno final.
-    await prisma.emailJob.updateMany({
-      where: { id: job.id, OR: [{ providerStatus: null }, { providerStatus: { notIn: ["delivered", ...SMS_FAILED_STATUSES] } }] },
-      data: { providerStatus: status },
-    });
+/** Confirma con la API de SMS Gate el estado real de un SMS (nunca se confía en el contenido de un aviso). */
+export async function confirmSmsState(jobId: string) {
+  const job = await prisma.emailJob.findUnique({ where: { id: jobId } });
+  if (!job?.providerMessageId) return null;
+  const device = await prisma.smsDevice.findUnique({ where: { businessId: job.businessId } });
+  if (!device) return null;
+  const st = await getSmsGateway().getState(credsOf(device), job.providerMessageId);
+  await applyGatewayState(job.id, st.state, st.error);
+  return st.state;
+}
+
+/** Barrido de SMS que esperan al móvil: consulta su estado y caduca los que el móvil no envió en 24 h. */
+export async function pollPendingSms(now = new Date()) {
+  const waiting = await prisma.emailJob.findMany({
+    where: { channel: Channel.SMS, status: EmailJobStatus.SENDING, providerMessageId: { not: null }, updatedAt: { lte: new Date(now.getTime() - 2 * 60_000) } },
+    take: 100,
+    orderBy: { updatedAt: "asc" },
+  });
+  let expired = 0;
+  for (const j of waiting) {
+    try {
+      const state = await confirmSmsState(j.id);
+      if ((state === "Pending" || state === "Processed") && j.sendingStartedAt && now.getTime() - j.sendingStartedAt.getTime() > SMS_DEVICE_TTL_SECONDS * 1000) {
+        const device = await prisma.smsDevice.findUnique({ where: { businessId: j.businessId } });
+        if (device) await getSmsGateway().cancel(credsOf(device), j.providerMessageId!);
+        await applyGatewayState(j.id, "Failed", "el móvil no estuvo conectado en 24 horas");
+        expired++;
+      } else {
+        await prisma.emailJob.updateMany({ where: { id: j.id, status: EmailJobStatus.SENDING }, data: { updatedAt: new Date() } });
+      }
+    } catch (err) {
+      logger.warn({ err, emailJobId: j.id }, "no se pudo consultar el estado del SMS");
+      if (err instanceof ProviderError && err.kind === "auth") await markSmsDeviceAuthFailure(j.businessId, err.message);
+      await prisma.emailJob.updateMany({ where: { id: j.id, status: EmailJobStatus.SENDING }, data: { updatedAt: new Date() } });
+    }
   }
-  return true;
+  return { polled: waiting.length, expired };
 }
 
 async function handleSendError(job: EmailJob, connectionId: string | null, err: unknown): Promise<SendOutcome> {
@@ -307,6 +373,20 @@ async function handleSendError(job: EmailJob, connectionId: string | null, err: 
     err instanceof ProviderError ? err : new ProviderError("transient", `Error interno al preparar el envío: ${(err as Error)?.message ?? String(err)}`);
   if (!(err instanceof ProviderError)) void reportError(err, { emailJobId: job.id });
   logger.warn({ emailJobId: job.id, kind: perr.kind, status: perr.status }, perr.message);
+
+  if (perr.kind === "auth" && job.channel === Channel.SMS) {
+    await prisma.$transaction(async (tx) => {
+      await releaseReservation(tx, job);
+      await tx.emailJob.update({
+        where: { id: job.id },
+        data: { status: EmailJobStatus.ON_HOLD, statusReason: "SMS_DEVICE_AUTH", lastError: perr.message, sendingStartedAt: null, attempts: { decrement: 1 } },
+      });
+      await log(tx, job, EmailLogEvent.AUTH_ERROR, perr.message);
+    });
+    await markSmsDeviceAuthFailure(job.businessId, perr.message);
+    await refreshCustomerRequestStatus(job.customerId);
+    return "on_hold";
+  }
 
   if (perr.kind === "auth" && connectionId) {
     await prisma.$transaction(async (tx) => {
@@ -420,7 +500,8 @@ export async function sweep(now = new Date()) {
   }
 
   const stale = await prisma.emailJob.findMany({
-    where: { status: EmailJobStatus.SENDING, sendingStartedAt: { lte: new Date(now.getTime() - 10 * 60_000) } },
+    // Los SMS ya entregados al móvil (con providerMessageId) se gestionan en pollPendingSms.
+    where: { status: EmailJobStatus.SENDING, sendingStartedAt: { lte: new Date(now.getTime() - 10 * 60_000) }, OR: [{ channel: Channel.EMAIL }, { providerMessageId: null }] },
     take: 100,
   });
   for (const job of stale) {
@@ -436,5 +517,6 @@ export async function sweep(now = new Date()) {
     await refreshCustomerRequestStatus(job.customerId);
   }
   const reminders = await scheduleDueReminders(now);
+  await pollPendingSms(now);
   return { due: due.length, orphan: reEnqueued, stale: stale.length, reminders: reminders.created };
 }

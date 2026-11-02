@@ -18,7 +18,6 @@ import { getCurrentUsage, getEntitlements } from "../billing/entitlements";
 import { DEFAULT_REMINDER, renderTemplate, type TemplateFields } from "@/lib/template";
 import { DEFAULT_SMS, renderSms } from "@/lib/sms";
 import { isMobileForSms, normalizePhone } from "@/lib/phone";
-import { getSmsProvider } from "../../sms/twilio";
 import { checkUsageAlerts } from "../notifications";
 import { isValidEmail } from "@/lib/email";
 import { applySendWindow } from "./schedule";
@@ -217,7 +216,8 @@ export async function createReviewRequest(businessId: string, input: CreateReque
         if (customer.emailStatus === CustomerEmailStatus.BOUNCED) return finish("SKIPPED", "BOUNCED");
         if (customer.emailStatus !== CustomerEmailStatus.VALID || !isValidEmail(customer.email)) return finish("SKIPPED", "INVALID_EMAIL");
       } else {
-        if (!getSmsProvider().isConfigured()) return finish("REJECTED", "SMS_NOT_CONFIGURED");
+        const device = await tx.smsDevice.findUnique({ where: { businessId } });
+        if (!device || !device.deviceId) return finish("REJECTED", "NO_SMS_DEVICE");
         phone = normalizePhone(customer.phone, business.country);
         if (!phone || !isMobileForSms(phone) || customer.phoneInvalidAt) return finish("SKIPPED", "INVALID_PHONE");
       }

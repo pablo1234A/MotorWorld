@@ -26,6 +26,7 @@ export async function makeUser(opts: { verified?: boolean; email?: string } = {}
     data: {
       email: opts.email ?? `user${n}-${Date.now()}@empresa-prueba.es`,
       name: `Usuario ${n}`,
+      phone: "+34611000000",
       passwordHash: await hashPassword("ClaveSegura123"),
       emailVerifiedAt: opts.verified === false ? null : new Date(),
       termsAcceptedAt: new Date(),
@@ -42,7 +43,7 @@ export async function makeTenant(opts: { plan?: PlanCode | null; connected?: boo
     name: `Negocio ${u.user.name}`,
     legalName: null, taxId: null, addressLine: "Calle Mayor 1", city: "Madrid", postalCode: "28001", country: "ES", phone: null, website: null,
     reviewUrl: "https://g.page/r/negocio-prueba/review", reviewPlatform: "google", senderName: null, replyToEmail: null,
-    timezone: "Europe/Madrid", resendCooldownDays: 30, trackClicks: true, weeklyDigest: true, smsSenderId: null, acceptDpa: true,
+    timezone: "Europe/Madrid", resendCooldownDays: 30, trackClicks: true, weeklyDigest: true, acceptDpa: true,
   });
   if (opts.plan !== null) await activatePlan(business.id, opts.plan ?? "STARTER", opts.status ?? "ACTIVE");
   if (opts.connected !== false) {

@@ -5,7 +5,7 @@ import { prisma } from "@/server/db";
 import { redis } from "@/server/redis";
 import { emailQueue } from "@/server/queue/queues";
 import { clearProviderOverrides } from "@/server/email/providers";
-import { setSmsProviderOverride, twilioSignature } from "@/server/sms/twilio";
+import { setSmsGatewayOverride, type GatewayState, type SmsGateway } from "@/server/sms/smsgate";
 import { createReviewRequest, scheduleDueReminders } from "@/server/modules/automation/requests";
 import { processEmailJob } from "@/server/modules/automation/sender";
 import { getCurrentUsage, usageWindow, addMonthsUtc } from "@/server/modules/billing/entitlements";
@@ -13,30 +13,45 @@ import { syncSubscription } from "@/server/modules/billing/stripe";
 import { checkUsageAlerts } from "@/server/modules/notifications";
 import { smsSegments, renderSms } from "@/lib/sms";
 import { normalizePhone } from "@/lib/phone";
-import { POST as twilioHook } from "@/app/api/webhooks/twilio/[token]/route";
+import { POST as smsHook } from "@/app/api/webhooks/smsgate/[token]/route";
+import { encrypt } from "@/server/crypto";
 import { activatePlan, ctx, fakeProvider, makeCustomer, makeTenant, req, resetDb } from "../helpers";
 
 beforeEach(async () => {
   await resetDb();
   clearProviderOverrides();
-  setSmsProviderOverride(null);
+  setSmsGatewayOverride(null);
 });
 afterAll(async () => {
   await emailQueue().close();
   redis().disconnect();
 });
 
-function fakeSms(fail?: () => never) {
-  const sent: { to: string; body: string }[] = [];
-  setSmsProviderOverride({
-    isConfigured: () => true,
-    send: async (m) => {
-      if (fail) fail();
-      sent.push({ to: m.to, body: m.body });
-      return { providerMessageId: `SM${sent.length}`, status: "queued" };
+/** Simula la API de SMS Gate (el móvil del negocio). El estado de cada mensaje se controla desde la prueba. */
+function fakeGateway(opts: { onSend?: () => void } = {}) {
+  const sent: { to: string; text: string; id: string }[] = [];
+  const states = new Map<string, GatewayState>();
+  const g: SmsGateway = {
+    listDevices: async () => [{ id: "dev1", name: "Pixel de Marta", lastSeen: new Date().toISOString() }],
+    send: async (_c, m) => {
+      opts.onSend?.();
+      sent.push({ to: m.to, text: m.text, id: m.id });
+      states.set(m.id, "Pending");
+      return { messageId: m.id, state: "Pending" };
     },
+    getState: async (_c, id) => ({ state: states.get(id) ?? "Pending", error: states.get(id) === "Failed" ? "RESULT_ERROR_GENERIC_FAILURE" : null }),
+    cancel: async (_c, id) => void states.set(id, "Cancelled"),
+    registerWebhook: async (_c, ev) => `wh-${ev}`,
+    deleteWebhook: async () => undefined,
+  };
+  setSmsGatewayOverride(g);
+  return { sent, states };
+}
+
+async function linkPhone(businessId: string) {
+  return prisma.smsDevice.create({
+    data: { businessId, apiBaseUrl: "https://api.sms-gate.app/3rdparty/v1", login: "u", passwordEnc: encrypt("p"), deviceId: "dev1", deviceName: "Pixel de Marta", phoneNumber: "+34611000000", webhookToken: `tok_${businessId}_abcdefghij` },
   });
-  return sent;
 }
 
 describe("utilidades", () => {
@@ -95,65 +110,114 @@ describe("plan anual con cupo mensual y prueba gratuita", () => {
   });
 });
 
-describe("canal SMS", () => {
+describe("SMS desde el móvil del negocio (SMS Gate)", () => {
   async function smsTenant(plan: "PRO" | "STARTER" = "PRO") {
     const t = await makeTenant({ plan });
     await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { channel: "SMS", delayMinutes: 0 } });
     return t;
   }
 
-  it("envía por SMS, cuenta en el cupo SMS (no en el de correo) y registra la entrega real", async () => {
+  it("vincula el móvil verificando las credenciales y registrando los avisos", async () => {
     const t = await smsTenant();
-    const sent = fakeSms();
-    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Rosa Gil", email: "rosa@correo-cliente.es", phone: "+34600112233", serviceName: "corte" } });
-    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
-    expect(r.status).toBe("CREATED");
-    expect(await processEmailJob(r.jobId!)).toBe("sent");
-    expect(sent[0].to).toBe("+34600112233");
-    expect(sent[0].body).toMatch(/^Hola Rosa, gracias por confiar en .*http:\/\/localhost:3999\/r\/.* Baja: http:\/\/localhost:3999\/baja\//);
-    const usage = await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } });
-    expect([usage.smsSent, usage.smsReserved, usage.sent]).toEqual([1, 0, 0]);
-
-    // StatusCallback firmado de Twilio → ENTREGADO
-    const job = await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } });
-    process.env.TWILIO_AUTH_TOKEN = "twilio_test_token";
-    const { resetEnvCache } = await import("@/server/env");
-    resetEnvCache();
-    const url = `http://localhost:3999/api/webhooks/twilio/${job.publicToken}`;
-    const params = { MessageSid: "SM1", MessageStatus: "delivered" };
-    const bad = await twilioHook(req(`/api/webhooks/twilio/${job.publicToken}`, { method: "POST", body: new URLSearchParams(params).toString(), headers: { "x-twilio-signature": "falsa" } }), ctx({ token: job.publicToken }));
-    expect(bad.status).toBe(401);
-    const ok = await twilioHook(
-      req(`/api/webhooks/twilio/${job.publicToken}`, { method: "POST", body: new URLSearchParams(params).toString(), headers: { "x-twilio-signature": twilioSignature("twilio_test_token", url, params) } }),
-      ctx({ token: job.publicToken }),
-    );
-    expect(ok.status).toBe(204);
-    const after = await prisma.emailJob.findUniqueOrThrow({ where: { id: job.id } });
-    expect(after.status).toBe("DELIVERED");
-    expect(after.deliveredAt).not.toBeNull();
-    delete process.env.TWILIO_AUTH_TOKEN;
-    resetEnvCache();
+    fakeGateway();
+    const { connectSmsDevice } = await import("@/server/modules/sms-device");
+    const r = await connectSmsDevice({ businessId: t.business.id, userId: t.user.id, login: "abc", password: "secreto", phoneNumber: "600 11 22 33" });
+    expect(r.device.deviceId).toBe("dev1");
+    expect(r.device.phoneNumber).toBe("+34600112233");
+    expect(r.device.passwordEnc).not.toContain("secreto");
+    expect(r.device.webhookIds).toEqual(["wh-sms:sent", "wh-sms:delivered", "wh-sms:failed"]);
   });
 
-  it("sin móvil válido se omite; cupo SMS agotado se rechaza; número rechazado queda marcado", async () => {
+  it("sin móvil vinculado no se crean SMS", async () => {
     const t = await smsTenant();
-    fakeSms();
-    const noPhone = await prisma.customer.create({ data: { businessId: t.business.id, name: "Sin Móvil", email: "a@correo-cliente.es", phone: "+34912345678" } });
-    expect((await createReviewRequest(t.business.id, { customerId: noPhone.id, source: EventSource.MANUAL, sendNow: true })).reason).toBe("INVALID_PHONE");
+    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Rosa Gil", email: "rosa@correo-cliente.es", phone: "+34600112233" } });
+    expect((await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true })).reason).toBe("NO_SMS_DEVICE");
+  });
 
-    await prisma.monthlyUsage.updateMany({ where: { businessId: t.business.id }, data: { smsSent: 50 } });
-    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Con Móvil", email: "b@correo-cliente.es", phone: "+34600999888" } });
-    expect((await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true })).reason).toBe("SMS_LIMIT_REACHED");
-
-    await prisma.monthlyUsage.updateMany({ where: { businessId: t.business.id }, data: { smsSent: 0 } });
-    const { ProviderError } = await import("@/server/email/providers/types");
-    fakeSms(() => {
-      throw new ProviderError("invalid_recipient", "Twilio rechazó el número (21211)", 400);
-    });
+  it("el SMS sale del móvil: solo cuenta cuando el móvil lo envía y el aviso se confirma con la API", async () => {
+    const t = await smsTenant();
+    await linkPhone(t.business.id);
+    const gw = fakeGateway();
+    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Rosa Gil", email: "rosa@correo-cliente.es", phone: "+34600112233", serviceName: "corte" } });
     const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
-    expect(await processEmailJob(r.jobId!)).toBe("bounced");
-    expect((await prisma.customer.findUniqueOrThrow({ where: { id: c.id } })).phoneInvalidAt).not.toBeNull();
-    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } })).smsSent).toBe(0);
+    expect(await processEmailJob(r.jobId!)).toBe("sent");
+    expect(gw.sent[0].to).toBe("+34600112233");
+    expect(gw.sent[0].id).toBe(r.jobId);
+    expect(gw.sent[0].text).toMatch(/^Hola Rosa, gracias por confiar en .* Baja: http:\/\/localhost:3999\/baja\//);
+    let job = await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } });
+    expect([job.status, job.statusReason]).toEqual(["SENDING", "WAITING_DEVICE"]);
+    let usage = await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } });
+    expect([usage.smsSent, usage.smsReserved, usage.sent]).toEqual([0, 1, 0]);
+
+    // Un aviso falsificado no cambia nada: el estado se consulta a la API (sigue Pending)
+    const hook = (body: unknown, token = `tok_${t.business.id}_abcdefghij`) => smsHook(req(`/api/webhooks/smsgate/${token}`, { method: "POST", body: JSON.stringify(body) }), ctx({ token }));
+    expect((await hook({ event: "sms:delivered", payload: { messageId: r.jobId } })).status).toBe(204);
+    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } })).status).toBe("SENDING");
+    expect((await hook({ event: "sms:sent", payload: { messageId: r.jobId } }, "token_que_no_existe_123456")).status).toBe(404);
+
+    gw.states.set(r.jobId!, "Sent");
+    await hook({ event: "sms:sent", payload: { messageId: r.jobId } });
+    await hook({ event: "sms:sent", payload: { messageId: r.jobId } }); // repetido: idempotente
+    usage = await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } });
+    expect([usage.smsSent, usage.smsReserved]).toEqual([1, 0]);
+    gw.states.set(r.jobId!, "Delivered");
+    await hook({ event: "sms:delivered", payload: { messageId: r.jobId } });
+    job = await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } });
+    expect(job.status).toBe("DELIVERED");
+    expect(job.deliveredAt).not.toBeNull();
+    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } })).smsSent).toBe(1);
+  });
+
+  it("si el móvil falla o no se conecta en 24 h, el SMS no cuenta en el cupo", async () => {
+    const t = await smsTenant();
+    await linkPhone(t.business.id);
+    const gw = fakeGateway();
+    const { pollPendingSms } = await import("@/server/modules/automation/sender");
+    const a = await prisma.customer.create({ data: { businessId: t.business.id, name: "Ana", email: "ana@correo-cliente.es", phone: "+34600000001" } });
+    const b = await prisma.customer.create({ data: { businessId: t.business.id, name: "Bea", email: "bea@correo-cliente.es", phone: "+34600000002" } });
+    const ra = await createReviewRequest(t.business.id, { customerId: a.id, source: EventSource.MANUAL, sendNow: true });
+    const rb = await createReviewRequest(t.business.id, { customerId: b.id, source: EventSource.MANUAL, sendNow: true });
+    await processEmailJob(ra.jobId!);
+    await processEmailJob(rb.jobId!);
+    gw.states.set(ra.jobId!, "Failed");
+    await prisma.emailJob.update({ where: { id: rb.jobId! }, data: { sendingStartedAt: new Date(Date.now() - 25 * 3600_000) } });
+    await prisma.emailJob.updateMany({ where: { businessId: t.business.id }, data: { updatedAt: new Date(Date.now() - 5 * 60_000) } });
+    const res = await pollPendingSms();
+    expect(res.expired).toBe(1);
+    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: ra.jobId! } })).status).toBe("FAILED");
+    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: rb.jobId! } })).lastError).toMatch(/24 horas/);
+    expect(gw.states.get(rb.jobId!)).toBe("Cancelled");
+    const u = await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } });
+    expect([u.smsSent, u.smsReserved]).toEqual([0, 0]);
+  });
+
+  it("credenciales del móvil revocadas → SMS en espera y móvil marcado para volver a vincular", async () => {
+    const t = await smsTenant();
+    await linkPhone(t.business.id);
+    const { ProviderError } = await import("@/server/email/providers/types");
+    fakeGateway({ onSend: () => { throw new ProviderError("auth", "SMS Gate rechazó el usuario o la contraseña del móvil.", 401); } });
+    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Eva", email: "eva@correo-cliente.es", phone: "+34600555333" } });
+    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
+    expect(await processEmailJob(r.jobId!)).toBe("on_hold");
+    expect((await prisma.smsDevice.findUniqueOrThrow({ where: { businessId: t.business.id } })).status).toBe("NEEDS_REAUTH");
+    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } })).smsReserved).toBe(0);
+  });
+
+  it("sin móvil válido se omite; cupo SMS agotado se rechaza; desconectar el correo no retiene los SMS", async () => {
+    const t = await smsTenant();
+    await linkPhone(t.business.id);
+    fakeGateway();
+    const fijo = await prisma.customer.create({ data: { businessId: t.business.id, name: "Fijo", email: "fijo@correo-cliente.es", phone: "+34912345678" } });
+    expect((await createReviewRequest(t.business.id, { customerId: fijo.id, source: EventSource.MANUAL, sendNow: true })).reason).toBe("INVALID_PHONE");
+    await prisma.monthlyUsage.updateMany({ where: { businessId: t.business.id }, data: { smsSent: 50 } });
+    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Móvil", email: "movil@correo-cliente.es", phone: "+34600999888" } });
+    expect((await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true })).reason).toBe("SMS_LIMIT_REACHED");
+    await prisma.monthlyUsage.updateMany({ where: { businessId: t.business.id }, data: { smsSent: 0 } });
+    await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { delayMinutes: 600 } });
+    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.API });
+    const { disconnect } = await import("@/server/modules/email-connection");
+    await disconnect(t.business.id, t.user.id);
+    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } })).status).toBe("SCHEDULED");
   });
 
   it("Starter no puede usar SMS (la regla vuelve a correo)", async () => {
@@ -245,36 +309,5 @@ describe("regresiones de la segunda revisión", () => {
     expect((await prisma.emailJob.count({ where: { businessId: t.business.id, isReminder: true } })) - created).toBeLessThanOrEqual(1);
   });
 
-  it("desconectar el correo no retiene los SMS pendientes", async () => {
-    const t = await makeTenant({ plan: "PRO" });
-    await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { channel: "SMS", delayMinutes: 600 } });
-    fakeSms();
-    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Ana Sms", email: "ana.sms@correo-cliente.es", phone: "+34600555444" } });
-    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.API });
-    const { disconnect } = await import("@/server/modules/email-connection");
-    await disconnect(t.business.id, t.user.id);
-    expect((await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } })).status).toBe("SCHEDULED");
-  });
 
-  it("un aviso de 'no entregado' que llega antes del registro del envío no se pierde", async () => {
-    const t = await makeTenant({ plan: "PRO" });
-    await prisma.automationRule.updateMany({ where: { businessId: t.business.id }, data: { channel: "SMS", delayMinutes: 0 } });
-    const { applySmsStatus } = await import("@/server/modules/automation/sender");
-    fakeSms(); // proveedor configurado al crear la solicitud
-    const c = await prisma.customer.create({ data: { businessId: t.business.id, name: "Eva Sms", email: "eva.sms@correo-cliente.es", phone: "+34600555333" } });
-    const r = await createReviewRequest(t.business.id, { customerId: c.id, source: EventSource.MANUAL, sendNow: true });
-    const job = await prisma.emailJob.findUniqueOrThrow({ where: { id: r.jobId! } });
-    setSmsProviderOverride({
-      isConfigured: () => true,
-      send: async () => {
-        await applySmsStatus(job.publicToken, "undelivered", "30007");
-        return { providerMessageId: "SMx", status: "queued" };
-      },
-    });
-    await processEmailJob(job.id);
-    const after = await prisma.emailJob.findUniqueOrThrow({ where: { id: job.id } });
-    expect(after.status).toBe("BOUNCED");
-    expect((await prisma.monthlyUsage.findFirstOrThrow({ where: { businessId: t.business.id } })).smsSent).toBe(1);
-  });
 });
-

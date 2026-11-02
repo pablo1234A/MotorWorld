@@ -67,7 +67,7 @@ export default async function AdminPage() {
         <Card className="mt-4">
           <CardHeader title="Integraciones del servidor" />
           <div className="flex flex-wrap gap-2 text-sm">
-            {Object.entries({ Stripe: integ.stripe, Google: integ.google, Microsoft: integ.microsoft, SMTP: integ.smtp, "Twilio (SMS)": integ.twilio }).map(([k, v]) => (
+            {Object.entries({ Stripe: integ.stripe, Google: integ.google, Microsoft: integ.microsoft, SMTP: integ.smtp }).map(([k, v]) => (
               <Badge key={k} tone={v ? "ok" : "warn"} dot>{k}: {v ? "configurado" : "sin configurar"}</Badge>
             ))}
           </div>

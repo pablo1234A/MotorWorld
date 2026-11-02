@@ -31,7 +31,7 @@ test("20. funcionamiento en móvil: landing, registro, panel y secciones", async
   for (const [path, title] of [
     ["/app", "Inicio"], ["/app/clientes", "Clientes"], ["/app/plantillas", "Plantillas de correo"], ["/app/automatizaciones", "Automatizaciones"],
     ["/app/envios", "Historial de envíos"], ["/app/estadisticas", "Estadísticas"], ["/app/conexion-correo", "Conexión de correo"],
-    ["/app/facturacion", "Suscripción y facturación"], ["/app/perfil", "Perfil y seguridad"], ["/app/resenas", "Reseñas"], ["/app/kit-qr", "Kit QR para tu local"],
+    ["/app/facturacion", "Suscripción y facturación"], ["/app/perfil", "Perfil y seguridad"], ["/app/resenas", "Reseñas"], ["/app/kit-qr", "Kit QR para tu local"], ["/app/conexion-sms", "Móvil para SMS"],
   ] as const) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();

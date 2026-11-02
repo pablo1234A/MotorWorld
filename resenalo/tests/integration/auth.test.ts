@@ -39,7 +39,7 @@ const PASS = "MiClaveSegura2026";
 
 describe("autenticación completa", () => {
   it("registro → verificación por email → logout → login → la cuenta persiste", async () => {
-    const r = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Ana García", email: EMAIL, password: PASS, acceptTerms: true } }), ctx());
+    const r = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Ana García", email: EMAIL, password: PASS, phone: "600 123 456", acceptTerms: true } }), ctx());
     expect(r.status).toBe(201);
     const cookie1 = cookieOf(r);
     expect(cookie1).toMatch(/^rsn_session=/);
@@ -49,6 +49,7 @@ describe("autenticación completa", () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { email: EMAIL } });
     expect(user.passwordHash).not.toContain(PASS);
     expect(user.passwordHash.startsWith("$argon2id$")).toBe(true);
+    expect(user.phone).toBe("+34600123456");
 
     // Sin verificar no puede crear el negocio
     const blocked = await createBusinessRoute(req("/api/v1/business", { method: "POST", cookie: cookie1, json: { name: "Pelu", acceptDpa: true } }), ctx());
@@ -79,12 +80,12 @@ describe("autenticación completa", () => {
     expect(me2.user.email).toBe(EMAIL);
 
     // No se puede registrar dos veces
-    const again = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Ana", email: EMAIL, password: PASS, acceptTerms: true } }), ctx());
+    const again = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Ana", email: EMAIL, password: PASS, phone: "600 123 456", acceptTerms: true } }), ctx());
     expect(again.status).toBe(409);
   });
 
   it("recuperación y restablecimiento de contraseña (invalida sesiones previas)", async () => {
-    const r = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Luis", email: EMAIL, password: PASS, acceptTerms: true } }), ctx());
+    const r = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Luis", email: EMAIL, password: PASS, phone: "600 123 456", acceptTerms: true } }), ctx());
     const oldCookie = cookieOf(r);
     expect((await forgotRoute(req("/api/v1/auth/forgot-password", { method: "POST", json: { email: EMAIL } }), ctx())).status).toBe(200);
     expect((await forgotRoute(req("/api/v1/auth/forgot-password", { method: "POST", json: { email: "no-existe@x.es" } }), ctx())).status).toBe(200);
@@ -102,7 +103,7 @@ describe("autenticación completa", () => {
   });
 
   it("protección contra fuerza bruta: bloqueo de cuenta tras 5 fallos", async () => {
-    await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Eva", email: EMAIL, password: PASS, acceptTerms: true } }), ctx());
+    await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Eva", email: EMAIL, password: PASS, phone: "600 123 456", acceptTerms: true } }), ctx());
     for (let i = 0; i < 5; i++) await loginRoute(req("/api/v1/auth/login", { method: "POST", json: { email: EMAIL, password: `Mala${i}clave99` } }), ctx());
     const locked = await loginRoute(req("/api/v1/auth/login", { method: "POST", json: { email: EMAIL, password: PASS } }), ctx());
     expect(locked.status).toBe(429);
@@ -115,6 +116,14 @@ describe("autenticación completa", () => {
       last = await loginRoute(req("/api/v1/auth/login", { method: "POST", json: { email: `x${i}@y.es`, password: "abcdefgh12" }, headers: { "x-forwarded-for": "9.9.9.9" } }), ctx());
     expect(last!.status).toBe(429);
     expect(last!.headers.get("retry-after")).toBeTruthy();
+  });
+
+  it("el teléfono es obligatorio en el registro", async () => {
+    const r = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Sin Tel", email: "sintel@x-empresa.es", password: PASS, acceptTerms: true } }), ctx());
+    expect(r.status).toBe(422);
+    expect((await r.json()).error.details.fields.phone).toBeTruthy();
+    const bad = await registerRoute(req("/api/v1/auth/register", { method: "POST", json: { name: "Tel Malo", email: "telmalo@x-empresa.es", password: PASS, phone: "123", acceptTerms: true } }), ctx());
+    expect(bad.status).toBe(422);
   });
 
   it("valida la entrada del registro", async () => {

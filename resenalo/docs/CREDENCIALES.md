@@ -39,13 +39,15 @@ El código de todas las integraciones está terminado. Sin estas credenciales, l
 4. *Certificados y secretos* → nuevo secreto de cliente. Copia `MICROSOFT_CLIENT_ID` (ID de la aplicación) y `MICROSOFT_CLIENT_SECRET` (valor). `MICROSOFT_TENANT=common`.
 5. Recomendado: verificación de editor (*Publisher verification*) para que los clientes no vean el aviso de «editor no verificado»; algunas organizaciones exigen el consentimiento de su administrador.
 
-## 3b. Twilio (SMS, planes Pro y Business)
+## 3b. SMS (planes Pro y Business): no necesitas nada
 
-1. Crea la cuenta en https://www.twilio.com y añade saldo.
-2. Crea un **Messaging Service** con un número o un remitente alfanumérico válido para España (y los países donde vayas a enviar). Copia `TWILIO_MESSAGING_SERVICE_SID` (o `TWILIO_FROM` si usas un número directamente).
-3. Copia `TWILIO_ACCOUNT_SID` y `TWILIO_AUTH_TOKEN`.
-4. No hay que configurar webhooks: Reseñalo indica en cada SMS su URL de estado (`/api/webhooks/twilio/…`) y verifica la firma de Twilio.
-5. Revisa los precios por SMS en España: cada SMS incluido en los planes es un coste tuyo (Pro: 50/mes, Business: 200/mes).
+Los SMS salen del **móvil Android de cada negocio**, con su número y su tarifa, mediante la app gratuita y de código abierto **SMS Gate for Android**. Tú no contratas ni pagas nada por los SMS. Cada negocio, desde **Panel → Móvil para SMS**:
+
+1. Instala SMS Gate en su Android y activa «Servidor en la nube».
+2. Copia en el panel el usuario y la contraseña que muestra la app. Reseñalo comprueba las credenciales, elige el móvil y registra los avisos de estado.
+3. Puede enviarse un SMS de prueba a su propio número.
+
+Notas: con iPhone no es posible (Apple no lo permite). El móvil debe estar encendido y con internet; un SMS espera hasta 24 h y después se marca como fallido sin contar en el cupo. Si el negocio prefiere no usar la nube de SMS Gate, puede indicar su propio servidor (https).
 
 ## 4. Correo transaccional de la plataforma (SMTP) — obligatorio en producción
 

@@ -152,7 +152,7 @@ export default function AutomationsPage() {
             </fieldset>
             <div className="grid gap-4 sm:grid-cols-2">
               <Locked locked={!f.sms} label="SMS disponible a partir del plan Pro">
-                <Select label="Canal" value={editing.form.channel} onChange={(e) => setEditing({ ...editing, form: { ...editing.form, channel: e.target.value as "EMAIL" | "SMS" } })} help={editing.form.channel === "SMS" ? "Se envía al móvil del cliente. Los clientes sin móvil válido se omiten." : "Se envía desde tu cuenta de correo conectada."}>
+                <Select label="Canal" value={editing.form.channel} onChange={(e) => setEditing({ ...editing, form: { ...editing.form, channel: e.target.value as "EMAIL" | "SMS" } })} help={editing.form.channel === "SMS" ? "Sale de tu móvil Android vinculado (Móvil para SMS). Los clientes sin móvil válido se omiten." : "Se envía desde tu cuenta de correo conectada."}>
                   <option value="EMAIL">Correo electrónico</option>
                   <option value="SMS" disabled={!f.sms}>SMS</option>
                 </Select>

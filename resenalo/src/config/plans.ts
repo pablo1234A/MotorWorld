@@ -90,6 +90,7 @@ export const PLANS: PlanDefinition[] = [
     tagline: "Más canales y control para negocios en crecimiento.",
     highlights: [
       "Hasta 300 correos y 50 SMS al mes",
+      "SMS desde tu propio móvil Android, con tu número",
       "Todo lo de Starter",
       "Recordatorio automático si no abren el enlace",
       "Responde a tus reseñas de Google desde el panel",

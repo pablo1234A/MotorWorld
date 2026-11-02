@@ -84,7 +84,7 @@ const pages: Record<string, () => ReactNode> = {
         <ul>
           <li>Stripe Payments Europe, Ltd. (pagos y facturación).</li>
           <li>Google LLC / Microsoft Corporation, únicamente a través de la cuenta de correo y la ficha de empresa que el propio usuario conecta (API de Gmail, Microsoft Graph y Google Business Profile).</li>
-          <li>Twilio Inc. (envío de SMS, solo si el negocio usa automatizaciones por SMS).</li>
+          <li>SMS Gate (servicio en la nube que retransmite los SMS al móvil Android del propio negocio, solo si este vincula su móvil). Los SMS salen de la línea móvil del negocio. <P v={null} label="verificar titular, ubicación y garantías del servicio en la nube de SMS Gate" /></li>
           <li>Proveedor de alojamiento: <P v={null} label="proveedor de hosting y ubicación de los servidores" />.</li>
           <li>Proveedor de correo transaccional: <P v={null} label="proveedor SMTP (p. ej. Amazon SES, Postmark)" />.</li>
         </ul>
@@ -214,7 +214,7 @@ const pages: Record<string, () => ReactNode> = {
         <li>Al finalizar el servicio, suprimir los datos o devolverlos (exportación) a elección del Responsable.</li>
       </ul>
       <h2>4. Subencargados autorizados</h2>
-      <p>Proveedor de alojamiento <P v={null} label="nombre y país" />; Google/Microsoft (únicamente como proveedor de correo elegido por el propio Responsable); Twilio Inc. (envío de SMS, si el Responsable activa ese canal; transferencia internacional amparada en <P v={null} label="verificar garantías: DPF o cláusulas contractuales tipo" />). El Encargado informará de cualquier cambio con antelación para que el Responsable pueda oponerse.</p>
+      <p>Proveedor de alojamiento <P v={null} label="nombre y país" />; Google/Microsoft (únicamente como proveedor de correo elegido por el propio Responsable); el servicio en la nube de SMS Gate, que retransmite los SMS al móvil Android del propio Responsable si este decide vincularlo (<P v={null} label="verificar titular, ubicación y garantías" />; el Responsable puede usar su propio servidor de SMS Gate para evitarlo). El Encargado informará de cualquier cambio con antelación para que el Responsable pueda oponerse.</p>
       <h2>5. Obligaciones del Responsable</h2>
       <p>Contar con base jurídica para el tratamiento y para el envío de las comunicaciones, informar a sus clientes y atender sus derechos.</p>
     </>

@@ -29,7 +29,7 @@ const features = [
   { icon: BarChart3, title: "Estadísticas reales", text: "Enviados, pendientes, fallidos y clics en el enlace. Sin cifras infladas." },
   { icon: ShieldCheck, title: "Protección anti‑duplicados", text: "Nunca se envía dos veces la misma solicitud ni se supera el límite de tu plan." },
   { icon: Link2, title: "Cualquier plataforma", text: "Google, Tripadvisor, Trustpilot, Facebook… pega el enlace de tu perfil de reseñas." },
-  { icon: MessageSquareText, title: "También por SMS", text: "Para clientes que no miran el correo: SMS con confirmación de entrega real del operador." },
+  { icon: MessageSquareText, title: "También por SMS", text: "Desde tu propio móvil Android: con tu número, tu tarifa y confirmación de entrega." },
   { icon: RefreshCw, title: "Recordatorio inteligente", text: "Si alguien no abre el enlace, le enviamos un único recordatorio amable. Nunca más de uno." },
   { icon: Star, title: "Tus reseñas de Google", text: "Valoración media, reseñas nuevas y respuestas desde el panel, conectando tu ficha." },
   { icon: QrCode, title: "Kit QR para el mostrador", text: "Cartel listo para imprimir con el QR de tu perfil de reseñas." },
@@ -43,7 +43,7 @@ const faqs = [
   { q: "¿Puedo pedir solo reseñas a clientes satisfechos?", a: "No. Reseñalo envía solicitudes neutrales a todos los clientes que registres. Filtrar opiniones negativas u ofrecer premios por reseñas positivas puede infringir la normativa de consumo y las políticas de Google, y daña la confianza en tu negocio." },
   { q: "¿Sabéis si el cliente ha dejado la reseña?", a: "Si conectas tu ficha de Google Business Profile, verás en el panel cada reseña nueva, tu valoración media y cuáles llegaron probablemente tras una solicitud (por coincidencia de nombre en los días siguientes al envío). Google no indica a través de qué enlace llegó cada reseña, así que esa relación es una estimación y así te la mostramos." },
   { q: "¿Cómo funciona la prueba gratuita?", a: `Tienes ${TRIAL_DAYS} días para probar cualquier plan, con hasta ${TRIAL_EMAIL_CAP} correos. Pedimos la tarjeta al empezar, pero no se cobra nada hasta el final de la prueba; si cancelas antes, no pagas. Te avisamos por correo 3 días antes.` },
-  { q: "¿Puedo enviar las solicitudes por SMS?", a: "Sí, en los planes Pro (50 SMS al mes) y Business (200). Eliges el canal en cada automatización. El SMS lleva siempre un enlace de baja y verás si el operador lo ha entregado." },
+  { q: "¿Puedo enviar las solicitudes por SMS?", a: "Sí, en los planes Pro (50 SMS al mes) y Business (200). Los SMS salen de tu propio móvil Android, con tu número: instalas la app gratuita SMS Gate, la vinculas en tu panel y Reseñalo se encarga del resto. Cuentan como SMS de tu tarifa móvil. Con iPhone no es posible, porque Apple no permite enviar SMS automáticamente." },
   { q: "¿Los precios incluyen IVA?", a: "Sí. Los precios mostrados incluyen el IVA del 21 %. En cada factura verás desglosados la base imponible, la cuota de IVA y el total." },
   { q: "¿Puedo cancelar cuando quiera?", a: "Sí. La suscripción es mensual y sin permanencia. Si cancelas, mantienes el servicio hasta el final del periodo ya pagado y no se renueva." },
 ];

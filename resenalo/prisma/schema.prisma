@@ -18,6 +18,8 @@ model User {
   id                String    @id @default(cuid())
   email             String    @unique
   name              String
+  // Teléfono de contacto (E.164), obligatorio en el registro. Se propone como número del negocio.
+  phone             String?
   passwordHash      String    @map("password_hash")
   emailVerifiedAt   DateTime? @map("email_verified_at")
   failedLoginCount  Int       @default(0) @map("failed_login_count")
@@ -98,8 +100,6 @@ model Business {
   trackClicks           Boolean   @default(true) @map("track_clicks")
   automationPaused      Boolean   @default(false) @map("automation_paused")
   weeklyDigest          Boolean   @default(true) @map("weekly_digest")
-  // Remitente alfanumérico para SMS (máx. 11 caracteres). null = número de la plataforma.
-  smsSenderId           String?   @map("sms_sender_id")
   trialUsedAt           DateTime? @map("trial_used_at")
   stripeCustomerId      String?   @unique @map("stripe_customer_id")
   onboardingCompletedAt DateTime? @map("onboarding_completed_at")
@@ -125,6 +125,7 @@ model Business {
   auditLogs        AuditLog[]
   oauthStates      OAuthState[]
   reviewSource     ReviewSource?
+  smsDevice        SmsDevice?
   reviews          Review[]
 
   @@index([ownerId])
@@ -763,4 +764,32 @@ model Review {
 
   @@index([businessId, createTime])
   @@map("reviews")
+}
+
+// ───────────────────────────── SMS desde el móvil del negocio ─────────────────────────────
+
+// Móvil Android del negocio con la app SMS Gate: los SMS salen de su SIM y con su número.
+model SmsDevice {
+  id             String           @id @default(cuid())
+  businessId     String           @unique @map("business_id")
+  provider       String           @default("SMSGATE")
+  apiBaseUrl     String           @map("api_base_url")
+  login          String
+  passwordEnc    String           @map("password_enc")
+  deviceId       String?          @map("device_id")
+  deviceName     String?          @map("device_name")
+  phoneNumber    String?          @map("phone_number")
+  status         ConnectionStatus @default(ACTIVE)
+  // Token secreto de la URL de webhooks (los avisos se confirman siempre consultando la API).
+  webhookToken   String           @unique @map("webhook_token")
+  webhookIds     String[]         @default([]) @map("webhook_ids")
+  lastSeenAt     DateTime?        @map("last_seen_at")
+  lastCheckedAt  DateTime?        @map("last_checked_at")
+  lastError      String?          @map("last_error")
+  connectedAt    DateTime         @default(now()) @map("connected_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("sms_devices")
 }

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import {
-  BarChart3, CreditCard, Star, QrCode, FileText, History, Home, LogOut, Mail, Megaphone, Menu, PlugZap, Settings, ShieldCheck, Users, Workflow, X,
+  BarChart3, CreditCard, Star, QrCode, Smartphone, FileText, History, Home, LogOut, Mail, Megaphone, Menu, PlugZap, Settings, ShieldCheck, Users, Workflow, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { api } from "@/lib/api";
@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
 ];
 const NAV2: NavItem[] = [
   { href: "/app/conexion-correo", label: "Conexión de correo", icon: Mail },
+  { href: "/app/conexion-sms", label: "Móvil para SMS", icon: Smartphone },
   { href: "/app/kit-qr", label: "Kit QR", icon: QrCode },
   { href: "/app/integraciones", label: "API e integraciones", icon: PlugZap },
   { href: "/app/negocio", label: "Configuración del negocio", icon: Settings },

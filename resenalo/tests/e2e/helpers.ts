@@ -65,6 +65,7 @@ export async function registerAndVerify(page: Page, request: APIRequestContext, 
   await page.goto("/registro");
   await page.getByLabel("Nombre y apellidos").fill(p.name);
   await page.getByLabel("Correo electrónico").fill(p.email);
+  await page.getByLabel("Teléfono móvil").fill("600 123 456");
   await page.getByLabel("Contraseña").fill(p.password);
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();

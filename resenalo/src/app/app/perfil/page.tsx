@@ -20,7 +20,9 @@ const device = (ua: string | null) => {
 };
 
 export default function ProfilePage() {
-  const me = useApi<{ user: { name: string; email: string } }>("/api/v1/auth/me");
+  const me = useApi<{ user: { name: string; email: string; phone: string | null } }>("/api/v1/auth/me");
+  const [phone, setPhone] = useState("");
+  const [nameErr, setNameErr] = useState<Record<string, string> | undefined>();
   const sessions = useApi<{ sessions: S[] }>("/api/v1/account/sessions");
   const toast = useToast();
   const [name, setName] = useState("");
@@ -28,7 +30,7 @@ export default function ProfilePage() {
   const [pwErr, setPwErr] = useState<{ msg?: string; fields?: Record<string, string> }>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [del, setDel] = useState({ open: false, password: "", confirm: "", err: "" });
-  useEffect(() => { if (me.data) setName(me.data.user.name); }, [me.data]);
+  useEffect(() => { if (me.data) { setName(me.data.user.name); setPhone(me.data.user.phone ?? ""); } }, [me.data]);
   if (me.loading && !me.data) return <PageLoader />;
 
   return (
@@ -37,9 +39,10 @@ export default function ProfilePage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Perfil" />
-          <form className="space-y-4" onSubmit={async (e) => { e.preventDefault(); setBusy("name"); try { await api("/api/v1/account/profile", { method: "PATCH", body: { name } }); toast("ok", "Perfil actualizado"); } catch (er) { toast("bad", (er as ApiError).message); } setBusy(null); }}>
+          <form className="space-y-4" onSubmit={async (e) => { e.preventDefault(); setBusy("name"); setNameErr(undefined); try { await api("/api/v1/account/profile", { method: "PATCH", body: { name, ...(phone ? { phone } : {}) } }); toast("ok", "Perfil actualizado"); } catch (er) { setNameErr((er as ApiError).fields); toast("bad", (er as ApiError).message); } setBusy(null); }}>
             <Input label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
             <Input label="Correo de acceso" value={me.data?.user.email ?? ""} disabled help="Para cambiarlo, contacta con soporte." />
+            <Input label="Teléfono móvil" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} error={nameErr?.phone} />
             <div className="flex justify-end"><Button type="submit" variant="secondary" loading={busy === "name"}>Guardar</Button></div>
           </form>
         </Card>

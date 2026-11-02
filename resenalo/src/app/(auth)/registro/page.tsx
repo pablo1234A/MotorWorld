@@ -11,7 +11,7 @@ import { Alert } from "@/components/ui/Display";
 function RegisterForm() {
   const router = useRouter();
   const plan = useSearchParams().get("plan");
-  const [f, setF] = useState({ name: "", email: "", password: "", acceptTerms: false });
+  const [f, setF] = useState({ name: "", email: "", phone: "", password: "", acceptTerms: false });
   const [err, setErr] = useState<{ msg?: string; fields?: Record<string, string> }>({});
   const [loading, setLoading] = useState(false);
   return (
@@ -37,6 +37,7 @@ function RegisterForm() {
         {err.msg ? <Alert tone="bad">{err.msg}</Alert> : null}
         <Input label="Nombre y apellidos" autoComplete="name" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} error={err.fields?.name} />
         <Input label="Correo electrónico" type="email" autoComplete="email" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} error={err.fields?.email} />
+        <Input label="Teléfono móvil" type="tel" autoComplete="tel" inputMode="tel" placeholder="+34 600 000 000" required value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} error={err.fields?.phone} help="Para avisos de tu cuenta. Si activas los SMS, se enviarán desde tu móvil." />
         <Input label="Contraseña" type="password" autoComplete="new-password" required minLength={10} value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} error={err.fields?.password} help="Mínimo 10 caracteres, con letras y números." />
         <Checkbox
           checked={f.acceptTerms}

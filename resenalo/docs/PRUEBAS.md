@@ -4,7 +4,7 @@ Ejecutadas el 31/10/2026 en el entorno de desarrollo (PostgreSQL 16, Redis 7, No
 
 | Batería | Comando | Resultado |
 |---|---|---|
-| Unitarias + integración (BD y Redis reales) | `npm test` | **98/98 superadas** (12 archivos) |
+| Unitarias + integración (BD y Redis reales) | `npm test` | **101/101 superadas** (12 archivos) |
 | E2E en navegador (app de producción `next start` + worker real) | `npm run test:e2e` | **12/12 superadas** (escritorio + móvil Pixel 7) |
 | Tipos / lint / build | `npm run typecheck`, `npm run lint`, `npm run build` | Sin errores |
 | Dependencias de producción | `npm audit --omit=dev` | 0 vulnerabilidades |
@@ -47,13 +47,14 @@ Ejecutadas el 31/10/2026 en el entorno de desarrollo (PostgreSQL 16, Redis 7, No
 
 - Plan anual: el cupo se divide en ventanas mensuales (incluido fin de mes, 31 ene → 28 feb).
 - Prueba gratuita: cupo limitado (50 correos / 10 SMS), se marca como usada y al activarse se aplica el cupo completo.
-- SMS: envío con cupo propio, texto con baja, StatusCallback de Twilio con firma válida (→ Entregado) y firma falsa (→ 401), móvil no válido, cupo SMS agotado, número rechazado marcado; Starter no puede usar SMS.
+- SMS desde el móvil del negocio (SMS Gate simulado en el borde de la API): vinculación verificando credenciales, sin móvil no se crean SMS, el SMS solo cuenta cuando el móvil lo envía, avisos falsificados o con token erróneo no cambian nada (se confirma con la API), avisos repetidos idempotentes, entregado, fallo del móvil y caducidad a las 24 h sin contar en el cupo, credenciales revocadas → en espera, número fijo omitido, cupo SMS agotado; Starter no puede usar SMS.
+- Registro: el teléfono móvil es obligatorio y se valida.
 - Recordatorio: exactamente uno tras el plazo, nunca a quien hizo clic, nunca en Starter, cuenta en el cupo.
 - Avisos de consumo del 80 % y 100 %: una sola vez por periodo, se reinician en el siguiente.
 - Google Business Profile (contra un servidor local que reproduce la API): OAuth con state, selección automática de ficha, sincronización idempotente, valoración y total, atribución estimada por nombre, respuesta publicada, Starter no puede responder y otro negocio no puede acceder.
 - E2E: Reseñas, Kit QR (PNG/SVG y cartel), canal SMS y recordatorio en el editor de automatizaciones, `/admin` oculto para no administradores.
 
-> ⏳ Pendiente con credenciales reales: Twilio (SMS a un móvil propio) y Google Business Profile (requiere que Google apruebe el acceso a la API).
+> ⏳ Pendiente con dispositivos y credenciales reales: un móvil Android con SMS Gate enviando a un número propio, y Google Business Profile (requiere que Google apruebe el acceso a la API).
 
 ## Otras comprobaciones automatizadas
 

@@ -8,9 +8,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, business } = await requirePageTenant();
-  const [sub, conn] = await Promise.all([
+  const [sub, conn, smsRules, smsDevice] = await Promise.all([
     prisma.subscription.findUnique({ where: { businessId: business.id }, include: { plan: true } }),
     prisma.emailConnection.findUnique({ where: { businessId: business.id }, select: { status: true, emailAddress: true } }),
+    prisma.automationRule.count({ where: { businessId: business.id, active: true, channel: "SMS" } }),
+    prisma.smsDevice.findUnique({ where: { businessId: business.id }, select: { status: true, deviceId: true } }),
   ]);
   const canSend = subscriptionAllowsSending(sub);
   const banners: { tone: string; text: string; href: string; cta: string }[] = [];
@@ -20,6 +22,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!conn || conn.status === "DISCONNECTED") banners.push({ tone: "warn", text: "No hay ninguna cuenta de correo conectada.", href: "/app/conexion-correo", cta: "Conectar correo" });
   else if (conn.status === "NEEDS_REAUTH")
     banners.push({ tone: "bad", text: `Hemos perdido la autorización de ${conn.emailAddress}. Los envíos están en espera.`, href: "/app/conexion-correo", cta: "Reconectar" });
+
+  if (smsRules && (!smsDevice || !smsDevice.deviceId))
+    banners.push({ tone: "warn", text: "Tienes automatizaciones por SMS, pero no has vinculado tu móvil Android.", href: "/app/conexion-sms", cta: "Vincular móvil" });
+  else if (smsRules && smsDevice?.status !== "ACTIVE")
+    banners.push({ tone: "bad", text: "Tu móvil para SMS necesita volver a vincularse. Los SMS están en espera.", href: "/app/conexion-sms", cta: "Revisar" });
 
   return (
     <div className="min-h-[100dvh]">
