@@ -34,8 +34,8 @@ from .assets import asset_local_copy, ingest_file
 log = logging.getLogger(__name__)
 
 LOCAL_TASKS = {"local_image_op", "local_video_op", "local_audio_op", "timeline_render", "video_extend"}
-PIPELINE_TASKS = {"video_extend", "timeline_render", "film_develop", "edit_chain", "film_batch"}
-PIPELINE_REMOTE_TASKS = {"film_develop", "edit_chain", "film_batch"}
+PIPELINE_TASKS = {"video_extend", "timeline_render", "film_develop", "edit_chain", "film_batch", "multi_shot"}
+PIPELINE_REMOTE_TASKS = {"film_develop", "edit_chain", "film_batch", "multi_shot"}
 ROLE_KIND = {"image": "image", "end_image": "image", "mask": "image", "reference": "image", "video": "video", "audio": "audio"}
 
 

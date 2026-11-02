@@ -34,7 +34,7 @@ from PIL import Image  # noqa: E402
 
 from app import db as dbmod  # noqa: E402
 from app.config import get_settings  # noqa: E402
-from app.redis_client import reset_memory_limits  # noqa: E402
+from app.redis_client import reset_memory_limits, reset_redis_client  # noqa: E402
 
 get_settings.cache_clear()
 
@@ -74,6 +74,7 @@ async def app():
     await dbmod.reset_engine()
     reset_storage()
     reset_memory_limits()
+    reset_redis_client()
     engine = dbmod.get_engine()
     async with engine.begin() as conn:
         from app import models  # noqa: F401

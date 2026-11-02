@@ -45,6 +45,10 @@ class LocalAdapter(ProviderAdapter):
                 if any(o.get("op") == "extract_frame" for o in ops):
                     at = next(o for o in ops if o.get("op") == "extract_frame").get("at", "last")
                     outs = [OutputItem(path=await ffmpeg_ops.extract_frame(vid.path, at))]
+                elif ops and ops[0].get("op") == "segment":
+                    seg = ops[0]
+                    outs = [OutputItem(path=await ffmpeg_ops.apply_segment_ops(vid.path, float(seg.get("start") or 0), float(seg.get("end") or 0),
+                                                                              seg.get("ops") or [], cb))]
                 elif any(o.get("op") == "extract_audio" for o in ops):
                     outs = [OutputItem(path=await ffmpeg_ops.extract_audio(vid.path))]
                 else:

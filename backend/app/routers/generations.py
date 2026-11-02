@@ -47,7 +47,8 @@ def _validate_params(model_id: str, params: dict[str, Any]) -> dict[str, Any]:
     declared = {p.name: p for p in m.params}
     passthrough = {"ops", "mix", "volumes", "delays", "timeline_id", "steps", "film_id", "step", "target_ids", "overwrite",
                    "mode", "scene_id", "language", "target_duration_s", "genre", "tone", "max_scenes", "i2v_model", "i2v_params",
-                   "join", "post_ops", "extend", "mask_asset_id", "reference_model", "model_id", "user_prompt"}
+                   "join", "post_ops", "extend", "mask_asset_id", "reference_model", "model_id", "user_prompt", "shots", "continuity",
+                   "video_model", "video_params", "transition"}
     out: dict[str, Any] = {}
     for k, v in params.items():
         if v is None or v == "":

@@ -111,3 +111,12 @@ async def test_render_empty_timeline_rejected(client):
     tl = (await client.post("/api/timelines", json={"name": "Vacío"})).json()
     r = await client.post(f"/api/timelines/{tl['id']}/render")
     assert r.status_code == 400 and r.json()["detail"]["code"] == "empty_timeline"
+
+
+async def test_segment_edit_keeps_rest_of_video(client, media_dir):
+    v = await upload(client, media_dir / "a.mp4")
+    g = await _run(client, {"task": "local_video_op", "model_id": "local-ffmpeg", "inputs": {"video": v["id"]},
+                            "params": {"ops": [{"op": "segment", "start": 1, "end": 2, "ops": [{"op": "color", "preset": "noir"}, {"op": "slow_motion", "factor": 0.5}]}]}})
+    assert g["status"] == "completed", g["error"]
+    assert abs(g["outputs"][0]["duration"] - 4.0) < 0.3  # 1s + 2s (slowed) + 1s
+    assert g["outputs"][0]["width"] == 640

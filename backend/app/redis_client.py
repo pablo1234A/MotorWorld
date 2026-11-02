@@ -71,3 +71,10 @@ async def rate_limit_hit(key: str, limit: int, window_seconds: int = 60) -> bool
 
 def reset_memory_limits() -> None:
     _memory.hits.clear()
+
+
+def reset_redis_client() -> None:
+    """Forget the cached client (tests run each case in a fresh event loop)."""
+    global _redis, _redis_ok
+    _redis = None
+    _redis_ok = None

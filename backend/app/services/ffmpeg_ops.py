@@ -50,6 +50,9 @@ VIDEO_OPS = {
     "audio_denoise": "Reducir ruido de audio",
     "normalize_audio": "Normalizar sonoridad (EBU R128)",
     "mute": "Quitar audio",
+    "segment": "Aplicar operaciones solo a un tramo (start, end, ops)",
+    "extract_frame": "Extraer fotograma (at: segundos | last)",
+    "extract_audio": "Extraer la pista de audio",
 }
 
 COLOR_PRESETS = {
@@ -509,3 +512,38 @@ async def extract_audio(src: Path) -> Path:
 
 def ceil2(v: float) -> int:
     return int(math.ceil(v / 2) * 2)
+
+
+async def apply_segment_ops(src: Path, start: float, end: float, ops: list[dict[str, Any]], on_progress: ProgressCb = None) -> Path:
+    """Apply ``ops`` only to [start, end] and keep the rest of the video intact (edit by segments)."""
+    info = await inspect(src)
+    dur = info.duration or 0
+    start, end = max(0.0, start), min(end, dur) if dur else end
+    if end <= start:
+        raise ValueError("Segmento vacío")
+    w, h, fps = (info.width or 1280) // 2 * 2, (info.height or 720) // 2 * 2, info.fps or 24
+    parts: list[tuple[Path, float]] = []
+    temps: list[Path] = []
+    try:
+        if start > 0.05:
+            p = await normalise_clip(src, w, h, fps, start=0, end=start)
+            temps.append(p)
+            parts.append((p, start))
+        mid = await normalise_clip(src, w, h, fps, start=start, end=end)
+        temps.append(mid)
+        mid2 = await apply_video_ops(mid, ops)
+        temps.append(mid2)
+        mid3 = await normalise_clip(mid2, w, h, fps)  # restore uniform size/audio after e.g. reframe
+        temps.append(mid3)
+        parts.append((mid3, (await inspect(mid3)).duration or (end - start)))
+        if dur - end > 0.05:
+            p = await normalise_clip(src, w, h, fps, start=end, end=dur)
+            temps.append(p)
+            parts.append((p, dur - end))
+        out = await concat_with_transitions(parts, [None] * (len(parts) - 1), on_progress)
+        if out in temps:
+            temps.remove(out)
+        return out
+    finally:
+        for t in temps:
+            t.unlink(missing_ok=True)

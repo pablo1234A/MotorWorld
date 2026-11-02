@@ -19,7 +19,7 @@ Task = Literal[
     "text_to_video", "image_to_video", "first_last_to_video", "video_to_video", "upscale_video",
     "text_to_speech", "text_to_music", "text_to_sfx", "video_to_audio",
     "local_image_op", "local_video_op", "local_audio_op", "video_extend", "timeline_render", "film_develop",
-    "edit_chain", "film_batch",
+    "edit_chain", "film_batch", "multi_shot",
 ]
 
 TASK_LABELS: dict[str, str] = {
@@ -46,6 +46,7 @@ TASK_LABELS: dict[str, str] = {
     "timeline_render": "Render de línea temporal",
     "film_develop": "Desarrollo de guion (LLM)",
     "edit_chain": "Cadena de edición",
+    "multi_shot": "Secuencia multi-plano",
     "film_batch": "Producción por lotes",
 }
 
@@ -108,6 +109,9 @@ class ModelSpec:
     def to_public(self) -> dict[str, Any]:
         d = asdict(self)
         d["task_labels"] = {t: TASK_LABELS.get(t, t) for t in self.tasks}
+        for r in d["routes"]:
+            r.pop("mapper", None)
+            r.pop("options", None)
         return d
 
 
@@ -627,10 +631,10 @@ MODELS += [
     ),
     ModelSpec(
         id="pipeline", name="Orquestador de pipelines", family="Local", category="utility",
-        tasks=["edit_chain", "film_batch"],
+        tasks=["edit_chain", "film_batch", "multi_shot"],
         description="Ejecuta cadenas de pasos (edición por instrucciones, producción de películas) delegando cada paso en el modelo adecuado.",
         license="N/A", commercial_use="yes",
-        routes=[Route("local", {"edit_chain": "pipeline", "film_batch": "pipeline"}, "local", Price(0.0, "run", "El coste es el de cada paso."), priority=1)],
+        routes=[Route("local", {"edit_chain": "pipeline", "film_batch": "pipeline", "multi_shot": "pipeline"}, "local", Price(0.0, "run", "El coste es el de cada paso."), priority=1)],
         tags=["internal"],
     ),
     ModelSpec(

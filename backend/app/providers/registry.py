@@ -114,7 +114,7 @@ def model_availability(model: ModelSpec, user_creds: dict[str, str]) -> dict[str
             continue
         a = build_adapter(r.provider, user_creds)
         routes.append({"provider": r.provider, "configured": a.is_configured(), "requires_key": a.requires_key()})
-    return {"available": any(x["configured"] for x in routes), "routes": routes}
+    return {"available": any(x["configured"] for x in routes), "route_status": routes}
 
 
 _health_cache: dict[str, tuple[float, tuple[bool, str]]] = {}

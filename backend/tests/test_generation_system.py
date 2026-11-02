@@ -178,3 +178,21 @@ async def test_post_ops_slow_motion_after_generation(client):
     assert g["status"] == "completed", g["error"]
     assert len(g["outputs"]) == 2 and g["outputs"][1]["duration"] > g["outputs"][0]["duration"] * 1.8
     assert "Camera: slow dolly in" in g["prompt"] and "85mm portrait lens" in g["prompt"]
+
+
+async def test_multi_shot_sequence_with_continuity(client, media_dir):
+    img = await upload(client, media_dir / "img.png")
+    r = await client.post("/api/generations", json={"task": "multi_shot", "model_id": "pipeline", "prompt": "Secuencia",
+                                                    "inputs": {"image": img["id"]},
+                                                    "params": {"video_model": "test-video", "continuity": True, "transition": "crossfade",
+                                                               "shots": [{"prompt": "plano general", "cinema": {"camera_movement": "crane_up"}},
+                                                                         {"prompt": "primer plano"}, {"prompt": "plano final"}]}})
+    assert r.status_code == 201, r.text
+    g = await wait_job(client, r.json()["id"], 240)
+    assert g["status"] == "completed", g["error"]
+    assert len(g["outputs"]) == 4 and g["outputs"][-1]["source"] == "render"
+    detail = (await client.get(f"/api/generations/{g['id']}")).json()
+    tasks = [c["task"] for c in detail["children"]]
+    assert tasks == ["image_to_video"] * 3  # shots 2-3 chained from the previous last frame
+    assert detail["children"][1]["inputs"]["image"][0] != img["id"]
+    assert abs(g["outputs"][-1]["duration"] - (3 * 3 - 2 * 0.4)) < 0.4

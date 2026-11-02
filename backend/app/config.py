@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     max_upload_mb: int = 500
     max_image_upload_mb: int = 40
     max_active_jobs_per_user: int = 4
-    rate_limit_per_minute: int = 120
+    rate_limit_per_minute: int = 600
     auth_rate_limit_per_minute: int = 10
     daily_generation_limit: int = 300
     user_storage_quota_mb: int = 20_000

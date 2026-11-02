@@ -44,7 +44,7 @@ async def _child(parent: Generation, ctx, *, task: str, model_id: str, prompt: s
 async def run_pipeline(gen: Generation, ctx) -> None:
     handler = {
         "video_extend": _video_extend, "timeline_render": _timeline_render, "film_develop": _film_develop,
-        "edit_chain": _edit_chain, "film_batch": _film_batch,
+        "edit_chain": _edit_chain, "film_batch": _film_batch, "multi_shot": _multi_shot,
     }[gen.task]
     try:
         outputs = await handler(gen, ctx)
@@ -310,3 +310,72 @@ async def _film_batch(gen: Generation, ctx) -> list[str]:
     if failures:
         await ctx.update(error=f"{len(failures)} de {len(jobs)} elementos fallaron: " + " | ".join(failures)[:3000])
     return outputs
+
+
+async def _multi_shot(gen: Generation, ctx) -> list[str]:
+    """Generate several shots of one sequence; optionally chain them through the last frame
+    (visual continuity), then assemble and render them into a single video."""
+    from . import ffmpeg_ops as ff
+    from .prompting import compose_video_prompt
+    from .timeline import Clip, TimelineData, Track, Transition, render
+
+    p = gen.params or {}
+    shots: list[dict[str, Any]] = p.get("shots") or []
+    model_id = p.get("video_model")
+    if not shots or not model_id:
+        raise PipelineError("Define al menos un plano y un modelo de vídeo")
+    from ..providers.catalog import get_model
+
+    m = get_model(model_id)
+    if m is None:
+        raise PipelineError("Modelo de vídeo desconocido")
+    start_image = (p.get("_roles", {}).get("image") or [None])[0]
+    continuity = bool(p.get("continuity", True))
+    clips: list[str] = []
+    outputs: list[str] = []
+    prev_frame: str | None = start_image
+    for i, sh in enumerate(shots):
+        prompt = compose_video_prompt(sh.get("prompt", ""), sh.get("cinema") or {}, model_id)
+        use_image = prev_frame if (i == 0 and start_image) or (i > 0 and continuity) else None
+        task = "image_to_video" if use_image and "image_to_video" in m.tasks else "text_to_video"
+        if task == "text_to_video" and "text_to_video" not in m.tasks:
+            raise PipelineError(f"{m.name} necesita una imagen inicial para el plano {i + 1}")
+        child = await _child(gen, ctx, task=task, model_id=model_id, prompt=prompt, params=p.get("video_params") or {},
+                             inputs={"image": use_image} if task == "image_to_video" else {}, provider=p.get("provider"),
+                             label=f"Plano {i + 1}/{len(shots)}")
+        clip_id = child.output_asset_ids[0]
+        clips.append(clip_id)
+        outputs.append(clip_id)
+        await ctx.update(progress=round((i + 1) / (len(shots) + 1), 3))
+        if continuity and i < len(shots) - 1:
+            async with get_sessionmaker()() as db:
+                a = await db.get(Asset, clip_id)
+                src = await asset_local_copy(a)
+                frame = await ff.extract_frame(src, "last")
+                fa = await ingest_file(db, user_id=gen.user_id, path=frame, source="edit", parent_id=a.id, generation_id=gen.id,
+                                       project_id=gen.project_id, name=f"plano-{i + 1}-ultimo-fotograma")
+                await db.commit()
+                src.unlink(missing_ok=True)
+                frame.unlink(missing_ok=True)
+            prev_frame = fa.id
+    await ctx.update(status_message="Montando la secuencia")
+    async with get_sessionmaker()() as db:
+        assets = {aid: await db.get(Asset, aid) for aid in clips}
+        paths = {aid: await asset_local_copy(a) for aid, a in assets.items()}
+    first = assets[clips[0]]
+    w, h = (first.width or 1280) // 2 * 2, (first.height or 720) // 2 * 2
+    trans = p.get("transition") or "cut"
+    data = TimelineData(width=w, height=h, fps=first.fps or 24, tracks=[Track(id="v1", kind="video", clips=[
+        Clip(id=f"s{i}", asset_id=aid, start=float(i), in_=0, out=assets[aid].duration,
+             transition_in=Transition(type=trans, duration=0.4) if i and trans != "cut" else None) for i, aid in enumerate(clips)])])
+    try:
+        out, _ = await render(data, paths)
+    finally:
+        for pth in paths.values():
+            pth.unlink(missing_ok=True)
+    async with get_sessionmaker()() as db:
+        final = await ingest_file(db, user_id=gen.user_id, path=out, source="render", generation_id=gen.id, project_id=gen.project_id,
+                                  name="secuencia-multiplano", meta={"shots": len(clips), "model_id": model_id})
+        await db.commit()
+    out.unlink(missing_ok=True)
+    return outputs + [final.id]

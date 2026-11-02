@@ -60,16 +60,26 @@ async def abort_job(gen_id: str) -> None:
             if local:
                 t.cancel()
         return
+    # Remote jobs stop cooperatively (the poll loop sees cancel_requested and
+    # cancels at the provider); arq abort additionally interrupts local work.
     try:
         from arq.jobs import Job
 
+        from ..db import get_sessionmaker
+        from ..models import Generation
+
+        async with get_sessionmaker()() as db:
+            g = await db.get(Generation, gen_id)
+            queue = g.queue if g else s.queue_generate
         pool = await get_pool()
         job_id = await pool.get(f"mw:jobid:{gen_id}")
         if job_id:
-            job = Job(job_id.decode() if isinstance(job_id, bytes) else job_id, pool, _queue_name=None)
-            await job.abort(timeout=0)
+            job = Job(job_id.decode() if isinstance(job_id, bytes) else job_id, pool, _queue_name=queue)
+            await job.abort(timeout=0.1, poll_delay=0.05)
+    except TimeoutError:
+        pass  # abort registered; the worker will cancel the task on its next poll
     except Exception:  # noqa: BLE001
-        log.debug("abort failed for %s", gen_id, exc_info=True)
+        log.warning("abort failed for %s", gen_id, exc_info=True)
 
 
 async def wait_inline(timeout: float = 60) -> None:
