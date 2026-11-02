@@ -411,7 +411,7 @@ MODELS += [
         routes=[
             Route("replicate", {"text_to_video": "wan-video/wan-2.2-t2v-fast", "image_to_video": "wan-video/wan-2.2-i2v-fast"}, "replicate_wan", Price(None, "video", "Consulta Replicate."), priority=20),
             Route("fal", {"text_to_video": "fal-ai/wan/v2.2-a14b/text-to-video", "image_to_video": "fal-ai/wan/v2.2-a14b/image-to-video"}, "fal_wan", Price(0.08, "second"), priority=30),
-            Route("diffusers", {"text_to_video": "Wan-AI/Wan2.2-TI2V-5B-Diffusers", "image_to_video": "Wan-AI/Wan2.2-TI2V-5B-Diffusers"}, "diffusers_wan", Price(0.0, "video", "Local, requiere GPU de ≥24 GB."), priority=60),
+            Route("diffusers", {"text_to_video": "Wan-AI/Wan2.2-TI2V-5B-Diffusers"}, "diffusers_wan", Price(0.0, "video", "Local, requiere GPU de ≥24 GB."), priority=60),
         ],
         tags=["open-weights", "cinematic"],
     ),
@@ -482,7 +482,7 @@ MODELS += [
         params=[p_aspect(AR_VID, "16:9"), p_resolution(["480p", "720p"], "720p"), p_seed()],
         routes=[
             Route("fal", {"text_to_video": "fal-ai/ltx-video-13b-distilled", "image_to_video": "fal-ai/ltx-video-13b-distilled/image-to-video"}, "fal_ltx", Price(None, "video", "Coste bajo; consulta fal."), priority=20),
-            Route("diffusers", {"text_to_video": "Lightricks/LTX-Video", "image_to_video": "Lightricks/LTX-Video"}, "diffusers_ltx", Price(0.0, "video", "Local (GPU)."), priority=60),
+            Route("diffusers", {"text_to_video": "Lightricks/LTX-Video"}, "diffusers_ltx", Price(0.0, "video", "Local (GPU)."), priority=60),
         ],
         tags=["open-weights", "fast"],
     ),

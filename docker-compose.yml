@@ -1,0 +1,161 @@
+# MotorWorld Studio — full stack.
+#   cp .env.example .env   (fill SECRET_KEY, ENCRYPTION_KEY, passwords and the provider keys you have)
+#   docker compose up -d --build
+#   open http://localhost (or https://$SITE_ADDRESS)
+name: motorworld
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-motorworld}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-motorworld}
+  REDIS_URL: redis://redis:6379/0
+  QUEUE_MODE: arq
+  STORAGE_BACKEND: s3
+  S3_ENDPOINT_URL: http://minio:9000
+  S3_PUBLIC_ENDPOINT_URL: ${S3_PUBLIC_ENDPOINT_URL:-http://localhost:9000}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-motorworld}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+  S3_BUCKET: ${S3_BUCKET:-motorworld}
+  TMP_DIR: /tmp/motorworld
+
+x-backend: &backend
+  build: ./backend
+  image: motorworld-backend
+  env_file: .env
+  environment: *backend-env
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    minio: { condition: service_healthy }
+  restart: unless-stopped
+  logging: &logging
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-motorworld}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-motorworld}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-motorworld}"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-motorworld}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+    volumes: [miniodata:/data]
+    ports: ["9000:9000"]   # presigned media URLs are served from here
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+
+  worker-generate:
+    <<: *backend
+    command: ["arq", "app.worker.GenerateWorker"]
+    environment:
+      <<: *backend-env
+      WORKER_CONCURRENCY: "${GENERATE_CONCURRENCY:-20}"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck: { disable: true }
+
+  worker-media:
+    <<: *backend
+    command: ["arq", "app.worker.MediaWorker"]
+    environment:
+      <<: *backend-env
+      WORKER_CONCURRENCY: "${MEDIA_CONCURRENCY:-2}"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck: { disable: true }
+    deploy:
+      replicas: ${MEDIA_REPLICAS:-1}
+
+  web:
+    build: ./frontend
+    image: motorworld-web
+    environment:
+      API_INTERNAL_URL: http://api:8000
+    depends_on: [api]
+    restart: unless-stopped
+    logging: *logging
+
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on: [web, api]
+    restart: unless-stopped
+    logging: *logging
+
+  backup:
+    image: postgres:16-alpine
+    profiles: ["backup"]   # docker compose --profile backup run --rm backup
+    environment:
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-motorworld}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-motorworld}
+      BACKUP_KEEP: ${BACKUP_KEEP:-7}
+    entrypoint: ["/bin/sh", "/deploy/backup.sh"]
+    volumes:
+      - ./deploy:/deploy:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+    depends_on: [postgres]
+
+  # Optional GPU worker for local open-weight models (needs NVIDIA Container Toolkit):
+  #   docker compose --profile gpu up -d worker-gpu
+  worker-gpu:
+    profiles: ["gpu"]
+    build: { context: ./backend, target: gpu }
+    env_file: .env
+    environment:
+      <<: *backend-env
+      LOCAL_DIFFUSERS_ENABLED: "true"
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }]
+    volumes: [hfcache:/root/.cache/huggingface]
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  caddydata:
+  hfcache:

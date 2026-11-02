@@ -16,7 +16,7 @@ import time
 import uuid
 from pathlib import Path
 
-import httpx
+import httpx  # noqa: E402
 
 OK = "\033[32m✓\033[0m"
 FAIL = "\033[31m✗\033[0m"

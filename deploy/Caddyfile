@@ -1,0 +1,25 @@
+# Reverse proxy: one origin for web + API (cookies stay first-party).
+# Set SITE_ADDRESS to your domain (e.g. studio.example.com) for automatic HTTPS.
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+	request_body {
+		max_size 600MB
+	}
+	handle /api/* {
+		reverse_proxy api:8000 {
+			transport http {
+				read_timeout 15m
+				write_timeout 15m
+			}
+		}
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
