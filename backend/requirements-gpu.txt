@@ -1,0 +1,10 @@
+# Optional: local open-weight inference on a CUDA GPU worker (LOCAL_DIFFUSERS_ENABLED=true)
+-r requirements.txt
+torch>=2.4
+diffusers>=0.32
+transformers>=4.46
+accelerate>=1.0
+sentencepiece
+imageio[ffmpeg]
+# Optional local background removal
+rembg[gpu]>=2.0.59
