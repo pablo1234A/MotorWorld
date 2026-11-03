@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotorWorld Imágenes</title>
+<meta name="description" content="Generador de imágenes con IA en un solo archivo, con base de datos local en el navegador.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#09090b;--panel:#101013;--panel2:#16161a;--panel3:#1d1d22;--line:#232329;--line2:#303038;--text:#ededf0;--muted:#8d8d98;--dim:#5c5c66;--accent:#ff5a36;--ok:#3ccf91;--warn:#f5b14c;--err:#ff4d5e;--info:#6aa8ff;
+  --sans:"Geist",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--display:"Instrument Serif",Georgia,serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:inherit}
+::selection{background:var(--accent);color:#fff}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--mono)}.muted{color:var(--muted)}.dim{color:var(--dim)}
+header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;padding:0 24px;height:60px;border-bottom:1px solid var(--line);background:rgba(9,9,11,.85);backdrop-filter:blur(14px)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:32px;height:32px;border-radius:10px;border:1px solid var(--line2);background:var(--panel2);display:grid;place-items:center}
+.logo-mark i{width:12px;height:12px;border-radius:50%;border:2.5px solid var(--accent)}
+.logo b{font-size:14px;font-weight:600}.logo em{font-family:var(--display);color:var(--muted);font-size:14px;margin-left:3px}
+nav.tabsnav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabsnav a{padding:8px 12px;border-radius:8px;font-size:13.5px;color:var(--muted);text-decoration:none;white-space:nowrap}
+nav.tabsnav a:hover{color:var(--text);background:var(--panel2)}
+nav.tabsnav a.on{color:var(--text);background:var(--panel3)}
+.dbpill{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.dbpill i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.jobs-pill{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line2);border-radius:8px;padding:6px 10px;white-space:nowrap}
+.jobs-pill.on{border-color:rgba(255,90,54,.45);background:rgba(255,90,54,.1)}
+.rec{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);animation:rec 1.4s infinite;margin-right:6px}
+@keyframes rec{50%{opacity:.25}}
+main{max-width:1500px;margin:0 auto;padding:36px 32px 60px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+h1.page{font-family:var(--display);font-weight:400;font-size:46px;line-height:1.05}
+h1.page em{color:var(--muted)}
+.lead{margin-top:8px;max-width:720px;font-size:15px;color:var(--muted);line-height:1.55}
+.head{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:18px}
+.pad{padding:20px}
+.split{display:grid;grid-template-columns:430px 1fr;gap:24px;align-items:start}
+.sticky{position:sticky;top:80px}
+.label{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+.label small{font-family:var(--mono);text-transform:none;letter-spacing:0;color:var(--dim);font-size:11px}
+.field{margin-bottom:18px}
+.input,.select,.textarea{width:100%;border:1px solid var(--line2);background:var(--panel2);border-radius:10px;padding:0 12px;height:40px;font-size:14px;outline:none;transition:.15s}
+.textarea{padding:12px 14px;height:auto;resize:vertical;line-height:1.55;font-size:15px}
+.input:focus,.select:focus,.textarea:focus{border-color:rgba(255,90,54,.6);box-shadow:0 0 0 3px rgba(255,90,54,.12)}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%238d8d98' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:32px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;font-size:14px;font-weight:500;border:1px solid var(--line2);background:var(--panel3);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:#45454f;background:#232329}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff;box-shadow:0 8px 24px -8px rgba(255,90,54,.5)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn.danger{background:rgba(255,77,94,.1);border-color:rgba(255,77,94,.3);color:var(--err)}
+.btn.sm{height:32px;padding:0 11px;font-size:12.5px}
+.btn.lg{height:48px;padding:0 24px;font-size:15px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line2);color:var(--muted);border-radius:999px;padding:5px 12px;font-size:12.5px;transition:.15s}
+.chip:hover{color:var(--text)}
+.chip.on{border-color:rgba(255,90,54,.6);background:rgba(255,90,54,.1);color:var(--text)}
+.chip.sq{border-radius:8px;font-family:var(--mono);font-size:12px}
+.tabs{display:flex;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:4px;gap:2px;margin-bottom:18px}
+.tab{flex:1;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.tab.on{background:var(--panel3);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:2px 6px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;background:var(--panel3);color:var(--muted)}
+.badge.ok{background:rgba(60,207,145,.1);color:var(--ok)}.badge.warn{background:rgba(245,177,76,.1);color:var(--warn)}.badge.err{background:rgba(255,77,94,.1);color:var(--err)}.badge.info{background:rgba(106,168,255,.1);color:var(--info)}.badge.accent{background:rgba(255,90,54,.12);color:var(--accent)}
+.notice{border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.55;border:1px solid rgba(106,168,255,.25);background:rgba(106,168,255,.06);color:#bcd6ff}
+.notice.warn{border-color:rgba(245,177,76,.3);background:rgba(245,177,76,.06);color:#f7d9a6}
+.notice.err{border-color:rgba(255,77,94,.3);background:rgba(255,77,94,.07);color:#ffb3bb}
+.notice a{color:inherit}
+.empty{border:1px dashed var(--line2);border-radius:18px;padding:56px 24px;text-align:center}
+.empty b{font-weight:500}.empty p{max-width:460px;margin:6px auto 0;font-size:14px;color:var(--muted)}
+.range{width:100%;accent-color:var(--accent)}
+.feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.gen{border:1px solid var(--line);background:var(--panel);border-radius:18px;overflow:hidden;animation:fade .45s cubic-bezier(.16,1,.3,1)}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.gen-imgs{display:grid;gap:1px;background:var(--line)}
+.gen-imgs.n2,.gen-imgs.n3,.gen-imgs.n4{grid-template-columns:1fr 1fr}
+.gen-img{position:relative;background:#000;aspect-ratio:1;overflow:hidden}
+.gen-img img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.gen-img .acts{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:.15s}
+.gen-img:hover .acts,.gen-img:focus-within .acts{opacity:1}
+.ibtn{display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:8px;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);color:#fff;font-size:12px}
+.ibtn.fav{color:var(--accent)}
+.gen-wait{aspect-ratio:16/10;display:grid;place-items:center;background:var(--panel2)}
+.spinner{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-body{padding:14px}
+.gen-meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:10px}
+.gen-prompt{font-size:13px;color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:8px}
+.gen-err{margin-top:10px;font-size:12px;line-height:1.45;background:rgba(255,77,94,.07);color:#ffb3bb;border-radius:8px;padding:8px 10px;word-break:break-word}
+.gen-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.thumb{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--panel2)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.thumb .fav{position:absolute;bottom:6px;right:8px;color:var(--accent);font-size:13px}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:24px;gap:24px}
+.lightbox.on{display:flex}
+.lightbox img{max-width:min(1100px,70vw);max-height:88vh;border-radius:12px}
+.lb-side{width:320px;max-height:88vh;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:18px;font-size:13px}
+.lb-side dl{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-family:var(--mono);font-size:11.5px;margin:12px 0}
+.lb-side dt{color:var(--dim)}
+.lb-side p.prompt{background:var(--panel2);border-radius:10px;padding:10px;line-height:1.5;color:var(--muted)}
+.toast{position:fixed;right:24px;bottom:24px;z-index:70;max-width:400px;border:1px solid var(--line2);background:var(--panel2);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.5;box-shadow:0 20px 50px rgba(0,0,0,.5);transform:translateY(20px);opacity:0;transition:.3s;pointer-events:none}
+.toast.show{transform:none;opacity:1}
+.prov{display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:start}
+.prov + .prov{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.order li{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:13px;list-style:none}
+.slot{aspect-ratio:16/10;border:1px dashed var(--line2);border-radius:12px;display:grid;place-items:center;font-size:13px;color:var(--muted);cursor:pointer;overflow:hidden;position:relative}
+.slot img{width:100%;height:100%;object-fit:cover}
+.slot:hover{border-color:#4a4a55;background:var(--panel2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.view{display:none}.view.on{display:block}
+footer{max-width:1500px;margin:0 auto;padding:0 32px 32px;font-size:12px;color:var(--dim);line-height:1.6}
+@media (max-width:1100px){.split{grid-template-columns:1fr}.sticky{position:static}.lightbox{flex-direction:column;overflow:auto}.lightbox img{max-width:100%}.lb-side{width:100%}}
+@media (max-width:720px){header.top{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px}.dbpill{margin-left:0}main{padding:24px 16px 48px}footer{padding:0 16px 28px}h1.page{font-size:36px}.grid2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="#crear"><span class="logo-mark"><i></i></span><span><b>MotorWorld</b><em>Imágenes</em></span></a>
+  <nav class="tabsnav" id="nav">
+    <a href="#crear">Crear</a><a href="#biblioteca">Biblioteca</a><a href="#historial">Historial</a><a href="#favoritos">Favoritos</a><a href="#proyectos">Proyectos</a><a href="#ajustes">Proveedores y datos</a><a href="#ayuda">Ayuda</a>
+  </nav>
+  <span class="dbpill" id="dbpill"><i></i>Base de datos local</span>
+  <span class="jobs-pill" id="jobsPill">Sin trabajos</span>
+</header>
+
+<main>
+  <!-- CREAR -->
+  <section class="view" id="v-crear">
+    <div class="head"><div><p class="eyebrow">Crear · Imagen</p><h1 class="page">Crear <em>imágenes</em></h1>
+      <p class="lead">Elige un modelo y describe la imagen. Se genera con el primer proveedor disponible y, si falla, se prueba el siguiente. Cada resultado se guarda en la base de datos de este navegador.</p></div></div>
+    <div id="setupNotice"></div>
+    <div class="split">
+      <div class="card pad sticky">
+        <div class="tabs" id="modeTabs">
+          <button class="tab on" data-mode="t2i">Texto</button><button class="tab" data-mode="i2i">Imagen</button><button class="tab" data-mode="edit">Editar con instrucción</button>
+        </div>
+        <div class="field"><div class="label">Modelo <small id="modelCount"></small></div><select class="select" id="model"></select><div id="modelInfo" style="margin-top:8px"></div></div>
+        <div class="field" id="refField" style="display:none"><div class="label">Imagen de referencia <small id="refHint"></small></div>
+          <div class="slot" id="refSlot"><span>Elegir imagen (archivo o biblioteca)</span></div><input type="file" id="refFile" accept="image/*" hidden></div>
+        <div class="field"><div class="label">Prompt <small id="promptLen">0/4000</small></div><textarea class="textarea" id="prompt" rows="5" maxlength="4000" placeholder="Un deportivo clásico rojo aparcado frente a una gasolinera del desierto al anochecer, luces de neón, asfalto mojado…"></textarea></div>
+        <div class="field" id="negField"><div class="label">Prompt negativo</div><textarea class="textarea" id="negative" rows="2" placeholder="borroso, deformado, texto, marca de agua"></textarea></div>
+        <div class="field" id="styleField"><div class="label">Estilo</div><div class="chips" id="styles"></div></div>
+        <div class="field" id="arField"><div class="label">Relación de aspecto</div><div class="chips" id="ars"></div></div>
+        <div class="field" id="numField"><div class="label">Número de imágenes <small id="numVal">1</small></div><input class="range" type="range" id="num" min="1" max="4" value="1"></div>
+        <div class="field" id="strengthField"><div class="label">Intensidad de transformación <small id="strengthVal">0.75</small></div><input class="range" type="range" id="strength" min="0.05" max="1" step="0.05" value="0.75"></div>
+        <details class="field" id="advanced"><summary class="label" style="cursor:pointer">Controles avanzados ▸</summary>
+          <div style="margin-top:12px">
+            <div class="field" id="stepsField"><div class="label">Pasos <small id="stepsVal">28</small></div><input class="range" type="range" id="steps" min="4" max="50" value="28"></div>
+            <div class="field" id="guidanceField"><div class="label">Guidance <small id="guidanceVal">3.5</small></div><input class="range" type="range" id="guidance" min="1" max="15" step="0.1" value="3.5"></div>
+            <div class="field" id="seedField"><div class="label">Semilla <small>vacío = aleatoria</small></div><div style="display:flex;gap:8px"><input class="input" id="seed" type="number" min="0" placeholder="Aleatoria"><button class="btn" id="dice" title="Semilla aleatoria">🎲</button></div></div>
+            <div class="field" id="rawField"><label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="raw" style="accent-color:var(--accent)" checked> Modo RAW (fotografía natural)</label></div>
+          </div>
+        </details>
+        <div class="field"><div class="label">Proyecto</div><select class="select" id="genProject"></select></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:16px">
+          <span class="mono dim" style="font-size:11px" id="estimate"></span>
+          <button class="btn primary lg" id="generate">Generar</button>
+        </div>
+        <p class="dim" style="font-size:11.5px;margin-top:10px" id="routeHint"></p>
+      </div>
+      <div><div class="feed" id="feed"></div><div id="feedEmpty"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-biblioteca">
+    <div class="head"><div><p class="eyebrow">Biblioteca</p><h1 class="page">Tu <em>biblioteca</em></h1><p class="lead">Imágenes generadas y subidas, guardadas en la base de datos de este navegador.</p></div>
+      <div style="display:flex;gap:8px"><select class="select" id="libProject" style="width:200px"></select><button class="btn" id="uploadBtn">Subir imágenes</button><input type="file" id="uploadFile" accept="image/*" multiple hidden></div></div>
+    <div class="lib" id="lib"></div>
+  </section>
+
+  <section class="view" id="v-historial">
+    <div class="head"><div><p class="eyebrow">Historial</p><h1 class="page">Historial de <em>generaciones</em></h1><p class="lead">Modelo, proveedor, prompt, parámetros, coste estimado, intentos y errores de cada trabajo.</p></div>
+      <div class="chips" id="histFilter"><button class="chip on" data-s="">Todos</button><button class="chip" data-s="processing">En curso</button><button class="chip" data-s="completed">Completados</button><button class="chip" data-s="failed">Error</button><button class="chip" data-s="cancelled">Cancelados</button></div></div>
+    <div class="feed" id="hist"></div>
+  </section>
+
+  <section class="view" id="v-favoritos">
+    <div class="head"><div><p class="eyebrow">Favoritos</p><h1 class="page">Lo <em>mejor</em> de tu trabajo</h1></div></div>
+    <div class="lib" id="favs"></div>
+  </section>
+
+  <section class="view" id="v-proyectos">
+    <div class="head"><div><p class="eyebrow">Proyectos</p><h1 class="page">Tus <em>proyectos</em></h1><p class="lead">Agrupa las imágenes de una misma campaña o producción.</p></div>
+      <div style="display:flex;gap:8px"><input class="input" id="projName" placeholder="Campaña lanzamiento GT" style="width:240px"><button class="btn primary" id="projCreate">Crear proyecto</button></div></div>
+    <div class="feed" id="projects"></div>
+  </section>
+
+  <section class="view" id="v-ajustes">
+    <div class="head"><div><p class="eyebrow">Configuración</p><h1 class="page">Proveedores <em>y datos</em></h1>
+      <p class="lead">Las claves se usan directamente desde tu navegador para llamar al proveedor. No pasan por ningún servidor nuestro.</p></div></div>
+    <div class="grid2">
+      <div class="card pad" id="provCards"></div>
+      <div style="display:grid;gap:16px;align-content:start">
+        <div class="card pad"><div class="label">Orden de proveedores</div><p class="muted" style="font-size:13px;margin-bottom:10px">Si un modelo está en varios proveedores se prueba primero el de arriba; si falla, el siguiente.</p><ul class="order" id="order"></ul></div>
+        <div class="card pad"><div class="label">Base de datos local</div><p class="muted" style="font-size:13px;line-height:1.55" id="dbStats"></p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn sm" id="exportDb">Exportar copia (.json)</button><button class="btn sm" id="importBtn">Importar copia</button><input type="file" id="importFile" accept="application/json,.json" hidden><button class="btn sm danger" id="wipeDb">Borrar todo</button></div>
+          <p class="dim" style="font-size:12px;margin-top:10px">Los datos viven en IndexedDB de este navegador. Si borras los datos del sitio o usas modo incógnito, se pierden: exporta copias.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-ayuda">
+    <div class="head"><div><p class="eyebrow">Ayuda</p><h1 class="page">Cómo <em>funciona</em></h1></div></div>
+    <div class="card pad" style="max-width:900px;font-size:14px;line-height:1.65;color:var(--muted)" id="helpBody"></div>
+  </section>
+</main>
+<footer>MotorWorld Imágenes · archivo único. Los resultados dependen de cada proveedor y modelo, y su uso está sujeto a sus licencias y condiciones. Costes mostrados = estimaciones aproximadas.</footer>
+
+<div class="lightbox" id="lb"><img id="lbImg" alt=""><div class="lb-side" id="lbSide"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ======================= Utilidades ======================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+const sleep = (ms, signal) => new Promise((res, rej) => { const t = setTimeout(res, ms); signal?.addEventListener("abort", () => { clearTimeout(t); rej(new DOMException("Cancelado", "AbortError")); }); });
+const fmtBytes = (n) => n < 1048576 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1048576).toFixed(1)} MB`;
+const fmtDate = (t) => new Date(t).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+function toast(msg, ms = 4500) { const t = $("#toast"); t.innerHTML = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), ms); }
+const blobToDataURL = (b) => new Promise((r, j) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.onerror = j; fr.readAsDataURL(b); });
+const dataURLToBlob = (d) => fetch(d).then((r) => r.blob());
+const imgSize = (blob) => new Promise((res) => { const u = URL.createObjectURL(blob); const i = new Image(); i.onload = () => { res([i.naturalWidth, i.naturalHeight]); URL.revokeObjectURL(u); }; i.onerror = () => { res([null, null]); URL.revokeObjectURL(u); }; i.src = u; });
+
+/* ======================= Base de datos (IndexedDB) ======================= */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("motorworld-imagenes", 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        const g = d.createObjectStore("generations", { keyPath: "id" }); g.createIndex("createdAt", "createdAt");
+        const a = d.createObjectStore("assets", { keyPath: "id" }); a.createIndex("createdAt", "createdAt");
+        d.createObjectStore("projects", { keyPath: "id" });
+      };
+      r.onsuccess = () => { this.db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  tx(store, mode = "readonly") { return this.db.transaction(store, mode).objectStore(store); },
+  req(r) { return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  put(store, v) { return this.req(this.tx(store, "readwrite").put(v)); },
+  get(store, id) { return this.req(this.tx(store).get(id)); },
+  del(store, id) { return this.req(this.tx(store, "readwrite").delete(id)); },
+  all(store) { return this.req(this.tx(store).getAll()).then((x) => x.sort((a, b) => b.createdAt - a.createdAt)); },
+  clear(store) { return this.req(this.tx(store, "readwrite").clear()); },
+};
+const urlCache = new Map();
+function assetURL(a) { if (!urlCache.has(a.id)) urlCache.set(a.id, URL.createObjectURL(a.blob)); return urlCache.get(a.id); }
+
+/* ======================= Ajustes y claves ======================= */
+const SETTINGS_KEY = "mw-img-settings";
+const S = Object.assign({ keys: {}, remember: {}, comfyUrl: "", order: ["pollinations", "huggingface", "fal", "comfyui"], disabled: {} }, (() => { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; } })());
+const sessionKeys = {};
+function saveSettings() {
+  const persist = { ...S, keys: {} };
+  for (const [p, v] of Object.entries(S.keys)) if (S.remember[p]) persist.keys[p] = v;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(persist)); } catch { /* sin almacenamiento */ }
+}
+const keyFor = (p) => S.keys[p] || sessionKeys[p] || "";
+
+/* ======================= Catálogo ======================= */
+const AR = { "1:1": [1024, 1024], "16:9": [1344, 768], "9:16": [768, 1344], "4:3": [1152, 864], "3:4": [864, 1152], "3:2": [1216, 832], "2:3": [832, 1216], "21:9": [1536, 640] };
+const FAL_SIZE = { "1:1": "square_hd", "16:9": "landscape_16_9", "9:16": "portrait_16_9", "4:3": "landscape_4_3", "3:4": "portrait_4_3" };
+const STYLES = [
+  ["none", "Sin estilo", ""], ["cinematic", "Cinematográfica", "cinematic film still, anamorphic lens, dramatic lighting, shallow depth of field, rich color grading, 35mm film grain"],
+  ["advertising", "Publicitaria", "high-end commercial advertising photography, studio lighting, crisp details, premium look, clean composition"],
+  ["product", "Producto", "professional product photography, seamless backdrop, softbox reflections, macro detail, catalog quality"],
+  ["portrait", "Retrato", "professional portrait photography, 85mm lens, natural skin texture, catchlights, bokeh background"],
+  ["fashion", "Moda", "editorial fashion photography, softbox lighting, styled wardrobe, magazine cover quality"],
+  ["architecture", "Arquitectura", "architectural photography, corrected verticals, golden hour, ultra detailed materials, wide angle"],
+  ["landscape", "Paisaje", "landscape photography, golden hour, dramatic sky, high dynamic range, ultra sharp"],
+  ["hyperreal", "Realismo extremo", "hyperrealistic photograph, medium format camera, 8k detail, natural imperfections, true-to-life colors"],
+  ["digital_art", "Arte digital", "digital painting, concept art, highly detailed, dramatic composition"],
+  ["illustration", "Ilustración", "editorial illustration, clean linework, flat shading, harmonious palette"],
+  ["anime", "Anime", "anime key visual, cel shading, vibrant colors, detailed background"],
+  ["3d", "3D", "3D render, global illumination, physically based materials, subsurface scattering"],
+];
+/* c = controles admitidos. Los que un modelo no admite se ocultan. */
+const MODELS = [
+  { id: "flux-schnell", name: "FLUX.1 [schnell]", tier: "Rápido", license: "Apache-2.0", commercial: "yes", open: true,
+    desc: "Modelo rápido de Black Forest Labs con pesos abiertos. Ideal para explorar ideas.",
+    c: { ar: ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], num: 4, seed: true }, modes: ["t2i"],
+    routes: [{ p: "pollinations", model: "flux", price: "gratis" }, { p: "huggingface", ep: "black-forest-labs/FLUX.1-schnell", price: "créditos HF" },
+      { p: "fal", ep: "fal-ai/flux/schnell", price: "≈0,003 $/MP" }, { p: "comfyui", tpl: "flux_schnell", price: "local" }] },
+  { id: "flux-dev", name: "FLUX.1 [dev]", tier: "Alta calidad", license: "FLUX.1 [dev] Non-Commercial (uso comercial de salidas vía proveedor con licencia)", commercial: "depends", open: true,
+    desc: "Más detalle y adherencia al prompt, con guidance y pasos configurables. Imagen a imagen vía fal.",
+    c: { ar: ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], num: 4, seed: true, steps: [10, 50, 28], guidance: [1, 10, 3.5], strength: true }, modes: ["t2i", "i2i"],
+    routes: [{ p: "huggingface", ep: "black-forest-labs/FLUX.1-dev", price: "créditos HF", modes: ["t2i"] },
+      { p: "fal", ep: "fal-ai/flux/dev", epI2I: "fal-ai/flux/dev/image-to-image", price: "≈0,025 $/MP" }] },
+  { id: "flux-ultra", name: "FLUX 1.1 [pro] Ultra", tier: "Máxima calidad", license: "Uso comercial vía API", commercial: "yes",
+    desc: "Hasta 4 MP, modo RAW para fotografía hiperrealista y referencia visual (image prompt).",
+    c: { ar: ["1:1", "16:9", "9:16", "4:3", "3:4", "21:9"], num: 1, seed: true, raw: true }, modes: ["t2i", "i2i"],
+    routes: [{ p: "fal", ep: "fal-ai/flux-pro/v1.1-ultra", epI2I: "fal-ai/flux-pro/v1.1-ultra/redux", price: "≈0,06 $/img" }] },
+  { id: "sdxl", name: "Stable Diffusion XL", tier: "Estándar", license: "CreativeML Open RAIL++-M", commercial: "yes", open: true,
+    desc: "Clásico de pesos abiertos, con prompt negativo y enorme ecosistema.",
+    c: { ar: ["1:1", "16:9", "9:16", "4:3", "3:4"], num: 2, seed: true, steps: [10, 60, 30], guidance: [1, 15, 7], negative: true }, modes: ["t2i"],
+    routes: [{ p: "huggingface", ep: "stabilityai/stable-diffusion-xl-base-1.0", price: "créditos HF" }, { p: "comfyui", tpl: "sdxl", price: "local" }] },
+  { id: "qwen-image", name: "Qwen-Image", tier: "Alta calidad", license: "Apache-2.0", commercial: "yes", open: true,
+    desc: "Muy bueno con texto dentro de la imagen (carteles, anuncios).",
+    c: { ar: ["1:1", "16:9", "9:16", "4:3", "3:4"], num: 4, seed: true, steps: [10, 50, 30], guidance: [1, 10, 4], negative: true }, modes: ["t2i"],
+    routes: [{ p: "fal", ep: "fal-ai/qwen-image", price: "≈0,02 $/MP" }] },
+  { id: "imagen4", name: "Google Imagen 4", tier: "Máxima calidad", license: "Uso comercial vía API", commercial: "yes",
+    desc: "Gran detalle y tipografía.", c: { ar: ["1:1", "16:9", "9:16", "4:3", "3:4"], num: 1, seed: true, negative: true }, modes: ["t2i"],
+    routes: [{ p: "fal", ep: "fal-ai/imagen4/preview", price: "≈0,05 $/img" }] },
+  { id: "kontext", name: "FLUX.1 Kontext [pro]", tier: "Máxima calidad", license: "Uso comercial vía API", commercial: "yes",
+    desc: "Edición por instrucciones que conserva identidad y objetos: «cambia el fondo y conserva el producto».",
+    c: { num: 1, seed: true }, modes: ["edit"], routes: [{ p: "fal", ep: "fal-ai/flux-pro/kontext", price: "≈0,04 $/img" }] },
+  { id: "qwen-edit", name: "Qwen-Image-Edit", tier: "Alta calidad", license: "Apache-2.0", commercial: "yes", open: true,
+    desc: "Edición por instrucciones de pesos abiertos, incluido texto.", c: { num: 1, seed: true, negative: true }, modes: ["edit"],
+    routes: [{ p: "fal", ep: "fal-ai/qwen-image-edit", price: "≈0,03 $/MP" }] },
+];
+
+/* ======================= Proveedores ======================= */
+class ProviderError extends Error { constructor(msg, retry = true) { super(msg); this.retry = retry; } }
+async function check(res, name) {
+  if (res.ok) return;
+  let body = ""; try { body = (await res.text()).slice(0, 300); } catch { /* */ }
+  if (res.status === 401 || res.status === 403) throw new ProviderError(`${name}: clave inválida o sin permiso (${res.status})`);
+  if (res.status === 402) throw new ProviderError(`${name}: sin créditos (402)`);
+  if (res.status === 429) throw new ProviderError(`${name}: límite de uso alcanzado (429)`);
+  if (res.status === 503) throw new ProviderError(`${name}: modelo cargándose o sin capacidad (503)`);
+  if (res.status === 400 || res.status === 422) {
+    if (/nsfw|safety|moderat/i.test(body)) throw new ProviderError(`${name}: bloqueado por moderación`, false);
+    throw new ProviderError(`${name}: petición no válida (${res.status}) ${body}`, false);
+  }
+  throw new ProviderError(`${name}: error ${res.status} ${body}`);
+}
+function netErr(e, name) {
+  if (e.name === "AbortError") throw e;
+  if (e instanceof ProviderError) throw e;
+  throw new ProviderError(`${name}: no se pudo conectar (red, bloqueador o CORS). ${e.message || ""}`);
+}
+const round32 = (v) => Math.max(256, Math.round(v / 32) * 32);
+
+const PROVIDERS = {
+  pollinations: {
+    name: "Pollinations.ai", needs: "none", site: "https://pollinations.ai",
+    free: "Gratis y sin clave (servicio comunitario). Sin garantía de disponibilidad; límites de uso y posibles colas. Revisa sus condiciones antes de un uso comercial.",
+    configured: () => !S.disabled.pollinations,
+    async run(job, route, signal) {
+      const [w, h] = AR[job.ar] || AR["1:1"];
+      const out = [];
+      for (let i = 0; i < job.num; i++) {
+        const seed = job.seed != null ? job.seed + i : Math.floor(Math.random() * 2 ** 31);
+        const prompt = job.prompt;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&seed=${seed}&model=${route.model}&nologo=true&private=true`;
+        let res;
+        try { res = await fetch(url, { signal }); } catch (e) { netErr(e, "Pollinations"); }
+        await check(res, "Pollinations");
+        const blob = await res.blob();
+        if (!blob.type.startsWith("image/")) throw new ProviderError("Pollinations no devolvió una imagen");
+        out.push({ blob, seed });
+        job.progressText = `${i + 1}/${job.num} imágenes`;
+        job.onUpdate?.();
+      }
+      return out;
+    },
+  },
+  huggingface: {
+    name: "Hugging Face", needs: "key", keyLabel: "Token de acceso (hf_…)", site: "https://huggingface.co/settings/tokens",
+    free: "Créditos mensuales incluidos: pequeños en cuentas gratuitas, mayores en PRO. Al agotarse, se bloquea o se cobra según tu cuenta.",
+    configured: () => !!keyFor("huggingface") && !S.disabled.huggingface,
+    async run(job, route, signal) {
+      const [w, h] = AR[job.ar] || AR["1:1"];
+      const out = [];
+      for (let i = 0; i < job.num; i++) {
+        const seed = job.seed != null ? job.seed + i : Math.floor(Math.random() * 2 ** 31);
+        const parameters = { width: round32(w), height: round32(h), seed };
+        if (job.c.steps) parameters.num_inference_steps = job.steps;
+        if (job.c.guidance) parameters.guidance_scale = job.guidance;
+        if (job.c.negative && job.negative) parameters.negative_prompt = job.negative;
+        let res;
+        try {
+          res = await fetch(`https://router.huggingface.co/hf-inference/models/${route.ep}`, {
+            method: "POST", signal, headers: { Authorization: `Bearer ${keyFor("huggingface")}`, "Content-Type": "application/json", Accept: "image/png" },
+            body: JSON.stringify({ inputs: job.prompt, parameters }),
+          });
+        } catch (e) { netErr(e, "Hugging Face"); }
+        await check(res, "Hugging Face");
+        const blob = await res.blob();
+        if (!blob.type.startsWith("image/")) throw new ProviderError("Hugging Face no devolvió una imagen");
+        out.push({ blob, seed });
+        job.progressText = `${i + 1}/${job.num} imágenes`;
+        job.onUpdate?.();
+      }
+      return out;
+    },
+  },
+  fal: {
+    name: "fal.ai", needs: "key", keyLabel: "API key (KEY_ID:KEY_SECRET)", site: "https://fal.ai/dashboard/keys",
+    free: "Pago por uso. Créditos promocionales puntuales en cuentas nuevas; no hay nivel gratuito ilimitado.",
+    configured: () => !!keyFor("fal") && !S.disabled.fal,
+    async run(job, route, signal) {
+      const H = { Authorization: `Key ${keyFor("fal")}`, "Content-Type": "application/json" };
+      const ep = job.mode === "i2i" && route.epI2I ? route.epI2I : route.ep;
+      const body = { prompt: job.prompt, enable_safety_checker: true };
+      if (job.c.num > 1) body.num_images = job.num;
+      if (job.seed != null) body.seed = job.seed;
+      if (ep.includes("ultra")) { body.aspect_ratio = job.ar; body.raw = job.raw; }
+      else if (ep.includes("imagen4")) body.aspect_ratio = job.ar;
+      else if (job.mode !== "edit") body.image_size = FAL_SIZE[job.ar] || { width: (AR[job.ar] || AR["1:1"])[0], height: (AR[job.ar] || AR["1:1"])[1] };
+      if (job.c.steps) body.num_inference_steps = job.steps;
+      if (job.c.guidance) body.guidance_scale = job.guidance;
+      if (job.c.negative && job.negative) body.negative_prompt = job.negative;
+      if (job.refDataURL) {
+        body.image_url = job.refDataURL;
+        if (job.mode === "i2i" && job.c.strength) body.strength = job.strength;
+      }
+      let res;
+      try { res = await fetch(`https://queue.fal.run/${ep}`, { method: "POST", signal, headers: H, body: JSON.stringify(body) }); } catch (e) { netErr(e, "fal"); }
+      await check(res, "fal");
+      const q = await res.json();
+      job.providerJob = { cancel_url: q.cancel_url };
+      let delay = 1500;
+      for (;;) {
+        await sleep(delay, signal);
+        delay = Math.min(delay * 1.25, 6000);
+        let s;
+        try { s = await fetch(`${q.status_url}`, { headers: H, signal }); } catch (e) { netErr(e, "fal"); }
+        await check(s, "fal");
+        const st = await s.json();
+        if (st.status === "IN_QUEUE") job.progressText = st.queue_position != null ? `En cola (posición ${st.queue_position})` : "En cola";
+        else if (st.status === "IN_PROGRESS") job.progressText = "Generando en fal";
+        else if (st.status === "COMPLETED") break;
+        job.onUpdate?.();
+      }
+      let r;
+      try { r = await fetch(q.response_url, { headers: H, signal }); } catch (e) { netErr(e, "fal"); }
+      if (!r.ok) { let d = ""; try { d = JSON.stringify((await r.json()).detail); } catch { /* */ } throw new ProviderError(`fal: ${d || r.status}`, r.status >= 500); }
+      const data = await r.json();
+      const imgs = data.images || (data.image ? [data.image] : []);
+      if (!imgs.length) throw new ProviderError("fal no devolvió imágenes", false);
+      const out = [];
+      for (const im of imgs) {
+        let ir;
+        try { ir = await fetch(im.url, { signal }); } catch (e) { netErr(e, "fal (descarga)"); }
+        if (!ir.ok) throw new ProviderError("fal: no se pudo descargar el resultado");
+        out.push({ blob: await ir.blob(), seed: data.seed ?? job.seed });
+      }
+      return out;
+    },
+    async cancel(job) { if (job.providerJob?.cancel_url) fetch(job.providerJob.cancel_url, { method: "PUT", headers: { Authorization: `Key ${keyFor("fal")}` } }).catch(() => {}); },
+  },
+  comfyui: {
+    name: "ComfyUI (tu ordenador)", needs: "url", site: "https://github.com/Comfy-Org/ComfyUI",
+    free: "Gratis en tu propio hardware. Arranca ComfyUI con --enable-cors-header \"*\" y ten descargado el checkpoint (sd_xl_base_1.0.safetensors o flux1-schnell-fp8.safetensors).",
+    configured: () => !!S.comfyUrl && !S.disabled.comfyui,
+    async run(job, route, signal) {
+      const base = S.comfyUrl.replace(/\/$/, "");
+      const flux = route.tpl === "flux_schnell";
+      const [w, h] = AR[job.ar] || AR["1:1"];
+      const seed = job.seed != null ? job.seed : Math.floor(Math.random() * 2 ** 31);
+      const wf = {
+        "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: flux ? "flux1-schnell-fp8.safetensors" : "sd_xl_base_1.0.safetensors" } },
+        "5": { class_type: "EmptyLatentImage", inputs: { width: round32(w), height: round32(h), batch_size: job.num } },
+        "6": { class_type: "CLIPTextEncode", inputs: { text: job.prompt, clip: ["4", 1] } },
+        "7": { class_type: "CLIPTextEncode", inputs: { text: job.negative || "", clip: ["4", 1] } },
+        "3": { class_type: "KSampler", inputs: { seed, steps: flux ? 4 : job.steps, cfg: flux ? 1 : job.guidance, sampler_name: flux ? "euler" : "dpmpp_2m", scheduler: flux ? "simple" : "karras", denoise: 1, model: ["4", 0], positive: ["6", 0], negative: ["7", 0], latent_image: ["5", 0] } },
+        "8": { class_type: "VAEDecode", inputs: { samples: ["3", 0], vae: ["4", 2] } },
+        "9": { class_type: "SaveImage", inputs: { filename_prefix: "motorworld", images: ["8", 0] } },
+      };
+      let res;
+      try { res = await fetch(`${base}/prompt`, { method: "POST", signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: wf, client_id: uid() }) }); } catch (e) { netErr(e, "ComfyUI"); }
+      await check(res, "ComfyUI");
+      const { prompt_id } = await res.json();
+      job.providerJob = { prompt_id };
+      for (;;) {
+        await sleep(1500, signal);
+        let r;
+        try { r = await fetch(`${base}/history/${prompt_id}`, { signal }); } catch (e) { netErr(e, "ComfyUI"); }
+        const hist = (await r.json())[prompt_id];
+        job.progressText = "Ejecutando en ComfyUI";
+        job.onUpdate?.();
+        if (!hist) continue;
+        if (hist.status?.status_str === "error") throw new ProviderError("ComfyUI: error de ejecución (¿falta el checkpoint?)", false);
+        const imgs = Object.values(hist.outputs || {}).flatMap((o) => o.images || []).filter((i) => i.type !== "temp");
+        const out = [];
+        for (const im of imgs) {
+          const q = new URLSearchParams({ filename: im.filename, subfolder: im.subfolder || "", type: im.type || "output" });
+          const ir = await fetch(`${base}/view?${q}`, { signal });
+          out.push({ blob: await ir.blob(), seed });
+        }
+        if (!out.length) throw new ProviderError("ComfyUI terminó sin imágenes", false);
+        return out;
+      }
+    },
+    async cancel() { if (S.comfyUrl) fetch(S.comfyUrl.replace(/\/$/, "") + "/interrupt", { method: "POST" }).catch(() => {}); },
+  },
+};
+
+/* ======================= Motor de trabajos ======================= */
+const running = new Map(); // genId -> {controller, job}
+function routesFor(model, mode) {
+  const order = S.order;
+  return model.routes
+    .filter((r) => !r.modes || r.modes.includes(mode))
+    .filter((r) => mode !== "i2i" || r.p === "fal")
+    .filter((r) => PROVIDERS[r.p].configured())
+    .sort((a, b) => order.indexOf(a.p) - order.indexOf(b.p));
+}
+
+async function runGeneration(gen) {
+  const model = MODELS.find((m) => m.id === gen.modelId);
+  const controller = new AbortController();
+  const job = { ...gen.params, c: model.c, mode: gen.mode, prompt: gen.prompt, negative: gen.negative, progressText: "", onUpdate: () => renderJobs(), refDataURL: null };
+  running.set(gen.id, { controller, job });
+  gen.status = "processing"; gen.startedAt = Date.now(); gen.error = null; gen.attempts = gen.attempts || [];
+  await DB.put("generations", gen); refreshAll();
+  try {
+    if (gen.refAssetId) { const ref = await DB.get("assets", gen.refAssetId); if (!ref) throw new ProviderError("La imagen de referencia ya no existe", false); job.refDataURL = await blobToDataURL(ref.blob); }
+    const routes = routesFor(model, gen.mode);
+    if (!routes.length) throw new ProviderError(`Ningún proveedor configurado para ${model.name}. Ve a «Proveedores y datos» y añade una clave de: ${[...new Set(model.routes.map((r) => PROVIDERS[r.p].name))].join(", ")}.`, false);
+    let last;
+    for (const route of routes) {
+      gen.provider = route.p; gen.statusMessage = `Generando con ${PROVIDERS[route.p].name}`;
+      await DB.put("generations", gen); refreshAll();
+      const t0 = Date.now();
+      try {
+        const outs = await PROVIDERS[route.p].run(job, route, controller.signal);
+        gen.attempts.push({ provider: route.p, ok: true, ms: Date.now() - t0 });
+        gen.outputIds = [];
+        for (const o of outs) {
+          const [w, h] = await imgSize(o.blob);
+          const a = { id: uid(), createdAt: Date.now(), blob: o.blob, mime: o.blob.type, size: o.blob.size, width: w, height: h, favorite: false, generationId: gen.id,
+            parentId: gen.refAssetId || null, projectId: gen.projectId || null, name: `${model.id}-${gen.id.slice(0, 6)}`, source: "generation",
+            meta: { prompt: gen.userPrompt, finalPrompt: gen.prompt, model: model.name, provider: PROVIDERS[route.p].name, seed: o.seed } };
+          await DB.put("assets", a);
+          gen.outputIds.push(a.id);
+        }
+        gen.status = "completed"; gen.finishedAt = Date.now(); gen.statusMessage = "Completado"; gen.price = route.price;
+        await DB.put("generations", gen);
+        toast(`Imagen lista con ${PROVIDERS[route.p].name}${gen.attempts.length > 1 ? " (tras probar otro proveedor)" : ""}.`);
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") throw e;
+        last = e;
+        gen.attempts.push({ provider: route.p, ok: false, error: e.message, ms: Date.now() - t0 });
+        await DB.put("generations", gen);
+        if (e instanceof ProviderError && !e.retry) break;
+      }
+    }
+    throw last;
+  } catch (e) {
+    if (e.name === "AbortError") { gen.status = "cancelled"; gen.statusMessage = "Cancelado"; }
+    else { gen.status = "failed"; gen.error = e.message; gen.statusMessage = "Error"; }
+    gen.finishedAt = Date.now();
+    await DB.put("generations", gen);
+  } finally {
+    running.delete(gen.id);
+    refreshAll();
+  }
+}
+
+function cancelGeneration(id) {
+  const r = running.get(id);
+  if (!r) return;
+  r.controller.abort();
+  DB.get("generations", id).then((g) => g && PROVIDERS[g.provider]?.cancel?.(r.job));
+}
+
+/* ======================= Estado de la UI de creación ======================= */
+const UI = { mode: "t2i", modelId: "flux-schnell", style: "none", ar: "1:1", ref: null };
+function modelsForMode() { return MODELS.filter((m) => m.modes.includes(UI.mode)); }
+function currentModel() { return MODELS.find((m) => m.id === UI.modelId); }
+
+function renderModelSelect() {
+  const ms = modelsForMode();
+  if (!ms.some((m) => m.id === UI.modelId)) UI.modelId = (ms.find((m) => routesFor(m, UI.mode).length) || ms[0]).id;
+  $("#model").innerHTML = ms.map((m) => { const ok = routesFor(m, UI.mode).length > 0; return `<option value="${m.id}" ${m.id === UI.modelId ? "selected" : ""}>${esc(m.name)} — ${m.tier}${ok ? "" : " (falta configurar)"}</option>`; }).join("");
+  $("#modelCount").textContent = `${ms.length} modelos`;
+  renderControls();
+}
+
+function renderControls() {
+  const m = currentModel();
+  const c = m.c;
+  const routes = routesFor(m, UI.mode);
+  $("#modelInfo").innerHTML = `<p class="muted" style="font-size:12.5px;line-height:1.5">${esc(m.desc)}</p><div class="chips" style="margin-top:8px">
+    <span class="badge ${m.commercial === "yes" ? "ok" : "warn"}">${m.commercial === "yes" ? "uso comercial" : "revisar licencia"}</span>${m.open ? '<span class="badge info">pesos abiertos</span>' : ""}
+    ${m.routes.map((r) => `<span class="badge ${PROVIDERS[r.p].configured() ? "ok" : ""}" title="${PROVIDERS[r.p].configured() ? "configurado" : "sin configurar"}">${esc(PROVIDERS[r.p].name)}</span>`).join("")}</div>
+    <p class="dim" style="font-size:11.5px;margin-top:6px">Licencia: ${esc(m.license)}</p>
+    ${routes.length ? "" : `<div class="notice warn" style="margin-top:10px">Este modelo necesita configurar ${esc([...new Set(m.routes.map((r) => PROVIDERS[r.p].name))].join(" o "))}. <a href="#ajustes">Configurar proveedores</a></div>`}`;
+  $("#refField").style.display = UI.mode === "t2i" ? "none" : "";
+  $("#refHint").textContent = UI.mode === "edit" ? "la imagen que quieres editar" : "se transformará según el prompt";
+  $("#negField").style.display = c.negative ? "" : "none";
+  $("#styleField").style.display = UI.mode === "edit" ? "none" : "";
+  $("#arField").style.display = c.ar && UI.mode !== "edit" ? "" : "none";
+  if (c.ar) { if (!c.ar.includes(UI.ar)) UI.ar = c.ar[0]; $("#ars").innerHTML = c.ar.map((a) => `<button class="chip sq ${a === UI.ar ? "on" : ""}" data-ar="${a}">${a}</button>`).join(""); }
+  $("#numField").style.display = c.num > 1 ? "" : "none";
+  $("#num").max = c.num || 1; if (+$("#num").value > (c.num || 1)) { $("#num").value = 1; $("#numVal").textContent = 1; }
+  $("#strengthField").style.display = UI.mode === "i2i" && c.strength ? "" : "none";
+  $("#stepsField").style.display = c.steps ? "" : "none";
+  if (c.steps) { $("#steps").min = c.steps[0]; $("#steps").max = c.steps[1]; $("#steps").value = c.steps[2]; $("#stepsVal").textContent = c.steps[2]; }
+  $("#guidanceField").style.display = c.guidance ? "" : "none";
+  if (c.guidance) { $("#guidance").min = c.guidance[0]; $("#guidance").max = c.guidance[1]; $("#guidance").value = c.guidance[2]; $("#guidanceVal").textContent = c.guidance[2]; }
+  $("#seedField").style.display = c.seed ? "" : "none";
+  $("#rawField").style.display = c.raw ? "" : "none";
+  $("#estimate").textContent = routes[0] ? `${PROVIDERS[routes[0].p].name} · ${routes[0].price}` : "";
+  $("#routeHint").textContent = routes.length > 1 ? `Si ${PROVIDERS[routes[0].p].name} falla, se probará: ${routes.slice(1).map((r) => PROVIDERS[r.p].name).join(" → ")}.` : "";
+  $("#generate").disabled = !routes.length;
+  if (UI.mode === "i2i" && !routes.length && m.routes.some((r) => r.p !== "fal")) $("#modelInfo").insertAdjacentHTML("beforeend", `<p class="dim" style="font-size:11.5px;margin-top:6px">Imagen a imagen solo está disponible vía fal.</p>`);
+}
+
+async function setRef(asset) {
+  UI.ref = asset;
+  $("#refSlot").innerHTML = asset ? `<img src="${assetURL(asset)}" alt="Referencia">` : `<span>Elegir imagen (archivo o biblioteca)</span>`;
+}
+
+async function generate() {
+  const m = currentModel();
+  const userPrompt = $("#prompt").value.trim();
+  if (!userPrompt) return toast(UI.mode === "edit" ? "Escribe la instrucción de edición." : "Escribe un prompt.");
+  if (UI.mode !== "t2i" && !UI.ref) return toast("Elige la imagen de referencia.");
+  if (running.size >= 4) return toast("Ya hay 4 generaciones en curso. Espera a que termine alguna.");
+  const style = STYLES.find((s) => s[0] === UI.style);
+  const prompt = UI.mode !== "edit" && style && style[2] ? `${userPrompt}, ${style[2]}` : userPrompt;
+  const seedVal = $("#seed").value.trim();
+  const gen = {
+    id: uid(), createdAt: Date.now(), modelId: m.id, modelName: m.name, mode: UI.mode, prompt, userPrompt,
+    negative: m.c.negative ? $("#negative").value.trim() : "", style: UI.style,
+    params: { ar: UI.ar, num: m.c.num > 1 ? +$("#num").value : 1, seed: m.c.seed && seedVal !== "" ? +seedVal : null,
+      steps: +$("#steps").value, guidance: +$("#guidance").value, strength: +$("#strength").value, raw: $("#raw").checked },
+    refAssetId: UI.mode !== "t2i" ? UI.ref.id : null, projectId: $("#genProject").value || null, status: "queued", attempts: [], outputIds: [], saved: false,
+  };
+  await DB.put("generations", gen);
+  runGeneration(gen);
+}
+
+/* ======================= Render ======================= */
+function statusBadge(g) {
+  const map = { queued: ["accent", "En espera"], processing: ["accent", "Procesando"], completed: ["ok", "Completado"], failed: ["err", "Error"], cancelled: ["", "Cancelado"] };
+  const [tone, label] = map[g.status] || ["", g.status];
+  return `<span class="badge ${tone}">${g.status === "processing" ? '<span class="rec" style="margin:0"></span>' : ""}${label}</span>`;
+}
+
+async function genCard(g, assets) {
+  const outs = (g.outputIds || []).map((id) => assets.get(id)).filter(Boolean);
+  const r = running.get(g.id);
+  const imgs = outs.length
+    ? `<div class="gen-imgs n${Math.min(outs.length, 4)}">${outs.map((a) => `<div class="gen-img"><img src="${assetURL(a)}" alt="${esc(g.userPrompt)}" data-open="${a.id}" loading="lazy"><div class="acts">
+        <button class="ibtn ${a.favorite ? "fav" : ""}" data-fav="${a.id}" title="Favorito">${a.favorite ? "♥" : "♡"}</button>
+        <button class="ibtn" data-use="${a.id}" title="Usar como referencia">Usar</button>
+        <button class="ibtn" data-dl="${a.id}" title="Descargar">↓</button></div></div>`).join("")}</div>`
+    : `<div class="gen-wait">${g.status === "processing" || g.status === "queued" ? `<div style="text-align:center"><div class="spinner" style="margin:0 auto 10px"></div><span class="mono muted" style="font-size:12px">${esc(r?.job.progressText || g.statusMessage || "Generando…")}</span></div>` : `<span class="mono dim" style="font-size:12px">${g.status === "failed" ? "Sin resultado" : "Cancelado"}</span>`}</div>`;
+  const active = g.status === "processing" || g.status === "queued";
+  const fails = (g.attempts || []).filter((a) => !a.ok);
+  return `<article class="gen" data-gen="${g.id}">${imgs}<div class="gen-body">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">${statusBadge(g)}<span style="font-size:12.5px;font-weight:500" class="mono">${esc(g.modelName)}</span></div>
+    <p class="gen-prompt">${esc(g.userPrompt)}</p>
+    ${g.error ? `<p class="gen-err">${esc(g.error)}</p>` : ""}
+    ${fails.length && g.status === "completed" ? `<p class="dim" style="font-size:11.5px;margin-top:8px">Fallback: ${fails.map((f) => esc(PROVIDERS[f.provider]?.name || f.provider)).join(", ")} falló antes.</p>` : ""}
+    <div class="gen-meta">${g.provider ? `<span>vía ${esc(PROVIDERS[g.provider]?.name || g.provider)}</span>` : ""}${g.price ? `<span>${esc(g.price)}</span>` : ""}<span>${fmtDate(g.createdAt)}</span>${g.params?.seed != null ? `<span>semilla ${g.params.seed}</span>` : ""}${g.params?.ar ? `<span>${g.params.ar}</span>` : ""}</div>
+    <div class="gen-actions">
+      ${active ? `<button class="btn sm" data-cancel="${g.id}">Cancelar</button>` : ""}
+      ${g.status === "failed" || g.status === "cancelled" ? `<button class="btn sm" data-retry="${g.id}">Reintentar</button>` : ""}
+      ${!active ? `<button class="btn sm" data-dup="${g.id}">Duplicar</button><button class="btn sm" data-var="${g.id}">Variación</button><button class="btn sm ghost" data-save="${g.id}">${g.saved ? "★ Guardado" : "☆ Guardar"}</button><button class="btn sm ghost" data-del="${g.id}">Eliminar</button>` : ""}
+    </div></div></article>`;
+}
+
+async function assetsMap() { const all = await DB.all("assets"); return new Map(all.map((a) => [a.id, a])); }
+
+async function renderFeed() {
+  const [gens, assets] = await Promise.all([DB.all("generations"), assetsMap()]);
+  const recent = gens.slice(0, 24);
+  $("#feed").innerHTML = (await Promise.all(recent.map((g) => genCard(g, assets)))).join("");
+  $("#feedEmpty").innerHTML = recent.length ? "" : `<div class="empty"><b>Tus imágenes aparecerán aquí</b><p>Cada resultado se guarda en la base de datos de este navegador con el modelo, proveedor, prompt y semilla, para poder reproducirlo.</p></div>`;
+}
+
+let histFilter = "";
+async function renderHistory() {
+  const [gens, assets] = await Promise.all([DB.all("generations"), assetsMap()]);
+  const list = gens.filter((g) => !histFilter || g.status === histFilter || (histFilter === "processing" && g.status === "queued"));
+  $("#hist").innerHTML = list.length ? (await Promise.all(list.map((g) => genCard(g, assets)))).join("") : `<div class="empty" style="grid-column:1/-1"><b>Sin generaciones</b></div>`;
+}
+
+function thumbs(list, emptyText) {
+  return list.length ? list.map((a) => `<div class="thumb"><img src="${assetURL(a)}" alt="${esc(a.name)}" data-open="${a.id}" loading="lazy">${a.favorite ? '<span class="fav">♥</span>' : ""}</div>`).join("") : `<div class="empty" style="grid-column:1/-1"><b>${emptyText}</b></div>`;
+}
+async function renderLibrary() {
+  const p = $("#libProject").value;
+  const all = (await DB.all("assets")).filter((a) => !p || a.projectId === p);
+  $("#lib").innerHTML = thumbs(all, "La biblioteca está vacía");
+}
+async function renderFavs() { $("#favs").innerHTML = thumbs((await DB.all("assets")).filter((a) => a.favorite), "Aún no hay favoritos"); }
+
+async function renderProjects() {
+  const [projects, assets] = await Promise.all([DB.all("projects"), DB.all("assets")]);
+  const opts = `<option value="">Sin proyecto</option>` + projects.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  const keep = [$("#genProject").value, $("#libProject").value];
+  $("#genProject").innerHTML = opts; $("#genProject").value = keep[0] || "";
+  $("#libProject").innerHTML = `<option value="">Todos los archivos</option>` + projects.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join(""); $("#libProject").value = keep[1] || "";
+  $("#projects").innerHTML = projects.length ? projects.map((p) => {
+    const items = assets.filter((a) => a.projectId === p.id);
+    return `<div class="card pad"><b style="font-size:16px">${esc(p.name)}</b><p class="mono dim" style="font-size:11px;margin-top:6px">${items.length} imágenes · ${fmtDate(p.createdAt)}</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:12px">${items.slice(0, 8).map((a) => `<img src="${assetURL(a)}" alt="" data-open="${a.id}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:zoom-in">`).join("")}</div>
+      <div style="display:flex;gap:6px;margin-top:12px"><button class="btn sm" data-projopen="${p.id}">Ver en biblioteca</button><button class="btn sm ghost" data-projdel="${p.id}">Eliminar</button></div></div>`;
+  }).join("") : `<div class="empty" style="grid-column:1/-1"><b>Sin proyectos</b><p>Crea uno y elígelo al generar.</p></div>`;
+}
+
+async function renderDbStats() {
+  const [g, a, p] = await Promise.all([DB.all("generations"), DB.all("assets"), DB.all("projects")]);
+  const bytes = a.reduce((s, x) => s + (x.size || 0), 0);
+  let quota = "";
+  try { const e = await navigator.storage.estimate(); quota = ` · espacio disponible del navegador: ${fmtBytes(e.quota || 0)}`; } catch { /* */ }
+  $("#dbStats").textContent = `${g.length} generaciones · ${a.length} imágenes (${fmtBytes(bytes)}) · ${p.length} proyectos${quota}`;
+  $("#dbpill").innerHTML = `<i></i>${a.length} imágenes · ${fmtBytes(bytes)}`;
+}
+
+function renderJobs() {
+  const n = running.size;
+  const pill = $("#jobsPill");
+  pill.classList.toggle("on", n > 0);
+  pill.innerHTML = n ? `<span class="rec"></span>${n} en curso` : "Sin trabajos";
+  for (const [id, r] of running) { const el = $(`[data-gen="${id}"] .gen-wait .mono`); if (el && r.job.progressText) el.textContent = r.job.progressText; }
+}
+
+function renderProviders() {
+  $("#provCards").innerHTML = Object.entries(PROVIDERS).map(([id, p]) => `<div class="prov">
+      <div><b style="font-size:15px">${esc(p.name)}</b> ${p.configured() ? '<span class="badge ok">activo</span>' : '<span class="badge">sin configurar</span>'}
+        <p class="muted" style="font-size:13px;line-height:1.55;margin-top:6px">${esc(p.free)}</p>
+        ${p.needs === "key" ? `<div style="display:flex;gap:8px;margin-top:10px"><input class="input" type="password" autocomplete="off" placeholder="${esc(p.keyLabel)}" data-key="${id}" value="${esc(keyFor(id))}"><button class="btn sm" data-savekey="${id}" style="height:40px">Guardar</button></div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:8px" class="muted"><input type="checkbox" data-remember="${id}" ${S.remember[id] ? "checked" : ""} style="accent-color:var(--accent)"> Recordar en este navegador (si no, se olvida al cerrar la pestaña)</label>` : ""}
+        ${p.needs === "url" ? `<div style="display:flex;gap:8px;margin-top:10px"><input class="input" placeholder="http://127.0.0.1:8188" data-url value="${esc(S.comfyUrl)}"><button class="btn sm" data-saveurl style="height:40px">Guardar</button></div>` : ""}
+        <p style="font-size:12px;margin-top:8px"><a class="muted" href="${p.site}" target="_blank" rel="noreferrer">${p.needs === "key" ? "Obtener clave" : "Más información"} ↗</a></p>
+      </div>
+      <label style="display:flex;gap:6px;align-items:center;font-size:12px" class="muted"><input type="checkbox" data-enable="${id}" ${S.disabled[id] ? "" : "checked"} style="accent-color:var(--accent)"> usar</label>
+    </div>`).join("") + `<div class="notice warn" style="margin-top:16px">Tus claves solo se envían al proveedor correspondiente. Si marcas «Recordar», se guardan en el almacenamiento de este navegador: cualquiera con acceso a este equipo podría leerlas. No uses este archivo en ordenadores compartidos y pon límites de gasto en tu cuenta del proveedor.</div>`;
+  $("#order").innerHTML = S.order.map((p, i) => `<li><span class="mono dim" style="width:16px">${i + 1}</span><span style="flex:1">${esc(PROVIDERS[p].name)}</span><button class="btn sm ghost" data-up="${i}" aria-label="Subir">↑</button><button class="btn sm ghost" data-down="${i}" aria-label="Bajar">↓</button></li>`).join("");
+}
+
+function renderSetupNotice() {
+  const any = Object.values(PROVIDERS).some((p) => p.configured());
+  const onlyFree = PROVIDERS.pollinations.configured() && !["huggingface", "fal", "comfyui"].some((k) => PROVIDERS[k].configured());
+  $("#setupNotice").innerHTML = !any ? `<div class="notice err" style="margin-bottom:20px">No hay ningún proveedor activo. <a href="#ajustes">Configura uno</a> para generar.</div>`
+    : onlyFree ? `<div class="notice" style="margin-bottom:20px">Funcionando con <b>Pollinations</b> (gratis, sin clave) para FLUX.1 [schnell]. Para más modelos, imagen a imagen y edición añade una clave de <b>Hugging Face</b> o <b>fal.ai</b> en <a href="#ajustes">Proveedores y datos</a>.</div>` : "";
+}
+
+async function refreshAll() {
+  const v = (location.hash || "#crear").slice(1);
+  renderJobs();
+  await renderProjects();
+  if (v === "crear") await renderFeed();
+  if (v === "biblioteca") await renderLibrary();
+  if (v === "historial") await renderHistory();
+  if (v === "favoritos") await renderFavs();
+  renderDbStats();
+}
+
+/* ======================= Visor ======================= */
+async function openLightbox(id) {
+  const a = await DB.get("assets", id);
+  if (!a) return;
+  const projects = await DB.all("projects");
+  $("#lbImg").src = assetURL(a);
+  const m = a.meta || {};
+  $("#lbSide").innerHTML = `<b>${esc(a.name)}</b><dl><dt>Tamaño</dt><dd>${a.width}×${a.height} · ${fmtBytes(a.size)}</dd>${m.model ? `<dt>Modelo</dt><dd>${esc(m.model)}</dd>` : ""}${m.provider ? `<dt>Proveedor</dt><dd>${esc(m.provider)}</dd>` : ""}${m.seed != null ? `<dt>Semilla</dt><dd>${m.seed}</dd>` : ""}<dt>Creado</dt><dd>${fmtDate(a.createdAt)}</dd><dt>Origen</dt><dd>${a.source === "upload" ? "subida" : "generada"}</dd></dl>
+    ${m.prompt ? `<p class="prompt">${esc(m.prompt)}</p>` : ""}
+    <div style="margin-top:12px"><div class="label">Proyecto</div><select class="select" data-assetproj="${a.id}"><option value="">Sin proyecto</option>${projects.map((p) => `<option value="${p.id}" ${a.projectId === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px"><button class="btn sm" data-fav="${a.id}">${a.favorite ? "♥ Favorito" : "♡ Favorito"}</button><button class="btn sm" data-dl="${a.id}">Descargar</button><button class="btn sm" data-use="${a.id}">Usar como referencia</button>${m.prompt ? `<button class="btn sm" data-reuse="${a.id}">Reutilizar prompt</button>` : ""}<button class="btn sm danger" data-delasset="${a.id}">Eliminar</button><button class="btn sm ghost" data-closelb>Cerrar</button></div>`;
+  $("#lb").classList.add("on");
+}
+function closeLightbox() { $("#lb").classList.remove("on"); }
+
+async function download(id) {
+  const a = await DB.get("assets", id);
+  const ext = (a.mime || "image/png").split("/")[1].replace("jpeg", "jpg");
+  const link = document.createElement("a");
+  link.href = assetURL(a); link.download = `${a.name}.${ext}`; link.click();
+}
+
+/* ======================= Eventos ======================= */
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button, img, [data-open]");
+  if (!t) { if (e.target.id === "lb") closeLightbox(); return; }
+  const d = t.dataset;
+  if (d.open) return openLightbox(d.open);
+  if (d.closelb !== undefined) return closeLightbox();
+  if (d.fav) { const a = await DB.get("assets", d.fav); a.favorite = !a.favorite; await DB.put("assets", a); refreshAll(); if ($("#lb").classList.contains("on")) openLightbox(a.id); return; }
+  if (d.dl) return download(d.dl);
+  if (d.use) { const a = await DB.get("assets", d.use); closeLightbox(); location.hash = "#crear"; if (UI.mode === "t2i") switchMode("i2i"); setRef(a); toast("Imagen cargada como referencia."); return; }
+  if (d.reuse) { const a = await DB.get("assets", d.reuse); closeLightbox(); location.hash = "#crear"; $("#prompt").value = a.meta.prompt || ""; if (a.meta.seed != null) $("#seed").value = a.meta.seed; return; }
+  if (d.delasset) { if (!confirm("¿Eliminar esta imagen de la base de datos?")) return; await DB.del("assets", d.delasset); URL.revokeObjectURL(urlCache.get(d.delasset)); urlCache.delete(d.delasset); closeLightbox(); refreshAll(); return; }
+  if (d.cancel) return cancelGeneration(d.cancel);
+  if (d.retry) { const g = await DB.get("generations", d.retry); g.status = "queued"; g.error = null; runGeneration(g); return; }
+  if (d.dup || d.var) {
+    const g = await DB.get("generations", d.dup || d.var);
+    const copy = { ...g, id: uid(), createdAt: Date.now(), status: "queued", attempts: [], outputIds: [], error: null, saved: false, provider: null, parentGenerationId: g.id,
+      params: { ...g.params, seed: d.var ? Math.floor(Math.random() * 2 ** 31) : g.params.seed } };
+    await DB.put("generations", copy); runGeneration(copy); return;
+  }
+  if (d.save) { const g = await DB.get("generations", d.save); g.saved = !g.saved; await DB.put("generations", g); refreshAll(); return; }
+  if (d.del) { if (!confirm("¿Eliminar la generación y sus imágenes?")) return; const g = await DB.get("generations", d.del); for (const id of g.outputIds || []) await DB.del("assets", id); await DB.del("generations", d.del); refreshAll(); return; }
+  if (d.ar) { UI.ar = d.ar; $$("#ars .chip").forEach((c) => c.classList.toggle("on", c.dataset.ar === UI.ar)); return; }
+  if (d.style) { UI.style = d.style; $$("#styles .chip").forEach((c) => c.classList.toggle("on", c.dataset.style === UI.style)); return; }
+  if (d.mode) return switchMode(d.mode);
+  if (d.savekey) { const v = $(`[data-key="${d.savekey}"]`).value.trim(); if (S.remember[d.savekey]) { S.keys[d.savekey] = v; } else { delete S.keys[d.savekey]; sessionKeys[d.savekey] = v; } saveSettings(); renderProviders(); renderModelSelect(); renderSetupNotice(); toast(v ? "Clave guardada." : "Clave eliminada."); return; }
+  if (d.saveurl !== undefined) { S.comfyUrl = $("[data-url]").value.trim(); saveSettings(); renderProviders(); renderModelSelect(); renderSetupNotice(); toast("URL de ComfyUI guardada."); return; }
+  if (d.up !== undefined || d.down !== undefined) { const i = +(d.up ?? d.down); const j = d.up !== undefined ? i - 1 : i + 1; if (j < 0 || j >= S.order.length) return; [S.order[i], S.order[j]] = [S.order[j], S.order[i]]; saveSettings(); renderProviders(); renderControls(); return; }
+  if (d.projopen) { location.hash = "#biblioteca"; setTimeout(() => { $("#libProject").value = d.projopen; renderLibrary(); }, 0); return; }
+  if (d.projdel) { if (!confirm("¿Eliminar el proyecto? Sus imágenes se quedan en la biblioteca.")) return; for (const a of await DB.all("assets")) if (a.projectId === d.projdel) { a.projectId = null; await DB.put("assets", a); } await DB.del("projects", d.projdel); refreshAll(); renderProjects(); return; }
+});
+document.addEventListener("change", async (e) => {
+  const d = e.target.dataset;
+  if (d.remember) { S.remember[d.remember] = e.target.checked; const v = keyFor(d.remember); if (e.target.checked && v) S.keys[d.remember] = v; else { if (v) sessionKeys[d.remember] = v; delete S.keys[d.remember]; } saveSettings(); }
+  if (d.enable) { S.disabled[d.enable] = !e.target.checked; saveSettings(); renderProviders(); renderModelSelect(); renderSetupNotice(); }
+  if (d.assetproj) { const a = await DB.get("assets", d.assetproj); a.projectId = e.target.value || null; await DB.put("assets", a); refreshAll(); }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLightbox(); if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && location.hash.replace("#", "") in { "": 1, crear: 1 }) generate(); });
+
+function switchMode(mode) {
+  UI.mode = mode;
+  $$("#modeTabs .tab").forEach((t) => t.classList.toggle("on", t.dataset.mode === mode));
+  $("#prompt").placeholder = mode === "edit" ? "Cambia el fondo por un estudio fotográfico con luz suave y conserva el producto exactamente igual." : mode === "i2i" ? "Describe en qué debe convertirse la imagen de referencia…" : "Un deportivo clásico rojo aparcado frente a una gasolinera del desierto al anochecer, luces de neón, asfalto mojado…";
+  renderModelSelect();
+}
+$("#model").addEventListener("change", (e) => { UI.modelId = e.target.value; renderControls(); });
+$("#prompt").addEventListener("input", () => ($("#promptLen").textContent = `${$("#prompt").value.length}/4000`));
+for (const [id, out] of [["num", "numVal"], ["strength", "strengthVal"], ["steps", "stepsVal"], ["guidance", "guidanceVal"]]) $("#" + id).addEventListener("input", (e) => ($("#" + out).textContent = e.target.value));
+$("#dice").addEventListener("click", () => ($("#seed").value = Math.floor(Math.random() * 2 ** 31)));
+$("#generate").addEventListener("click", generate);
+
+async function importImageFiles(files, projectId = null) {
+  let n = 0;
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) continue;
+    if (f.size > 40 * 1048576) { toast(`${esc(f.name)} supera 40 MB`); continue; }
+    const [w, h] = await imgSize(f);
+    if (!w) { toast(`${esc(f.name)} no es una imagen válida`); continue; }
+    const a = { id: uid(), createdAt: Date.now(), blob: f, mime: f.type, size: f.size, width: w, height: h, favorite: false, projectId, name: f.name.replace(/\.[^.]+$/, ""), source: "upload", meta: {} };
+    await DB.put("assets", a); n++;
+    if (files.length === 1) return a;
+  }
+  return n;
+}
+$("#refSlot").addEventListener("click", async () => {
+  const all = (await DB.all("assets")).slice(0, 24);
+  if (!all.length) return $("#refFile").click();
+  const box = $("#lbSide");
+  $("#lbImg").removeAttribute("src");
+  box.innerHTML = `<b>Elegir referencia</b><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0">${all.map((a) => `<img src="${assetURL(a)}" alt="" data-pick="${a.id}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer">`).join("")}</div><button class="btn sm" id="pickFile">Subir desde el ordenador</button> <button class="btn sm ghost" data-closelb>Cerrar</button>`;
+  $("#lb").classList.add("on");
+  $("#pickFile").onclick = () => { closeLightbox(); $("#refFile").click(); };
+  $$("[data-pick]", box).forEach((img) => (img.onclick = async () => { setRef(await DB.get("assets", img.dataset.pick)); closeLightbox(); }));
+});
+$("#refFile").addEventListener("change", async (e) => { const a = await importImageFiles([...e.target.files]); if (a && a.id) setRef(a); e.target.value = ""; refreshAll(); });
+$("#uploadBtn").addEventListener("click", () => $("#uploadFile").click());
+$("#uploadFile").addEventListener("change", async (e) => { const r = await importImageFiles([...e.target.files], $("#libProject").value || null); toast(`${typeof r === "number" ? r : 1} imagen(es) añadidas a la biblioteca.`); e.target.value = ""; refreshAll(); });
+$("#libProject").addEventListener("change", renderLibrary);
+$$("#histFilter .chip").forEach((c) => c.addEventListener("click", () => { $$("#histFilter .chip").forEach((x) => x.classList.remove("on")); c.classList.add("on"); histFilter = c.dataset.s; renderHistory(); }));
+$("#projCreate").addEventListener("click", async () => { const n = $("#projName").value.trim(); if (!n) return toast("Escribe un nombre."); await DB.put("projects", { id: uid(), name: n, createdAt: Date.now() }); $("#projName").value = ""; renderProjects(); renderDbStats(); });
+
+/* Copia de seguridad de la base de datos */
+$("#exportDb").addEventListener("click", async () => {
+  const [g, a, p] = await Promise.all([DB.all("generations"), DB.all("assets"), DB.all("projects")]);
+  const assets = [];
+  for (const x of a) assets.push({ ...x, blob: undefined, dataURL: await blobToDataURL(x.blob) });
+  const blob = new Blob([JSON.stringify({ format: "motorworld-imagenes", version: 1, exportedAt: new Date().toISOString(), generations: g, assets, projects: p })], { type: "application/json" });
+  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `motorworld-imagenes-${new Date().toISOString().slice(0, 10)}.json`; link.click();
+  toast(`Copia exportada: ${a.length} imágenes, ${g.length} generaciones.`);
+});
+$("#importBtn").addEventListener("click", () => $("#importFile").click());
+$("#importFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (data.format !== "motorworld-imagenes") throw new Error("No es una copia de MotorWorld Imágenes");
+    for (const p of data.projects || []) await DB.put("projects", p);
+    for (const g of data.generations || []) { if (g.status === "processing" || g.status === "queued") { g.status = "failed"; g.error = "Interrumpida al exportar"; } await DB.put("generations", g); }
+    for (const a of data.assets || []) { const blob = await dataURLToBlob(a.dataURL); const { dataURL, ...rest } = a; await DB.put("assets", { ...rest, blob }); }
+    toast(`Importado: ${(data.assets || []).length} imágenes, ${(data.generations || []).length} generaciones.`);
+    refreshAll();
+  } catch (err) { toast(`No se pudo importar: ${esc(err.message)}`); }
+});
+$("#wipeDb").addEventListener("click", async () => {
+  if (!confirm("¿Borrar TODAS las imágenes, generaciones y proyectos de este navegador? Exporta una copia antes si quieres conservarlas.")) return;
+  for (const s of ["generations", "assets", "projects"]) await DB.clear(s);
+  urlCache.forEach((u) => URL.revokeObjectURL(u)); urlCache.clear(); setRef(null);
+  toast("Base de datos vaciada."); refreshAll();
+});
+
+$("#helpBody").innerHTML = `
+<p><b style="color:var(--text)">Qué es.</b> Un generador de imágenes completo en un solo archivo HTML: interfaz, motor de trabajos con fallback entre proveedores y base de datos (IndexedDB) con biblioteca, historial, favoritos y proyectos. No necesita servidor: tu navegador llama directamente a los proveedores de IA.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Empezar gratis.</b> Sin configurar nada puedes generar con FLUX.1 [schnell] a través de Pollinations (servicio gratuito y comunitario, sin garantía de disponibilidad). Con un token gratuito de Hugging Face tienes FLUX.1 [dev] y SDXL usando tus créditos mensuales. Con ComfyUI en tu ordenador generas sin coste con tu GPU.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Máxima calidad.</b> Con una clave de fal.ai: FLUX 1.1 pro Ultra, Imagen 4, Qwen-Image, imagen a imagen y edición por instrucciones (FLUX Kontext, Qwen-Image-Edit). Es de pago por uso: configura límites de gasto en tu cuenta.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Fallback.</b> Si un proveedor falla (red, sin créditos, límite de uso, caída), se prueba el siguiente que tenga el mismo modelo, en el orden que elijas. Los rechazos por contenido o parámetros no se reintentan. Todo queda en el historial.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Progreso.</b> Solo se muestra información real (posición en cola de fal, nº de imágenes completadas); no se inventan porcentajes.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Tus datos.</b> Imágenes, prompts y proyectos se guardan solo en este navegador. Exporta copias desde «Proveedores y datos». Borrar los datos del sitio o usar modo incógnito los elimina.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Si sale «no se pudo conectar».</b> Puede ser la red, un bloqueador de anuncios o que el proveedor no acepte llamadas desde el navegador (CORS). En ese caso usa la plataforma completa de MotorWorld Studio, que llama a los proveedores desde el servidor.</p>
+<p style="margin-top:12px"><b style="color:var(--text)">Licencias.</b> Cada modelo indica su licencia. FLUX.1 [dev] tiene pesos no comerciales; comprueba también las condiciones de cada proveedor antes de un uso comercial.</p>`;
+
+/* ======================= Inicio ======================= */
+function route() {
+  const v = (location.hash || "#crear").slice(1);
+  const id = $("#v-" + v) ? v : "crear";
+  $$(".view").forEach((s) => s.classList.toggle("on", s.id === "v-" + id));
+  $$("#nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + id));
+  if (id === "ajustes") renderProviders();
+  if (id === "proyectos") renderProjects();
+  refreshAll();
+  window.scrollTo(0, 0);
+}
+(async function init() {
+  try { await DB.open(); } catch (e) { document.body.innerHTML = `<div class="notice err" style="margin:40px">No se pudo abrir la base de datos del navegador (${esc(e.message)}). Prueba en otro navegador o fuera del modo privado.</div>`; return; }
+  try { navigator.storage?.persist?.(); } catch { /* */ }
+  // trabajos que quedaron a medias al cerrar la pestaña
+  for (const g of await DB.all("generations")) if (g.status === "processing" || g.status === "queued") { g.status = "failed"; g.error = "Interrumpida: la pestaña se cerró o recargó durante la generación. Puedes reintentarla."; await DB.put("generations", g); }
+  $("#styles").innerHTML = STYLES.map(([id, label]) => `<button class="chip ${id === UI.style ? "on" : ""}" data-style="${id}">${label}</button>`).join("");
+  renderModelSelect();
+  renderSetupNotice();
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
