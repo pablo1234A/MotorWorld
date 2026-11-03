@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotorWorld Studio — Vista previa</title>
+<meta name="description" content="Vista previa en un solo archivo de la interfaz de MotorWorld Studio con el catálogo real de modelos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090b;--panel:#101013;--panel2:#16161a;--panel3:#1d1d22;--line:#232329;--line2:#303038;
+  --text:#ededf0;--muted:#8d8d98;--dim:#5c5c66;--accent:#ff5a36;--ok:#3ccf91;--warn:#f5b14c;--err:#ff4d5e;--info:#6aa8ff;
+  --sans:"Geist",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--display:"Instrument Serif",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:inherit}
+::selection{background:var(--accent);color:#fff}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.display{font-family:var(--display);font-weight:400;letter-spacing:-.01em}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}.dim{color:var(--dim)}
+/* layout */
+.side{position:fixed;inset:0 auto 0 0;width:248px;border-right:1px solid var(--line);background:#0b0b0d;padding:20px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;z-index:30}
+.main{margin-left:248px;min-height:100vh}
+.top{position:sticky;top:0;z-index:20;height:56px;border-bottom:1px solid var(--line);background:rgba(9,9,11,.82);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
+.content{max-width:1500px;margin:0 auto;padding:40px}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px;text-decoration:none}
+.logo-mark{width:32px;height:32px;border-radius:10px;border:1px solid var(--line2);background:var(--panel2);display:grid;place-items:center;position:relative}
+.logo-mark i{width:12px;height:12px;border-radius:50%;border:2.5px solid var(--accent)}
+.logo b{font-size:14px;font-weight:600;display:block;line-height:1}
+.logo em{font-family:var(--display);color:var(--muted);font-size:13px}
+.group-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;padding:0 12px 6px}
+.nav a{position:relative;display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;font-size:13.5px;color:var(--muted);text-decoration:none;transition:.15s}
+.nav a:hover{background:var(--panel2);color:var(--text)}
+.nav a.active{background:var(--panel3);color:var(--text)}
+.nav a.active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--accent)}
+.nav a.active svg{color:var(--accent)}
+.nav svg{width:17px;height:17px;stroke-width:1.7}
+.menu-btn{display:none}
+.preview-pill{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px;border:1px solid rgba(245,177,76,.35);background:rgba(245,177,76,.08);font-family:var(--mono);font-size:12px;color:#f7d9a6}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--warn)}
+/* components */
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+h1.page{font-family:var(--display);font-weight:400;font-size:46px;line-height:1.05}
+h1.page em{color:var(--muted)}
+.lead{margin-top:8px;max-width:680px;font-size:15px;color:var(--muted);line-height:1.55}
+.head{margin-bottom:28px}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:18px}
+.pad{padding:20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.split{display:grid;grid-template-columns:440px 1fr;gap:24px;align-items:start}
+.label{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+.label small{font-family:var(--mono);text-transform:none;letter-spacing:0;color:var(--dim);font-size:11px}
+.field{margin-bottom:18px}
+.input,.select,.textarea{width:100%;border:1px solid var(--line2);background:var(--panel2);border-radius:10px;padding:0 12px;height:40px;font-size:14px;outline:none;transition:.15s}
+.textarea{padding:12px 14px;height:auto;resize:vertical;line-height:1.55;font-size:15px}
+.input:focus,.select:focus,.textarea:focus{border-color:rgba(255,90,54,.6);box-shadow:0 0 0 3px rgba(255,90,54,.12)}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%238d8d98' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:32px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;font-size:14px;font-weight:500;border:1px solid var(--line2);background:var(--panel3);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:#45454f;background:#232329}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff;box-shadow:0 8px 24px -8px rgba(255,90,54,.5)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.lg{height:48px;padding:0 24px;font-size:15px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line2);color:var(--muted);border-radius:999px;padding:5px 12px;font-size:12.5px;transition:.15s}
+.chip:hover{color:var(--text)}
+.chip.on{border-color:rgba(255,90,54,.6);background:rgba(255,90,54,.1);color:var(--text)}
+.tabs{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:4px;gap:2px}
+.tab{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.tab.on{background:var(--panel3);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:2px 6px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;background:var(--panel3);color:var(--muted)}
+.badge.ok{background:rgba(60,207,145,.1);color:var(--ok)}.badge.warn{background:rgba(245,177,76,.1);color:var(--warn)}.badge.err{background:rgba(255,77,94,.1);color:var(--err)}.badge.info{background:rgba(106,168,255,.1);color:var(--info)}.badge.accent{background:rgba(255,90,54,.12);color:var(--accent)}
+.notice{border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.55;border:1px solid rgba(106,168,255,.25);background:rgba(106,168,255,.06);color:#bcd6ff}
+.notice.warn{border-color:rgba(245,177,76,.3);background:rgba(245,177,76,.06);color:#f7d9a6}
+.empty{border:1px dashed var(--line2);border-radius:18px;padding:56px 24px;text-align:center}
+.empty p{max-width:460px;margin:6px auto 0;font-size:14px;color:var(--muted)}
+.hero{position:relative;overflow:hidden;border-radius:26px;border:1px solid var(--line);background:var(--panel);padding:56px 40px;margin-bottom:40px}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 85% 0%,rgba(255,90,54,.14),transparent 55%),radial-gradient(ellipse at 0% 100%,rgba(255,181,71,.06),transparent 45%)}
+.hero>*{position:relative}
+.hero h1{font-family:var(--display);font-weight:400;font-size:64px;line-height:1}
+.hero h1 em{color:var(--muted)}
+.action{position:relative;display:block;text-align:left;width:100%;border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:20px;transition:.2s}
+.action:hover{border-color:var(--line2);background:var(--panel2)}
+.action svg{color:var(--accent);width:20px;height:20px}
+.action b{display:block;margin-top:24px;font-size:16px;font-weight:500}
+.action span{display:block;margin-top:4px;font-size:13px;color:var(--muted)}
+.section-title{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 16px}
+.range{width:100%;accent-color:var(--accent)}
+.moves{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.move{border:1px solid var(--line2);border-radius:8px;padding:8px 4px;font-size:11.5px;color:var(--muted);line-height:1.2}
+.move.on{border-color:rgba(255,90,54,.6);background:rgba(255,90,54,.1);color:var(--text)}
+.toast{position:fixed;right:24px;bottom:24px;z-index:60;max-width:380px;border:1px solid var(--line2);background:var(--panel2);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.5;box-shadow:0 20px 50px rgba(0,0,0,.5);transform:translateY(20px);opacity:0;transition:.3s;pointer-events:none}
+.toast.show{transform:none;opacity:1}
+.model-card dl{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:12px;margin-top:14px}
+.model-card dt{color:var(--dim)}
+.pill{font-family:var(--mono);font-size:10px;border-radius:4px;padding:2px 6px;background:var(--panel3);color:var(--muted)}
+.steps{counter-reset:s;display:grid;gap:10px}
+.step{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:14px}
+.step::before{counter-increment:s;content:counter(s,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:2px}
+.canvas-wrap{position:relative;border-radius:18px;border:1px solid var(--line);overflow:hidden;background-color:#1a1a1f;background-image:linear-gradient(45deg,#24242a 25%,transparent 25%),linear-gradient(-45deg,#24242a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#24242a 75%),linear-gradient(-45deg,transparent 75%,#24242a 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+.canvas-wrap canvas{display:block;width:100%;height:auto}
+.ba-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.85);pointer-events:none}
+.tag{position:absolute;top:10px;font-family:var(--mono);font-size:10px;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:4px}
+.drop{border:1px dashed var(--line2);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(255,90,54,.05)}
+.view{display:none;animation:fade .45s cubic-bezier(.16,1,.3,1)}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+details summary{cursor:pointer;list-style:none}
+details summary::-webkit-details-marker{display:none}
+.faq{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:18px 20px;margin-bottom:10px}
+.faq[open]{background:var(--panel2)}
+.faq summary{font-size:15px;font-weight:500}
+.faq p{margin-top:10px;font-size:14px;line-height:1.6;color:var(--muted)}
+footer{max-width:1500px;margin:0 auto;padding:0 40px 32px;font-size:12px;color:var(--dim);display:flex;gap:16px;flex-wrap:wrap}
+@media (max-width:1180px){.split{grid-template-columns:1fr}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1023px){
+  .side{transform:translateX(-100%);transition:transform .3s cubic-bezier(.16,1,.3,1);width:264px}
+  .side.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.6)}
+  .main{margin-left:0}
+  .menu-btn{display:inline-flex}
+  .content{padding:28px 16px}
+  footer{padding:0 16px 28px}
+  .top{padding:0 16px}
+}
+@media (max-width:640px){
+  .g2,.g3{grid-template-columns:1fr}
+  h1.page{font-size:38px}
+  .hero{padding:40px 22px}.hero h1{font-size:44px}
+  .moves{grid-template-columns:repeat(3,1fr)}
+  .preview-pill span.long{display:none}
+  .top-count{display:none}
+  .preview-pill{white-space:nowrap}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<aside class="side" id="side">
+  <a class="logo" href="#inicio"><span class="logo-mark"><i></i></span><span><b>MotorWorld</b><em>Studio</em></span></a>
+  <nav class="nav" id="nav"></nav>
+</aside>
+
+<div class="main">
+  <header class="top">
+    <button class="btn ghost sm menu-btn" id="menuBtn" aria-label="Abrir menú"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <span class="preview-pill"><span class="dot"></span>Vista previa <span class="long">· sin servidor conectado</span></span>
+    <span class="mono dim top-count" style="font-size:12px">38 modelos · 13 proveedores</span>
+  </header>
+  <main class="content" id="content"></main>
+  <footer><span>© MotorWorld Studio</span><span>Vista previa estática generada desde el repositorio. Para generar y editar con IA ejecuta la plataforma completa (docker compose up).</span></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = /*__CATALOG__*/;
+
+const ICON = {
+  home:'<path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/>',
+  img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+  video:'<rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/>',
+  clap:'<path d="M4 11h16v9H4z"/><path d="m4 11 2.5-6 13 3.5L18 11"/><path d="m8.5 5.6 2 5.4M13.5 7l2 4"/>',
+  wand:'<path d="m15 4 5 5L9 20H4v-5z"/><path d="M13 6l5 5"/>',
+  scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
+  audio:'<path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/>',
+  boxes:'<path d="M3 7 12 3l9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+  library:'<path d="M4 19V5M8 19V5M12 19 16 5l4 14"/>',
+  folder:'<path d="M3 6h6l2 2h10v11H3z"/>',
+  history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/>',
+  heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  key:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14 9l2 2"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7v.5M12 17h.01"/>',
+  arrow:'<path d="M7 17 17 7M8 7h9v9"/>',
+};
+const svg = (k, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const NAV = [
+  ["", [["inicio","Inicio","home"]]],
+  ["Crear", [["imagenes","Crear imágenes","img"],["videos","Crear vídeos","video"],["peliculas","Crear películas","clap"]]],
+  ["Editar", [["editor-imagen","Editor de imágenes","wand"],["editor-video","Editor de vídeos","scissors"],["estudio","Estudio creativo","audio"]]],
+  ["Organizar", [["modelos","Modelos de IA","boxes"],["proveedores","Proveedores y claves","key"],["biblioteca","Biblioteca","library"],["proyectos","Proyectos","folder"],["historial","Historial","history"],["favoritos","Favoritos","heart"]]],
+  ["", [["ayuda","Centro de ayuda","help"]]],
+];
+document.getElementById("nav").innerHTML = NAV.map(([g, items], i) =>
+  `<div style="${i === NAV.length - 1 ? "margin-top:12px" : ""}">${g ? `<p class="group-label">${g}</p>` : ""}${items.map(([id, l, ic]) => `<a href="#${id}" data-id="${id}">${svg(ic)}${l}</a>`).join("")}</div>`).join("");
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.innerHTML = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 4200);
+}
+const NEED_SERVER = "Esta vista previa no tiene servidor. Para generar de verdad ejecuta la plataforma (<span class='mono'>docker compose up</span>) y configura una API key del proveedor.";
+
+const TIER = {top:"Máxima calidad", high:"Alta calidad", standard:"Estándar", draft:"Borrador"};
+const UNIT = {image:"/img", second:"/s", megapixel:"/MP", run:"/uso", video:"/vídeo", "1k_chars":"/1k car."};
+function price(m) {
+  const r = m.routes.find((r) => r.price && r.price.usd != null) || m.routes[0];
+  if (!r || !r.price) return "—";
+  if (r.price.usd === 0) return "Gratis (local)";
+  if (r.price.usd == null) return "Ver proveedor";
+  return `≈ ${r.price.usd} $${UNIT[r.price.unit] || ""}`;
+}
+const modelsFor = (task) => DATA.models.filter((m) => m.tasks.includes(task));
+const header = (eyebrow, title, lead) => `<div class="head"><p class="eyebrow">${eyebrow}</p><h1 class="page">${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ""}</div>`;
+const empty = (title, text) => `<div class="empty"><p style="font-size:15px;font-weight:500;color:var(--text);margin:0">${title}</p><p>${text}</p></div>`;
+
+function modelSelect(task, id) {
+  const ms = modelsFor(task);
+  return `<div class="field"><div class="label">Modelo <small>${ms.length} disponibles</small></div>
+    <select class="select" id="${id}" data-task="${task}">${ms.map((m) => `<option value="${m.id}">${esc(m.name)} — ${TIER[m.quality_tier]} · ${price(m)}</option>`).join("")}</select>
+    <div id="${id}-info" style="margin-top:8px"></div></div>`;
+}
+function paramControls(m) {
+  if (!m) return "";
+  return m.params.map((p) => {
+    if (p.type === "enum") return `<div class="field"><div class="label">${esc(p.label)}</div><div class="chips">${p.options.map((o, i) => `<button class="chip ${i === 0 ? "on" : ""}" data-chip>${o === "match_input_image" ? "como la imagen" : esc(o)}</button>`).join("")}</div></div>`;
+    if (p.type === "bool") return `<div class="field"><label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" style="accent-color:var(--accent)"> ${esc(p.label)}</label></div>`;
+    if (p.type === "seed") return `<div class="field"><div class="label">${esc(p.label)} <small>vacío = aleatoria</small></div><input class="input" type="number" placeholder="Aleatoria"></div>`;
+    if (p.type === "string") return `<div class="field"><div class="label">${esc(p.label)}</div><input class="input"></div>`;
+    return `<div class="field"><div class="label">${esc(p.label)} ${p.advanced ? "<small>avanzado</small>" : ""}</div><input class="range" type="range"></div>`;
+  }).join("");
+}
+function bindModelSelect(id, paramsBox) {
+  const sel = document.getElementById(id);
+  const upd = () => {
+    const m = DATA.models.find((x) => x.id === sel.value);
+    document.getElementById(id + "-info").innerHTML = m ? `<div class="chips">${m.open_weights ? '<span class="badge info">pesos abiertos</span>' : ""}<span class="badge ${m.commercial_use === "yes" ? "ok" : m.commercial_use === "no" ? "err" : "warn"}">${m.commercial_use === "yes" ? "uso comercial" : m.commercial_use === "no" ? "no comercial" : "revisar licencia"}</span>${m.routes.map((r) => `<span class="pill">${r.provider}</span>`).join("")}</div>${m.limitations ? `<p class="dim" style="font-size:12px;margin-top:8px">⚠ ${esc(m.limitations)}</p>` : ""}` : "";
+    if (paramsBox) document.getElementById(paramsBox).innerHTML = paramControls(m) + (m && m.supports_negative_prompt ? `<div class="field"><div class="label">Prompt negativo</div><textarea class="textarea" rows="2" placeholder="borroso, deformado, texto, marca de agua"></textarea></div>` : "");
+  };
+  sel.addEventListener("change", upd);
+  upd();
+}
+
+const VIEWS = {
+  inicio: () => `
+    <div class="hero"><p class="eyebrow">● Estudio audiovisual con IA</p><h1>¿Qué vamos a <em>rodar</em> hoy?</h1>
+      <p class="lead" style="margin-top:20px">Imagen, vídeo, guion, personajes, sonido y montaje en un solo estudio. Elige el mejor modelo para cada plano y cambia de proveedor sin rehacer tu trabajo.</p></div>
+    <div class="notice warn" style="margin-bottom:32px">Estás viendo la <b>vista previa en un solo archivo</b>. Los catálogos de modelos y proveedores son los reales del proyecto; el retoque del editor de imágenes funciona en tu navegador. Generar con IA, renderizar con FFmpeg y guardar en la biblioteca requieren el servidor.</div>
+    <p class="section-title">Empezar</p>
+    <div class="grid g3">${[["imagenes","img","Fotografía hiperrealista","Texto a imagen, variaciones, estilos"],["videos","video","Foto a vídeo","Imagen a vídeo, cámara, primer/último fotograma"],["peliculas","clap","Película o anuncio","Guion, personajes, storyboard y montaje"],["editor-imagen","wand","Editar con un prompt","Fondos, objetos, iluminación, máscaras"],["editor-video","scissors","Editar un vídeo","FFmpeg + modelos generativos"],["estudio","audio","Música y sonido","Voces, efectos, mezcla, timeline"]]
+      .map(([h, ic, t, s]) => `<a class="action" href="#${h}">${svg(ic, 20)}<b>${t}</b><span>${s}</span><span style="position:absolute;top:20px;right:20px;color:var(--dim)">${svg("arrow", 16)}</span></a>`).join("")}</div>`,
+
+  imagenes: () => `${header("Crear · Imagen", "Crear <em>imágenes</em>", "Fotografía, publicidad, producto, arquitectura o ilustración con el modelo que prefieras. Los controles cambian según lo que admite cada modelo.")}
+    <div class="split"><div class="card pad">
+      <div class="tabs" style="margin-bottom:18px">${["Texto","Imagen","Variaciones","Ampliar"].map((t, i) => `<button class="tab ${i ? "" : "on"}" data-tab>${t}</button>`).join("")}</div>
+      ${modelSelect("text_to_image", "imgModel")}
+      <div class="field"><div class="label">Prompt</div><textarea class="textarea" rows="5" placeholder="Un deportivo clásico rojo aparcado frente a una gasolinera del desierto al anochecer, luces de neón, asfalto mojado…"></textarea></div>
+      <div class="field"><div class="label">Estilo</div><div class="chips">${DATA.options.image_styles.map((s, i) => `<button class="chip ${i ? "" : "on"}" data-chip>${esc(s.label)}</button>`).join("")}</div></div>
+      <div class="field"><div class="label">Composición <small>se añade al prompt</small></div><div class="chips">${["libre", ...DATA.options.compositions.map((c) => c.label)].map((c, i) => `<button class="chip ${i ? "" : "on"}" data-chip>${esc(c)}</button>`).join("")}</div></div>
+      <div id="imgParams"></div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--line);padding-top:16px"><button class="btn primary lg" data-server>Generar</button></div>
+    </div>${empty("Tus imágenes aparecerán aquí", "Cada resultado se guarda en tu biblioteca con el modelo, proveedor, prompt y semilla utilizados para poder reproducirlo.")}</div>`,
+
+  videos: () => `${header("Crear · Vídeo", "Crear <em>vídeos</em>", "Texto a vídeo, animación de fotografías, transiciones entre fotogramas, extensión de escenas y secuencias multi-plano con dirección de cámara.")}
+    <div class="split"><div class="card pad">
+      <div class="tabs" style="margin-bottom:18px">${["Texto","Imagen","Inicio/Fin","Vídeo a vídeo","Extender","Multi-shot"].map((t, i) => `<button class="tab ${i ? "" : "on"}" data-tab>${t}</button>`).join("")}</div>
+      ${modelSelect("text_to_video", "vidModel")}
+      <div class="field"><div class="label">Prompt</div><textarea class="textarea" rows="4" placeholder="Un coche deportivo atraviesa una carretera costera al amanecer, el sol se refleja en la carrocería…"></textarea></div>
+      <div class="field"><div class="label">Movimiento de cámara <small>se aplica vía prompt</small></div><div class="moves">${DATA.options.camera_movements.map((m) => `<button class="move" data-move>${esc(m.label)}</button>`).join("")}</div></div>
+      <details class="field"><summary class="label">Control cinematográfico ▸</summary><div class="grid g2" style="margin-top:10px">${Object.entries(DATA.options.cinema).map(([k, g]) => `<div><div class="label">${esc(g.label)}</div><select class="select"><option>—</option>${g.options.map((o) => `<option>${esc(o.replaceAll("_", " "))}</option>`).join("")}</select></div>`).join("")}</div><p class="dim" style="font-size:12px;margin-top:8px">Se convierten en indicaciones de dirección dentro del prompt; la fidelidad depende del modelo.</p></details>
+      <label class="field" style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" style="accent-color:var(--accent)"> Cámara lenta real (FFmpeg, interpolación)</label>
+      <div id="vidParams"></div>
+      <div style="display:flex;justify-content:flex-end;border-top:1px solid var(--line);padding-top:16px"><button class="btn primary lg" data-server>Generar vídeo</button></div>
+    </div>${empty("Tus vídeos aparecerán aquí", "Los vídeos tardan de 30 s a varios minutos según el modelo. El progreso solo se muestra en porcentaje cuando el proveedor lo informa.")}</div>`,
+
+  peliculas: () => `${header("Crear · Películas", "Estudio de <em>producción</em>", "De la idea al montaje final: argumento, escenas, diálogos, personajes con referencias visuales, storyboard, clips, voces, música y exportación.")}
+    <div class="grid g2"><div class="card pad"><p class="section-title">Flujo de producción</p><div class="steps">${[
+      ["Guion", "La IA (Claude u Ollama local) desarrolla argumento, escenas, planos y diálogos. También se puede escribir a mano."],
+      ["Personajes", "Rostro, cabello, vestuario, edad visual, accesorios, colores, voz y semilla. Imagen de referencia generada o subida."],
+      ["Localizaciones", "Descripción, momento del día, iluminación y referencias."],
+      ["Storyboard", "Plano, cámara, óptica, duración, prompts y diálogo por plano; reescritura de escenas con IA."],
+      ["Producción por lotes", "Referencias, fotogramas (con referencias de personaje), clips, voces, efectos y banda sonora."],
+      ["Montaje", "Línea temporal automática (vídeo, diálogos, música, efectos, subtítulos) y render FFmpeg; exportación OTIO/SRT."]]
+      .map(([t, d]) => `<div class="step"><div><b style="font-size:14px">${t}</b><p class="muted" style="font-size:13px;margin-top:3px">${d}</p></div></div>`).join("")}</div></div>
+      <div class="card pad"><p class="section-title">Nueva producción</p>
+        <div class="field"><div class="label">Título provisional</div><input class="input" placeholder="Última vuelta"></div>
+        <div class="field"><div class="label">Idea de la película</div><textarea class="textarea" rows="6" placeholder="Una piloto de rallies veterana vuelve al circuito donde perdió a su copiloto para correr una última carrera al amanecer…"></textarea></div>
+        <div class="field"><div class="label">Formato</div><div class="chips">${["16:9 cine/TV","21:9 scope","9:16 vertical","1:1"].map((f, i) => `<button class="chip ${i ? "" : "on"}" data-chip>${f}</button>`).join("")}</div></div>
+        <button class="btn primary" style="width:100%" data-server>Desarrollar con IA</button>
+        <p class="dim" style="font-size:12px;margin-top:12px">Ningún modelo garantiza una consistencia perfecta de personajes: se combinan descripción fija, referencias visuales, semilla y modelos con referencia.</p></div></div>`,
+
+  "editor-imagen": () => `${header("Editar · Imagen", "Editor de <em>imágenes</em>", "En la plataforma completa describes el cambio y se ejecuta con el modelo adecuado. En esta vista previa, el retoque de color, la máscara y el antes/después funcionan de verdad en tu navegador.")}
+    <div class="split" style="grid-template-columns:1fr 380px">
+      <div>
+        <div class="drop" id="drop"><input type="file" id="file" accept="image/*" hidden><p style="font-size:14px">Arrastra una imagen o haz clic para abrirla</p><p class="dim" style="font-size:12px;margin-top:6px">Se procesa solo en tu navegador; no se sube a ningún sitio.</p></div>
+        <div class="canvas-wrap" id="cw" style="display:none"><canvas id="cv"></canvas><canvas id="mask" style="position:absolute;inset:0;opacity:.55;pointer-events:none"></canvas><div class="ba-line" id="baLine" style="display:none"></div><span class="tag" id="tagA" style="left:10px;display:none">ANTES</span><span class="tag" id="tagB" style="right:10px;display:none">DESPUÉS</span></div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn sm" id="maskBtn" disabled>Seleccionar zona (máscara)</button><button class="btn sm" id="baBtn" disabled>Antes / después</button><button class="btn sm" id="resetBtn" disabled>Volver al original</button><button class="btn sm" id="dlBtn" disabled>Descargar PNG</button></div>
+      </div>
+      <div class="grid">
+        <div class="card pad"><div class="field"><div class="label">Instrucción</div><textarea class="textarea" rows="4" placeholder="Convierte esta foto en una imagen publicitaria de lujo, cambia el fondo por un estudio y conserva el producto exactamente igual."></textarea></div>
+          <button class="btn" style="width:100%" data-server>Planificar edición con IA</button></div>
+        <div class="card pad"><div class="label">Retoque de color <small>en el navegador</small></div>
+          ${[["brightness","Brillo",100],["contrast","Contraste",100],["saturate","Saturación",100],["sepia","Sepia",0],["grayscale","Blanco y negro",0]].map(([k, l, v]) => `<div style="display:flex;align-items:center;gap:10px;margin:10px 0"><span style="width:110px;font-size:12.5px" class="muted">${l}</span><input class="range" type="range" min="0" max="${k === "sepia" || k === "grayscale" ? 100 : 200}" value="${v}" data-f="${k}"><span class="mono dim" style="font-size:11px;width:34px;text-align:right" data-v="${k}">${v}%</span></div>`).join("")}
+          <button class="btn sm" style="width:100%;margin-top:8px" id="applyBtn" disabled>Aplicar</button></div>
+      </div></div>`,
+
+  "editor-video": () => `${header("Editar · Vídeo", "Editor de <em>vídeos</em>", "El planificador separa operaciones FFmpeg (exactas y gratuitas) de las generativas (vídeo a vídeo, ampliación con IA, extensión, sonido sincronizado).")}
+    <div class="split" style="grid-template-columns:1fr 400px"><div><div class="drop" id="vdrop"><input type="file" id="vfile" accept="video/*" hidden><p style="font-size:14px">Abre un vídeo para previsualizarlo</p><p class="dim" style="font-size:12px;margin-top:6px">Solo se reproduce en tu navegador.</p></div><video id="vplayer" controls playsinline style="display:none;width:100%;border-radius:18px;background:#000;max-height:66vh"></video></div>
+    <div class="card pad"><p class="section-title">Operaciones</p><div class="chips" style="margin-bottom:16px">${["Corte","Velocidad","Cámara lenta","Interpolación 60 fps","Estabilizar","Color","Reencuadre 9:16","Cinemascope","Grano","Subtítulos","Texto","Fundidos","Limpiar audio","Normalizar","Por segmentos"].map((o) => `<span class="badge info">${o}</span>`).join("")}</div>
+      <div class="chips" style="margin-bottom:18px">${["Vídeo a vídeo","Ampliación IA","Extender escena","Sonido sincronizado"].map((o) => `<span class="badge accent">${o}</span>`).join("")}</div>
+      <div class="field"><div class="label">Instrucción</div><textarea class="textarea" rows="4" placeholder="Anuncio cinematográfico de coches, noche lluviosa, mejor iluminación y formato vertical para reels"></textarea></div>
+      <button class="btn primary" style="width:100%" data-server>Analizar y planificar</button></div></div>`,
+
+  estudio: () => `${header("Estudio creativo", "Sonido, montaje <em>y recursos</em>", "Voces, música, efectos y audio sincronizado; mezcla; montaje multipista con render FFmpeg; recursos gratuitos de Pexels, Pixabay y Unsplash.")}
+    <div class="split"><div class="card pad"><div class="tabs" style="margin-bottom:18px">${["Voz","Música","Efectos","Sonido de vídeo","Mezcla","Edición"].map((t, i) => `<button class="tab ${i ? "" : "on"}" data-tab>${t}</button>`).join("")}</div>
+      ${modelSelect("text_to_speech", "audModel")}
+      <div class="field"><div class="label">Texto a locutar</div><textarea class="textarea" rows="4" placeholder="Hay carreteras que no se recorren: se recuerdan."></textarea></div>
+      <p class="dim" style="font-size:12px;margin-bottom:16px">Solo voces de biblioteca o propias con consentimiento. No se clonan voces de personas reales sin autorización.</p>
+      <button class="btn primary" data-server>Generar</button></div>
+      <div class="card pad"><p class="section-title">Montaje multipista</p><div style="display:grid;gap:6px">${["Vídeo principal","Superposición","Diálogos","Música","Efectos","Subtítulos"].map((t, i) => `<div style="display:flex;align-items:center;gap:12px;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:var(--panel2)"><span style="width:130px;font-size:12.5px">${t}</span><span class="badge ${i < 2 ? "accent" : i < 5 ? "info" : ""}">${i < 2 ? "vídeo" : i < 5 ? "audio" : "subs"}</span></div>`).join("")}</div>
+      <p class="muted" style="font-size:13px;margin-top:14px">Transiciones (fundido, a negro, cortinillas…), recortes, velocidad, volumen, efectos de color por clip, render H.264/AAC y exportación OpenTimelineIO y SRT.</p></div></div>`,
+
+  modelos: () => `${header("Centro de modelos", "Modelos <em>de IA</em>", "Todos los motores integrados con sus tareas, resoluciones, duraciones, limitaciones, coste, licencia y proveedores. Datos reales del registro del proyecto.")}
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;align-items:center"><div class="chips" id="mfilters">${[["all","Todos"],["image","Imágenes"],["video","Vídeos"],["audio","Audio"],["edit","Edición"],["free","Gratuitos / abiertos"],["paid","De pago"],["local","Locales"]].map(([k, l], i) => `<button class="chip ${i ? "" : "on"}" data-f="${k}">${l}</button>`).join("")}</div><input class="input" id="mq" placeholder="Buscar modelo…" style="max-width:260px;margin-left:auto"></div>
+    <div class="grid g3" id="mgrid"></div>`,
+
+  proveedores: () => `${header("Proveedores", "Proveedores <em>y claves</em>", "Qué necesita cada proveedor y qué ofrece gratis. Las claves se guardan solo en el servidor (variables de entorno) o cifradas por usuario; nunca en el navegador.")}
+    <div class="grid g2">${DATA.providers.map((p) => `<div class="card pad"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><b style="font-size:15px">${esc(p.name)}</b><span class="badge ${p.kind === "local" ? "ok" : p.kind === "stock" ? "info" : ""}">${p.kind === "cloud" ? "nube" : p.kind === "local" ? "local" : p.kind === "llm" ? "guion (LLM)" : "stock gratis"}</span></div>
+      <p class="muted" style="font-size:13px;margin-top:10px;line-height:1.55"><span style="color:var(--text)">Nivel gratuito: </span>${esc(p.free_tier)}</p><p class="dim" style="font-size:12.5px;margin-top:6px">${esc(p.commercial_note)}</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12px">${p.key_env ? `<span class="mono pill">${esc(p.key_env)}</span>` : ""}${p.signup_url ? `<a class="muted" href="${esc(p.signup_url)}" target="_blank" rel="noreferrer">Obtener clave ↗</a>` : ""}${p.docs_url ? `<a class="muted" href="${esc(p.docs_url)}" target="_blank" rel="noreferrer">Documentación ↗</a>` : ""}</div></div>`).join("")}</div>`,
+
+  biblioteca: () => `${header("Biblioteca personal", "Tu <em>biblioteca</em>", "Archivos subidos, generados, editados y renderizados. Privados por usuario, con miniaturas, favoritos, proyectos y descargas.")}${empty("Requiere el servidor", "La biblioteca vive en tu instancia de MotorWorld Studio (PostgreSQL + almacenamiento S3/MinIO).")}`,
+  proyectos: () => `${header("Proyectos", "Tus <em>proyectos</em>", "Agrupa archivos, generaciones, películas y montajes de una misma campaña o producción.")}${empty("Requiere el servidor", "Crea proyectos desde la plataforma completa.")}`,
+  historial: () => `${header("Historial", "Historial de <em>generaciones</em>", "Cada trabajo registra modelo, proveedor, prompt, parámetros, coste estimado, intentos y errores; se puede cancelar, reintentar, duplicar, guardar, descargar o eliminar.")}${empty("Requiere el servidor", "El historial se guarda en la base de datos de tu instancia.")}`,
+  favoritos: () => `${header("Favoritos", "Lo <em>mejor</em> de tu trabajo", "Archivos marcados como favoritos y generaciones guardadas.")}${empty("Requiere el servidor", "Los favoritos se guardan en tu cuenta.")}`,
+
+  ayuda: () => `${header("Centro de ayuda", "¿En qué te <em>ayudamos</em>?", "")}${[
+    ["¿Qué puedo hacer gratis?", "Todo el motor local: recortes, velocidad, cámara lenta, estabilización, color, reencuadre, subtítulos, mezcla y limpieza de audio, montaje y exportación. Para IA gratuita: créditos mensuales pequeños de Hugging Face, ComfyUI o Diffusers en tu GPU, y Ollama para el guion."],
+    ["¿Por qué un modelo aparece «sin configurar»?", "Cada modelo se ejecuta a través de uno o varios proveedores. Si ninguno tiene API key o servidor configurado, no se puede usar. Si uno falla, se prueba automáticamente el siguiente."],
+    ["¿Se modifica mi archivo original al editar?", "Nunca. Cada edición crea una versión nueva enlazada al original."],
+    ["¿Qué significa el porcentaje de progreso?", "Solo se muestra cuando el proveedor o FFmpeg informan de un progreso real; si no, aparece «procesando» sin inventar cifras."],
+    ["¿Cómo exporto mi película?", "Desde Montaje: «Renderizar» genera un MP4 con FFmpeg; también puedes exportar OpenTimelineIO (.otio) y subtítulos .srt."],
+    ["¿Cómo arranco la plataforma completa?", "cp .env.example .env · rellena las claves · docker compose up -d --build · abre http://localhost. Instrucciones completas en README.md y docs/DEPLOY.md."]]
+    .map(([q, a]) => `<details class="faq"><summary>${q}</summary><p>${a}</p></details>`).join("")}`,
+};
+
+function bindCommon(root) {
+  root.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { b.parentElement.querySelectorAll(".tab").forEach((x) => x.classList.remove("on")); b.classList.add("on"); }));
+  root.querySelectorAll("[data-chip]").forEach((b) => b.addEventListener("click", () => { b.parentElement.querySelectorAll(".chip").forEach((x) => x.classList.remove("on")); b.classList.add("on"); }));
+  root.querySelectorAll("[data-move]").forEach((b) => b.addEventListener("click", () => { const on = b.classList.contains("on"); root.querySelectorAll("[data-move]").forEach((x) => x.classList.remove("on")); if (!on) b.classList.add("on"); }));
+  root.querySelectorAll("[data-server]").forEach((b) => b.addEventListener("click", () => toast(NEED_SERVER)));
+}
+
+function bindModels() {
+  let f = "all";
+  const grid = document.getElementById("mgrid");
+  const q = document.getElementById("mq");
+  const render = () => {
+    const s = q.value.toLowerCase();
+    const list = DATA.models.filter((m) => {
+      if (s && !(m.name + m.family + m.description).toLowerCase().includes(s)) return false;
+      if (["image", "video", "audio", "edit"].includes(f)) return m.category === f;
+      if (f === "free") return m.open_weights || m.local_only || m.routes.some((r) => r.price && r.price.usd === 0);
+      if (f === "paid") return m.routes.some((r) => r.price && r.price.usd !== 0);
+      if (f === "local") return m.local_only || m.routes.some((r) => ["comfyui", "diffusers", "local"].includes(r.provider));
+      return true;
+    });
+    grid.innerHTML = list.map((m) => `<div class="card pad model-card"><p class="mono dim" style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase">${esc(m.family)} · ${m.category}</p>
+      <b style="display:block;font-size:16px;margin-top:4px">${esc(m.name)}</b><p class="muted" style="font-size:13px;line-height:1.55;margin-top:8px">${esc(m.description)}</p>
+      <div class="chips" style="margin-top:10px">${Object.values(m.task_labels).map((t) => `<span class="badge">${esc(t)}</span>`).join("")}</div>
+      <dl>${m.resolutions.length ? `<dt>Resoluciones</dt><dd>${m.resolutions.join(", ")}</dd>` : ""}${m.durations.length ? `<dt>Duraciones</dt><dd>${m.durations.join(" / ")} s</dd>` : ""}${m.aspect_ratios.length ? `<dt>Formatos</dt><dd>${m.aspect_ratios.slice(0, 6).join(" ")}</dd>` : ""}<dt>Coste</dt><dd class="mono">${price(m)}</dd><dt>Licencia</dt><dd>${m.license_url ? `<a href="${esc(m.license_url)}" target="_blank" rel="noreferrer">${esc(m.license)}</a>` : esc(m.license)}</dd></dl>
+      <div class="chips" style="margin-top:12px"><span class="badge ${m.commercial_use === "yes" ? "ok" : m.commercial_use === "no" ? "err" : "warn"}">${m.commercial_use === "yes" ? "uso comercial" : m.commercial_use === "no" ? "no comercial" : "revisar licencia"}</span>${m.open_weights ? '<span class="badge info">pesos abiertos</span>' : ""}</div>
+      ${m.limitations ? `<p class="dim" style="font-size:12px;margin-top:10px">⚠ ${esc(m.limitations)}</p>` : ""}
+      <div style="margin-top:14px"><p class="mono dim" style="font-size:10px;margin-bottom:6px">PROVEEDORES</p><div class="chips">${m.routes.map((r) => `<span class="pill">${r.provider}</span>`).join("")}</div></div></div>`).join("") || `<p class="muted">Sin resultados.</p>`;
+  };
+  document.querySelectorAll("#mfilters .chip").forEach((b) => b.addEventListener("click", () => { document.querySelectorAll("#mfilters .chip").forEach((x) => x.classList.remove("on")); b.classList.add("on"); f = b.dataset.f; render(); }));
+  q.addEventListener("input", render);
+  render();
+}
+
+function bindImageEditor() {
+  const drop = document.getElementById("drop"), file = document.getElementById("file"), cw = document.getElementById("cw");
+  const cv = document.getElementById("cv"), mask = document.getElementById("mask"), ctx = cv.getContext("2d"), mctx = mask.getContext("2d");
+  let original = null, current = null, maskOn = false, ba = false, baX = 0.5, drawing = false;
+  const btns = ["maskBtn", "baBtn", "resetBtn", "dlBtn", "applyBtn"].map((id) => document.getElementById(id));
+  const filters = () => [...document.querySelectorAll("[data-f]")].filter((r) => r.type === "range").map((r) => `${r.dataset.f}(${r.value}%)`).join(" ");
+  const draw = () => {
+    if (!current) return;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.filter = ba ? "none" : filters();
+    ctx.drawImage(current, 0, 0);
+    ctx.filter = "none";
+    if (ba && original) {
+      const x = Math.round(cv.width * baX);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, x, cv.height); ctx.clip(); ctx.drawImage(original, 0, 0); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(x, 0, cv.width - x, cv.height); ctx.clip(); ctx.drawImage(current, 0, 0); ctx.restore();
+      document.getElementById("baLine").style.left = baX * 100 + "%";
+    }
+  };
+  const load = (f) => {
+    if (!f || !f.type.startsWith("image/")) return toast("Elige un archivo de imagen.");
+    const img = new Image();
+    img.onload = () => {
+      original = img; current = img;
+      cv.width = mask.width = img.naturalWidth; cv.height = mask.height = img.naturalHeight;
+      drop.style.display = "none"; cw.style.display = "block";
+      btns.forEach((b) => (b.disabled = false));
+      draw();
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  drop.addEventListener("click", () => file.click());
+  file.addEventListener("change", () => load(file.files[0]));
+  drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); load(e.dataTransfer.files[0]); });
+  document.querySelectorAll("input[type=range][data-f]").forEach((r) => r.addEventListener("input", () => { document.querySelector(`[data-v="${r.dataset.f}"]`).textContent = r.value + "%"; draw(); }));
+  btns[4].addEventListener("click", () => {
+    const tmp = document.createElement("canvas"); tmp.width = cv.width; tmp.height = cv.height;
+    const t = tmp.getContext("2d"); t.filter = filters(); t.drawImage(current, 0, 0);
+    const img = new Image(); img.onload = () => { current = img; document.querySelectorAll("input[type=range][data-f]").forEach((r) => { r.value = ["sepia", "grayscale"].includes(r.dataset.f) ? 0 : 100; document.querySelector(`[data-v="${r.dataset.f}"]`).textContent = r.value + "%"; }); draw(); toast("Ajustes aplicados. El original se conserva: usa «Antes / después» o «Volver al original»."); };
+    img.src = tmp.toDataURL("image/png");
+  });
+  btns[2].addEventListener("click", () => { current = original; draw(); });
+  btns[3].addEventListener("click", () => { ba = false; draw(); const a = document.createElement("a"); a.download = "motorworld-edicion.png"; a.href = cv.toDataURL("image/png"); a.click(); });
+  btns[1].addEventListener("click", () => { ba = !ba; ["baLine", "tagA", "tagB"].forEach((id) => (document.getElementById(id).style.display = ba ? "block" : "none")); draw(); });
+  btns[0].addEventListener("click", () => { maskOn = !maskOn; mask.style.pointerEvents = maskOn ? "auto" : "none"; mask.style.cursor = maskOn ? "crosshair" : ""; btns[0].classList.toggle("primary", maskOn); if (maskOn) toast("Pinta la zona a modificar. En la plataforma completa esta máscara se envía al modelo de inpainting."); });
+  const pos = (e) => { const r = mask.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * mask.width, (e.clientY - r.top) / r.height * mask.height, mask.width / r.width]; };
+  mask.addEventListener("pointerdown", (e) => { drawing = true; mask.setPointerCapture(e.pointerId); const [x, y, s] = pos(e); mctx.beginPath(); mctx.moveTo(x, y); mctx.lineWidth = 40 * s; mctx.lineCap = "round"; mctx.strokeStyle = "#ff5a36"; mctx.lineTo(x + 0.1, y); mctx.stroke(); });
+  mask.addEventListener("pointermove", (e) => { if (!drawing) return; const [x, y] = pos(e); mctx.lineTo(x, y); mctx.stroke(); });
+  mask.addEventListener("pointerup", () => (drawing = false));
+  cv.addEventListener("pointermove", (e) => { if (!ba || !e.buttons) return; const r = cv.getBoundingClientRect(); baX = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); draw(); });
+  cw.addEventListener("pointerdown", (e) => { if (!ba || maskOn) return; const r = cv.getBoundingClientRect(); baX = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); draw(); });
+}
+
+function bindVideoEditor() {
+  const drop = document.getElementById("vdrop"), file = document.getElementById("vfile"), player = document.getElementById("vplayer");
+  drop.addEventListener("click", () => file.click());
+  file.addEventListener("change", () => { const f = file.files[0]; if (!f) return; player.src = URL.createObjectURL(f); player.style.display = "block"; drop.style.display = "none"; });
+}
+
+function route() {
+  const id = (location.hash || "#inicio").slice(1);
+  const view = VIEWS[id] ? id : "inicio";
+  const root = document.getElementById("content");
+  root.innerHTML = `<div class="view on">${VIEWS[view]()}</div>`;
+  document.querySelectorAll("#nav a").forEach((a) => a.classList.toggle("active", a.dataset.id === view));
+  bindCommon(root);
+  if (view === "imagenes") bindModelSelect("imgModel", "imgParams");
+  if (view === "videos") bindModelSelect("vidModel", "vidParams");
+  if (view === "estudio") bindModelSelect("audModel");
+  if (view === "modelos") bindModels();
+  if (view === "editor-imagen") bindImageEditor();
+  if (view === "editor-video") bindVideoEditor();
+  document.getElementById("side").classList.remove("open");
+  window.scrollTo(0, 0);
+}
+document.getElementById("menuBtn").addEventListener("click", (e) => { e.stopPropagation(); document.getElementById("side").classList.toggle("open"); });
+document.addEventListener("click", (e) => { const s = document.getElementById("side"); if (s.classList.contains("open") && !s.contains(e.target)) s.classList.remove("open"); });
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
