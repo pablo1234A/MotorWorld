@@ -195,6 +195,16 @@ as $$
   select nullif(current_setting('tests.' || p_name, true), '')::uuid;
 $$;
 
+create function tests.suffix()
+returns text
+language sql
+stable
+set search_path = ''
+as $$
+  select current_setting('tests.suffix', true);
+$$;
+
+grant execute on function tests.suffix() to authenticated, anon;
 grant execute on function tests.authenticate_as(uuid), tests.authenticate_anon(),
   tests.clear_authentication(), tests.set_id(text, uuid), tests.id(text) to authenticated, anon;
 

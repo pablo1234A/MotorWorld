@@ -1,11 +1,14 @@
 import "server-only";
 
-import { Pool, type PoolClient } from "pg";
+import { Kysely, PostgresDialect, sql, type Transaction } from "kysely";
+import pg from "pg";
 
 import { mapDatabaseError } from "./errors";
+import type { DB } from "./schema.gen";
 
 /**
- * Acceso a PostgreSQL (ADR-003).
+ * Acceso a PostgreSQL (ADR-003) con Kysely y tipos generados
+ * (`pnpm db:types` → src/server/db/schema.gen.ts).
  *
  * - `withRls`: transacción con `role = authenticated` y los claims del JWT YA
  *   VERIFICADO del usuario. Las políticas RLS se aplican también a las
@@ -19,9 +22,16 @@ import { mapDatabaseError } from "./errors";
  * transacción.
  */
 
+// Las fechas de negocio (`date`) se tratan como texto AAAA-MM-DD: convertirlas
+// a Date de JS desplazaría el día según la zona horaria del servidor.
+pg.types.setTypeParser(1082, (value: string) => value);
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-let pool: Pool | undefined;
+export type Tx = Transaction<DB>;
+
+let pool: pg.Pool | undefined;
+let db: Kysely<DB> | undefined;
 
 function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
@@ -31,21 +41,27 @@ function getDatabaseUrl(): string {
   return url;
 }
 
-export function getPool(): Pool {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: getDatabaseUrl(),
-      max: Number(process.env.DATABASE_POOL_MAX ?? 10),
-      idleTimeoutMillis: 30_000,
-      connectionTimeoutMillis: 10_000,
-      application_name: "revisaya",
-    });
-  }
+export function getPool(): pg.Pool {
+  pool ??= new pg.Pool({
+    connectionString: getDatabaseUrl(),
+    max: Number(process.env.DATABASE_POOL_MAX ?? 10),
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 10_000,
+    application_name: "revisaya",
+  });
   return pool;
 }
 
+function getDb(): Kysely<DB> {
+  db ??= new Kysely<DB>({ dialect: new PostgresDialect({ pool: getPool() }) });
+  return db;
+}
+
 export async function closePool(): Promise<void> {
-  await pool?.end();
+  // Kysely.destroy() cierra también el pool que se le pasó.
+  if (db) await db.destroy();
+  else await pool?.end();
+  db = undefined;
   pool = undefined;
 }
 
@@ -56,21 +72,16 @@ export interface AuthContext {
   claims?: Record<string, unknown>;
 }
 
-export type Tx = PoolClient;
-
-async function runInTransaction<T>(setup: (tx: Tx) => Promise<void>, fn: (tx: Tx) => Promise<T>): Promise<T> {
-  const client = await getPool().connect();
+async function run<T>(setup: (tx: Tx) => Promise<unknown>, fn: (tx: Tx) => Promise<T>): Promise<T> {
   try {
-    await client.query("begin");
-    await setup(client);
-    const result = await fn(client);
-    await client.query("commit");
-    return result;
+    return await getDb()
+      .transaction()
+      .execute(async (tx) => {
+        await setup(tx);
+        return fn(tx);
+      });
   } catch (err) {
-    await client.query("rollback").catch(() => undefined);
     throw mapDatabaseError(err);
-  } finally {
-    client.release();
   }
 }
 
@@ -79,16 +90,12 @@ export function withRls<T>(auth: AuthContext, fn: (tx: Tx) => Promise<T>): Promi
     throw new Error("withRls: userId no es un UUID válido");
   }
   const claims = JSON.stringify({ ...auth.claims, sub: auth.userId, role: "authenticated" });
-  return runInTransaction(async (tx) => {
-    await tx.query(
-      "select set_config('request.jwt.claims', $1, true), set_config('role', 'authenticated', true)",
-      [claims],
-    );
-  }, fn);
+  return run(
+    (tx) => sql`select set_config('request.jwt.claims', ${claims}, true), set_config('role', 'authenticated', true)`.execute(tx),
+    fn,
+  );
 }
 
 export function withSystem<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
-  return runInTransaction(async (tx) => {
-    await tx.query("select set_config('request.jwt.claims', '', true)");
-  }, fn);
+  return run((tx) => sql`select set_config('request.jwt.claims', '', true)`.execute(tx), fn);
 }

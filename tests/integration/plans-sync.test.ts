@@ -3,13 +3,13 @@ import { afterAll, describe, expect, it } from "vitest";
 import { PLAN_CODES, PLANS } from "@/lib/plans";
 import { closePool } from "@/server/db/client";
 
-import { sql } from "./support/db";
+import { query } from "./support/db";
 
 afterAll(closePool);
 
 describe("plans: base de datos ↔ espejo TypeScript", () => {
   it("coinciden plan por plan (precios, límites y funcionalidades)", async () => {
-    const rows = await sql<{
+    const rows = await query<{
       code: string;
       name: string;
       price_month_cents: number;

@@ -27,6 +27,15 @@ pnpm dev
 
 `pnpm db:start` usa por defecto imágenes de Docker Hub (`SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io`); en otros entornos se puede cambiar a `public.ecr.aws`. Studio, Realtime, PostgREST y otros servicios que el proyecto no usa no se levantan.
 
+### Configuración de Supabase Auth en staging/producción
+
+`supabase/config.toml` solo aplica en local. En cada proyecto remoto hay que configurar en el panel de Supabase:
+
+- **Site URL** = `APP_URL` del entorno, y **Redirect URLs** = `https://<dominio>/**`.
+- **Email confirmations** activadas; **Secure password change** activado; longitud mínima 10 y requisitos "minúsculas, mayúsculas y números"; **Leaked password protection** activada (si el plan lo incluye).
+- **Plantillas** "Confirm signup" y "Reset password": copiar `supabase/templates/confirmation.html` y `recovery.html` con sus asuntos.
+- **SMTP propio** (Resend u otro, dominio de RevisaYa verificado): el SMTP por defecto de Supabase no es apto para producción por sus límites de envío.
+
 ## 3. Procedimiento de despliegue (borrador)
 
 1. PR → CI verde (ver TESTING §4) → revisión.

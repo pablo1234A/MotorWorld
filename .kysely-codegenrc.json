@@ -1,0 +1,15 @@
+{
+  "url": "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+  "dialect": "postgres",
+  "dateParser": "string",
+  "defaultSchemas": ["public"],
+  "includePattern": "{public,private}.*",
+  "outFile": "src/server/db/schema.gen.ts",
+  "overrides": {
+    "columns": {
+      "quotes.number": "Generated<string>",
+      "quotes.sequence": "Generated<number>",
+      "quotes.series_year": "Generated<number>"
+    }
+  }
+}

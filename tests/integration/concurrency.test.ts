@@ -1,8 +1,9 @@
+import { sql } from "kysely";
 import { afterAll, describe, expect, it } from "vitest";
 
 import { closePool, withSystem } from "@/server/db/client";
 
-import { createCustomers, createOrg, sql } from "./support/db";
+import { createCustomers, createOrg, query } from "./support/db";
 
 /**
  * Límites y contadores bajo operaciones SIMULTÁNEAS (casos críticos 3 y 4).
@@ -19,14 +20,10 @@ describe("concurrencia", () => {
     const results = await Promise.allSettled(
       Array.from({ length: 10 }, (_, i) =>
         withSystem(async (tx) => {
-          await tx.query("insert into customers (organization_id, branch_id, first_name) values ($1, $2, $3)", [
-            org.orgId,
-            org.branchId,
-            `Simultáneo ${i}`,
-          ]);
+          await tx.insertInto("customers").values({ organization_id: org.orgId, branch_id: org.branchId, first_name: `Simultáneo ${i}` }).execute();
           // Mantiene la transacción abierta para forzar el solapamiento: sin el
           // bloqueo del límite, las 10 verían 145 filas confirmadas y entrarían.
-          await tx.query("select pg_sleep(0.1)");
+          await sql`select pg_sleep(0.1)`.execute(tx);
         }),
       ),
     );
@@ -38,13 +35,13 @@ describe("concurrencia", () => {
     for (const r of rejected) {
       expect((r as PromiseRejectedResult).reason).toMatchObject({ code: "plan_limit_reached", detail: "customers" });
     }
-    const [{ n }] = await sql<{ n: string }>("select count(*) as n from customers where organization_id = $1", [org.orgId]);
+    const [{ n }] = await query<{ n: string }>("select count(*) as n from customers where organization_id = $1", [org.orgId]);
     expect(Number(n)).toBe(150);
   });
 
   it("20 reservas de correo simultáneas con 5 disponibles: exactamente 5 se reservan (Pro: 500)", async () => {
     const org = await createOrg("pro");
-    await sql(
+    await query(
       `insert into usage_counters (organization_id, resource, period_start, used, limit_snapshot)
        values ($1, 'emails', app.usage_period($1), 495, 500)`,
       [org.orgId],
@@ -52,18 +49,18 @@ describe("concurrencia", () => {
 
     const periods = await Promise.all(
       Array.from({ length: 20 }, () =>
-        withSystem(async (tx) => (await tx.query<{ p: string | null }>("select app.reserve_usage($1, 'emails') as p", [org.orgId])).rows[0].p),
+        withSystem(async (tx) => (await sql<{ p: string | null }>`select app.reserve_usage(${org.orgId}, 'emails') as p`.execute(tx)).rows[0].p),
       ),
     );
 
     expect(periods.filter((p) => p !== null)).toHaveLength(5);
-    const [{ used }] = await sql<{ used: number }>("select used from usage_counters where organization_id = $1", [org.orgId]);
+    const [{ used }] = await query<{ used: number }>("select used from usage_counters where organization_id = $1", [org.orgId]);
     expect(used).toBe(500);
   });
 
   it("10 presupuestos simultáneos reciben números distintos y correlativos", async () => {
     const org = await createOrg("pro");
-    const [{ id: customerId }] = await sql<{ id: string }>(
+    const [{ id: customerId }] = await query<{ id: string }>(
       "insert into customers (organization_id, branch_id, first_name) values ($1, $2, 'Laura') returning id",
       [org.orgId, org.branchId],
     );
@@ -71,12 +68,12 @@ describe("concurrencia", () => {
     const numbers = await Promise.all(
       Array.from({ length: 10 }, () =>
         withSystem(async (tx) => {
-          const r = await tx.query<{ number: string }>(
-            `insert into quotes (organization_id, branch_id, customer_id, issue_date, valid_until)
-             values ($1, $2, $3, date '2026-11-04', date '2026-12-04') returning number`,
-            [org.orgId, org.branchId, customerId],
-          );
-          return r.rows[0].number;
+          const r = await tx
+            .insertInto("quotes")
+            .values({ organization_id: org.orgId, branch_id: org.branchId, customer_id: customerId, issue_date: "2026-11-04", valid_until: "2026-12-04" })
+            .returning("number")
+            .executeTakeFirstOrThrow();
+          return r.number;
         }),
       ),
     );
@@ -87,11 +84,11 @@ describe("concurrencia", () => {
 
   it("10 planificadores simultáneos crean un único recordatorio por evento", async () => {
     const org = await createOrg("pro");
-    const [{ id: customerId }] = await sql<{ id: string }>(
+    const [{ id: customerId }] = await query<{ id: string }>(
       "insert into customers (organization_id, branch_id, first_name, email) values ($1, $2, 'Laura', 'laura@test.local') returning id",
       [org.orgId, org.branchId],
     );
-    const [{ id: vehicleId }] = await sql<{ id: string }>(
+    const [{ id: vehicleId }] = await query<{ id: string }>(
       "insert into vehicles (organization_id, branch_id, customer_id, plate) values ($1, $2, $3, '1234BCD') returning id",
       [org.orgId, org.branchId, customerId],
     );
@@ -99,17 +96,25 @@ describe("concurrencia", () => {
     await Promise.all(
       Array.from({ length: 10 }, () =>
         withSystem((tx) =>
-          tx.query(
-            `insert into reminders (organization_id, branch_id, customer_id, vehicle_id, type, due_date, offset_days, scheduled_for)
-             values ($1, $2, $3, $4, 'service_date', date '2027-03-15', 30, now())
-             on conflict on constraint reminders_event_unique do nothing`,
-            [org.orgId, org.branchId, customerId, vehicleId],
-          ),
+          tx
+            .insertInto("reminders")
+            .values({
+              organization_id: org.orgId,
+              branch_id: org.branchId,
+              customer_id: customerId,
+              vehicle_id: vehicleId,
+              type: "service_date",
+              due_date: "2027-03-15",
+              offset_days: 30,
+              scheduled_for: new Date(),
+            })
+            .onConflict((oc) => oc.constraint("reminders_event_unique").doNothing())
+            .execute(),
         ),
       ),
     );
 
-    const [{ n }] = await sql<{ n: string }>("select count(*) as n from reminders where vehicle_id = $1", [vehicleId]);
+    const [{ n }] = await query<{ n: string }>("select count(*) as n from reminders where vehicle_id = $1", [vehicleId]);
     expect(Number(n)).toBe(1);
   });
 });

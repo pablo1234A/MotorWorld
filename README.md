@@ -2,7 +2,7 @@
 
 SaaS para talleres mecánicos: el taller registra sus clientes, vehículos e historial de revisiones, y RevisaYa envía cada día avisos por correo a los clientes a los que les toca la revisión, con un botón para pedir cita.
 
-> **Estado: Fase 1 completada** (infraestructura y base de datos). Aún no hay pantallas de producto: llegan a partir de la Fase 2. Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
+> **Estado: Fase 2 completada** (backend y autenticación): registro con verificación de email, acceso, recuperación de contraseña, alta de taller, usuarios con roles y permisos, e invitaciones. Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
 > "RevisaYa" es un nombre provisional: falta comprobar la marca y el dominio.
 
 ## Puesta en marcha local
@@ -15,7 +15,8 @@ cp .env.example .env.local   # valores locales: los muestra `pnpm db:start`
 pnpm db:start                # Supabase local (PostgreSQL 17, Auth, Storage)
 pnpm db:reset                # aplica las migraciones
 pnpm check                   # typecheck, lint, tests (unit, pgTAP, integración) y build
-pnpm dev
+pnpm test:e2e                # E2E con Playwright (tras pnpm build)
+pnpm dev                     # http://localhost:3000 · correos locales en http://127.0.0.1:54324
 ```
 
 ## Estructura
@@ -24,11 +25,13 @@ pnpm dev
 src/
   app/            Next.js App Router (UI y rutas)
   lib/            código compartido sin secretos (matrículas, catálogo de planes)
-  server/         solo servidor: acceso a BD con RLS, errores, entorno
+  components/     componentes de interfaz (ui/, auth/, members/…)
+  server/         solo servidor: acceso a BD con RLS, auth, módulos de dominio, seguridad
+  proxy.ts        refresco de sesión y redirección optimista de zonas privadas
 supabase/
   migrations/     esquema SQL versionado (fuente de verdad)
   tests/database/ tests pgTAP (RLS, límites, integridad)
-tests/            Vitest: unit/ e integration/
+tests/            Vitest (unit/, integration/) y Playwright (e2e/)
 docs/             documentación técnica
 legacy/           contenido previo del repositorio (web MOTORWORLD), sin uso
 ```

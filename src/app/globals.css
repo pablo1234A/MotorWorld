@@ -1,17 +1,51 @@
 @import "tailwindcss";
 
-/* Tokens base. El sistema de diseño completo se define en la Fase 10. */
+/*
+ * Tokens base. El sistema de diseño completo (tipografía, escala, componentes
+ * de marketing) se define en la Fase 10; estos tokens ya son los definitivos
+ * de color para que las pantallas funcionales no tengan que rehacerse.
+ */
 :root {
-  --background: #ffffff;
+  --background: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --border: #dde1e7;
   --foreground: #14161a;
   --muted: #5b616e;
+  --accent: #1f4fd8;
+  --accent-hover: #1a43b8;
+  --accent-soft: #eaf0ff;
+  --accent-ring: rgb(31 79 216 / 0.25);
+  --danger: #c62828;
+  --danger-soft: #fdecec;
+  --danger-strong: #8e1b1b;
+  --success: #1b7f4b;
+  --success-soft: #e8f6ee;
+  --success-strong: #135c36;
+  --warning: #b86e00;
+  --warning-soft: #fff4e0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0e1013;
+    --surface: #161a1f;
+    --surface-2: #1e232a;
+    --border: #2b313a;
     --foreground: #eceef1;
     --muted: #9aa0ab;
+    --accent: #5b8cff;
+    --accent-hover: #7aa2ff;
+    --accent-soft: #18233d;
+    --accent-ring: rgb(91 140 255 / 0.3);
+    --danger: #f06464;
+    --danger-soft: #2a1414;
+    --danger-strong: #ffb3b3;
+    --success: #43c383;
+    --success-soft: #11251a;
+    --success-strong: #9be5bf;
+    --warning: #f0a83c;
+    --warning-soft: #2a1f0e;
   }
 }
 

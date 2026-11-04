@@ -24,9 +24,9 @@ insert into quotes (organization_id, branch_id, customer_id, vehicle_id, issue_d
 values (tests.id('org'), tests.id('br'), tests.id('cust'), tests.id('veh'), date '2026-11-04', date '2026-12-04');
 insert into quotes (organization_id, branch_id, customer_id, issue_date, valid_until)
 values (tests.id('org'), tests.id('br'), tests.id('cust'), date '2026-11-05', date '2026-12-05');
-select results_eq($$ select number from quotes order by sequence $$,
+select results_eq($$ select number from quotes where organization_id = tests.id('org') order by sequence $$,
   $$ values ('P-2026-0001'), ('P-2026-0002') $$, 'Numeración correlativa por sucursal y año');
-select tests.set_id('q1', (select id from quotes where number = 'P-2026-0001'));
+select tests.set_id('q1', (select id from quotes where organization_id = tests.id('org') and number = 'P-2026-0001'));
 
 select throws_ok($$ insert into quote_items (organization_id, branch_id, quote_id, position, description, quantity,
                                               unit_price, tax_rate, line_subtotal, line_tax, line_total)
@@ -65,7 +65,7 @@ insert into appointments (organization_id, branch_id, customer_id, vehicle_id, s
                           requester_email, requested_date)
 values (tests.id('org'), tests.id('br'), tests.id('cust'), tests.id('veh'), 'reminder_link', 'Laura',
         'laura@cliente.test', date '2026-11-20');
-select tests.set_id('ap', (select id from appointments limit 1));
+select tests.set_id('ap', (select id from appointments where organization_id = tests.id('org') limit 1));
 select is((select status from appointments where id = tests.id('ap')), 'requested',
   'Una solicitud nace como "requested", no como cita confirmada');
 select throws_ok($$ update appointments set status = 'confirmed' where id = tests.id('ap') $$,

@@ -46,3 +46,5 @@ supabase/.branches
 
 # allow committing the example env
 !.env.example
+test-results/
+playwright-report/

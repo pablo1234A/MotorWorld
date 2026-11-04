@@ -15,9 +15,14 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
-    "check": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm db:test && pnpm test:integration && pnpm build"
+    "check": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm db:test && pnpm test:integration && pnpm build",
+    "db:types": "kysely-codegen",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
+    "kysely": "^0.29.8",
     "next": "16.4.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -25,6 +30,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
@@ -32,6 +38,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
+    "kysely-codegen": "^0.20.0",
     "pg": "^8.23.1",
     "supabase": "3.0.0",
     "tailwindcss": "^4",

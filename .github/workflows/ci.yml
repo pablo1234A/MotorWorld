@@ -52,13 +52,32 @@ jobs:
       - name: Tests de integración (concurrencia, contexto RLS)
         run: pnpm test:integration
 
+      - name: Variables de entorno locales (Supabase de CI, valores no secretos)
+        run: |
+          pnpm exec supabase status -o json > "$RUNNER_TEMP/supabase.json"
+          {
+            echo "APP_ENV=local"
+            echo "APP_URL=http://localhost:3000"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL "$RUNNER_TEMP/supabase.json")"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY "$RUNNER_TEMP/supabase.json")"
+            echo "DATABASE_URL=$(jq -r .DB_URL "$RUNNER_TEMP/supabase.json")"
+          } > .env.local
+
       - name: Build
         run: pnpm build
-        env:
-          # El build no conecta con servicios: valores de ejemplo no secretos.
-          APP_URL: http://localhost:3000
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build-placeholder
+
+      - name: Navegador para E2E
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Tests E2E (registro, verificación, acceso, recuperación, invitaciones)
+        run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
 
       - name: Auditoría de dependencias
         run: pnpm audit --prod --audit-level high

@@ -24,13 +24,19 @@
 | Fuerza bruta en login | Rate limiting de Supabase Auth + rate limiting propio en las rutas de auth; captcha tras varios intentos. |
 | API keys filtradas | Solo se muestra la clave una vez; se guarda HMAC-SHA-256; prefijo identificable para escáneres; scopes, caducidad y revocación; rate limiting por clave. |
 
-## 2. Autenticación
+## 2. Autenticación (implementada en la Fase 2)
 
-- Supabase Auth con email + contraseña (mínimo 10 caracteres y comprobación contra contraseñas filtradas si el plan de Supabase lo permite), verificación obligatoria de email, recuperación por enlace de un solo uso.
-- Sesión validada en servidor con `supabase.auth.getClaims()`/`getUser()` (verificación de la firma del JWT), **nunca** con `getSession()` sin verificar.
-- Cambio de contraseña exige reautenticación reciente. Cerrar sesión en todos los dispositivos disponible.
-- Invitaciones: token de un solo uso (hash en BD), caducidad de 7 días, vinculado al email invitado.
-- 2FA (TOTP de Supabase) recomendado para administradores; se ofrecerá como opción en la Fase 11.
+- **Supabase Auth** con email y contraseña. Política: ≥ 10 caracteres con minúsculas, mayúsculas y números (configurada en Auth y validada también con zod). La contraseña nunca se devuelve al formulario ni se registra.
+- **Verificación de email obligatoria** antes de poder entrar (`enable_confirmations`); crear un taller o aceptar una invitación exige además el email confirmado (comprobado en SQL).
+- **Enlaces de correo** (verificación y recuperación) con `token_hash` de un solo uso hacia `/auth/confirm`; un enlace inventado, caducado o reutilizado se rechaza con un mensaje único (no se revela cuál de los tres es).
+- **Sesión** en cookies httpOnly gestionadas por `@supabase/ssr`; el proxy la refresca en cada petición. En servidor se usa siempre `getClaims()` (JWT verificado), nunca la cookie sin verificar.
+- **Sin enumeración de cuentas**: registro, recuperación y reenvío de verificación responden igual exista o no la cuenta; el login da un mensaje genérico.
+- **Cambio de contraseña** con la contraseña actual (reautenticación); "cerrar sesión en todos los dispositivos" revoca todas las sesiones.
+- **Redirecciones** tras login/registro solo a rutas internas (`safeNextPath`): sin redirecciones abiertas (probado en unit y E2E).
+- **Invitaciones**: token de 256 bits (solo se guarda su SHA-256), caducidad de 7 días, un solo uso, ligado al email invitado; la página pública muestra el email enmascarado.
+- **Rate limiting** propio (ADR-027) además del de Supabase Auth.
+- **Auditoría**: inicio y cierre de sesión, cambios de contraseña, alta de taller, invitaciones y cambios de miembros.
+- 2FA (TOTP de Supabase) para administradores: pendiente, Fase 11.
 
 ## 3. Autorización en tres capas
 

@@ -98,7 +98,7 @@ select throws_ok(
 select throws_ok(
   $$ update customers set organization_id = tests.id('org_b'), branch_id = tests.id('br_b') where id = tests.id('cust_a') $$,
   '42501', 'tenant_immutable', 'La tenencia es inmutable incluso para el sistema');
-select is((select count(*) from vehicles where plate_normalized = '1234ABC'), 2::bigint,
+select is((select count(*) from vehicles where plate_normalized = '1234ABC' and organization_id in (tests.id('org_a'), tests.id('org_b'))), 2::bigint,
   'La misma matrícula puede existir en organizaciones distintas');
 select throws_ok(
   $$ insert into vehicles (organization_id, branch_id, customer_id, plate)

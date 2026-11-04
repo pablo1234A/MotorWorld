@@ -7,9 +7,9 @@
 | Fase | Estado | Fecha |
 |---|---|---|
 | 0 — Auditoría y planificación | ✅ Completada y **aprobada** (ADR-001…015, P1–P20) | 2026-11-04 |
-| 1 — Infraestructura y base de datos | ✅ Completada (pendiente de revisión) | 2026-11-04 |
-| 2 — Backend y autenticación | ⏭ Siguiente | — |
-| 3 — Clientes, vehículos e historial | ⏸ No iniciada | — |
+| 1 — Infraestructura y base de datos | ✅ Completada | 2026-11-04 |
+| 2 — Backend y autenticación | ✅ Completada (pendiente de revisión) | 2026-11-05 |
+| 3 — Clientes, vehículos e historial | ⏭ Siguiente | — |
 | 4 — Importación Excel/CSV | ⏸ No iniciada | — |
 | 5 — Motor de automatizaciones | ⏸ No iniciada | — |
 | 6 — Sistema de correos | ⏸ No iniciada | — |
@@ -19,6 +19,52 @@
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 2 — Backend y autenticación
+
+### Qué se ha construido
+- **Autenticación** (Supabase Auth + `@supabase/ssr`): registro con verificación de email obligatoria, inicio y cierre de sesión, cierre de sesión en todos los dispositivos, recuperación de contraseña por correo, cambio de contraseña exigiendo la actual, reenvío del correo de verificación. Correos de Auth en español con enlaces `token_hash` que funcionan desde otro dispositivo (ADR-022).
+- **Sesiones y protección de rutas**: `src/proxy.ts` refresca la sesión y redirige las zonas privadas sin sesión; cada página, Server Action y Route Handler vuelve a verificar en servidor (`src/server/auth/guards.ts`).
+- **Organizaciones**: alta de taller con sucursal principal y propietario en una transacción (`app.create_organization`), dirección pública automática, zona horaria (Península/Canarias), máximo 5 talleres por usuario, selector de taller activo validado contra las membresías reales.
+- **Usuarios, roles y permisos**: administrador / operario con 10 permisos asignables y alcance por sucursales; gestión desde `/app/usuarios` (invitar, nuevo enlace, anular, editar permisos, suspender, reactivar, eliminar) con confirmaciones; propietario protegido.
+- **Invitaciones**: enlace de un solo uso (256 bits, solo el hash en BD, 7 días), aceptación con email verificado y coincidente (`app.accept_invitation`), respeto del límite de usuarios del plan (pendientes incluidas).
+- **Capa de servidor**: Kysely con tipos generados (`pnpm db:types`), servicios por módulo (`src/server/modules/*`), resultado uniforme de acciones con errores en español, validación zod compartida cliente/servidor, rate limiting en PostgreSQL, logger con redacción de datos sensibles, cabeceras de seguridad.
+- **Pantallas funcionales** (P15): inicio, registro, acceso, recuperación, verificación, contraseña nueva, alta de taller, panel con contadores reales y estado del plan, usuarios, mi cuenta, invitación. Ningún botón sin backend.
+- **Migración** `20261105000100_auth_functions.sql` (alta de talleres, invitaciones, validación de sucursales de la invitación, INSERT de invitaciones por columnas).
+
+### Pruebas ejecutadas (2026-11-05, desde base de datos nueva, todas en verde)
+
+| Comando | Resultado |
+|---|---|
+| `pnpm db:reset` | 15/15 migraciones |
+| `pnpm db:test` (pgTAP) | **197/197** (11 archivos; nuevo `090_auth_functions.sql`, 22 tests) |
+| `pnpm test` (Vitest) | **67/67** (9 archivos; nuevos: servicios de miembros y alta de taller, utilidades de auth) |
+| `pnpm test:e2e` (Playwright) | **13/13**: registro → correo → verificación → alta de taller; acceso; sin verificar no entra; validación de servidor; credenciales incorrectas; recuperación de contraseña; enlace manipulado; rate limiting; redirección abierta; cambio de contraseña; invitación de operario de principio a fin; invitación para otro correo; límite Pro; sin plan no se invita |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` | sin errores |
+| `pnpm audit` | 0 vulnerabilidades |
+
+Caso crítico 2 (operario ≠ administrador) cubierto ahora también de extremo a extremo: el operario no ve "Usuarios", la URL directa lo rechaza, el servicio lo rechaza y, con un contexto falsificado como administrador, lo rechaza la base de datos.
+
+### Errores encontrados y corregidos durante la fase
+- `buttonClass` se exportaba desde un módulo de cliente y se usaba en Server Components: el build lo detectó; se separó en `button-styles.ts`.
+- Lectura de la sesión durante el prerender de Next (`Date.now()` en la verificación del JWT): corregido con `connection()` (ADR-023).
+- El mensaje "enlace caducado" no era fiable (Supabase no distingue caducado de inventado): ahora hay un único mensaje honesto.
+- Las invitaciones permitían al administrador escribir `accepted_at`: INSERT restringido por columnas.
+- Los tests pgTAP dependían de una base de datos vacía: ahora acotan sus consultas y usan identificadores únicos.
+
+### Pendiente (documentado, con su fase)
+- Envío automático por correo de las invitaciones → Fase 6 (hoy el administrador copia el enlace; ADR-024).
+- Aceptación de condiciones y privacidad en el registro → Fase 10 con los textos legales (ADR-025).
+- 2FA para administradores y CSP con nonces → Fase 11.
+- Contratación de plan desde el panel → Fase 8 (Stripe TEST). Hasta entonces una organización nueva queda en solo lectura, y lo indica.
+
+### Credenciales que deben configurarse
+- Ninguna nueva para desarrollo local. Para staging: proyecto Supabase (UE) con la configuración de Auth de [DESPLIEGUE §2](DESPLIEGUE.md) (Site URL, Redirect URLs, plantillas, SMTP propio).
+
+### Siguiente fase
+**Fase 3 — Clientes, vehículos e historial**: CRUD completo con búsqueda, filtros y paginación en servidor, ficha de vehículo con historial, kilómetros, próximas revisiones, cambio de propietario y borrado seguro; pantallas conectadas y tests de integridad.
 
 ---
 
@@ -85,7 +131,7 @@ Cobertura de los casos críticos:
 - En este entorno de desarrollo, las imágenes de Supabase se descargan de Docker Hub porque el registro de AWS está bloqueado por el proxy (ADR-020). En CI se usa el registro por defecto.
 
 ### Siguiente fase
-**Fase 2 — Backend y autenticación**: registro con creación de organización y sucursal principal, login, logout, verificación de email, recuperación y cambio de contraseña, sesiones con `@supabase/ssr`, protección de rutas, invitaciones (crear, aceptar, revocar) respetando el límite de usuarios, guards `requireMember`/`requireRole`/`requirePermission`, servicios con validación zod, Kysely con tipos generados, errores tipados y auditoría.
+Fase 2 (completada, ver arriba).
 
 ---
 

@@ -1,17 +1,21 @@
 /**
- * Traducción de errores de PostgreSQL a errores de dominio estables.
- * Los códigos RY00x los lanzan las funciones de límites/entitlements
- * (supabase/migrations/20261104000400_billing_entitlements.sql).
+ * Errores de dominio estables y traducción desde PostgreSQL.
+ * Los códigos RY00x los lanzan las funciones SQL de límites, entitlements,
+ * invitaciones y alta de talleres.
  *
  * Nunca se expone al usuario el mensaje interno de la base de datos: solo un
- * código estable y, cuando aplica, el recurso o la restricción afectados.
+ * código estable y, cuando aplica, el recurso o motivo afectados.
  */
 
 export type DomainErrorCode =
+  | "unauthenticated"
+  | "permission_denied"
   | "plan_limit_reached"
   | "subscription_inactive"
   | "feature_unavailable"
-  | "permission_denied"
+  | "invitation_invalid"
+  | "organization_quota"
+  | "rate_limited"
   | "conflict"
   | "integrity_violation"
   | "validation_error"
@@ -19,10 +23,14 @@ export type DomainErrorCode =
   | "internal_error";
 
 const HTTP_STATUS: Record<DomainErrorCode, number> = {
+  unauthenticated: 401,
+  permission_denied: 403,
   plan_limit_reached: 422,
   subscription_inactive: 403,
   feature_unavailable: 403,
-  permission_denied: 403,
+  invitation_invalid: 410,
+  organization_quota: 422,
+  rate_limited: 429,
   conflict: 409,
   integrity_violation: 409,
   validation_error: 400,
@@ -32,7 +40,7 @@ const HTTP_STATUS: Record<DomainErrorCode, number> = {
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;
-  /** Recurso, funcionalidad o restricción afectada (nunca datos personales). */
+  /** Recurso, funcionalidad, motivo o restricción (nunca datos personales). */
   readonly detail?: string;
   readonly status: number;
 
@@ -56,11 +64,12 @@ function isPgError(err: unknown): err is PgErrorLike {
   return typeof err === "object" && err !== null && typeof (err as PgErrorLike).code === "string";
 }
 
-/** Mensajes propios lanzados por triggers con significado de negocio. */
+/** Mensajes propios lanzados por triggers/funciones con significado de negocio. */
 const KNOWN_MESSAGES = new Set([
   "tenant_immutable",
   "owner_protected",
   "permission_denied",
+  "email_not_verified",
   "customer_has_vehicles",
   "customer_deleted",
   "service_date_in_future",
@@ -71,6 +80,7 @@ const KNOWN_MESSAGES = new Set([
   "invalid_quote_transition",
   "invalid_appointment_status",
   "invalid_appointment_transition",
+  "invalid_branches",
   "duplicate_offsets",
   "duplicate_weekdays",
   "invalid_timezone",
@@ -88,6 +98,10 @@ export function mapDatabaseError(err: unknown): DomainError {
       return new DomainError("subscription_inactive", undefined, { cause: err });
     case "RY003":
       return new DomainError("feature_unavailable", err.detail, { cause: err });
+    case "RY004":
+      return new DomainError("invitation_invalid", err.detail, { cause: err });
+    case "RY005":
+      return new DomainError("organization_quota", undefined, { cause: err });
     case "42501": // insufficient_privilege / violación de RLS
       return new DomainError("permission_denied", known, { cause: err });
     case "23505": // unique_violation

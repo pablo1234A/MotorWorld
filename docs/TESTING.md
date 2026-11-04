@@ -39,7 +39,8 @@ pnpm db:reset          # aplica todas las migraciones desde cero
 pnpm db:test           # pgTAP: supabase/tests/database/*.sql
 pnpm test:unit         # Vitest: tests/unit
 pnpm test:integration  # Vitest contra la BD local: tests/integration
-pnpm check             # todo lo anterior + typecheck, lint y build
+pnpm build && pnpm test:e2e   # Playwright: app compilada + Auth real + Mailpit
+pnpm check             # typecheck, lint, unit, pgTAP, integración y build
 ```
 
 Estructura:
@@ -49,7 +50,10 @@ Estructura:
 | `supabase/tests/database/000_helpers.sql` | Helpers de test (`tests.create_org`, `tests.authenticate_as`…). Solo en la BD local; no es una migración. |
 | `supabase/tests/database/0x0_*.sql` | Un archivo por área: esquema, aislamiento, roles, sucursales, límites, recordatorios, historial, presupuestos/citas, anónimo. |
 | `tests/unit/` | Funciones puras (matrículas, planes, entorno, errores). |
-| `tests/integration/` | Contexto RLS del servidor, sincronía de planes, concurrencia. |
+| `tests/integration/` | Contexto RLS del servidor, sincronía de planes, concurrencia, servicios de miembros y alta de talleres (incluidos contextos falsificados). |
+| `tests/e2e/` | Playwright: registro → correo (Mailpit) → verificación → alta de taller; acceso, recuperación y cambio de contraseña; invitaciones; límites de usuarios; rate limiting; redirecciones abiertas. |
+
+Los tests no dependen del orden ni de una base de datos vacía: cada uno crea sus propios talleres con identificadores aleatorios y acota sus consultas a ellos.
 
 `tests.authenticate_as(uuid)` reproduce exactamente lo que hace `withRls` en el servidor (rol `authenticated` + claims del JWT en la transacción), así que las pruebas de RLS cubren el camino real de producción.
 

@@ -29,23 +29,23 @@ select lives_ok($$
   values (tests.id('org'), tests.id('br'), tests.id('cust'), tests.id('veh'), 'service_date', date '2027-03-15', 7, now()) $$,
   'Otro offset (7 días) es otro evento distinto');
 
-select throws_ok($$ update reminders set status = 'sent', sent_at = now() where offset_days = 30 $$,
+select throws_ok($$ update reminders set status = 'sent', sent_at = now() where vehicle_id = tests.id('veh') and offset_days = 30 $$,
   '23514', null, 'No se puede marcar como enviado sin identificador del proveedor');
-select throws_ok($$ update reminders set status = 'skipped' where offset_days = 30 $$,
+select throws_ok($$ update reminders set status = 'skipped' where vehicle_id = tests.id('veh') and offset_days = 30 $$,
   '23514', null, 'Un recordatorio saltado exige motivo');
 select lives_ok($$ update reminders set status = 'sent', sent_at = now(), provider = 'resend',
-                   provider_message_id = 'msg_1' where offset_days = 30 $$,
+                   provider_message_id = 'msg_1' where vehicle_id = tests.id('veh') and offset_days = 30 $$,
   'Con confirmación del proveedor sí se marca como enviado');
 
 -- El usuario solo puede cancelar recordatorios programados.
 select tests.authenticate_as(tests.id('owner'));
-select throws_ok($$ update reminders set status = 'sent' where offset_days = 7 $$,
+select throws_ok($$ update reminders set status = 'sent' where vehicle_id = tests.id('veh') and offset_days = 7 $$,
   '42501', null, 'El usuario no puede marcar un recordatorio como enviado');
-select lives_ok($$ update reminders set status = 'canceled', skip_reason = 'canceled_by_user' where offset_days = 7 $$,
+select lives_ok($$ update reminders set status = 'canceled', skip_reason = 'canceled_by_user' where vehicle_id = tests.id('veh') and offset_days = 7 $$,
   'El administrador puede cancelar un recordatorio programado');
-update reminders set status = 'canceled', skip_reason = 'canceled_by_user' where offset_days = 30;
+update reminders set status = 'canceled', skip_reason = 'canceled_by_user' where vehicle_id = tests.id('veh') and offset_days = 30;
 select tests.clear_authentication();
-select is((select status from reminders where offset_days = 30), 'sent',
+select is((select status from reminders where vehicle_id = tests.id('veh') and offset_days = 30), 'sent',
   'Un recordatorio ya enviado no se puede cancelar');
 
 -- Registro de correos e idempotencia de webhooks
