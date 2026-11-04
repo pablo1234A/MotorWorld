@@ -1,0 +1,109 @@
+/**
+ * Traducción de errores de PostgreSQL a errores de dominio estables.
+ * Los códigos RY00x los lanzan las funciones de límites/entitlements
+ * (supabase/migrations/20261104000400_billing_entitlements.sql).
+ *
+ * Nunca se expone al usuario el mensaje interno de la base de datos: solo un
+ * código estable y, cuando aplica, el recurso o la restricción afectados.
+ */
+
+export type DomainErrorCode =
+  | "plan_limit_reached"
+  | "subscription_inactive"
+  | "feature_unavailable"
+  | "permission_denied"
+  | "conflict"
+  | "integrity_violation"
+  | "validation_error"
+  | "not_found"
+  | "internal_error";
+
+const HTTP_STATUS: Record<DomainErrorCode, number> = {
+  plan_limit_reached: 422,
+  subscription_inactive: 403,
+  feature_unavailable: 403,
+  permission_denied: 403,
+  conflict: 409,
+  integrity_violation: 409,
+  validation_error: 400,
+  not_found: 404,
+  internal_error: 500,
+};
+
+export class DomainError extends Error {
+  readonly code: DomainErrorCode;
+  /** Recurso, funcionalidad o restricción afectada (nunca datos personales). */
+  readonly detail?: string;
+  readonly status: number;
+
+  constructor(code: DomainErrorCode, detail?: string, options?: { cause?: unknown }) {
+    super(detail ? `${code}: ${detail}` : code, options);
+    this.name = "DomainError";
+    this.code = code;
+    this.detail = detail;
+    this.status = HTTP_STATUS[code];
+  }
+}
+
+interface PgErrorLike {
+  code?: string;
+  message?: string;
+  detail?: string;
+  constraint?: string;
+}
+
+function isPgError(err: unknown): err is PgErrorLike {
+  return typeof err === "object" && err !== null && typeof (err as PgErrorLike).code === "string";
+}
+
+/** Mensajes propios lanzados por triggers con significado de negocio. */
+const KNOWN_MESSAGES = new Set([
+  "tenant_immutable",
+  "owner_protected",
+  "permission_denied",
+  "customer_has_vehicles",
+  "customer_deleted",
+  "service_date_in_future",
+  "sending_domain_not_verified",
+  "quote_not_editable",
+  "quote_number_immutable",
+  "quote_totals_mismatch",
+  "invalid_quote_transition",
+  "invalid_appointment_status",
+  "invalid_appointment_transition",
+  "duplicate_offsets",
+  "duplicate_weekdays",
+  "invalid_timezone",
+]);
+
+export function mapDatabaseError(err: unknown): DomainError {
+  if (err instanceof DomainError) return err;
+  if (!isPgError(err)) return new DomainError("internal_error", undefined, { cause: err });
+
+  const known = err.message && KNOWN_MESSAGES.has(err.message) ? err.message : undefined;
+  switch (err.code) {
+    case "RY001":
+      return new DomainError("plan_limit_reached", err.detail, { cause: err });
+    case "RY002":
+      return new DomainError("subscription_inactive", undefined, { cause: err });
+    case "RY003":
+      return new DomainError("feature_unavailable", err.detail, { cause: err });
+    case "42501": // insufficient_privilege / violación de RLS
+      return new DomainError("permission_denied", known, { cause: err });
+    case "23505": // unique_violation
+      return new DomainError("conflict", err.constraint, { cause: err });
+    case "23503": // foreign_key_violation
+      return new DomainError("integrity_violation", known ?? err.constraint, { cause: err });
+    case "23514": // check_violation
+    case "23502": // not_null_violation
+    case "22P02": // invalid_text_representation
+    case "22007": // invalid_datetime_format
+    case "22008": // datetime_field_overflow
+    case "22003": // numeric_value_out_of_range
+    case "22001": // string_data_right_truncation
+    case "22023": // invalid_parameter_value
+      return new DomainError("validation_error", known ?? err.constraint, { cause: err });
+    default:
+      return new DomainError("internal_error", undefined, { cause: err });
+  }
+}

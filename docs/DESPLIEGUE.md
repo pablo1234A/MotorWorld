@@ -12,15 +12,30 @@
 
 Región de funciones: UE (Frankfurt o París) junto a la región de Supabase, para que la latencia sea baja y los datos se queden en la UE.
 
-## 2. Procedimiento (borrador)
+## 2. Entorno local (desde la Fase 1)
 
-1. PR → CI verde (ver TESTING §3) → revisión.
+Requisitos: Node ≥ 22, pnpm 10, Docker.
+
+```bash
+pnpm install
+cp .env.example .env.local      # rellenar con los valores que muestra el paso siguiente
+pnpm db:start                   # levanta PostgreSQL, Auth, Storage y Mailpit en Docker
+pnpm db:reset                   # aplica las migraciones
+pnpm check                      # verifica que todo está en verde
+pnpm dev
+```
+
+`pnpm db:start` usa por defecto imágenes de Docker Hub (`SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io`); en otros entornos se puede cambiar a `public.ecr.aws`. Studio, Realtime, PostgREST y otros servicios que el proyecto no usa no se levantan.
+
+## 3. Procedimiento de despliegue (borrador)
+
+1. PR → CI verde (ver TESTING §4) → revisión.
 2. Merge a `main` → migraciones aplicadas a staging (`supabase db push`) → despliegue a staging → smoke tests.
 3. Promoción a producción manual: backup previo, `supabase db push` a prod, despliegue, smoke tests, vigilancia de Sentry 30 min.
 4. Migraciones solo hacia delante y compatibles con la versión anterior del código (expandir → migrar → contraer). Ninguna destructiva sin autorización.
 5. Rollback: redeploy de la versión anterior en Vercel (instantáneo); la BD no se revierte salvo incidente grave (restauración desde backup/PITR).
 
-## 3. Checklist de lanzamiento (se completará en la Fase 12)
+## 4. Checklist de lanzamiento (se completará en la Fase 12)
 
 Incluye lo que pide el PDF (§11) más lo técnico:
 

@@ -125,7 +125,7 @@ flowchart LR
 │  │  └─ adapters/               # email/, payments/, calendar/, captcha/, storage/, crypto/, ratelimit/
 │  ├─ components/                # ui/ (sistema de diseño), app/, marketing/
 │  ├─ emails/                    # plantillas React Email (layout corporativo)
-│  └─ lib/                       # funciones puras compartidas: plate, money, dates, template-vars
+│  └─ lib/                       # funciones puras compartidas: plate, plans (catálogo público), money, dates, template-vars
 ├─ supabase/
 │  ├─ config.toml
 │  ├─ migrations/                # SQL versionado (nunca destructivo sin autorización)

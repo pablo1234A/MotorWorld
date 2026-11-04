@@ -1,6 +1,6 @@
 # RevisaYa — Base de datos
 
-> Estado: **diseño (Fase 0)**. Las migraciones SQL se escriben en la Fase 1 a partir de este documento.
+> Estado: **implementado (Fase 1)** en `supabase/migrations/` y verificado con 175 tests pgTAP + tests de concurrencia. Ver §7 para el índice de migraciones y los ajustes respecto al diseño inicial.
 > Motor: PostgreSQL (Supabase, región UE). Extensiones: `pgcrypto`, `citext`, `pg_trgm`, `pg_cron`, `pg_net`, `pgtap` (solo tests).
 
 ## 1. Convenciones
@@ -105,7 +105,7 @@ Límite de sucursales por plan: trigger `enforce_branch_limit`.
 `id`, `organization_id`, `email citext`, `role`, `permissions`, `branch_ids uuid[]`, `token_hash bytea unique` (SHA-256 del token; el token en claro solo viaja en el email), `invited_by`, `expires_at` (7 días), `accepted_at`, `revoked_at`. Índice único parcial `(organization_id, email) where accepted_at is null and revoked_at is null`.
 Límite de usuarios: miembros activos + invitaciones pendientes ≤ `max_users` (trigger con bloqueo).
 
-Permisos de operario (lista cerrada): `customers.read`, `customers.write`, `customers.delete`, `vehicles.write`, `vehicles.delete`, `maintenance.write`, `imports.run`, `reminders.read`, `appointments.manage`, `quotes.manage`, `reports.read`. Exclusivos de administrador (no asignables): facturación, usuarios, sucursales, integraciones, API keys, plantillas, configuración, exportación/borrado RGPD.
+Lectura de clientes, vehículos e historial: cualquier miembro con acceso a la sucursal (ADR-019). Permisos de operario (lista cerrada): `customers.write`, `customers.delete`, `vehicles.write`, `vehicles.delete`, `maintenance.write`, `imports.run`, `reminders.read`, `appointments.manage`, `quotes.manage`, `reports.read`. Exclusivos de administrador (no asignables): facturación, usuarios, sucursales, integraciones, API keys, plantillas, configuración, exportación/borrado RGPD.
 
 ### 3.3 Configuración por sucursal
 
@@ -258,13 +258,40 @@ Funciones auxiliares (`app`, `security definer`, `stable`, `set search_path = ''
 `app.uid()`, `app.is_member(org)`, `app.is_admin(org)`, `app.can_access_branch(org, branch)`, `app.has_permission(org, perm)`.
 Ninguna política confía en un `organization_id` enviado por el cliente: todas comparan con las membresías reales del `auth.uid()` verificado.
 
-## 6. Comprobaciones previas a cerrar el esquema (checklist de la Fase 1)
+## 6. Comprobaciones previas a cerrar el esquema (checklist de la Fase 1 — completada)
 
-- [ ] Todas las relaciones con FK; las de tenencia, compuestas.
-- [ ] Ninguna tabla con datos de cliente sin `organization_id` + RLS activada y forzada (`force row level security`).
-- [ ] Índices: toda FK indexada; índices compuestos encabezados por `organization_id`.
-- [ ] Unicidades: matrícula por sucursal, recordatorio por evento, mensaje por proveedor, evento de webhook, número de presupuesto.
-- [ ] Triggers de límites probados con concurrencia (dos transacciones simultáneas no superan el límite).
-- [ ] Inmutabilidad de `organization_id`/`branch_id` probada.
-- [ ] Reglas de borrado probadas (sin cascadas accidentales).
-- [ ] pgTAP: un usuario de la organización A no lee/escribe/borra nada de B; un operario sin permiso no escribe; `anon` no ve nada salvo `plans`.
+- [x] Todas las relaciones con FK; las de tenencia, compuestas.
+- [x] Ninguna tabla con datos de cliente sin `organization_id` + RLS activada y forzada (`force row level security`).
+- [x] Índices: toda FK indexada; índices compuestos encabezados por `organization_id`.
+- [x] Unicidades: matrícula por sucursal, recordatorio por evento, mensaje por proveedor, evento de webhook, número de presupuesto.
+- [x] Triggers de límites probados con concurrencia (dos transacciones simultáneas no superan el límite).
+- [x] Inmutabilidad de `organization_id`/`branch_id` probada.
+- [x] Reglas de borrado probadas (sin cascadas accidentales).
+- [x] pgTAP: un usuario de la organización A no lee/escribe/borra nada de B; un operario sin permiso no escribe; `anon` no ve nada salvo `plans`.
+
+## 7. Implementación (Fase 1)
+
+| Migración | Contenido |
+|---|---|
+| `0100_foundation` | Extensiones (citext, pg_trgm, pgcrypto), esquemas `app`/`private`, privilegios por defecto, `set_updated_at`, `forbid_tenant_change`, `validate_timezone`, `normalize_plate`. |
+| `0200_plans` | Catálogo de planes con precios y límites exactos del PDF. |
+| `0300_identity` | `profiles` (+ sincronización desde `auth.users`), `organizations`, `branches`, `organization_members` (protección del propietario), `member_branches`, `invitations`; funciones `app.member_orgs`, `app.admin_orgs`, `app.accessible_branches`. |
+| `0400_billing_entitlements` | `billing_prices`, `billing_customers`, `subscriptions`, `billing_invoices`, `stripe_events`; `app.active_plan`, `has_feature`, `assert_feature`, `org_limit`, `assert_within_limit`, `branches_with_permission`; límites de usuarios y sucursales. |
+| `0500_branch_settings` | `branch_settings` (creada automáticamente con cada sucursal), `blackout_dates`, `availability_rules`. |
+| `0600_customers_vehicles` | `customers`, `vehicles`, `maintenance_records`, `maintenance_parts`, `mileage_readings`; ficha del vehículo mantenida desde el historial; borrado lógico protegido; límites de clientes y vehículos activos. |
+| `0700_reminders_email` | `reminders` (unicidad por evento), `email_templates`, `sending_domains` (+ modo de remitente validado), `email_logs`, `email_events`, `email_suppressions`. |
+| `0800_appointments` | `appointments` (máquina de estados), `appointment_events` automáticos. |
+| `0900_quotes` | `quotes`, `quote_items` (aritmética verificada), `document_sequences`, numeración `P-AAAA-NNNN`, totales verificados al COMMIT. |
+| `1000_usage_integrations_api` | `usage_counters` + `reserve_usage`/`release_usage`, `integrations`, `private.integration_secrets`, `calendar_event_links`, `api_keys` (hash no legible), `api_request_logs`. |
+| `1100_imports` | `import_batches`, `import_rows` y trazabilidad del lote en clientes/vehículos. |
+| `1200_ops_audit_compliance` | `private.jobs`, `private.job_runs`, `private.rate_limit_buckets` + token bucket, `audit_logs` con trigger genérico, `data_subject_requests`, `legal_acceptances`. |
+| `1300_storage` | Buckets privados `org-assets`, `imports`, `documents` y políticas por organización. |
+| `1400_hardening` | Revoca privilegios a `anon` y **falla la migración** si alguna tabla queda sin RLS forzada, si `anon` tiene acceso a algo más que `plans`, si `private` es accesible o si una función SECURITY DEFINER no fija `search_path`. |
+
+Ajustes respecto al diseño de la Fase 0:
+
+- `maintenance_parts` y `mileage_readings` llevan también `branch_id` (para RLS por sucursal sin joins).
+- Las escrituras de usuarios en clientes y vehículos nunca son `DELETE` físicos: el borrado es lógico y exige `customers.delete`/`vehicles.delete` (trigger `guard_soft_delete`); la purga la hará un job.
+- Los privilegios se conceden **por columna**: un usuario no puede escribir `organization_id`, `status` de la organización, `provider_message_id`, `key_hash`, etc., aunque la política RLS lo permitiera.
+- Los recordatorios solo admiten una acción de usuario: cancelar uno programado (`scheduled`/`retrying` → `canceled`).
+- Formatos de error: ver ADR-017.

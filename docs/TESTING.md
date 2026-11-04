@@ -31,7 +31,31 @@
 | 9 | Los vehículos mantienen su historial | cambio de propietario y borrado de cliente ⇒ historial intacto |
 | 10 | Las sucursales permanecen aisladas | pgTAP con operario de sucursal A frente a datos de B |
 
-## 3. CI (GitHub Actions, Fase 1)
+## 3. Cómo ejecutar las pruebas
+
+```bash
+pnpm db:start          # Supabase local (Docker)
+pnpm db:reset          # aplica todas las migraciones desde cero
+pnpm db:test           # pgTAP: supabase/tests/database/*.sql
+pnpm test:unit         # Vitest: tests/unit
+pnpm test:integration  # Vitest contra la BD local: tests/integration
+pnpm check             # todo lo anterior + typecheck, lint y build
+```
+
+Estructura:
+
+| Ruta | Contenido |
+|---|---|
+| `supabase/tests/database/000_helpers.sql` | Helpers de test (`tests.create_org`, `tests.authenticate_as`…). Solo en la BD local; no es una migración. |
+| `supabase/tests/database/0x0_*.sql` | Un archivo por área: esquema, aislamiento, roles, sucursales, límites, recordatorios, historial, presupuestos/citas, anónimo. |
+| `tests/unit/` | Funciones puras (matrículas, planes, entorno, errores). |
+| `tests/integration/` | Contexto RLS del servidor, sincronía de planes, concurrencia. |
+
+`tests.authenticate_as(uuid)` reproduce exactamente lo que hace `withRls` en el servidor (rol `authenticated` + claims del JWT en la transacción), así que las pruebas de RLS cubren el camino real de producción.
+
+Resultados de la última ejecución: ver [ESTADO-DEL-PROYECTO](ESTADO-DEL-PROYECTO.md).
+
+## 4. CI (GitHub Actions)
 
 `install → typecheck → lint → unit → supabase start → db reset (migraciones) → pgTAP → integración → build → e2e (en PR a main) → audit/gitleaks`.
 Las migraciones se prueban desde cero en cada ejecución: si no se aplican limpias, el pipeline falla.

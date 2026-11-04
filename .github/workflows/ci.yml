@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Typecheck, lint, tests y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tests unitarios
+        run: pnpm test:unit
+
+      - name: Supabase local
+        run: pnpm db:start
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
+
+      - name: Migraciones desde cero
+        run: pnpm db:reset
+
+      - name: Tests de base de datos (pgTAP — RLS, límites, integridad)
+        run: pnpm db:test
+
+      - name: Tests de integración (concurrencia, contexto RLS)
+        run: pnpm test:integration
+
+      - name: Build
+        run: pnpm build
+        env:
+          # El build no conecta con servicios: valores de ejemplo no secretos.
+          APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build-placeholder
+
+      - name: Auditoría de dependencias
+        run: pnpm audit --prod --audit-level high
+
+      - name: Detección de secretos
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
