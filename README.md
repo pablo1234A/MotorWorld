@@ -2,7 +2,7 @@
 
 SaaS para talleres mecánicos: el taller registra sus clientes, vehículos e historial de revisiones, y RevisaYa envía cada día avisos por correo a los clientes a los que les toca la revisión, con un botón para pedir cita.
 
-> **Estado: Fase 2 completada** (backend y autenticación): registro con verificación de email, acceso, recuperación de contraseña, alta de taller, usuarios con roles y permisos, e invitaciones. Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
+> **Estado: Fase 3 completada**: autenticación, talleres, usuarios e invitaciones (Fase 2) y gestión de clientes, vehículos e historial de mantenimiento con búsqueda, filtros y fichas (Fase 3). Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
 > "RevisaYa" es un nombre provisional: falta comprobar la marca y el dominio.
 
 ## Puesta en marcha local

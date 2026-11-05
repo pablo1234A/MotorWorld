@@ -51,7 +51,9 @@ Estructura:
 | `supabase/tests/database/0x0_*.sql` | Un archivo por área: esquema, aislamiento, roles, sucursales, límites, recordatorios, historial, presupuestos/citas, anónimo. |
 | `tests/unit/` | Funciones puras (matrículas, planes, entorno, errores). |
 | `tests/integration/` | Contexto RLS del servidor, sincronía de planes, concurrencia, servicios de miembros y alta de talleres (incluidos contextos falsificados). |
-| `tests/e2e/` | Playwright: registro → correo (Mailpit) → verificación → alta de taller; acceso, recuperación y cambio de contraseña; invitaciones; límites de usuarios; rate limiting; redirecciones abiertas. |
+| `tests/e2e/` | Playwright: registro → correo (Mailpit) → verificación → alta de taller; acceso, recuperación y cambio de contraseña; invitaciones; límites de usuarios; rate limiting; redirecciones abiertas; clientes, vehículos e historial de principio a fin; borrado seguro; solo lectura. |
+
+Con Cache Components, Next mantiene la página anterior oculta en el DOM (`<Activity>`): en los E2E los selectores se acotan a la tarjeta o sección visible.
 
 Los tests no dependen del orden ni de una base de datos vacía: cada uno crea sus propios talleres con identificadores aleatorios y acota sus consultas a ellos.
 

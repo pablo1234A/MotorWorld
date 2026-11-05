@@ -8,9 +8,9 @@
 |---|---|---|
 | 0 — Auditoría y planificación | ✅ Completada y **aprobada** (ADR-001…015, P1–P20) | 2026-11-04 |
 | 1 — Infraestructura y base de datos | ✅ Completada | 2026-11-04 |
-| 2 — Backend y autenticación | ✅ Completada (pendiente de revisión) | 2026-11-05 |
-| 3 — Clientes, vehículos e historial | ⏭ Siguiente | — |
-| 4 — Importación Excel/CSV | ⏸ No iniciada | — |
+| 2 — Backend y autenticación | ✅ Completada | 2026-11-05 |
+| 3 — Clientes, vehículos e historial | ✅ Completada (pendiente de revisión) | 2026-11-05 |
+| 4 — Importación Excel/CSV | ⏭ Siguiente | — |
 | 5 — Motor de automatizaciones | ⏸ No iniciada | — |
 | 6 — Sistema de correos | ⏸ No iniciada | — |
 | 7 — Citas y presupuestos | ⏸ No iniciada | — |
@@ -19,6 +19,41 @@
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 3 — Clientes, vehículos e historial
+
+### Qué se ha construido
+- **Clientes** (`/app/clientes`): listado con búsqueda por nombre, correo, teléfono o matrícula, filtros (taller, con/sin correo), orden y paginación en servidor; alta con aviso de posible duplicado (mismo correo o teléfono) que exige confirmación; ficha con edición, vehículos, historial de todos sus vehículos y baja de avisos; borrado seguro (si tiene vehículos, hay que marcar que se borran también; todo en una transacción; el historial se conserva).
+- **Vehículos** (`/app/vehiculos`): listado con búsqueda por matrícula, marca/modelo, bastidor o propietario y filtros de próxima revisión (vencida, 30 días, 90 días, sin fecha), estado y taller; alta desde la ficha del cliente con su última revisión opcional; ficha individual con matrícula, marca, modelo, bastidor, propietario, kilómetros, última y próxima revisión e historial completo; edición, estado (activo, inactivo, vendido, dado de baja), lecturas de kilómetros (una lectura menor exige confirmar el cambio de cuentakilómetros), próxima revisión manual, cambio de propietario con buscador (el historial se queda con el vehículo) y borrado.
+- **Historial** (`/app/historial` y en cada ficha): revisiones con fecha, kilómetros, trabajos, piezas (descripción, referencia, cantidad con coma decimal), observaciones, próxima revisión recomendada, propietario en ese momento y quién la registró; edición (sustituye las piezas) y borrado solo para administradores. Cada cambio recalcula la ficha del vehículo.
+- **Panel**: revisiones vencidas, en los próximos 30 días, vehículos sin próxima revisión y clientes sin correo (con enlace al listado filtrado).
+- **Servidor**: servicios `customers`, `vehicles`, `maintenance`, `branches`; Server Actions con comprobación de permiso; endpoint `GET /api/app/customers/search` (con sesión, RLS); validación compartida (teléfonos a E.164, fechas reales, km, bastidor, matrícula); modo de solo lectura cuando no hay plan activo.
+
+### Pruebas ejecutadas (2026-11-05, desde base de datos nueva, todas en verde)
+
+| Comando | Resultado |
+|---|---|
+| `pnpm db:test` (pgTAP) | **197/197** |
+| `pnpm test` (Vitest) | **106/106** (nuevos: `workshop.test.ts` 23 unitarios; `workshop-services.test.ts` 16 de integración) |
+| `pnpm test:e2e` (Playwright) | **16/16** (nuevos: ficha completa cliente → vehículo → revisión con piezas → km → búsqueda → historial; duplicados, vencidas, matrícula repetida y borrado seguro; modo de solo lectura) |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm audit` | sin errores · 0 vulnerabilidades |
+
+Casos críticos reforzados en esta fase: **1** (otro taller no ve, edita ni borra clientes ni historial, ni falsificando el contexto), **2** (operario: consulta sí; escribir y borrar según permisos), **9** (cambio de propietario y borrado conservan el historial), **10** (operario limitado a una sucursal solo lista y crea en la suya).
+
+### Errores encontrados y corregidos durante la fase
+- **Mensaje engañoso al borrar**: un operario sin permiso para borrar vehículos recibía "el cliente tiene vehículos" porque RLS filtra el UPDATE en silencio. Ahora es "sin permiso" (ADR-032). Los datos nunca se modificaban: la transacción se revertía.
+- **Ids de campo duplicados** cuando una página tiene varios formularios (las etiquetas apuntaban al campo equivocado; problema de accesibilidad): ids únicos con `useId`.
+- **Cantidades con coma decimal** ("4,5") se leían como no válidas: normalizadas.
+
+### Pendiente (documentado, con su fase)
+- Importación desde Excel/CSV → Fase 4 (siguiente).
+- Purga definitiva de borrados lógicos a los 30 días → job de mantenimiento de la Fase 5.
+- Restaurar un cliente borrado desde la interfaz (la base de datos ya lo permite dentro del plazo) → se valorará en la Fase 10.
+
+### Siguiente fase
+**Fase 4 — Importación Excel/CSV**: plantilla descargable, subida, lectura y validación fila a fila, staging con corrección de errores, informe de errores descargable y confirmación atómica en una única transacción.
 
 ---
 
@@ -64,7 +99,7 @@ Caso crítico 2 (operario ≠ administrador) cubierto ahora también de extremo 
 - Ninguna nueva para desarrollo local. Para staging: proyecto Supabase (UE) con la configuración de Auth de [DESPLIEGUE §2](DESPLIEGUE.md) (Site URL, Redirect URLs, plantillas, SMTP propio).
 
 ### Siguiente fase
-**Fase 3 — Clientes, vehículos e historial**: CRUD completo con búsqueda, filtros y paginación en servidor, ficha de vehículo con historial, kilómetros, próximas revisiones, cambio de propietario y borrado seguro; pantallas conectadas y tests de integridad.
+Fase 3 (completada, ver arriba).
 
 ---
 

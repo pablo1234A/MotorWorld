@@ -1,4 +1,6 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+"use client";
+
+import { type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, useId } from "react";
 
 const CONTROL =
   "w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-[15px] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] aria-[invalid=true]:border-[var(--danger)]";
@@ -10,8 +12,11 @@ interface FieldProps {
   hint?: ReactNode;
 }
 
+// Ids únicos con useId: varios formularios de una misma página pueden tener
+// campos con el mismo `name` y cada etiqueta debe apuntar a SU campo.
 export function Field({ label, name, errors, hint, id, ...input }: FieldProps & InputHTMLAttributes<HTMLInputElement>) {
-  const inputId = id ?? `f-${name}`;
+  const autoId = useId();
+  const inputId = id ?? `f-${name}-${autoId}`;
   const describedBy = errors?.length ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
   return (
     <div className="flex flex-col gap-1.5">
@@ -41,7 +46,8 @@ export function SelectField({
   children,
   ...select
 }: FieldProps & SelectHTMLAttributes<HTMLSelectElement>) {
-  const selectId = id ?? `f-${name}`;
+  const autoId = useId();
+  const selectId = id ?? `f-${name}-${autoId}`;
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={selectId} className="text-sm font-medium">

@@ -35,6 +35,21 @@ const CONFLICT_REASON: Record<string, string> = {
   vehicles_plate_unique: "Ya existe un vehículo con esa matrícula en este taller.",
 };
 
+const VALIDATION_REASON: Record<string, string> = {
+  km_lower_than_current: "Los kilómetros son menores que los actuales. Si se ha cambiado el cuentakilómetros, márcalo para confirmarlo.",
+  read_on_in_future: "La fecha de la lectura no puede ser futura.",
+  service_date_in_future: "La fecha de la revisión no puede ser futura.",
+  vehicles_next_after_last: "La próxima revisión debe ser posterior a la última.",
+  maintenance_records_next_after: "La próxima revisión recomendada debe ser posterior a la fecha de la revisión.",
+  vehicles_vin_check: "El bastidor no es válido.",
+};
+
+const INTEGRITY_REASON: Record<string, string> = {
+  customer_has_vehicles: "El cliente tiene vehículos. Bórralos también o asígnalos a otro cliente antes.",
+  customer_deleted: "El cliente seleccionado ya no existe.",
+  owner_other_branch: "El nuevo propietario debe ser un cliente del mismo taller.",
+};
+
 export function errorMessage(code: string, detail?: string): string {
   switch (code) {
     case "unauthenticated":
@@ -56,9 +71,9 @@ export function errorMessage(code: string, detail?: string): string {
     case "conflict":
       return (detail && CONFLICT_REASON[detail]) || "Ya existe un registro con esos datos.";
     case "integrity_violation":
-      return "La operación no es coherente con los datos existentes.";
+      return (detail && INTEGRITY_REASON[detail]) || "La operación no es coherente con los datos existentes.";
     case "validation_error":
-      return "Revisa los datos del formulario.";
+      return (detail && VALIDATION_REASON[detail]) || "Revisa los datos del formulario.";
     case "not_found":
       return "No se ha encontrado lo que buscas.";
     default:

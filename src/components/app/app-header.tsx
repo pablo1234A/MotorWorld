@@ -5,8 +5,9 @@ import { signOutAction } from "@/server/modules/auth/actions";
 import { switchOrganizationAction } from "@/server/modules/organizations/actions";
 
 /**
- * Cabecera del panel. Solo enlaza a pantallas que ya existen; el sidebar
- * completo (clientes, vehículos, recordatorios…) se añade módulo a módulo.
+ * Cabecera del panel. Solo enlaza a pantallas que ya existen; el resto de
+ * módulos (recordatorios, citas, presupuestos…) se añaden en su fase. El
+ * diseño definitivo con barra lateral llega en la Fase 10.
  */
 export function AppHeader({ ctx }: { ctx: OrgContext }) {
   const admin = ctx.membership.role === "admin";
@@ -43,9 +44,16 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
         )}
 
         <nav aria-label="Principal" className="flex flex-1 flex-wrap items-center gap-1 text-sm">
-          <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app">
-            Inicio
-          </Link>
+          {[
+            ["/app", "Inicio"],
+            ["/app/clientes", "Clientes"],
+            ["/app/vehiculos", "Vehículos"],
+            ["/app/historial", "Historial"],
+          ].map(([href, label]) => (
+            <Link key={href} className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href={href}>
+              {label}
+            </Link>
+          ))}
           {admin ? (
             <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/usuarios">
               Usuarios

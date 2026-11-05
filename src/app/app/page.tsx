@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { Alert, Card } from "@/components/ui/feedback";
 import { ROLE_LABELS } from "@/lib/permissions";
@@ -57,6 +58,17 @@ export default async function DashboardPage() {
         </Card>
       )}
 
+      <section aria-labelledby="revisiones" className="flex flex-col gap-3">
+        <h2 id="revisiones" className="text-lg font-semibold">Revisiones</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <LinkStat href="/app/vehiculos?revision=vencidas" label="Vencidas" value={summary.overdue} tone={summary.overdue ? "danger" : undefined} />
+          <LinkStat href="/app/vehiculos?revision=30" label="En los próximos 30 días" value={summary.dueIn30} tone={summary.dueIn30 ? "warning" : undefined} />
+          <LinkStat href="/app/vehiculos?revision=sin-fecha" label="Vehículos sin próxima revisión" value={summary.withoutNextService} />
+          <LinkStat href="/app/clientes?correo=sin" label="Clientes sin correo (no reciben avisos)" value={summary.customersWithoutEmail} />
+        </div>
+      </section>
+
+      <h2 className="text-lg font-semibold">Tu cuenta</h2>
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Clientes" value={summary.customers} limit={plan ? limit(plan.maxCustomers) : undefined} />
         <Stat label="Vehículos activos" value={summary.activeVehicles} limit={plan ? limit(plan.maxActiveVehicles) : undefined} />
@@ -74,5 +86,15 @@ function Stat({ label, value, limit }: { label: string; value: number; limit?: s
       <dd className="mt-1 text-3xl font-semibold tabular-nums">{value.toLocaleString("es-ES")}</dd>
       {limit ? <dd className="mt-1 text-xs text-[var(--muted)]">de {limit} en tu plan</dd> : null}
     </div>
+  );
+}
+
+function LinkStat({ href, label, value, tone }: { href: string; label: string; value: number; tone?: "danger" | "warning" }) {
+  const color = tone === "danger" ? "text-[var(--danger)]" : tone === "warning" ? "text-[var(--warning)]" : "";
+  return (
+    <Link href={href} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-colors hover:border-[var(--accent)]">
+      <p className="text-sm text-[var(--muted)]">{label}</p>
+      <p className={`mt-1 text-3xl font-semibold tabular-nums ${color}`}>{value.toLocaleString("es-ES")}</p>
+    </Link>
   );
 }
