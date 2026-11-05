@@ -21,7 +21,7 @@ function StylePreview({ style, kind, mode, selected }: { style: StyleId; kind: P
         <p className="text-[9px] tracking-[.18em] uppercase" style={{ color: t.colors.muted }}>
           {def.label}
         </p>
-        <p className="mt-1.5 text-[21px] leading-none" style={{ fontFamily: serif ? "Georgia, serif" : "inherit", fontWeight: serif ? 400 : 650, textTransform: t.headingCase === "upper" ? "uppercase" : "none", letterSpacing: serif ? "-0.01em" : "-0.03em" }}>
+        <p className="mt-1.5 text-[21px] leading-none" style={{ fontFamily: `"${t.fonts.display}", ${serif ? "Georgia, serif" : "system-ui, sans-serif"}`, fontWeight: serif ? 400 : 650, textTransform: t.headingCase === "upper" ? "uppercase" : "none", letterSpacing: serif ? "-0.01em" : "-0.03em" }}>
           Aa Bb
         </p>
         <div className="absolute right-4 bottom-4 left-4 flex items-center gap-1.5">
@@ -131,6 +131,8 @@ export function NewProjectWizard({ engine }: { engine: "claude" | "local" }) {
 
       {step === 2 ? (
         <div className="mt-6">
+          {/* Real typefaces of every art direction, so each preview shows its actual voice. */}
+          <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${Array.from(new Set(Object.values(STYLES).flatMap((st) => st.fonts.map((f) => f.display)))).map((f) => `family=${f.replace(/ /g, "+")}`).join("&")}&display=swap`} />
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[13px] text-muted">Elige una dirección de arte o deja que la IA decida según tu sector.</p>
             <Segmented label="Modo" value={mode} onChange={setMode} className="w-48" options={[{ value: "light", label: <><Sun className="size-3.5" /> Claro</> }, { value: "dark", label: <><Moon className="size-3.5" /> Oscuro</> }]} />

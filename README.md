@@ -66,7 +66,7 @@ Leyenda: ✅ funciona y está probado · 🔑 implementado; necesita una clave o
 | 2 | Seleccionar tipo de proyecto | ✅ | 12 tipos: landing, tienda, SaaS, corporativa, portfolio, restaurante, concesionario, app web, dashboard, educación, 3D, interactiva |
 | 3 | Elegir estilo visual | ✅ | 9 direcciones de arte con vista previa real de tipografía y paleta, modo claro u oscuro |
 | 4 | Generar estructura completa | ✅ | Multipágina, con navegación y pie sincronizados |
-| 5 | Generar el frontend | ✅ | 24 tipos de sección, 50 variantes de layout |
+| 5 | Generar el frontend | ✅ | 24 tipos de sección, 54 variantes de layout |
 | 6 | Crear componentes | ✅ | Biblioteca de secciones + componentes reutilizables guardados por el usuario |
 | 7 | Crear páginas adicionales | ✅ | Desde el panel (con plantillas) o pidiéndolo al chat |
 | 8 | Modificar cualquier elemento por instrucciones | ✅ / 🔑 | Motor local para instrucciones comunes; Claude Opus 5.5 para instrucciones libres |
