@@ -81,15 +81,19 @@ function extractCity(text: string): string | null {
   return stop.test(m[1]) ? null : m[1];
 }
 
+/** Words that describe the website itself, not what the business offers. */
+const SITE_FEATURE_WORDS = /^(precios?|planes|prueba gratis|estilo|modo|oscur|clar|animaci|reservas? online|formulario|contacto|blog|newsletter|carrito|pagos?|web|p[aá]gina|secci[oó]n|dise[nñ]o|3d)/i;
+
 function extractOfferings(text: string): string[] {
   const m = text.match(
-    /(?:vende[n]?|vendemos|ofrece[n]?|ofrecemos|especializad[oa]s? en|servicios? de|productos? como|sell[s]?|offer[s]?|incluye|con)\s+([^.;:\n]{3,200})/i,
+    /(?:vende[n]?|vendemos|ofrece[n]?|ofrecemos|especializad[oa]s? en|servicios? de|productos? como|sell[s]?|offer[s]?|que hace[n]?|dedicad[oa] a)\s+([^.;:\n]{3,200})/i,
   );
   if (!m) return [];
   return m[1]
     .split(/,|\sy\s|\se\s|\sand\s|\so\s|\//i)
     .map((s) => s.replace(/^(de|el|la|los|las|un|una|unos|unas|the|a)\s+/i, "").trim())
-    .filter((s) => s.length > 2 && s.length < 48 && !/^(que|para|donde)\b/i.test(s))
+    .map((s) => s.replace(/\s+(con|para|en|de estilo|estilo)\s.*$/i, "").trim())
+    .filter((s) => s.length > 2 && s.length < 48 && !/^(que|para|donde)\b/i.test(s) && !SITE_FEATURE_WORDS.test(s))
     .slice(0, 8)
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
 }

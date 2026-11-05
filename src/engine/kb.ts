@@ -17,6 +17,7 @@ export interface ItemSeed {
   price?: string;
   badge?: string;
   features?: string[];
+  value?: number;
 }
 
 export interface PagePlan {
