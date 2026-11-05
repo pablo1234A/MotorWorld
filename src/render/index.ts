@@ -45,7 +45,7 @@ export function linkMapper(doc: SiteDocument, page: Page, t: RenderTarget) {
     if (t.mode === "publish") {
       const base = t.basePath ?? "";
       if (path === page.path && hash) return suffix;
-      return `${base}${path === "/" ? "/" : path}${suffix}`;
+      return `${base}${path === "/" ? (base ? "" : "/") : path}${suffix}`;
     }
     return href; // edit: the bridge intercepts navigation
   };
@@ -140,7 +140,7 @@ export function renderPage(doc: SiteDocument, page: Page, t: RenderTarget): Rend
   const js = RUNTIME_JS;
   const fonts = googleFontsHref(doc.theme);
   const canonicalBase = t.mode === "publish" ? `${t.appUrl}${t.basePath ?? ""}` : t.appUrl;
-  const canonical = `${canonicalBase}${page.path === "/" ? "/" : page.path}`;
+  const canonical = `${canonicalBase}${page.path === "/" ? (t.mode === "publish" ? "" : "/") : page.path}`;
   const title = page.seo.title || `${page.name} — ${doc.settings.siteName}`;
   const desc = page.seo.description;
   const og = page.seo.ogImage;
@@ -188,7 +188,7 @@ ${bridge}
 export function sitemapXml(doc: SiteDocument, baseUrl: string): string {
   const urls = doc.pages
     .filter((p) => !p.seo.noindex)
-    .map((p) => `<url><loc>${h(baseUrl + (p.path === "/" ? "/" : p.path))}</loc></url>`)
+    .map((p) => `<url><loc>${h(baseUrl + (p.path === "/" ? (/\/s\/[^/]+$/.test(baseUrl) ? "" : "/") : p.path))}</loc></url>`)
     .join("");
   return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`;
 }
@@ -212,8 +212,10 @@ const EDITOR_CSS = String.raw`
 
 /** Runs inside the preview iframe. Talks to the editor via postMessage (same origin only). */
 export const EDITOR_BRIDGE_JS = String.raw`(function(){
-var d=document,parentOrigin=location.origin;
-function post(m){parent.postMessage(Object.assign({source:"wb-preview"},m),parentOrigin)}
+var d=document;
+/* The preview runs in a sandboxed iframe with an opaque origin: messages carry no secrets and the
+   editor only accepts them from this iframe's window, while we only accept messages from our parent. */
+function post(m){parent.postMessage(Object.assign({source:"wb-preview"},m),"*")}
 var hover=d.createElement("div");hover.className="wbx-hover";hover.innerHTML="<span></span>";hover.style.display="none";d.body.appendChild(hover);
 var sel=d.createElement("div");sel.className="wbx-sel";sel.style.display="none";d.body.appendChild(sel);
 var selected=null,editing=null;
@@ -257,7 +259,7 @@ function finish(save){var f=editing;if(!f)return;editing=null;f.removeEventListe
   var field=f.getAttribute("data-wb-field");if(field==="text"||field==="body"||field==="subheading"||field==="heading"){v=v.replace(/^“|”$/g,"")}
   if(v!==f.__orig.trim())post({type:"edit",sectionId:f.__sec.getAttribute("data-wb-section"),field:field,itemId:f.getAttribute("data-wb-item"),value:v})}
 window.addEventListener("message",function(e){
-  if(e.origin!==parentOrigin||!e.data||e.data.source!=="wb-editor")return;var m=e.data;
+  if(e.source!==parent||!e.data||e.data.source!=="wb-editor")return;var m=e.data;
   if(m.type==="update"){
     var st=d.getElementById("wb-theme");if(st&&m.css!==undefined)st.textContent=m.css;
     if(m.fonts){var l=d.querySelector('link[rel=stylesheet][href*="fonts.googleapis"]');if(l&&l.href!==m.fonts)l.href=m.fonts}
