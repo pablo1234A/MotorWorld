@@ -134,6 +134,8 @@ export interface RenderedPage {
   html: string;
   css: string;
   js: string;
+  /** Inline scripts emitted by the renderer itself (hash-pinned in the hosted site's CSP). */
+  inlineScripts: string[];
 }
 
 export function renderPage(doc: SiteDocument, page: Page, t: RenderTarget): RenderedPage {
@@ -148,9 +150,9 @@ export function renderPage(doc: SiteDocument, page: Page, t: RenderTarget): Rend
   const robots = page.seo.noindex || t.mode === "edit" ? '<meta name="robots" content="noindex,nofollow">' : "";
   const up = t.mode === "export" ? "../".repeat(depthOf(page.path)) : "";
   const styleTag = t.externalAssets ? `<link rel="stylesheet" href="${up}assets/site.css">` : `<style id="wb-theme">${css}</style>`;
-  const scriptTag = t.externalAssets
-    ? `<script>${runtimeConfig(doc, page, t)}</script><script src="${up}assets/site.js" defer></script>`
-    : `<script>${runtimeConfig(doc, page, t)}</script><script>${js}</script>`;
+  const cfg = runtimeConfig(doc, page, t);
+  const inlineScripts = t.externalAssets ? [cfg] : [cfg, js];
+  const scriptTag = t.externalAssets ? `<script>${cfg}</script><script src="${up}assets/site.js" defer></script>` : `<script>${cfg}</script><script>${js}</script>`;
   const bridge = t.mode === "edit" ? `<style>${EDITOR_CSS}</style><script>${EDITOR_BRIDGE_JS}</script>` : "";
   const analytics = t.mode === "publish" && doc.settings.analytics?.plausibleDomain ? `<script defer data-domain="${a(doc.settings.analytics.plausibleDomain)}" src="https://plausible.io/js/script.js"></script>` : "";
 
@@ -183,7 +185,7 @@ ${scriptTag}
 ${bridge}
 </body>
 </html>`;
-  return { html, css, js };
+  return { html, css, js, inlineScripts };
 }
 
 export function sitemapXml(doc: SiteDocument, baseUrl: string): string {

@@ -118,7 +118,7 @@ Decisión clave: **los sitios son un documento estructurado, no código suelto.*
 
 ## F. Funcionalidades a desarrollar
 
-Las 18 capacidades del brief. En el README se lleva el estado de cada una (hecho / parcial / pendiente).
+Las 18 capacidades del brief. El estado actual de cada una (hecha y probada, pendiente de clave, parcial o pendiente) está en la tabla del [README](../README.md#estado-de-las-funcionalidades).
 
 ## G. Limitaciones técnicas detectadas
 
@@ -133,11 +133,11 @@ Las 18 capacidades del brief. En el README se lleva el estado de cada una (hecho
 | Fase | Contenido |
 |---|---|
 | 1 | Auditoría (este documento) ✅ |
-| 2 | Scaffold, esquema de documento, BD, auth |
-| 3 | Interfaz del creador: dashboard, asistente de nuevo proyecto, galería, recursos, integraciones |
-| 4 | Editor visual: capas, propiedades, iframe con selección y edición inline, dispositivos, deshacer/rehacer, autoguardado |
-| 5 | Motor de generación: planner, estilos, contenido, validador, autofix, Claude Opus 5.5 |
-| 6 | Subidas, formularios con almacenamiento, Resend, Stripe, imágenes |
-| 7 | Exportación ZIP, publicación integrada, despliegue en Vercel |
-| 8 | Tests unitarios (Vitest) + e2e (Playwright) + QA visual |
-| 9 | Auditoría final y documentación |
+| 2 | Scaffold, esquema de documento, BD, auth ✅ |
+| 3 | Interfaz del creador: dashboard, asistente de nuevo proyecto, galería, recursos, integraciones ✅ |
+| 4 | Editor visual: capas, propiedades, iframe con selección y edición inline, dispositivos, deshacer/rehacer, autoguardado ✅ |
+| 5 | Motor de generación: planner, estilos, contenido, validador, autofix, Claude Opus 5.5 ✅ (Claude sin probar con clave real) |
+| 6 | Subidas, formularios con almacenamiento, Resend, Stripe, imágenes ✅ (servicios externos sin probar: red bloqueada) |
+| 7 | Exportación ZIP, publicación integrada, despliegue en Vercel ✅ (Vercel sin probar: red bloqueada) |
+| 8 | Tests unitarios (Vitest) + e2e (Playwright) + QA visual ✅ 38 unitarios + 16 pasos e2e |
+| 9 | Auditoría final y documentación ✅ |

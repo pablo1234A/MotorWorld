@@ -111,6 +111,14 @@ describe("QA and autofix", () => {
     expect(clean).not.toMatch(/script|onclick|javascript:|iframe/i);
     expect(clean).toContain("hola");
   });
+
+  it("cannot be bypassed by nesting tags", () => {
+    for (const attack of ["<scr<script></script>ipt>alert(1)</script>", "<scr<script>x</script>ipt src=//evil></script>", "<<script>script>alert(1)<</script>/script>", "<img src=x o<script></script>nerror=alert(1)>"]) {
+      const clean = sanitizeCustomHtml(attack);
+      expect(clean).not.toMatch(/<\s*script/i);
+      expect(clean).not.toMatch(/\son\w+\s*=/i);
+    }
+  });
 });
 
 describe("operations", () => {

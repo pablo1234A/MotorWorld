@@ -21,7 +21,19 @@ function fallbackHref(doc: SiteDocument): string {
   return "/";
 }
 
-export function sanitizeCustomHtml(html: string): string {
+export function sanitizeCustomHtml(input: string): string {
+  // Repeat until stable: removing one tag must never assemble a new one ("<scr<script></script>ipt>").
+  let html = input;
+  for (let i = 0; i < 10; i++) {
+    const next = sanitizeOnce(html);
+    if (next === html) break;
+    html = next;
+  }
+  // Last line of defence: neutralize any remaining script-like tag openers.
+  return html.replace(/<\s*\/?\s*(script|iframe|object|embed)/gi, "&lt;$1");
+}
+
+function sanitizeOnce(html: string): string {
   return html
     .replace(/<\s*(script|iframe|object|embed|link|meta|base|form)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
     .replace(/<\s*(script|iframe|object|embed|link|meta|base)[^>]*\/?>/gi, "")

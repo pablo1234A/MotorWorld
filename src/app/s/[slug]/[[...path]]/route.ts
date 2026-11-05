@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { renderPage, robotsTxt, sitemapXml } from "@/render";
 import { appUrl } from "@/server/http";
 import { getPublicationBySlug } from "@/server/projects";
@@ -17,14 +18,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   if (joined === "/robots.txt") return new Response(robotsTxt(`${base}/s/${slug}`), { headers: { "Content-Type": "text/plain; charset=utf-8" } });
   const page = doc.pages.find((p) => p.path === joined.replace(/\/+$/, "") || (joined === "/" && p.path === "/"));
   if (!page) return notFound("Esta página no existe.", `/s/${slug}/`);
-  const { html } = renderPage(doc, page, { mode: "publish", projectId: pub.projectId, appUrl: base, basePath: `/s/${slug}`, checkoutEnabled: !!process.env.STRIPE_SECRET_KEY });
+  const { html, inlineScripts } = renderPage(doc, page, { mode: "publish", projectId: pub.projectId, appUrl: base, basePath: `/s/${slug}`, checkoutEnabled: !!process.env.STRIPE_SECRET_KEY });
   return new Response(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=600",
       "Content-Security-Policy": [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https://plausible.io",
+        // Only our own inline runtime may run (hash-pinned). Any script or event handler that
+        // slipped into user content is blocked by the browser, even though it shares our origin.
+        `script-src 'self' ${scriptHashes(inlineScripts)} https://plausible.io`,
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
         "img-src 'self' data: https:",
@@ -36,6 +39,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       ].join("; "),
     },
   });
+}
+
+function scriptHashes(scripts: string[]): string {
+  return scripts.map((code) => `'sha256-${createHash("sha256").update(code, "utf8").digest("base64")}'`).join(" ");
 }
 
 function notFound(message: string, home = "/") {

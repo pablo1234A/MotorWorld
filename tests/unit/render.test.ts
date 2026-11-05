@@ -46,6 +46,15 @@ describe("renderer", () => {
     expect(linkMapper(doc, home, { ...target, mode: "export" })("https://example.com")).toBe("https://example.com");
   });
 
+  it("reports exactly the inline scripts it emits, so a CSP can pin them", () => {
+    const d = structuredClone(doc);
+    d.pages[0].sections.splice(2, 0, { ...d.pages[0].sections[2], id: "sec_custom", type: "custom", variant: "html", content: { html: "<script>evil()</script>" } });
+    const { html, inlineScripts } = renderPage(d, d.pages[0], { ...target, mode: "publish" });
+    expect(inlineScripts).toHaveLength(2);
+    expect(inlineScripts.some((s) => s.includes("evil"))).toBe(false);
+    expect(html).toContain("evil()"); // still in the markup: the CSP hash pinning is what blocks it
+  });
+
   it("points forms to the platform endpoint and includes a honeypot", () => {
     const page = doc.pages.find((p) => p.sections.some((s) => s.content.form))!;
     const { html } = renderPage(doc, page, { ...target, mode: "publish" });
