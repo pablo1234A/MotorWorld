@@ -19,6 +19,8 @@ export interface RenderCtx {
   checkoutAction: string | null;
   projectId: string;
   h1Used: boolean;
+  /** Section whose heading becomes the page's single <h1> (hero, or the first heading on sub-pages). */
+  h1SectionId: string | null;
   sectionIndex: number;
 }
 
@@ -32,11 +34,11 @@ function text(ctx: RenderCtx, tag: string, cls: string, value: string | undefine
 
 function heading(ctx: RenderCtx, s: Section, level: 1 | 2 | 3, cls = ""): string {
   if (!s.content.heading) return "";
-  // Exactly one <h1> per page: the first hero-like heading claims it.
-  let lv: number = level;
-  if (level === 1) {
-    if (ctx.h1Used) lv = 2;
-    else ctx.h1Used = true;
+  // Exactly one <h1> per page; the visual size still follows the section's design.
+  let lv: number = level === 1 ? 2 : level;
+  if (!ctx.h1Used && s.id === ctx.h1SectionId) {
+    lv = 1;
+    ctx.h1Used = true;
   }
   const size = level === 1 ? "wb-h1" : level === 2 ? "wb-h2" : "wb-h3";
   return `<h${lv} class="wb-h ${size} ${cls}"${ed(ctx, "heading")}>${h(s.content.heading)}</h${lv}>`;

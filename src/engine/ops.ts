@@ -312,6 +312,7 @@ export function applyOperations(input: SiteDocument, rawOps: unknown[]): ApplyRe
     }
   }
 
+  if (!applied.length) return { doc: input, applied, errors };
   if (themeChanged) refreshGeneratedArt(doc);
   if (pagesChanged) syncNavigation(doc);
 

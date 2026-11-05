@@ -76,6 +76,7 @@ function ctxFor(doc: SiteDocument, page: Page, t: RenderTarget): RenderCtx {
     checkoutAction: t.checkoutEnabled ? `${t.appUrl}/api/checkout/${t.projectId}` : null,
     projectId: t.projectId,
     h1Used: false,
+    h1SectionId: (page.sections.find((s) => (s.type === "hero" || s.type === "scene3d") && s.content.heading) ?? page.sections.find((s) => s.type !== "navbar" && s.type !== "footer" && s.content.heading && !(s.hidden?.desktop && s.hidden?.mobile)))?.id ?? null,
     sectionIndex: 0,
   };
 }

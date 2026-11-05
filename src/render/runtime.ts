@@ -190,7 +190,7 @@ function initScenes(){
       }
       scene.add(obj);
       var target={x:0,y:0},cur={x:0,y:0},visible=true,running=false;
-      function size(){var w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;gl.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();obj.position.x=w>860?1.35:0;obj.scale.setScalar(w>860?1:.78)}
+      function size(){var w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;gl.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();obj.position.x=w>860?1.7:0;obj.position.y=w>860?0:-.9;obj.scale.setScalar(w>860?.82:.62)}
       size();window.addEventListener("resize",size);
       cv.parentNode.addEventListener("pointermove",function(e){var r=cv.getBoundingClientRect();target.x=((e.clientX-r.left)/r.width-.5)*2;target.y=((e.clientY-r.top)/r.height-.5)*-2},{passive:true});
       var t0=performance.now();

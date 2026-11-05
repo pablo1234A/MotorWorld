@@ -446,12 +446,12 @@ select.wb-input{background-image:linear-gradient(45deg,transparent 50%,currentCo
 .wb-chart text{fill:var(--c-muted);font-size:11px;font-family:var(--wb-font-mono)}
 
 /* ─── 3D scene ─── */
-.wb-scene{min-height:min(100svh,960px);display:flex;align-items:center;overflow:hidden}
-.wb-scene canvas.wb-gl{position:absolute;inset:0;width:100%!important;height:100%!important;z-index:0}
-.wb-scene .wb-scene-fallback{position:absolute;inset:0;z-index:0;background:radial-gradient(60% 60% at 70% 45%,color-mix(in srgb,var(--wb-primary) 55%,transparent),transparent 70%),radial-gradient(40% 40% at 25% 70%,color-mix(in srgb,var(--wb-accent) 40%,transparent),transparent 70%)}
-.wb-scene .wb-c{position:relative;z-index:1;pointer-events:none}
-.wb-scene .wb-c a,.wb-scene .wb-c button{pointer-events:auto}
-.wb-scene .wb-h1{max-width:14ch}
+.wb-scene3d{min-height:min(100svh,960px);display:flex;align-items:center;overflow:hidden}
+.wb-scene3d canvas.wb-gl{position:absolute;inset:0;width:100%!important;height:100%!important;z-index:0}
+.wb-scene3d .wb-scene-fallback{position:absolute;inset:0;z-index:0;background:radial-gradient(60% 60% at 70% 45%,color-mix(in srgb,var(--wb-primary) 55%,transparent),transparent 70%),radial-gradient(40% 40% at 25% 70%,color-mix(in srgb,var(--wb-accent) 40%,transparent),transparent 70%)}
+.wb-scene3d .wb-c{position:relative;z-index:1;pointer-events:none}
+.wb-scene3d .wb-c a,.wb-scene3d .wb-c button{pointer-events:auto}
+.wb-scene3d .wb-h1{max-width:14ch}
 .wb-scene-hint{position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:1;font-family:var(--wb-font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--c-muted)}
 
 /* ─── Footer ─── */
