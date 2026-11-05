@@ -15,6 +15,8 @@ export type DomainErrorCode =
   | "feature_unavailable"
   | "invitation_invalid"
   | "organization_quota"
+  | "import_invalid"
+  | "import_file_invalid"
   | "rate_limited"
   | "conflict"
   | "integrity_violation"
@@ -30,6 +32,8 @@ const HTTP_STATUS: Record<DomainErrorCode, number> = {
   feature_unavailable: 403,
   invitation_invalid: 410,
   organization_quota: 422,
+  import_invalid: 409,
+  import_file_invalid: 400,
   rate_limited: 429,
   conflict: 409,
   integrity_violation: 409,
@@ -102,6 +106,10 @@ export function mapDatabaseError(err: unknown): DomainError {
       return new DomainError("invitation_invalid", err.detail, { cause: err });
     case "RY005":
       return new DomainError("organization_quota", undefined, { cause: err });
+    case "RY006":
+      return new DomainError("import_invalid", err.detail, { cause: err });
+    case "P0002": // no_data_found
+      return new DomainError("not_found", undefined, { cause: err });
     case "42501": // insufficient_privilege / violación de RLS
       return new DomainError("permission_denied", known, { cause: err });
     case "23505": // unique_violation

@@ -7,3 +7,5 @@ ignoredBuiltDependencies:
 overrides:
   # GHSA-g3hv-75wg-m249 (transitiva de eslint-config-next, solo desarrollo)
   "minimatch@>=7.0.0 <11.0.1": ">=11.0.1"
+  # GHSA-w5hq-g745-h8pq (transitiva de exceljs)
+  "uuid@<11.1.1": ">=11.1.1"

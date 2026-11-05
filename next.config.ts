@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // Importación Excel/CSV: hasta 5 MB de archivo + margen del multipart.
+      // El resto de acciones envían formularios pequeños; el servidor valida cada campo.
+      bodySizeLimit: "5.2mb",
+    },
+  },
   turbopack: {
     rules: {
       "*.css": {

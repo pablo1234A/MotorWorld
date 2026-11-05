@@ -49,6 +49,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
             ["/app/clientes", "Clientes"],
             ["/app/vehiculos", "Vehículos"],
             ["/app/historial", "Historial"],
+            ...(admin || ctx.membership.permissions.includes("imports.run") ? [["/app/importar", "Importar"]] : []),
           ].map(([href, label]) => (
             <Link key={href} className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href={href}>
               {label}

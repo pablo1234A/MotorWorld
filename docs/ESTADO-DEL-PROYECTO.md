@@ -9,9 +9,9 @@
 | 0 — Auditoría y planificación | ✅ Completada y **aprobada** (ADR-001…015, P1–P20) | 2026-11-04 |
 | 1 — Infraestructura y base de datos | ✅ Completada | 2026-11-04 |
 | 2 — Backend y autenticación | ✅ Completada | 2026-11-05 |
-| 3 — Clientes, vehículos e historial | ✅ Completada (pendiente de revisión) | 2026-11-05 |
-| 4 — Importación Excel/CSV | ⏭ Siguiente | — |
-| 5 — Motor de automatizaciones | ⏸ No iniciada | — |
+| 3 — Clientes, vehículos e historial | ✅ Completada (incluidos sus pendientes: purga y papelera) | 2026-11-05 |
+| 4 — Importación Excel/CSV | ✅ Completada (pendiente de revisión) | 2026-11-05 |
+| 5 — Motor de automatizaciones | ⏭ Siguiente | — |
 | 6 — Sistema de correos | ⏸ No iniciada | — |
 | 7 — Citas y presupuestos | ⏸ No iniciada | — |
 | 8 — Suscripciones y límites (Stripe TEST) | ⏸ No iniciada | — |
@@ -19,6 +19,44 @@
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 4 — Importación Excel/CSV
+
+### Qué se ha construido
+Flujo completo del PDF (§3) y del encargo (§8) — detalle en [IMPORTACION](IMPORTACION.md):
+1. **Plantilla** descargable en `.xlsx` (hoja «Clientes» con formatos de fecha y texto, fila de ejemplo y hoja «Instrucciones») y `.csv` (`;` + BOM para el Excel en español).
+2. **Subida** de `.xlsx` o `.csv` (máx. 5 MB y 2.000 filas) con detección de cabeceras propias del taller («Correo», «Placa», «Km»…), CSV en UTF-8 o Windows-1252 y fechas nativas de Excel.
+3. **Validación de cada fila** sin guardar nada: emails inválidos, matrículas incorrectas o poco habituales, fechas imposibles o futuras, años de dos cifras, km negativos o con decimales, filas vacías, fila de ejemplo, campos obligatorios vacíos, matrículas repetidas en el archivo, vehículos que ya existen (se omiten), clientes que ya existen (se vinculan), mismo cliente en varias filas (se agrupa por correo).
+4. **Corrección**: editar la fila en pantalla (se revalida todo el lote), excluir filas, aceptar filas sin correo; o corregir el archivo y volver a subirlo.
+5. **Informe de errores** descargable (CSV y Excel) con la fila, los datos originales, errores y avisos.
+6. **Resumen** (clientes nuevos, existentes, vehículos, omitidas) y **comprobación previa de límites del plan**.
+7. **Confirmación atómica** (`app.commit_import`): todo o nada; aviso y confirmación expresa si el archivo ya se importó; doble clic o doble envío no duplican.
+8. **Historial** de importaciones y descarte de una importación (borra el staging).
+
+### Pruebas ejecutadas (2026-11-05, desde base de datos nueva, todas en verde)
+
+| Comando | Resultado |
+|---|---|
+| `pnpm db:test` (pgTAP) | **216/216** |
+| `pnpm test` (Vitest) | **153/153** (nuevos: `imports.test.ts` unitario, 33; `imports.test.ts` de integración, 9; `trash.test.ts`, 5) |
+| `pnpm test:e2e` (Playwright) | **18/18** (nuevos: importación completa con corrección en pantalla, informe y archivo repetido; archivo no válido) |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm audit` | sin errores · 0 vulnerabilidades |
+
+**Caso crítico 5** (una importación incorrecta no deja registros parciales): probado con un fallo por límite del plan y con un fallo a mitad de transacción (matrícula registrada por otro usuario entre validación y confirmación, después de haberse insertado ya los clientes): en ambos, 0 fichas nuevas. Rendimiento: 2.000 filas en ~1,3 s en total.
+
+### Errores encontrados y corregidos durante la fase
+- La detección automática de separador de PapaParse fallaba con pocas columnas: sustituida por una detección propia (con test).
+- Los JSON de la revalidación se serializaban dos veces (se habrían guardado como texto): corregido antes de ejecutarse, cubierto por los tests de corrección de filas.
+- La confirmación necesitaba permiso de columna sobre `id` para enlazar clientes y vehículos: concedido (ADR-033).
+
+### Pendiente (documentado)
+- Programación automática de avisos para las fichas importadas → Fase 5 (el motor leerá `next_service_date`, ya calculada).
+- Importación con «actualizar los datos de un vehículo existente» en lugar de omitirlo: fuera del alcance actual (IMPORTACION R7).
+
+### Siguiente fase
+**Fase 5 — Motor de automatizaciones**: planificador diario por zona horaria con ventanas de envío y festivos, recordatorios idempotentes, dispatcher con cola, lease, reintentos con backoff, reparto justo por taller, recuperación tras caídas, avisos por kilometraje estimado (Max+), monitorización.
 
 ---
 
@@ -53,7 +91,7 @@ Casos críticos reforzados en esta fase: **1** (otro taller no ve, edita ni borr
 - La importación pasa a la Fase 4.
 
 ### Siguiente fase
-**Fase 4 — Importación Excel/CSV**: plantilla descargable, subida, lectura y validación fila a fila, staging con corrección de errores, informe de errores descargable y confirmación atómica en una única transacción.
+Fase 4 (completada, ver arriba).
 
 ---
 
@@ -137,7 +175,7 @@ Cobertura de los casos críticos:
 | 2 | Un operario no puede hacer acciones de administrador | `020_roles_permissions.sql` (27 tests) |
 | 3 | No se pueden duplicar recordatorios | `050_reminders_email.sql` + 10 planificadores simultáneos en `concurrency.test.ts` |
 | 4 | No se pueden superar los límites del plan | `040_plan_limits.sql` (29 tests) + altas y reservas de correo simultáneas |
-| 5 | Importación incorrecta sin registros parciales | Base preparada (staging + rollback de transacción probado en `rls-context.test.ts`); la confirmación de importación se prueba en la Fase 4 |
+| 5 | Importación incorrecta sin registros parciales | `tests/integration/imports.test.ts` (fallo por límite y fallo a mitad de transacción ⇒ 0 fichas) |
 | 6 | Un error de correo no detiene otros envíos | Fase 5 (motor) |
 | 7 | Webhook duplicado no duplica operaciones | Unicidad de `email_events` y `stripe_events` probada; procesadores en Fases 6 y 8 |
 | 8 | La cancelación se refleja | Acceso de solo lectura con suscripción cancelada probado en `040`; webhook de Stripe en Fase 8 |

@@ -1,6 +1,6 @@
 # RevisaYa — Importación Excel/CSV
 
-> Estado: **diseño (Fase 0)**. Implementación en la Fase 4.
+> Estado: **implementado (Fase 4)**. Código: `src/lib/imports/` (columnas, validación pura, mensajes), `src/server/modules/imports/` (lectura de archivos, staging, confirmación, plantilla e informe), migración `20261105000300_imports_commit.sql` (`app.commit_import`). Ajustes respecto al diseño: §7.
 
 ## 1. Plantilla (según el PDF)
 
@@ -72,3 +72,18 @@ Descargable en CSV y XLSX con las columnas originales + `fila`, `errores`, `avis
 - Encabezados tolerantes: sin distinción de mayúsculas/tildes y con alias (`email`, `e-mail`, `correo`; `km`, `kilómetros`…).
 - `.xls` (Excel 97-2003) no se admite: se pide guardar como `.xlsx` o CSV (se documenta la decisión).
 - Seguridad: límite de tamaño descomprimido para .xlsx, sin evaluar fórmulas (se lee el valor cacheado), archivos en bucket privado y borrados a los 7 días.
+
+## 7. Implementación (Fase 4) y ajustes respecto al diseño
+
+| Tema | Cómo quedó |
+|---|---|
+| Pantallas | `/app/importar` (plantilla, subida, historial de importaciones) y `/app/importar/[id]` (resumen, filas con errores/avisos/todas, corregir fila en pantalla, excluir/incluir fila, informe CSV/XLSX, confirmar, descartar). |
+| Archivo original | **No se guarda** en Storage: solo las filas en staging (`import_rows`), que se purgan a los 7 días (`private.purge_expired_data`). Menos copias de datos personales. |
+| R4 correo vacío | Opción **por importación**: «Importar también las filas sin correo» convierte el error en aviso para todas las filas sin correo (más simple que marcar fila a fila). |
+| Excluir filas | Una fila excluida no se importa ni bloquea la confirmación (`skip_excluded`). |
+| R7 vehículo existente | La fila se omite (`skip_duplicate`) y sus otros errores no bloquean, porque no se importa. |
+| Separador CSV | Detección propia en la línea de cabecera (la automática de PapaParse fallaba con pocas columnas y líneas vacías al final). |
+| Confirmación | `app.commit_import` (SECURITY INVOKER: con RLS, permisos y triggers de límites del usuario). Bloquea el lote (`FOR UPDATE`), comprueba estado, errores, caducidad y archivo repetido, e inserta clientes, vehículos y la última revisión de cada vehículo con **una sentencia por tabla**. Cualquier fallo revierte todo. 2.000 filas: ~0,1 s de staging y ~1,2 s de confirmación en local. |
+| Límites del plan | Comprobación previa visible en la vista previa (cuántos caben) y comprobación definitiva de la BD al confirmar. |
+| Concurrencia | Dos confirmaciones simultáneas del mismo lote: una importa y la otra recibe «ya confirmada». Si alguien registra una matrícula entre la validación y la confirmación, la confirmación falla entera por el índice único. |
+| Seguridad del archivo | Tipo por contenido (no extensión), máximo 5 MB (Server Actions a 5,2 MB), tamaño descomprimido del ZIP comprobado antes de abrirlo (≤ 60 MB), sin evaluar fórmulas, `.xls` rechazado con instrucciones, informe CSV protegido contra inyección de fórmulas, rate limiting de 30 subidas/hora por taller. |

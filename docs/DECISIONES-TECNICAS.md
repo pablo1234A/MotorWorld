@@ -40,6 +40,11 @@
 | 030 | **Clientes duplicados (mismo correo o teléfono en la sucursal): aviso con confirmación**, no bloqueo | Unicidad por email | Las familias comparten correo; el aviso evita duplicados accidentales sin impedir casos legítimos. | Aceptada |
 | 031 | **Paginación por desplazamiento** (25 por página, total con `count(*) over ()` en la misma consulta) y búsqueda con índices trigram | Paginación por cursor | Suficiente para miles de registros por taller y permite saltar a una página; los listados no hacen N+1 (subconsultas correlacionadas indexadas). | Aceptada |
 | 032 | **Los servicios detectan escrituras que RLS ha filtrado en silencio** (0 filas afectadas sobre un registro visible ⇒ `permission_denied`) | Confiar en que RLS lance error | RLS no lanza error en UPDATE/DELETE, solo no afecta filas: sin esta comprobación el usuario vería "guardado" sin que se guardara nada. | Aceptada |
+| 033 | **Confirmación de importación como función SQL `SECURITY INVOKER`** con inserciones en bloque (una sentencia por tabla) y UUID generados en la propia transacción | Bucle de inserciones desde TypeScript | Atomicidad garantizada por la BD, mismos permisos/RLS/límites que un alta manual, triggers de límite una vez por sentencia; 2.000 filas en ~1 s. | Aceptada |
+| 034 | **El archivo importado no se guarda**; solo el staging de filas, purgado a los 7 días | Guardar el original en Storage | Minimización de datos personales; el informe de errores se genera desde el staging. | Aceptada |
+| 035 | **"Importar sin correo" como opción de la importación** (no por fila) | Casilla por fila | Más rápido para el taller y menos propenso a errores; la vista previa muestra cuántas filas afecta. | Aceptada |
+| 036 | **Límite de cuerpo de Server Actions a 5,2 MB** (`experimental.serverActions.bodySizeLimit`) | Route Handler aparte para la subida | Mantiene la subida dentro del mismo patrón de acciones (validación, permisos, errores); el servidor sigue rechazando archivos > 5 MB. | Aceptada |
+| 037 | **Override de `uuid ≥ 11.1.1`** (transitiva de ExcelJS) | Otra librería de Excel | GHSA-w5hq-g745-h8pq; ExcelJS verificado leyendo y escribiendo con la versión corregida. `pnpm audit`: 0 vulnerabilidades. | Aceptada |
 
 ## 2. Cuestiones abiertas: contradicciones, ambigüedades y propuestas
 

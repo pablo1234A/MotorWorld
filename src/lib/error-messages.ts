@@ -50,6 +50,27 @@ const INTEGRITY_REASON: Record<string, string> = {
   owner_other_branch: "El nuevo propietario debe ser un cliente del mismo taller.",
 };
 
+const IMPORT_REASON: Record<string, string> = {
+  already_committed: "Esta importación ya se ha confirmado.",
+  has_errors: "Corrige o excluye las filas con errores antes de confirmar.",
+  expired: "La importación ha caducado (7 días). Vuelve a subir el archivo.",
+  repeated_file: "Este archivo ya se importó antes en este taller. Marca la casilla si quieres importarlo de nuevo.",
+  not_editable: "La importación ya no se puede modificar.",
+};
+
+const IMPORT_FILE_REASON: Record<string, string> = {
+  file_empty: "El archivo está vacío.",
+  file_too_large: "El archivo supera los 5 MB.",
+  file_type: "El archivo no es un Excel (.xlsx) ni un CSV.",
+  file_xls: "Es un Excel antiguo (.xls). Ábrelo y guárdalo como .xlsx o CSV.",
+  file_corrupt: "No se ha podido leer el archivo. Comprueba que no esté dañado.",
+  file_too_big_uncompressed: "El archivo es demasiado grande una vez descomprimido.",
+  no_header: "No se encuentra la fila de cabeceras. Usa la plantilla o pon los nombres de las columnas en la primera fila.",
+  missing_columns: "Faltan columnas obligatorias: nombre del cliente, matrícula y última revisión.",
+  too_many_rows: "El archivo tiene más de 2.000 filas. Divídelo en varios archivos.",
+  no_rows: "El archivo no tiene filas de datos.",
+};
+
 export function errorMessage(code: string, detail?: string): string {
   switch (code) {
     case "unauthenticated":
@@ -66,6 +87,10 @@ export function errorMessage(code: string, detail?: string): string {
       return (detail && INVITATION_REASON[detail]) || "La invitación no es válida.";
     case "organization_quota":
       return "Has alcanzado el máximo de talleres que puedes crear con tu cuenta.";
+    case "import_invalid":
+      return (detail && IMPORT_REASON[detail]) || "La importación no se puede completar.";
+    case "import_file_invalid":
+      return (detail && IMPORT_FILE_REASON[detail]) || "No se ha podido leer el archivo.";
     case "rate_limited":
       return "Demasiados intentos. Espera unos minutos y vuelve a probar.";
     case "conflict":

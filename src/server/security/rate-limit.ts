@@ -26,6 +26,7 @@ export const RATE_LIMITS = {
   resendVerificationPerEmail: { capacity: 3, windowSeconds: 3600 },
   invitationsPerOrg: { capacity: 30, windowSeconds: 3600 },
   invitationAcceptPerIp: { capacity: 20, windowSeconds: 900 },
+  importUploadsPerOrg: { capacity: 30, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export async function consumeRateLimit(key: string, rule: RateLimitRule): Promise<boolean> {
