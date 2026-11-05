@@ -118,7 +118,7 @@ export default async function CustomerPage({ params, searchParams }: Props) {
         <Card>
           <h2 className="mb-1 text-lg font-semibold">Borrar cliente</h2>
           <p className="mb-4 text-sm text-[var(--muted)]">
-            Deja de aparecer en las listas y no recibe avisos. El historial de sus vehículos se conserva. Se eliminará definitivamente a los 30 días.
+            Deja de aparecer en las listas y no recibe avisos. Se puede restaurar desde la papelera durante 30 días; después se elimina definitivamente con su historial.
           </p>
           <DeleteCustomerForm id={customer.id} name={name} vehicleCount={customer.vehicles.length} canDeleteVehicles={caps.vehiclesDelete} />
         </Card>

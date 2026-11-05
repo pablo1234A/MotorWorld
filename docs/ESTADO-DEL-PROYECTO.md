@@ -47,10 +47,10 @@ Casos críticos reforzados en esta fase: **1** (otro taller no ve, edita ni borr
 - **Ids de campo duplicados** cuando una página tiene varios formularios (las etiquetas apuntaban al campo equivocado; problema de accesibilidad): ids únicos con `useId`.
 - **Cantidades con coma decimal** ("4,5") se leían como no válidas: normalizadas.
 
-### Pendiente (documentado, con su fase)
-- Importación desde Excel/CSV → Fase 4 (siguiente).
-- Purga definitiva de borrados lógicos a los 30 días → job de mantenimiento de la Fase 5.
-- Restaurar un cliente borrado desde la interfaz (la base de datos ya lo permite dentro del plazo) → se valorará en la Fase 10.
+### Pendientes de la fase, completados después (2026-11-05)
+- **Purga definitiva a los 30 días** (`private.purge_expired_data`, migración `20261105000200_retention_purge.sql`), programada a diario con `pg_cron` (03:17 UTC): elimina clientes y vehículos borrados hace más de 30 días con su historial, recordatorios y presupuestos del cliente; conserva desvinculados citas, registros de correo y presupuestos de clientes activos; purga el staging de importaciones (7 días) y los contadores de rate limiting; deja un evento de auditoría por taller (solo recuentos) y la ejecución en `job_runs`. La excepción a las protecciones de usuario solo se activa dentro de la función del sistema (probado). Tests: `100_retention_purge.sql` (19).
+- **Papelera** (`/app/papelera`, enlazada desde Clientes): clientes y vehículos borrados en los últimos 30 días con fecha de eliminación definitiva; restaurar un cliente recupera los vehículos borrados con él; vuelve a comprobar límites del plan y matrícula única; exige el permiso de borrado. Tests: `trash.test.ts` (5) y paso E2E.
+- La importación pasa a la Fase 4.
 
 ### Siguiente fase
 **Fase 4 — Importación Excel/CSV**: plantilla descargable, subida, lectura y validación fila a fila, staging con corrección de errores, informe de errores descargable y confirmación atómica en una única transacción.

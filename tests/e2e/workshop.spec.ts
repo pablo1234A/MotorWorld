@@ -137,6 +137,16 @@ test.describe("Clientes, vehículos e historial", () => {
     await expect(page.getByText("Cliente borrado.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Pedro bis" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Pedro", exact: true })).toHaveCount(0);
+
+    // Papelera: se puede restaurar (con su vehículo) durante 30 días
+    await page.getByRole("link", { name: "Papelera" }).click();
+    const trashCustomers = card(page, "Clientes borrados (1)");
+    await expect(trashCustomers.getByText("Pedro", { exact: true })).toBeVisible();
+    await expect(trashCustomers.getByText(/1 vehículo · borrado el/)).toBeVisible();
+    await trashCustomers.getByRole("button", { name: "Restaurar" }).click();
+    await expect(page.getByText("Cliente restaurado con 1 vehículo.")).toBeVisible();
+    await page.goto("/app/vehiculos?revision=vencidas");
+    await expect(page.getByRole("link", { name: "5678 FGH" })).toBeVisible();
   });
 
   test("sin plan activo: modo de solo lectura (consultar sí, crear no)", async ({ page }) => {

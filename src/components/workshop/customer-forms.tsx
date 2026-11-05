@@ -145,7 +145,7 @@ export function DeleteCustomerForm({ id, name, vehicleCount, canDeleteVehicles }
       className="flex flex-col gap-3"
       onSubmit={(e) => {
         const text = withVehicles
-          ? `¿Borrar a ${name} y sus ${vehicleCount} vehículos? Dejarán de recibir avisos. El historial se conserva.`
+          ? `¿Borrar a ${name} y sus ${vehicleCount} vehículos? Dejarán de recibir avisos. Podrás restaurarlos desde la papelera durante 30 días.`
           : `¿Borrar a ${name}?`;
         if (!window.confirm(text)) e.preventDefault();
       }}

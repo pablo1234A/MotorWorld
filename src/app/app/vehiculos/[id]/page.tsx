@@ -196,7 +196,7 @@ export default async function VehiclePage({ params, searchParams }: Props) {
           {caps.vehiclesDelete ? (
             <Card>
               <h2 className="mb-1 text-lg font-semibold">Borrar vehículo</h2>
-              <p className="mb-4 text-sm text-[var(--muted)]">Si lo ha vendido o dado de baja, mejor cambia su estado y conservarás la ficha.</p>
+              <p className="mb-4 text-sm text-[var(--muted)]">Si lo ha vendido o dado de baja, mejor cambia su estado y conservarás la ficha. Lo borrado se puede restaurar durante 30 días desde la papelera.</p>
               <DeleteVehicleForm id={v.id} plate={v.plate} />
             </Card>
           ) : null}

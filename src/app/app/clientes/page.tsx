@@ -43,11 +43,18 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
           <p className="text-sm text-[var(--muted)]">Fichas de los clientes del taller y sus vehículos.</p>
         </div>
-        {caps.customersWrite ? (
-          <Link href="/app/clientes/nuevo" className={buttonClass("primary")}>
-            Nuevo cliente
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {caps.customersDelete || caps.vehiclesDelete ? (
+            <Link href="/app/papelera" className={buttonClass("secondary")}>
+              Papelera
+            </Link>
+          ) : null}
+          {caps.customersWrite ? (
+            <Link href="/app/clientes/nuevo" className={buttonClass("primary")}>
+              Nuevo cliente
+            </Link>
+          ) : null}
+        </div>
       </div>
       {caps.readOnly ? <ReadOnlyNotice /> : null}
       {param(sp.borrado) ? <Alert tone="success">Cliente borrado.</Alert> : null}

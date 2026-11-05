@@ -66,8 +66,8 @@ HTTPS obligatorio (HSTS), `Content-Security-Policy` con nonce, `X-Content-Type-O
 - **Exportación de toda la organización**: job asíncrono que genera un ZIP en Storage con URL firmada de 24 h.
 - **Retención** (propuesta, pendiente de aprobación, P9):
   - Cuenta cancelada: datos conservados **60 días** (reactivación y exportación) → purga definitiva y aviso previo por email a los 7 días del borrado.
-  - Borrado lógico de registros: purga a los 30 días.
-  - Staging de importaciones: 7 días. Archivos subidos: 7 días.
+  - Borrado lógico de clientes y vehículos: restaurables desde la papelera 30 días; después purga definitiva diaria (`private.purge_expired_data`, pg_cron). **Implementado.**
+  - Staging de importaciones: 7 días (incluido en la purga diaria). Los archivos subidos no se guardan: solo las filas en staging.
   - `email_logs`: 24 meses; `audit_logs`: 24 meses; `api_request_logs`: 30 días.
 - **Comunicaciones**: los recordatorios de un servicio ya contratado se tratan como avisos de servicio (según el PDF, normalmente sin consentimiento específico, **pendiente de revisión jurídica**). Aun así, cada correo incluye enlace de baja y cabecera `List-Unsubscribe` + `List-Unsubscribe-Post` (también exigidas por Gmail/Yahoo a remitentes masivos). Si el taller quisiera enviar promociones, eso sería otra funcionalidad con consentimiento explícito: queda fuera del alcance actual.
 - **Seguimiento de aperturas**: el píxel de apertura puede requerir consentimiento (art. 22.2 LSSI / criterio de la AEPD). Propuesta: **desactivado por defecto**, activable solo tras la revisión jurídica (P8).

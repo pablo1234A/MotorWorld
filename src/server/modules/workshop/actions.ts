@@ -22,6 +22,7 @@ import { assertAdmin, assertPermission, requireOrg } from "@/server/auth/guards"
 import * as customers from "../customers/service";
 import type { DuplicateMatch } from "../customers/service";
 import * as maintenance from "../maintenance/service";
+import * as trash from "../trash/service";
 import * as vehicles from "../vehicles/service";
 
 /**
@@ -208,5 +209,27 @@ export async function deleteRecordAction(_prev: ActionState, formData: FormData)
     await maintenance.deleteRecord(ctx, id);
     refresh();
     return { status: "success", message: "Revisión eliminada del historial." };
+  });
+}
+
+// ------------------------------------------------------------------ papelera
+export async function restoreCustomerAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction("customer.restore", async () => {
+    const ctx = await requireOrg();
+    assertPermission(ctx, "customers.delete");
+    const { id } = parseForm(idOnly, formData);
+    const { vehicles } = await trash.restoreCustomer(ctx, id);
+    // La fila desaparece de la papelera: el aviso se muestra a nivel de página.
+    redirect(`/app/papelera?restaurado=cliente&vehiculos=${vehicles}`);
+  });
+}
+
+export async function restoreVehicleAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction("vehicle.restore", async () => {
+    const ctx = await requireOrg();
+    assertPermission(ctx, "vehicles.delete");
+    const { id } = parseForm(idOnly, formData);
+    await trash.restoreVehicle(ctx, id);
+    redirect("/app/papelera?restaurado=vehiculo");
   });
 }

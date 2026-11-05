@@ -158,7 +158,7 @@ export function DeleteVehicleForm({ id, plate }: { id: string; plate: string }) 
     <form
       action={action}
       onSubmit={(e) => {
-        if (!window.confirm(`¿Borrar el vehículo ${plate}? Dejará de recibir avisos. El historial se conserva.`)) e.preventDefault();
+        if (!window.confirm(`¿Borrar el vehículo ${plate}? Dejará de recibir avisos. Podrás restaurarlo desde la papelera durante 30 días.`)) e.preventDefault();
       }}
       className="flex flex-col gap-3"
     >
