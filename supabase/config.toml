@@ -109,7 +109,8 @@ enabled = true
 # Port to use for the email testing server web interface.
 port = 54324
 # Uncomment to expose additional ports for testing user applications that send emails.
-# SMTP de Mailpit: el motor de recordatorios envía aquí en local (EMAIL_PROVIDER=smtp).
+# SMTP de Mailpit para el motor de recordatorios. La versión actual de la CLI no
+# publica este puerto: se usa la IP del contenedor (pnpm mailpit:smtp-url, ver docs/DESPLIEGUE.md).
 smtp_port = 54325
 # pop3_port = 54326
 # admin_email = "admin@email.com"
