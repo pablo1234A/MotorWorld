@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { CancelImportForm, CommitForm, ImportRow, NoEmailOption } from "@/components/imports/import-forms";
+import { CancelImportForm, CommitForm, ImportRow, NoEmailOption, UpdateExistingOption } from "@/components/imports/import-forms";
 import { buttonClass } from "@/components/ui/button-styles";
 import { Alert, Card } from "@/components/ui/feedback";
 import { Pagination } from "@/components/ui/pagination";
@@ -44,7 +44,7 @@ export default async function ImportBatchPage({
   let blocker: string | undefined;
   if (!canWrite) blocker = "Para confirmar necesitas un plan activo y permiso para crear clientes, vehículos y revisiones.";
   else if (s.withErrors > 0) blocker = `Corrige o excluye las ${s.withErrors} filas con errores para poder confirmar.`;
-  else if (s.newVehicles === 0) blocker = "No hay ninguna fila que importar.";
+  else if (s.newVehicles + (s.updatedVehicles ?? 0) === 0) blocker = "No hay ninguna fila que importar.";
   else if (limits && !limits.ok) blocker = "La importación supera el límite de tu plan. Excluye filas o mejora el plan.";
 
   const tab = (key: string, label: string, count: number) => (
@@ -72,7 +72,8 @@ export default async function ImportBatchPage({
       {batch.status === "committed" ? (
         <Alert tone="success" title={param(sp.confirmada) ? "Importación completada" : "Importación confirmada"}>
           Se han creado {s.committed?.customers ?? 0} clientes y {s.committed?.vehicles ?? 0} vehículos con su última revisión
-          {s.committed?.attachedCustomers ? `, y se han añadido vehículos a ${s.committed.attachedCustomers} clientes que ya existían` : ""}. Los avisos se programarán
+          {s.committed?.attachedCustomers ? `, y se han añadido vehículos a ${s.committed.attachedCustomers} clientes que ya existían` : ""}
+          {s.committed?.updatedVehicles ? `; se han completado ${s.committed.updatedVehicles} vehículos que ya tenías` : ""}. Los avisos se programarán
           según la configuración del taller.{" "}
           <Link href="/app/clientes" className="font-medium text-[var(--accent)]">
             Ver clientes
@@ -90,6 +91,7 @@ export default async function ImportBatchPage({
           ["Con avisos", s.withWarnings],
           ["Clientes nuevos", s.newCustomers],
           ["Vehículos nuevos", s.newVehicles],
+          ...(s.updatedVehicles ? ([["Vehículos a completar", s.updatedVehicles]] as Array<[string, number]>) : []),
           ["Omitidas", s.duplicatesSkipped + s.empty + s.excluded],
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -115,6 +117,7 @@ export default async function ImportBatchPage({
         <Card>
           <div className="flex flex-col gap-4">
             <NoEmailOption batchId={id} allowNoEmail={s.options.allowNoEmail} />
+            <UpdateExistingOption batchId={id} updateExisting={s.options.updateExisting ?? false} duplicates={s.duplicatesSkipped} />
             <div className="flex flex-wrap gap-2">
               <a href={`/api/app/import/${id}/report`} className={buttonClass("secondary")} download>
                 Descargar informe de errores (CSV)

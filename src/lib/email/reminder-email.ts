@@ -54,6 +54,8 @@ export interface ReminderEmailInput {
     address?: string | null;
     phone?: string | null;
     email?: string | null;
+    /** URL pública absoluta del logo (o relativa en la vista previa del panel). */
+    logoUrl?: string | null;
   };
   /** Destino del botón (mailto: o página de cita). Sin destino, no hay botón. */
   ctaHref?: string | null;
@@ -117,7 +119,11 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(subject)}</title></head>
 <body style="margin:0;padding:24px;background:#f4f5f7;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#14161a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden">
-<tr><td style="background:${color};padding:20px 28px;color:#ffffff;font-size:18px;font-weight:700">${name}</td></tr>
+${
+  input.workshop.logoUrl
+    ? `<tr><td style="padding:20px 28px;border-bottom:4px solid ${color}"><img src="${escapeHtml(input.workshop.logoUrl)}" alt="${name}" height="48" style="display:block;height:auto;max-height:48px;max-width:220px;border:0"></td></tr>`
+    : `<tr><td style="background:${color};padding:20px 28px;color:#ffffff;font-size:18px;font-weight:700">${name}</td></tr>`
+}
 <tr><td style="padding:28px">
 ${htmlParagraphs}
 ${

@@ -17,6 +17,8 @@ export interface Membership {
   organizationId: string;
   organizationName: string;
   organizationSlug: string;
+  /** Logo del taller (ruta en el almacenamiento), para el panel. */
+  logoPath: string | null;
   role: Role;
   isOwner: boolean;
   permissions: OperatorPermission[];
@@ -52,6 +54,7 @@ export async function listMemberships(user: AuthUser): Promise<Membership[]> {
         "m.organization_id as organizationId",
         "o.trade_name as organizationName",
         "o.slug as organizationSlug",
+        "o.logo_path as logoPath",
         "m.role",
         "m.is_owner as isOwner",
         "m.permissions",

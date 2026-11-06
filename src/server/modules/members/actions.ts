@@ -10,16 +10,28 @@ import { type ActionState, parseForm, runAction } from "@/server/actions/result"
 import { ACTIVE_ORG_COOKIE, activeOrgCookieOptions } from "@/server/auth/context";
 import { assertAdmin, requireOrg, requireUser } from "@/server/auth/guards";
 import { clientIp } from "@/server/http/request";
+import { getEmailProvider, getSenderConfig } from "@/server/email/provider";
 import { enforceRateLimits, RATE_LIMITS } from "@/server/security/rate-limit";
+
+import { sendInvitationEmail } from "./invitation-email";
 
 import * as members from "./service";
 
+type InviteData = { url: string; email: string; emailed: boolean };
+
+async function deliver(ctx: Awaited<ReturnType<typeof requireOrg>>, email: string, role: "admin" | "operator", url: string): Promise<boolean> {
+  return sendInvitationEmail({ email: getEmailProvider(), sender: getSenderConfig() }, {
+    organizationId: ctx.membership.organizationId,
+    to: email,
+    url,
+    role,
+    replyTo: ctx.user.email,
+  });
+}
+
 const idSchema = z.object({ id: z.uuid() });
 
-export async function inviteMemberAction(
-  _prev: ActionState<{ url: string; email: string }>,
-  formData: FormData,
-): Promise<ActionState<{ url: string; email: string }>> {
+export async function inviteMemberAction(_prev: ActionState<InviteData>, formData: FormData): Promise<ActionState<InviteData>> {
   return runAction(
     "member.invite",
     async () => {
@@ -27,25 +39,28 @@ export async function inviteMemberAction(
       assertAdmin(ctx);
       const input = parseForm(inviteSchema, formData);
       const { url } = await members.createInvitation(ctx, input);
+      const emailed = await deliver(ctx, input.email, input.role, url);
       refresh();
-      return { status: "success", message: "Invitación creada.", data: { url, email: input.email } };
+      return { status: "success", message: emailed ? `Invitación enviada por correo a ${input.email}.` : "Invitación creada.", data: { url, email: input.email, emailed } };
     },
     formData,
   );
 }
 
-export async function renewInvitationAction(
-  _prev: ActionState<{ url: string; email: string }>,
-  formData: FormData,
-): Promise<ActionState<{ url: string; email: string }>> {
+export async function renewInvitationAction(_prev: ActionState<InviteData>, formData: FormData): Promise<ActionState<InviteData>> {
   return runAction("member.invitation_renew", async () => {
     const ctx = await requireOrg();
     assertAdmin(ctx);
     const { id } = parseForm(idSchema, formData);
     const email = z.string().parse(formData.get("email"));
-    const { url } = await members.renewInvitation(ctx, id);
+    const { url, role } = await members.renewInvitation(ctx, id);
+    const emailed = await deliver(ctx, email, role, url);
     refresh();
-    return { status: "success", message: "Nuevo enlace generado. El anterior ya no sirve.", data: { url, email } };
+    return {
+      status: "success",
+      message: emailed ? `Invitación reenviada por correo a ${email}. El enlace anterior ya no sirve.` : "Nuevo enlace generado. El anterior ya no sirve.",
+      data: { url, email, emailed },
+    };
   });
 }
 

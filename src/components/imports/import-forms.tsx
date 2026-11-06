@@ -77,6 +77,27 @@ export function NoEmailOption({ batchId, allowNoEmail, disabled }: { batchId: st
   );
 }
 
+/** R7: completar los vehículos ya registrados en lugar de omitirlos. */
+export function UpdateExistingOption({ batchId, updateExisting, duplicates, disabled }: { batchId: string; updateExisting: boolean; duplicates: number; disabled?: boolean }) {
+  const [state, action] = useActionState(setImportOptionsAction, idle);
+  if (!updateExisting && duplicates === 0) return null;
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-3">
+      <input type="hidden" name="batchId" value={batchId} />
+      <input type="hidden" name="updateExisting" value={updateExisting ? "false" : "true"} />
+      <p className="text-sm">
+        {updateExisting
+          ? "Los vehículos que ya tienes se completan: marca y modelo si faltaban, la revisión si es más reciente, los km si son mayores y el correo o teléfono del cliente si estaba vacío. No se sobrescribe nada."
+          : `${duplicates} ${duplicates === 1 ? "vehículo ya existe" : "vehículos ya existen"} en el taller y se omiten.`}
+      </p>
+      <SubmitButton variant="secondary" disabled={disabled} pendingLabel="Revalidando…">
+        {updateExisting ? "Omitir los vehículos existentes" : "Completar los vehículos existentes con estos datos"}
+      </SubmitButton>
+      {state.status === "error" ? <span className="text-sm text-[var(--danger)]">{state.message}</span> : null}
+    </form>
+  );
+}
+
 function IssueList({ issues, tone }: { issues: Issue[]; tone: "error" | "warning" }) {
   if (!issues.length) return null;
   return (

@@ -9,7 +9,7 @@ import { ImportParseError, parseImportFile } from "@/server/modules/imports/pars
 const ctx = (over: Partial<ValidationContext> = {}): ValidationContext => ({
   today: "2026-11-05",
   existingCustomersByEmail: new Map(),
-  existingPlates: new Set(),
+  existingPlates: new Map(),
   allowNoEmail: false,
   ...over,
 });
@@ -105,8 +105,18 @@ describe("validación de filas", () => {
     expect(rows[1].errors).toEqual([{ code: "plate_repeated_in_file", column: "plate", ref: 2 }]);
   });
 
+  it("R7: con «actualizar existentes», la fila completa el vehículo registrado (y sí se valida)", () => {
+    const plates = new Map([["1234BCD", "veh-1"]]);
+    const { rows, summary } = validateRows([row(2, ok)], ctx({ existingPlates: plates, updateExisting: true, existingCustomersByEmail: new Map([["pedro@correo.test", "cli-1"]]) }));
+    expect(rows[0]).toMatchObject({ action: "update_existing_vehicle", matchedVehicleId: "veh-1", matchedCustomerId: null });
+    expect(rows[0].warnings.map((w) => w.code)).toContain("plate_exists_update");
+    expect(summary).toMatchObject({ updatedVehicles: 1, newVehicles: 0, duplicatesSkipped: 0 });
+    const bad = validateRows([row(2, { ...ok, km: "-5" })], ctx({ existingPlates: plates, updateExisting: true }));
+    expect(bad.rows[0].errors.map((e) => e.code)).toContain("km_negative");
+  });
+
   it("vehículo que ya existe en el taller: se omite sin bloquear", () => {
-    const { rows, summary } = validateRows([row(2, { ...ok, email: "" })], ctx({ existingPlates: new Set(["1234BCD"]) }));
+    const { rows, summary } = validateRows([row(2, { ...ok, email: "" })], ctx({ existingPlates: new Map([["1234BCD", "veh-1"]]) }));
     expect(rows[0].action).toBe("skip_duplicate");
     expect(rows[0].errors).toEqual([]);
     expect(summary).toMatchObject({ duplicatesSkipped: 1, newVehicles: 0 });

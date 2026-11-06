@@ -26,6 +26,8 @@ import { ImportParseError, parseImportFile } from "./parse";
 
 export interface ImportOptions {
   allowNoEmail: boolean;
+  /** R7: actualizar los vehículos ya registrados en lugar de omitirlos. */
+  updateExisting?: boolean;
 }
 
 export interface BatchSummary extends ValidationSummary {
@@ -33,7 +35,7 @@ export interface BatchSummary extends ValidationSummary {
   unknownHeaders: string[];
   repeatedFile: boolean;
   options: ImportOptions;
-  committed?: { customers: number; attachedCustomers: number; vehicles: number; maintenanceRecords: number };
+  committed?: { customers: number; attachedCustomers: number; vehicles: number; updatedVehicles?: number; maintenanceRecords: number };
 }
 
 export interface BatchInfo {
@@ -53,7 +55,7 @@ export interface BatchInfo {
 
 const EDITABLE = ["validated", "has_errors"] as const;
 
-async function workshopContext(tx: Tx, orgId: string, branchId: string, allowNoEmail: boolean) {
+async function workshopContext(tx: Tx, orgId: string, branchId: string, allowNoEmail: boolean, updateExisting = false) {
   const [customers, plates, branch] = await Promise.all([
     tx
       .selectFrom("customers")
@@ -64,7 +66,7 @@ async function workshopContext(tx: Tx, orgId: string, branchId: string, allowNoE
       .where("email", "is not", null)
       .orderBy("created_at")
       .execute(),
-    tx.selectFrom("vehicles").select("plate_normalized").where("branch_id", "=", branchId).where("deleted_at", "is", null).execute(),
+    tx.selectFrom("vehicles").select(["id", "plate_normalized"]).where("branch_id", "=", branchId).where("deleted_at", "is", null).execute(),
     tx
       .selectFrom("branches as b")
       .innerJoin("organizations as o", "o.id", "b.organization_id")
@@ -77,8 +79,9 @@ async function workshopContext(tx: Tx, orgId: string, branchId: string, allowNoE
   return {
     today: todayIn(branch?.tz ?? "Europe/Madrid"),
     existingCustomersByEmail: byEmail,
-    existingPlates: new Set(plates.map((p) => p.plate_normalized).filter((p): p is string => Boolean(p))),
+    existingPlates: new Map(plates.filter((p) => p.plate_normalized).map((p) => [p.plate_normalized as string, p.id])),
     allowNoEmail,
+    updateExisting,
   };
 }
 
@@ -92,6 +95,7 @@ function rowData(r: ValidatedRow) {
     warnings: r.warnings,
     action: r.action,
     matched_customer_id: r.matchedCustomerId,
+    matched_vehicle_id: r.matchedVehicleId,
   };
 }
 
@@ -117,7 +121,7 @@ function serializeRaw(raw: RawRow): Record<string, string | number | boolean | n
 }
 
 function batchStatus(summary: ValidationSummary): "validated" | "has_errors" {
-  return summary.errorCount > 0 || summary.newVehicles === 0 ? "has_errors" : "validated";
+  return summary.errorCount > 0 || summary.newVehicles + summary.updatedVehicles === 0 ? "has_errors" : "validated";
 }
 
 // ------------------------------------------------------------------ subida
@@ -151,7 +155,7 @@ export async function uploadImport(ctx: ServiceCtx, input: { branchId: string; f
       kind: parsed.kind,
       unknownHeaders: parsed.unknownHeaders.slice(0, 20),
       repeatedFile: Boolean(repeated),
-      options: { allowNoEmail: false },
+      options: { allowNoEmail: false, updateExisting: false },
     };
     const batch = await tx
       .insertInto("import_batches")
@@ -309,7 +313,7 @@ async function revalidate(
     const raws = new Map<number, RawRow>(stored.map((r) => [r.row_number, r.raw as RawRow]));
     change.rows?.(raws);
 
-    const wctx = await workshopContext(tx, orgId, batch.branch_id, options.allowNoEmail);
+    const wctx = await workshopContext(tx, orgId, batch.branch_id, options.allowNoEmail, options.updateExisting ?? false);
     const { rows, summary } = validateRows(
       [...raws.entries()].map(([rowNumber, raw]) => ({ rowNumber, raw })),
       wctx,
@@ -319,9 +323,11 @@ async function revalidate(
     await sql`
       update import_rows r
          set raw = x.raw, normalized = x.normalized, errors = x.errors, warnings = x.warnings,
-             action = x.action, matched_customer_id = x.matched_customer_id, updated_at = now()
+             action = x.action, matched_customer_id = x.matched_customer_id, matched_vehicle_id = x.matched_vehicle_id,
+             updated_at = now()
         from jsonb_to_recordset(${payload}::jsonb) as x(row_number int, raw jsonb, normalized jsonb, errors jsonb,
-                                                        warnings jsonb, action text, matched_customer_id uuid)
+                                                        warnings jsonb, action text, matched_customer_id uuid,
+                                                        matched_vehicle_id uuid)
        where r.batch_id = ${batchId} and r.row_number = x.row_number
     `.execute(tx);
 

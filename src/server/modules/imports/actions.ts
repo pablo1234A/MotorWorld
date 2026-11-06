@@ -77,8 +77,14 @@ export async function setImportOptionsAction(_prev: ActionState, formData: FormD
   return runAction("import.options", async () => {
     const ctx = await requireOrg();
     assertCanImport(ctx);
-    const input = parseForm(batchId.extend({ allowNoEmail: z.enum(["true", "false"]) }), formData);
-    await imports.setOptions(ctx, input.batchId, { allowNoEmail: input.allowNoEmail === "true" });
+    const input = parseForm(
+      batchId.extend({ allowNoEmail: z.enum(["true", "false"]).optional(), updateExisting: z.enum(["true", "false"]).optional() }),
+      formData,
+    );
+    await imports.setOptions(ctx, input.batchId, {
+      ...(input.allowNoEmail ? { allowNoEmail: input.allowNoEmail === "true" } : {}),
+      ...(input.updateExisting ? { updateExisting: input.updateExisting === "true" } : {}),
+    });
     refresh();
     return { status: "success" };
   });

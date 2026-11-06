@@ -10,6 +10,7 @@ import { unsubscribeToken } from "@/server/email/links";
 import { type EmailPort, sanitizeProviderMessage, type SendResult } from "@/server/email/port";
 import type { SenderConfig } from "@/server/email/provider";
 import { logger } from "@/server/logger";
+import { logoUrl } from "@/server/modules/organizations/profile";
 
 /**
  * Dispatcher de recordatorios (docs/AUTOMATIZACIONES.md §3).
@@ -88,6 +89,7 @@ interface ReminderContext {
   org_slug: string;
   org_active: boolean;
   brand_primary: string | null;
+  logo_path: string | null;
   contact_phone: string | null;
   contact_email: string | null;
   contact_address: string | null;
@@ -117,7 +119,7 @@ async function loadContext(id: string): Promise<ReminderContext | undefined> {
              v.next_service_date::text as next_service_date, v.last_service_date::text as last_service_date,
              c.first_name, c.email::text as email, c.reminders_opt_out as opted_out, (c.deleted_at is not null) as customer_deleted,
              o.trade_name as org_name, o.slug::text as org_slug, (o.status = 'active' and b.status = 'active') as org_active,
-             o.brand_primary,
+             o.brand_primary, o.logo_path,
              coalesce(b.phone, o.phone) as contact_phone,
              coalesce(bs.reply_to_email::text, b.email::text, o.email::text) as contact_email,
              nullif(concat_ws(', ', coalesce(b.address_line1, o.address_line1), coalesce(b.city, o.city)), '') as contact_address,
@@ -248,7 +250,14 @@ async function processOne(id: string, opts: { email: EmailPort; sender: SenderCo
     vehicleModel: c.model,
     plate: c.plate,
     dueDate: c.due_date,
-    workshop: { name: c.org_name, brandColor: c.brand_primary, address: c.contact_address, phone: c.contact_phone, email: c.contact_email },
+    workshop: {
+      name: c.org_name,
+      brandColor: c.brand_primary,
+      address: c.contact_address,
+      phone: c.contact_phone,
+      email: c.contact_email,
+      logoUrl: logoUrl(opts.sender.appUrl, c.organization_id, c.logo_path),
+    },
     ctaHref: cta,
     unsubscribeUrl: unsubscribePage,
   });

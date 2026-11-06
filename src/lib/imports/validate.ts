@@ -26,6 +26,7 @@ export type IssueCode =
   | "plate_unrecognized"
   | "plate_repeated_in_file"
   | "plate_exists"
+  | "plate_exists_update"
   | "last_service_missing"
   | "date_invalid"
   | "date_two_digit_year"
@@ -62,7 +63,13 @@ export interface NormalizedRow {
   customerKey: string;
 }
 
-export type RowAction = "create_customer_and_vehicle" | "attach_to_existing_customer" | "skip_duplicate" | "skip_empty" | "skip_excluded";
+export type RowAction =
+  | "create_customer_and_vehicle"
+  | "attach_to_existing_customer"
+  | "update_existing_vehicle"
+  | "skip_duplicate"
+  | "skip_empty"
+  | "skip_excluded";
 
 export interface ValidatedRow {
   rowNumber: number;
@@ -72,6 +79,8 @@ export interface ValidatedRow {
   warnings: Issue[];
   action: RowAction;
   matchedCustomerId: string | null;
+  /** Vehículo ya registrado que esta fila actualiza (R7). */
+  matchedVehicleId: string | null;
 }
 
 export interface ValidationContext {
@@ -79,10 +88,12 @@ export interface ValidationContext {
   today: string;
   /** Clientes activos de la sucursal por email normalizado. */
   existingCustomersByEmail: ReadonlyMap<string, string>;
-  /** Matrículas normalizadas ya registradas en la sucursal. */
-  existingPlates: ReadonlySet<string>;
+  /** Matrículas normalizadas ya registradas en la sucursal → id del vehículo. */
+  existingPlates: ReadonlyMap<string, string>;
   /** El taller acepta importar filas sin correo (no recibirán avisos). */
   allowNoEmail: boolean;
+  /** R7: las filas de vehículos ya registrados los actualizan en lugar de omitirse. */
+  updateExisting?: boolean;
 }
 
 export interface ValidationSummary {
@@ -93,6 +104,8 @@ export interface ValidationSummary {
   empty: number;
   excluded: number;
   duplicatesSkipped: number;
+  /** Vehículos ya registrados que se actualizarán (R7). */
+  updatedVehicles: number;
   newCustomers: number;
   existingCustomers: number;
   newVehicles: number;
@@ -204,12 +217,12 @@ export function validateRows(rows: ReadonlyArray<{ rowNumber: number; raw: RawRo
     const warnings: Issue[] = [];
 
     if (isEmptyRow(raw)) {
-      out.push({ rowNumber, raw, normalized: null, errors, warnings, action: "skip_empty", matchedCustomerId: null });
+      out.push({ rowNumber, raw, normalized: null, errors, warnings, action: "skip_empty", matchedCustomerId: null, matchedVehicleId: null });
       continue;
     }
     if (isExampleRow(raw)) {
       warnings.push({ code: "example_row" });
-      out.push({ rowNumber, raw, normalized: null, errors, warnings, action: "skip_empty", matchedCustomerId: null });
+      out.push({ rowNumber, raw, normalized: null, errors, warnings, action: "skip_empty", matchedCustomerId: null, matchedVehicleId: null });
       continue;
     }
 
@@ -266,20 +279,28 @@ export function validateRows(rows: ReadonlyArray<{ rowNumber: number; raw: RawRo
     // Duplicados de matrícula: en el archivo y en el taller
     let action: RowAction = "create_customer_and_vehicle";
     let matchedCustomerId: string | null = null;
+    let matchedVehicleId: string | null = null;
     if (plate.valid && !raw.__excluded) {
       const first = firstRowForPlate.get(plate.normalized);
       if (first !== undefined) errors.push({ code: "plate_repeated_in_file", column: "plate", ref: first });
       else firstRowForPlate.set(plate.normalized, rowNumber);
-      if (ctx.existingPlates.has(plate.normalized)) {
-        warnings.push({ code: "plate_exists", column: "plate" });
-        action = "skip_duplicate";
+      const existingVehicle = ctx.existingPlates.get(plate.normalized);
+      if (existingVehicle) {
+        if (ctx.updateExisting) {
+          warnings.push({ code: "plate_exists_update", column: "plate" });
+          action = "update_existing_vehicle";
+          matchedVehicleId = existingVehicle;
+        } else {
+          warnings.push({ code: "plate_exists", column: "plate" });
+          action = "skip_duplicate";
+        }
       }
     }
 
     // Cliente existente (por correo) y coherencia de nombres con el mismo correo
     if (email && EMAIL_RE.test(email) && name) {
       const existing = ctx.existingCustomersByEmail.get(email);
-      if (existing && action !== "skip_duplicate") {
+      if (existing && action === "create_customer_and_vehicle") {
         warnings.push({ code: "customer_exists", column: "email" });
         action = "attach_to_existing_customer";
         matchedCustomerId = existing;
@@ -315,6 +336,7 @@ export function validateRows(rows: ReadonlyArray<{ rowNumber: number; raw: RawRo
       warnings: raw.__excluded ? [] : warnings,
       action,
       matchedCustomerId,
+      matchedVehicleId,
     });
   }
 
@@ -335,6 +357,7 @@ export function summarize(rows: readonly ValidatedRow[]): ValidationSummary {
     empty: rows.filter((r) => r.action === "skip_empty").length,
     excluded: rows.filter((r) => r.action === "skip_excluded").length,
     duplicatesSkipped: rows.filter((r) => r.action === "skip_duplicate").length,
+    updatedVehicles: rows.filter((r) => r.action === "update_existing_vehicle").length,
     newCustomers: newCustomerKeys.size,
     existingCustomers: existing.size,
     newVehicles: importable.length,

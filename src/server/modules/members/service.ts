@@ -198,7 +198,7 @@ export async function revokeInvitation(ctx: MemberCtx, invitationId: string): Pr
 }
 
 /** Anula la invitación y crea otra igual con un enlace nuevo (el anterior deja de valer). */
-export async function renewInvitation(ctx: MemberCtx, invitationId: string): Promise<{ id: string; url: string }> {
+export async function renewInvitation(ctx: MemberCtx, invitationId: string): Promise<{ id: string; url: string; role: Role }> {
   requireAdminCtx(ctx);
   const inv = await withRls(ctx.auth, (tx) =>
     tx
@@ -212,13 +212,14 @@ export async function renewInvitation(ctx: MemberCtx, invitationId: string): Pro
   );
   if (!inv) throw new DomainError("not_found");
   await revokeInvitation(ctx, invitationId);
-  return createInvitation(ctx, {
+  const created = await createInvitation(ctx, {
     email: String(inv.email),
     role: inv.role as Role,
     permissions: inv.permissions.filter(isOperatorPermission),
     branchScope: inv.branch_scope as "all" | "selected",
     branchIds: inv.branch_ids,
   });
+  return { ...created, role: inv.role as Role };
 }
 
 export async function updateMember(ctx: MemberCtx, input: UpdateMemberInput): Promise<void> {

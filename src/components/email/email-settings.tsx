@@ -136,6 +136,7 @@ export function DomainsManager({ domains, configured, readOnly }: { domains: Dom
       {domains.map((d) => (
         <DomainItem key={d.id} domain={d} configured={configured} readOnly={readOnly} />
       ))}
+      {configured ? <DnsGuide /> : null}
       {!configured ? (
         <p className="rounded-lg bg-[var(--surface-2)] px-4 py-3 text-sm">
           La verificación de dominios propios no está disponible todavía en esta instalación de RevisaYa. Mientras tanto, tus avisos salen con
@@ -288,5 +289,34 @@ function SuppressionItem({ row, readOnly }: { row: { email: string; reason: stri
         </form>
       ) : null}
     </li>
+  );
+}
+
+/** Guía paso a paso (PDF §5). Misma información que docs/GUIA-DOMINIO-PROPIO.md. */
+function DnsGuide() {
+  return (
+    <details className="rounded-lg border border-[var(--border)] px-4 py-3 text-sm">
+      <summary className="cursor-pointer font-medium">Cómo añadir los registros DNS, paso a paso</summary>
+      <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 leading-6">
+        <li>Añade tu dominio aquí. Te mostraremos una tabla de registros DNS (tipo, nombre, valor y, a veces, prioridad).</li>
+        <li>
+          Entra en el panel donde tienes contratado el dominio y busca la sección de DNS (suele llamarse «Zona DNS», «Gestionar DNS» o «Registros
+          DNS»).
+        </li>
+        <li>
+          Crea un registro por cada fila con el mismo tipo, nombre y valor. Si tu panel añade el dominio al final del nombre, escribe solo la primera
+          parte (por ejemplo <code>resend._domainkey</code>).
+        </li>
+        <li>
+          Recomendado: si no tienes un registro <code>_dmarc</code>, crea uno TXT con el valor <code>v=DMARC1; p=none; rua=mailto:tu-correo@tudominio.es</code>.
+        </li>
+        <li>Pulsa «Comprobar ahora». Los cambios pueden tardar hasta 72 horas; lo comprobamos solos cada 30 minutos.</li>
+        <li>Cuando esté verificado, elígelo arriba como remitente y envíate una prueba desde Plantillas.</li>
+      </ol>
+      <p className="mt-3 text-[var(--muted)]">
+        Si ya tenías un registro SPF (TXT que empieza por <code>v=spf1</code>) con el mismo nombre, no crees otro: solo puede haber uno y hay que
+        combinarlos. Ante la duda, pide ayuda a quien gestione tu dominio.
+      </p>
+    </details>
   );
 }

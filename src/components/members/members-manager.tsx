@@ -24,7 +24,7 @@ import {
 } from "@/server/modules/members/actions";
 import type { BranchOption, InvitationRow, MemberRow } from "@/server/modules/members/service";
 
-type LinkState = ActionState<{ url: string; email: string }>;
+type LinkState = ActionState<{ url: string; email: string; emailed: boolean }>;
 const idle: ActionState = { status: "idle" };
 const idleLink: LinkState = { status: "idle" };
 
@@ -39,11 +39,20 @@ function StateMessage({ state }: { state: ActionState<unknown> }) {
 function InvitationLink({ state }: { state: LinkState }) {
   const [copied, setCopied] = useState(false);
   if (state.status !== "success" || !state.data) return null;
-  const { url, email } = state.data;
+  const { url, email, emailed } = state.data;
   return (
     <Alert tone="success" title={state.message}>
       <p className="mb-2">
-        Envía este enlace a <strong>{email}</strong>. Caduca en 7 días y solo sirve una vez. Por seguridad no lo volveremos a mostrar.
+        {emailed ? (
+          <>
+            Le ha llegado un correo a <strong>{email}</strong> con el enlace. Si no lo encuentra, puedes enviárselo tú.
+          </>
+        ) : (
+          <>
+            Envía este enlace a <strong>{email}</strong>.
+          </>
+        )}{" "}
+        Caduca en 7 días y solo sirve una vez. Por seguridad no lo volveremos a mostrar.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input readOnly value={url} aria-label="Enlace de invitación" className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />

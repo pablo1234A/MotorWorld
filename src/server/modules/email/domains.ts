@@ -10,7 +10,7 @@ import { logger } from "@/server/logger";
 import type { ServiceCtx } from "@/server/modules/branches/service";
 import { enforceRateLimits, RATE_LIMITS } from "@/server/security/rate-limit";
 
-import { assertOrgAdmin } from "./guard";
+import { assertOrgAdmin } from "@/server/auth/db-guards";
 
 /**
  * Dominio propio del taller (modo `custom_domain` del PDF). Solo se usa como

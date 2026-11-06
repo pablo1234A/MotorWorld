@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { OrgContext } from "@/server/auth/context";
+import { logoUrl } from "@/server/modules/organizations/profile";
 import { signOutAction } from "@/server/modules/auth/actions";
 import { switchOrganizationAction } from "@/server/modules/organizations/actions";
 
@@ -11,11 +12,16 @@ import { switchOrganizationAction } from "@/server/modules/organizations/actions
  */
 export function AppHeader({ ctx }: { ctx: OrgContext }) {
   const admin = ctx.membership.role === "admin";
+  const logo = logoUrl("http://local", ctx.membership.organizationId, ctx.membership.logoPath)?.replace("http://local", "");
   return (
     <header className="border-b border-[var(--border)] bg-[var(--surface)]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
-        <Link href="/app" className="text-lg font-semibold tracking-tight">
-          RevisaYa
+        <Link href="/app" className="flex items-center gap-3 text-lg font-semibold tracking-tight">
+          {logo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- logo servido por la ruta pública del taller
+            <img src={logo} alt={ctx.membership.organizationName} className="h-8 max-w-32 object-contain" />
+          ) : null}
+          <span>RevisaYa</span>
         </Link>
 
         {ctx.memberships.length > 1 ? (

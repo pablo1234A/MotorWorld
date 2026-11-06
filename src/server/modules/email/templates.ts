@@ -14,9 +14,10 @@ import type { EmailPort } from "@/server/email/port";
 import type { SenderConfig } from "@/server/email/provider";
 import { resolveWorkshopSender } from "@/server/email/sender";
 import type { ServiceCtx } from "@/server/modules/branches/service";
+import { logoUrl } from "@/server/modules/organizations/profile";
 import { enforceRateLimits, RATE_LIMITS } from "@/server/security/rate-limit";
 
-import { assertOrgAdmin } from "./guard";
+import { assertOrgAdmin } from "@/server/auth/db-guards";
 
 /**
  * Plantillas de los avisos (editables en todos los planes, P10): asunto,
@@ -104,7 +105,7 @@ export interface PreviewSample {
   vehicleModel: string | null;
   plate: string;
   dueDate: string;
-  workshop: { name: string; brandColor: string | null; address: string | null; phone: string | null; email: string | null };
+  workshop: { name: string; brandColor: string | null; address: string | null; phone: string | null; email: string | null; logoUrl: string | null };
   ctaHref: string | null;
   fromExample: boolean;
 }
@@ -123,6 +124,7 @@ export async function previewSample(ctx: Ctx): Promise<PreviewSample> {
       .select([
         "o.trade_name as name",
         "o.brand_primary as brandColor",
+        "o.logo_path as logoPath",
         "o.timezone",
         sql<string | null>`coalesce(b.phone, o.phone)`.as("phone"),
         sql<string | null>`coalesce(bs.reply_to_email::text, b.email::text, o.email::text)`.as("email"),
@@ -141,7 +143,9 @@ export async function previewSample(ctx: Ctx): Promise<PreviewSample> {
       .orderBy("v.next_service_date")
       .limit(1)
       .executeTakeFirst();
-    const workshop = { name: org.name, brandColor: org.brandColor, address: org.address, phone: org.phone, email: org.email };
+    // Ruta relativa: la vista previa del panel la resuelve en el mismo origen.
+    const logo = logoUrl("http://local", orgId, org.logoPath)?.replace("http://local", "") ?? null;
+    const workshop = { name: org.name, brandColor: org.brandColor, address: org.address, phone: org.phone, email: org.email, logoUrl: logo };
     const ctaHref = org.email ? `mailto:${org.email}` : null;
     return vehicle
       ? { customerFirstName: vehicle.firstName, vehicleMake: vehicle.make, vehicleModel: vehicle.model, plate: vehicle.plate, dueDate: vehicle.due, workshop, ctaHref, fromExample: false }
@@ -188,7 +192,7 @@ export async function sendTestEmail(
     vehicleModel: sample.vehicleModel,
     plate: sample.plate,
     dueDate: sample.dueDate,
-    workshop: sample.workshop,
+    workshop: { ...sample.workshop, logoUrl: sample.workshop.logoUrl ? new URL(sample.workshop.logoUrl, deps.sender.appUrl).toString() : null },
     ctaHref: sample.ctaHref,
     unsubscribeUrl: new URL("/baja/ejemplo", deps.sender.appUrl).toString(),
   });

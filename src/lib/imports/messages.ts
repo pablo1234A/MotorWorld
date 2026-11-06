@@ -14,6 +14,7 @@ const MESSAGES: Record<IssueCode, string> = {
   plate_unrecognized: "Formato de matrícula poco habitual: revísala",
   plate_repeated_in_file: "Matrícula repetida en el archivo",
   plate_exists: "Ese vehículo ya existe en el taller: se omite",
+  plate_exists_update: "Ese vehículo ya existe: se completarán sus datos (marca, modelo, km, revisión más reciente y contacto que falte)",
   last_service_missing: "Falta la fecha de la última revisión",
   date_invalid: "Fecha no válida (usa dd/mm/aaaa)",
   date_two_digit_year: "Escribe el año con 4 cifras (dd/mm/aaaa)",

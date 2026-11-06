@@ -21,7 +21,7 @@ export interface PreviewData {
   vehicleModel: string | null;
   plate: string;
   dueDate: string;
-  workshop: { name: string; brandColor: string | null; address: string | null; phone: string | null; email: string | null };
+  workshop: { name: string; brandColor: string | null; address: string | null; phone: string | null; email: string | null; logoUrl: string | null };
   ctaHref: string | null;
   fromExample: boolean;
 }

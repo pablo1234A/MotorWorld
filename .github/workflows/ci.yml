@@ -61,6 +61,7 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL "$RUNNER_TEMP/supabase.json")"
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY "$RUNNER_TEMP/supabase.json")"
             echo "DATABASE_URL=$(jq -r .DB_URL "$RUNNER_TEMP/supabase.json")"
+            echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY "$RUNNER_TEMP/supabase.json")"
             # Correo real hacia Mailpit (SMTP del contenedor local) y secretos
             # efímeros generados en cada ejecución (no son credenciales reales).
             echo "EMAIL_PROVIDER=smtp"

@@ -47,6 +47,67 @@ beforeAll(async () => {
 afterAll(closePool);
 
 describe("importación", () => {
+  it("R7: completar vehículos existentes sin sobrescribir nada (marca, revisión más reciente, km mayores, contacto vacío)", async () => {
+    const o = await createOrg("business");
+    const ctx = await adminOf(o);
+    const p = plate();
+    const [{ id: customerId }] = await query<{ id: string }>(
+      "insert into customers (organization_id, branch_id, first_name) values ($1, $2, 'Ana') returning id",
+      [o.orgId, o.branchId],
+    );
+    const [{ id: vehicleId }] = await query<{ id: string }>(
+      "insert into vehicles (organization_id, branch_id, customer_id, plate, model) values ($1, $2, $3, $4, 'León') returning id",
+      [o.orgId, o.branchId, customerId, p],
+    );
+    await query(
+      "insert into maintenance_records (organization_id, branch_id, vehicle_id, service_date, km, work_performed) values ($1, $2, $3, '2025-06-01', 50000, 'Revisión')",
+      [o.orgId, o.branchId, vehicleId],
+    );
+
+    const id = await imports.uploadImport(ctx, {
+      branchId: o.branchId,
+      fileName: "actualizar.csv",
+      data: csv([`Ana Ruiz;ana-${randomUUID().slice(0, 6)}@correo.test;611 222 333;${p};Seat;Ibiza;10/03/2026;61.000;`]),
+    });
+    let batch = await imports.getBatch(ctx, id);
+    // Sin la opción, la fila se omite y no hay nada que importar.
+    expect(batch!.summary).toMatchObject({ duplicatesSkipped: 1, newVehicles: 0 });
+    expect(batch!.status).toBe("has_errors");
+
+    await imports.setOptions(ctx, id, { updateExisting: true });
+    batch = await imports.getBatch(ctx, id);
+    expect(batch).toMatchObject({ status: "validated" });
+    expect(batch!.summary).toMatchObject({ updatedVehicles: 1, duplicatesSkipped: 0 });
+
+    const result = await imports.commitImport(ctx, id, false);
+    expect(result).toMatchObject({ vehicles: 0, updatedVehicles: 1, maintenanceRecords: 1 });
+    const [v] = await query<{ make: string; model: string; last: string; km: number }>(
+      "select make, model, last_service_date::text as last, current_km as km from vehicles where id = $1",
+      [vehicleId],
+    );
+    // Marca completada; el modelo que ya había NO se sobrescribe.
+    expect(v).toEqual({ make: "Seat", model: "León", last: "2026-03-10", km: 61000 });
+    const [c] = await query<{ email: string; phone: string; first_name: string }>("select email::text, phone, first_name from customers where id = $1", [customerId]);
+    expect(c.email).toMatch(/^ana-/);
+    expect(c).toMatchObject({ phone: "+34611222333", first_name: "Ana" });
+    expect(await count("vehicles", o.orgId)).toBe(1);
+
+    // Una revisión más antigua que la última no se añade al historial.
+    const old = await imports.uploadImport(ctx, {
+      branchId: o.branchId,
+      fileName: "antiguo.csv",
+      data: csv([`Ana Ruiz;otra@correo.test;;${p};;;01/01/2026;40.000;`]),
+    });
+    await imports.setOptions(ctx, old, { updateExisting: true });
+    expect(await imports.commitImport(ctx, old, false)).toMatchObject({ updatedVehicles: 1, maintenanceRecords: 0 });
+    const [after] = await query<{ km: number; email: string }>(
+      "select v.current_km as km, c.email::text from vehicles v join customers c on c.id = v.customer_id where v.id = $1",
+      [vehicleId],
+    );
+    expect(after.km).toBe(61000);
+    expect(after.email).toMatch(/^ana-/);
+  });
+
   it("staging: valida sin crear ninguna ficha; corregir una fila revalida todo el lote", async () => {
     const p1 = plate();
     const id = await imports.uploadImport(admin, {

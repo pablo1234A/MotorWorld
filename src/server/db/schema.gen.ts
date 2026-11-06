@@ -574,12 +574,14 @@ export interface Quotes {
   created_by: string | null;
   currency: Generated<string>;
   customer_id: string;
+  decided_at: Timestamp | null;
   id: Generated<string>;
   issue_date: Generated<string>;
   notes: string | null;
   number: Generated<string>;
   organization_id: string;
   pdf_path: string | null;
+  sent_at: Timestamp | null;
   sequence: Generated<number>;
   series_year: Generated<number>;
   snapshot: Json | null;
