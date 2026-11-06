@@ -5,7 +5,8 @@ import { useActionState, useId, useMemo, useRef, useState } from "react";
 import { SubmitButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/feedback";
 import { fieldErrors, FormMessage } from "@/components/ui/form-state";
-import { DEFAULT_TEMPLATES, renderReminderEmail, TEMPLATE_VARIABLES, type TemplateContent } from "@/lib/email/reminder-email";
+import { DEFAULT_TEMPLATES, type TemplateContent, variablesFor } from "@/lib/email/reminder-email";
+import { renderSampleEmail } from "@/lib/email/sample";
 import { type EditableTemplateKind, TEMPLATE_KIND_LABELS, VARIABLE_HELP } from "@/lib/validation/email";
 import type { ActionState } from "@/server/actions/result";
 import { restoreTemplateAction, saveTemplateAction } from "@/server/modules/email/actions";
@@ -53,21 +54,7 @@ export function TemplateEditor({
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const uid = useId();
 
-  const preview = useMemo(
-    () =>
-      renderReminderEmail({
-        template: values,
-        customerFirstName: sample.customerFirstName,
-        vehicleMake: sample.vehicleMake,
-        vehicleModel: sample.vehicleModel,
-        plate: sample.plate,
-        dueDate: sample.dueDate,
-        workshop: sample.workshop,
-        ctaHref: sample.ctaHref,
-        unsubscribeUrl: "#",
-      }),
-    [values, sample],
-  );
+  const preview = useMemo(() => renderSampleEmail(kind, values, sample, "#"), [kind, values, sample]);
 
   function insertVariable(v: string) {
     const el = bodyRef.current;
@@ -136,7 +123,7 @@ export function TemplateEditor({
             )}
             {readOnly ? null : (
               <div className="flex flex-wrap gap-2" aria-label="Insertar variable">
-                {TEMPLATE_VARIABLES.map((v) => (
+                {variablesFor(kind).map((v) => (
                   <button
                     key={v}
                     type="button"

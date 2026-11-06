@@ -17,6 +17,14 @@ export interface OutboundEmail {
    */
   idempotencyKey: string;
   tags?: Record<string, string>;
+  /** Adjuntos (PDF de presupuestos, invitación de calendario .ics). */
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
 }
 
 export type SendResult =

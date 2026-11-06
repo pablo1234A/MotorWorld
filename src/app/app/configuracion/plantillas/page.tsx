@@ -30,15 +30,23 @@ export default async function TemplatesPage() {
       {!providerConfigured ? (
         <Alert tone="info">El envío de correo aún no está configurado en RevisaYa: puedes editar y previsualizar, pero no enviar pruebas.</Alert>
       ) : null}
-      {templates.map((t) => (
-        <TemplateEditor
-          key={t.kind}
-          kind={t.kind}
-          initial={{ subject: t.subject, body: t.body, buttonLabel: t.buttonLabel, buttonEnabled: t.buttonEnabled }}
-          custom={t.custom}
-          sample={sample}
-          readOnly={readOnly}
-        />
+      {[
+        ["Avisos de revisión", templates.filter((t) => t.kind.startsWith("reminder_"))],
+        ["Correos de citas", templates.filter((t) => t.kind.startsWith("booking_"))],
+      ].map(([title, list]) => (
+        <div key={title as string} className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold tracking-tight">{title as string}</h2>
+          {(list as typeof templates).map((t) => (
+            <TemplateEditor
+              key={t.kind}
+              kind={t.kind}
+              initial={{ subject: t.subject, body: t.body, buttonLabel: t.buttonLabel, buttonEnabled: t.buttonEnabled }}
+              custom={t.custom}
+              sample={sample}
+              readOnly={readOnly}
+            />
+          ))}
+        </div>
       ))}
     </div>
   );

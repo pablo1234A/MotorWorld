@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Configuración · RevisaYa" };
 const SECTIONS = [
   { href: "/app/configuracion/taller", title: "Datos del taller", text: "Nombre, logo, color, datos fiscales y de contacto." },
   { href: "/app/configuracion/avisos", title: "Avisos", text: "Activar los avisos, días de antelación, horario de envío, festivos y avisos por kilometraje." },
+  { href: "/app/configuracion/citas", title: "Citas", text: "Página para pedir cita, huecos libres y horario." },
   { href: "/app/configuracion/plantillas", title: "Plantillas de correo", text: "El texto que reciben tus clientes, con vista previa y correo de prueba." },
   { href: "/app/configuracion/correo", title: "Correo", text: "Remitente o dominio propio, resumen para el taller y direcciones bloqueadas." },
   { href: "/app/usuarios", title: "Usuarios", text: "Quién puede entrar en el panel y qué puede hacer." },

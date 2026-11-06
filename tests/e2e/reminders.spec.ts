@@ -105,7 +105,9 @@ test.describe("avisos de revisión", () => {
     expect(mail.Subject).toBe("Revisión de tu Seat León en Taller Avisos");
     expect(mail.From.Name).toBe("Taller Avisos");
     expect(mail.Text).toContain(`Hola Nuria, te recordamos que la revisión de tu Seat León (4321 KZB) está prevista para el ${es(due)}.`);
-    expect(mail.HTML).toContain("mailto:recepcion@taller-avisos.test");
+    // El botón «Pedir cita» lleva a la página de citas del taller con el enlace firmado del aviso.
+    const bookingLink = mail.HTML.match(/href="([^"]*\/t\/[^"]+\/cita\?t=[^"]+)"/)?.[1];
+    expect(bookingLink).toBeTruthy();
     const unsubscribe = mail.HTML.match(/href="([^"]*\/baja\/[^"]+)"/)?.[1];
     expect(unsubscribe).toBeTruthy();
 
@@ -117,7 +119,36 @@ test.describe("avisos de revisión", () => {
     const [{ n }] = await db<{ n: number }>("select count(*)::int as n from email_logs where to_email = $1", [customerEmail]);
     expect(n).toBe(1);
 
-    // 5. Baja del cliente desde el enlace del correo.
+    // 5. El cliente pide cita desde el botón del correo (formulario ya relleno).
+    const booking = await page.context().newPage();
+    await booking.goto(bookingLink!.replace(/&amp;/g, "&"));
+    await expect(booking.getByRole("heading", { name: "Pedir cita" })).toBeVisible();
+    await expect(booking.getByText("Cita para tu Seat León (4321 KZB)")).toBeVisible();
+    await expect(booking.getByLabel("Nombre y apellidos")).toHaveValue("Nuria Sanz");
+    await expect(booking.getByLabel("Correo electrónico")).toHaveValue(customerEmail);
+    const wanted = addDays(isoInMadrid(new Date()), 3);
+    await booking.getByLabel("¿Qué día te vendría bien?").fill(wanted);
+    await booking.getByLabel("¿Algo que debamos saber? (opcional)").fill("Mejor por la mañana");
+    await booking.getByRole("button", { name: "Pedir cita" }).click();
+    await expect(booking.getByText("¡Solicitud enviada!")).toBeVisible();
+    await waitForEmail(customerEmail, "Hemos recibido tu solicitud de cita en Taller Avisos");
+    await booking.close();
+
+    // 6. El taller la ve, la confirma con hora y el cliente recibe la cita con el .ics.
+    await page.getByRole("link", { name: "Citas", exact: true }).click();
+    await page.locator('a[href^="/app/citas/"]', { hasText: "Nuria Sanz" }).click();
+    await expect(page.getByText("Solicitud pendiente")).toBeVisible();
+    await expect(page.getByText("Mejor por la mañana")).toBeVisible();
+    await page.getByLabel("Hora").fill("10:30");
+    await page.getByRole("button", { name: "Confirmar cita" }).click();
+    await expect(page.getByText("Cita confirmada. Le hemos enviado un correo al cliente.")).toBeVisible();
+    const confirmed = await waitForEmail(customerEmail, "Cita confirmada en Taller Avisos");
+    expect(confirmed.Subject).toBe(`Cita confirmada en Taller Avisos: ${es(wanted)} a las 10:30`);
+    expect(confirmed.Attachments?.some((a) => a.FileName === "cita.ics")).toBe(true);
+    await page.getByRole("link", { name: "Recordatorios", exact: true }).click();
+    await expect(page.getByRole("row", { name: /4321 KZB/ }).getByRole("link", { name: "Cita pedida" })).toBeVisible();
+
+    // 7. Baja del cliente desde el enlace del correo.
     const customerPage = await page.context().newPage();
     await customerPage.goto(unsubscribe!.replace(/&amp;/g, "&"));
     await expect(customerPage.getByRole("heading", { name: "Avisos de Taller Avisos" })).toBeVisible();

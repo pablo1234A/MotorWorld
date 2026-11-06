@@ -102,7 +102,7 @@ Resúmenes y avisos de consumo salen de `"RevisaYa" <no_reply@EMAIL_SHARED_DOMAI
 
 | Servicio | Uso | Credenciales |
 |---|---|---|
-| Cloudflare Turnstile | captcha en formularios públicos | `TURNSTILE_SITE_KEY` (pública), `TURNSTILE_SECRET_KEY` |
+| Cloudflare Turnstile | captcha en la página pública de citas (implementado en la Fase 7; verificación en servidor con `siteverify`, si Cloudflare no responde se rechaza) | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (pública), `TURNSTILE_SECRET_KEY`. Sin ellas no se exige y siguen activos el límite de peticiones y el campo trampa. |
 | Sentry | errores frontend/backend, con *scrubbing* de datos personales | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN` (CI) |
 | healthchecks.io (o similar) | *dead-man switch* de jobs | URL de ping |
 | Upstash Redis (opcional, escala) | rate limiting distribuido | `UPSTASH_REDIS_REST_URL/TOKEN` |

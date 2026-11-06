@@ -12,13 +12,79 @@
 | 3 — Clientes, vehículos e historial | ✅ Completada (incluidos sus pendientes: purga y papelera) | 2026-11-05 |
 | 4 — Importación Excel/CSV | ✅ Completada | 2026-11-05 |
 | 5 — Motor de automatizaciones | ✅ Completada | 2026-11-06 |
-| 6 — Sistema de correos | ✅ Completada (pendiente de revisión) | 2026-11-06 |
-| 7 — Citas y presupuestos | ⏭ Siguiente | — |
-| 8 — Suscripciones y límites (Stripe TEST) | ⏸ No iniciada | — |
+| 6 — Sistema de correos | ✅ Completada | 2026-11-06 |
+| 7 — Citas y presupuestos | ✅ Completada (pendiente de revisión) | 2026-11-06 |
+| 8 — Suscripciones y límites (Stripe TEST) | ⏭ Siguiente | — |
 | 9 — Google Calendar, informes y API | ⏸ No iniciada | — |
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 7 — Citas y presupuestos (y pendientes de fases anteriores)
+
+### Pendientes de fases anteriores, completados
+- **Datos del taller** (PDF §5: «logo, nombre y colores del taller, en el panel y en los correos»). En `/app/configuracion/taller`:
+  - nombre comercial, razón social y NIF/NIE/CIF validado con su letra o dígito de control (también NIF-IVA de la UE);
+  - dirección, teléfono, correo y color;
+  - **logo**: PNG, JPG o WebP de hasta 1 MB, comprobado por su firma (nunca SVG) y guardado en el almacenamiento privado.
+
+  El logo aparece en el panel, en los correos, en la página de citas y en los PDF.
+- **Invitaciones por correo** (pendiente de la Fase 2): además del enlace copiable, la persona invitada recibe un correo de la plataforma con el enlace.
+- **Importación R7** (pendiente de la Fase 4): opción para completar los vehículos que ya existen sin sobrescribir nada, dentro de la misma confirmación atómica.
+- **Guía paso a paso de los registros DNS** del dominio propio (PDF §5), en la pantalla y en [GUIA-DOMINIO-PROPIO](GUIA-DOMINIO-PROPIO.md).
+
+### Qué se ha construido (Fase 7)
+Detalle en [CITAS-PRESUPUESTOS](CITAS-PRESUPUESTOS.md).
+1. **Página pública para pedir cita** (`/t/<slug>/cita`), con la marca del taller:
+   - desde el botón «Pedir cita» del aviso llega con un enlace firmado: datos rellenos y la solicitud queda vinculada al cliente, al vehículo y al aviso;
+   - también hay un enlace general para la web del taller;
+   - dos modos: el cliente propone un día, o elige un hueco libre (horario semanal en la zona horaria del taller, festivos, antelación mínima y capacidad, sin dobles reservas de la última plaza);
+   - protegida con límite de peticiones, campo trampa y Turnstile si está configurado.
+2. **Solicitud ≠ cita**: el taller confirma (día, hora, duración), cambia la fecha, rechaza o cancela (con mensaje), marca como realizada o «no se presentó», vincula la solicitud a una ficha o la crea, y añade notas. Cada cambio queda en el historial. También hay citas creadas en el taller y un aviso de solicitudes pendientes en el inicio.
+3. **Correos de cita**:
+   - al cliente: recibida, confirmada (con **.ics** para el calendario), cambiada, rechazada y cancelada; las cinco plantillas son editables;
+   - al taller: aviso de cada solicitud nueva.
+4. **Presupuestos con IVA en PDF** (Pro y superiores):
+   - editor con total en vivo e importes exactos (`decimal.js`, verificados por la base de datos);
+   - numeración `P-AAAA-NNNN` sin duplicados;
+   - borrador → emitido (datos congelados y PDF guardado) → aceptado, rechazado o caducado (automático cada noche);
+   - envío por correo con el PDF adjunto, duplicar y descargar.
+5. El panel de **Recordatorios** muestra «Cita pedida» en los avisos que acabaron en una solicitud.
+
+### Pruebas ejecutadas (2026-11-06, desde base de datos nueva, todas en verde)
+
+| Comando | Resultado |
+|---|---|
+| `pnpm db:test` (pgTAP) | **293/293** (nuevo: `130_appointments_quotes.sql`, 18: huecos en hora de Madrid en invierno y en verano, preaviso, festivos, ocupación por solicitudes y citas, una solicitud abierta por aviso, numeración, fechas y caducidad de presupuestos) |
+| `pnpm test` (Vitest) | **256/256** (nuevos: `phase7.test.ts` 20 unitarios; `phase7.test.ts` 9 de integración; R7 en importación, 2) |
+| `pnpm test:e2e` (Playwright) | **24/24**. Nuevos o ampliados: |
+| | — del correo real del aviso → botón «Pedir cita» → solicitud → el taller confirma → el cliente recibe la cita con el `.ics` en Mailpit; |
+| | — citas por huecos; |
+| | — datos fiscales y logo; |
+| | — presupuesto con IVA, borrador, PDF, emitido y enviado con el PDF adjunto por SMTP. |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm audit` | sin errores · 0 vulnerabilidades |
+
+He revisado también, a ojo, el PDF generado (renderizado a imagen) y las pantallas nuevas en móvil (390 px, sin desbordes).
+
+### Errores encontrados y corregidos durante la fase
+- El `.ics` no escapaba el punto y coma (`"\;"` en JavaScript es solo `;`): detectado por un test unitario.
+- La base de datos solo admitía NIF de hasta 12 caracteres y los NIF-IVA de la UE llegan a 14: restricción ampliada (no destructiva).
+- Tras confirmar una cita, emitir un presupuesto o vincular una ficha, el mensaje de éxito se perdía porque el formulario desaparecía: ahora el resultado viaja en la URL (detectado por los E2E).
+- Los selectores de los E2E encontraban enlaces ocultos de la página anterior (Cache Components): se acotan.
+- Tests de pgTAP que dependían de una base de datos vacía (avisos pendientes de otras pruebas): aislados.
+
+### Pendiente (documentado)
+- Sincronización de citas con Google Calendar (Max): **Fase 9**.
+- Probar Resend (dominios, webhooks, adjuntos) con una cuenta real antes de producción: sin credenciales aquí.
+- Turnstile: sin claves en este entorno; probada la lógica, no el widget real de Cloudflare.
+
+### Credenciales que deben configurarse (staging/producción)
+`SUPABASE_SECRET_KEY` (almacenamiento de logos y PDF), y recomendadas `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`.
+
+### Siguiente fase
+**Fase 8 — Suscripciones y límites (Stripe en modo TEST)**: alta del plan y prueba gratuita de 7 días, cambios de plan, portal de cliente, webhooks idempotentes, impagos con gracia y cancelación. **Siempre con claves TEST; no se activan cobros reales.**
 
 ---
 
@@ -59,13 +125,13 @@ Casos críticos reforzados: **7** (un webhook duplicado no duplica operaciones: 
 - Con SMTP (SES) no hay eventos de entrega ni dominios propios (ADR-050).
 - "Plantillas a medida" de Excelencia (P10) es un servicio de diseño de RevisaYa, no una función del producto.
 - Seguimiento de aperturas (P8): desactivado hasta la revisión jurídica.
-- Plantillas de los correos de citas → Fase 7.
+- Plantillas de los correos de citas → hecho en la Fase 7.
 
 ### Credenciales que deben configurarse (staging/producción)
 `RESEND_API_KEY` con `EMAIL_PROVIDER=resend` (dominios propios) y `RESEND_WEBHOOK_SECRET` (webhook de entregas), además de las de la Fase 5.
 
 ### Siguiente fase
-**Fase 7 — Citas y presupuestos**: página pública de citas (destino del botón «Pedir cita»), gestión de citas, presupuestos en PDF.
+Fase 7 (completada, ver arriba).
 
 ---
 
@@ -106,7 +172,7 @@ Casos críticos cubiertos en esta fase:
 
 ### Pendiente (documentado)
 - Webhooks de entrega, rebote y queja; avisos de cuota al 80 %/100 %; editor de plantillas; dominios propios; resúmenes al taller → **Fase 6**.
-- Página de citas como destino del botón "Pedir cita" → Fase 7 (hasta entonces, `mailto:` al taller).
+- Página de citas como destino del botón "Pedir cita" → **hecho en la Fase 7**.
 - En local, el puerto SMTP de Mailpit no se publica con esta versión de la CLI de Supabase: se usa la IP del contenedor (`pnpm mailpit:smtp-url`), también en CI.
 
 ### Credenciales que deben configurarse (staging/producción)
@@ -148,7 +214,7 @@ Flujo completo del PDF (§3) y del encargo (§8) — detalle en [IMPORTACION](IM
 
 ### Pendiente (documentado)
 - Programación automática de avisos para las fichas importadas → Fase 5 (el motor leerá `next_service_date`, ya calculada).
-- Importación con «actualizar los datos de un vehículo existente» en lugar de omitirlo: fuera del alcance actual (IMPORTACION R7).
+- Importación con «actualizar los datos de un vehículo existente» → **hecho el 2026-11-06** (IMPORTACION R7: completar sin sobrescribir).
 
 ### Siguiente fase
 Fase 5 (completada, ver arriba). Las fichas importadas reciben avisos automáticamente (el planificador lee `next_service_date`).
@@ -223,7 +289,7 @@ Caso crítico 2 (operario ≠ administrador) cubierto ahora también de extremo 
 - Los tests pgTAP dependían de una base de datos vacía: ahora acotan sus consultas y usan identificadores únicos.
 
 ### Pendiente (documentado, con su fase)
-- Envío automático por correo de las invitaciones → Fase 6 (hoy el administrador copia el enlace; ADR-024).
+- Envío automático por correo de las invitaciones → **hecho el 2026-11-06** (además del enlace copiable).
 - Aceptación de condiciones y privacidad en el registro → Fase 10 con los textos legales (ADR-025).
 - 2FA para administradores y CSP con nonces → Fase 11.
 - Contratación de plan desde el panel → Fase 8 (Stripe TEST). Hasta entonces una organización nueva queda en solo lectura, y lo indica.

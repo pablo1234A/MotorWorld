@@ -110,6 +110,10 @@ select private.plan_reminders(pg_temp.now_());
 select is((select count(*) from reminders where vehicle_id = tests.id('v_km')), 0::bigint, 'Pro: sin avisos por kilometraje');
 
 -- ------------------------------------------------- reclamación y recuperación
+-- Aislamiento: avisos pendientes de otros talleres (datos de otras pruebas en
+-- una base de datos no vacía) no participan; se revierte al final.
+update reminders set status = 'canceled', skip_reason = 'canceled_by_user'
+ where organization_id not in (tests.id('org'), tests.id('org3')) and status in ('scheduled', 'retrying', 'processing');
 update reminders set status = 'scheduled', scheduled_for = pg_temp.now_() where organization_id = tests.id('org') and status <> 'canceled';
 insert into reminders (organization_id, branch_id, customer_id, vehicle_id, type, due_date, offset_days, scheduled_for)
 select tests.id('org3'), tests.id('br3'), v.customer_id, v.id, 'service_date', date '2027-05-01', 30, pg_temp.now_()

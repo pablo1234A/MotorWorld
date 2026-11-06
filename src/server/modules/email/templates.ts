@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 import { sql } from "kysely";
 
 import { addDays, todayIn } from "@/lib/dates";
-import { DEFAULT_TEMPLATES, renderReminderEmail, type TemplateContent } from "@/lib/email/reminder-email";
+import { DEFAULT_TEMPLATES, type TemplateContent } from "@/lib/email/reminder-email";
+import { renderSampleEmail } from "@/lib/email/sample";
 import { EDITABLE_TEMPLATE_KINDS, type EditableTemplateKind, type TemplateInput } from "@/lib/validation/email";
 import type { OrgContext } from "@/server/auth/context";
 import { withRls, withSystem } from "@/server/db/client";
@@ -185,17 +186,15 @@ export async function sendTestEmail(
   });
   if (!period) throw new DomainError("plan_limit_reached", "emails");
 
-  const rendered = renderReminderEmail({
-    template: { subject: input.subject, body: input.body, buttonLabel: input.buttonLabel, buttonEnabled: input.buttonEnabled },
-    customerFirstName: sample.customerFirstName,
-    vehicleMake: sample.vehicleMake,
-    vehicleModel: sample.vehicleModel,
-    plate: sample.plate,
-    dueDate: sample.dueDate,
-    workshop: { ...sample.workshop, logoUrl: sample.workshop.logoUrl ? new URL(sample.workshop.logoUrl, deps.sender.appUrl).toString() : null },
-    ctaHref: sample.ctaHref,
-    unsubscribeUrl: new URL("/baja/ejemplo", deps.sender.appUrl).toString(),
-  });
+  const rendered = renderSampleEmail(
+    input.kind,
+    { subject: input.subject, body: input.body, buttonLabel: input.buttonLabel, buttonEnabled: input.buttonEnabled },
+    {
+      ...sample,
+      workshop: { ...sample.workshop, logoUrl: sample.workshop.logoUrl ? new URL(sample.workshop.logoUrl, deps.sender.appUrl).toString() : null },
+    },
+    new URL("/baja/ejemplo", deps.sender.appUrl).toString(),
+  );
   const subject = `[Prueba] ${rendered.subject}`.slice(0, 200);
   const result = await deps.email
     .send({

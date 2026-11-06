@@ -79,7 +79,9 @@ describe("validación de plantillas", () => {
     expect(r.error?.issues[0].message).toContain("{precio}");
     expect(templateSchema.safeParse({ ...ok, subject: "Hola\nBcc: x@y.z" }).success).toBe(false);
     expect(templateSchema.safeParse({ ...ok, body: "   " }).success).toBe(false);
-    expect(templateSchema.safeParse({ ...ok, kind: "booking_confirmed" }).success).toBe(false);
+    expect(templateSchema.safeParse({ ...ok, kind: "factura" }).success).toBe(false);
+    // Desde la Fase 7 los correos de citas también son editables (con sus variables).
+    expect(templateSchema.safeParse({ ...ok, kind: "booking_confirmed" }).success).toBe(true);
     expect(templateSchema.safeParse({ ...ok, buttonLabel: "x".repeat(41) }).success).toBe(false);
   });
 });

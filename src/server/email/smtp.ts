@@ -37,6 +37,7 @@ export class SmtpEmailAdapter implements EmailPort {
         html: email.html,
         text: email.text,
         headers: { ...email.headers, "X-RevisaYa-Idempotency-Key": email.idempotencyKey },
+        attachments: email.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
       });
       if (info.rejected?.length) {
         return { kind: "permanent", code: "smtp_rejected", message: "El servidor rechazó el destinatario" };

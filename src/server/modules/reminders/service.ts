@@ -170,6 +170,8 @@ export interface ReminderRow {
   customerId: string;
   customerName: string;
   branchName: string;
+  /** Cita pedida desde el botón de este aviso (si la hay). */
+  appointmentId: string | null;
 }
 
 export interface ReminderFilters {
@@ -222,6 +224,7 @@ export async function listReminders(ctx: Ctx, f: ReminderFilters): Promise<Page<
         "c.id as customerId",
         sql<string>`trim(c.first_name || ' ' || c.last_name)`.as("customerName"),
         "b.name as branchName",
+        sql<string | null>`(select ap.id from appointments ap where ap.reminder_id = r.id order by ap.created_at desc limit 1)`.as("appointmentId"),
         sql<string>`count(*) over ()`.as("total"),
       ])
       // Pendientes: lo próximo primero. Resto: lo más reciente primero.

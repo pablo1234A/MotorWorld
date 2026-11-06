@@ -47,7 +47,13 @@ sequenceDiagram
 - **R4 Correo vacío** (propuesta, P3): error bloqueante por defecto, como dice el PDF ("correo vacío" aparece en la revisión de errores). El taller puede marcar explícitamente esas filas como "importar sin correo (no recibirá avisos)", y entonces pasan a aviso. Nunca se importa a medias sin esa decisión explícita.
 - **R5 Matrícula**: se acepta el formato actual (`0000BBB`, sin vocales ni Ñ/Q), el provincial antiguo (`M1234AB`, `B1234A`), ciclomotor (`C1234BBB`) y otros (históricos, temporales, extranjeros) entre 4 y 10 caracteres alfanuméricos **con aviso** ("formato no reconocido, revísalo"). Caracteres no alfanuméricos → error.
 - **R6 Duplicados dentro del archivo**: misma matrícula dos veces → error en la segunda fila.
-- **R7 Duplicados contra la BD**: matrícula existente en la sucursal → la fila se marca `skip_duplicate` (aviso) con opción de "actualizar datos del vehículo existente" en una versión posterior; por defecto no se sobrescribe nada.
+- **R7 Duplicados contra la BD**: matrícula existente en la sucursal → la fila se marca `skip_duplicate` (aviso) y no se importa. **Implementado (2026-11-06)**: con la opción del lote «Completar los vehículos existentes con estos datos», la fila pasa a `update_existing_vehicle` y, en la misma confirmación atómica, **completa** el vehículo **sin sobrescribir nada**:
+  - marca y modelo, solo si faltaban;
+  - la revisión entra en el historial solo si es más reciente que la última (y recalcula la próxima);
+  - los kilómetros, solo si son mayores (lectura de tipo `import`);
+  - el correo y el teléfono del propietario, solo si los tenía vacíos.
+
+  Esas filas sí se validan (sus errores bloquean).
 - **R8 Agrupación de clientes**: filas con el mismo email normalizado (o, sin email, mismo nombre + teléfono) se agrupan en **un único cliente con varios vehículos**. Si el email ya existe en la sucursal se vincula al cliente existente (aviso visible).
 - **R9 Límites del plan**: antes de confirmar se calcula si los clientes y vehículos nuevos superan el límite; si es así, error global con el exceso exacto. La BD lo vuelve a comprobar dentro de la transacción.
 - **R10 Doble importación**: si el `sha256` del archivo coincide con una importación ya confirmada de la sucursal, se avisa y se exige confirmación explícita; en cualquier caso R7 impide crear vehículos duplicados.
@@ -81,7 +87,7 @@ Descargable en CSV y XLSX con las columnas originales + `fila`, `errores`, `avis
 | Archivo original | **No se guarda** en Storage: solo las filas en staging (`import_rows`), que se purgan a los 7 días (`private.purge_expired_data`). Menos copias de datos personales. |
 | R4 correo vacío | Opción **por importación**: «Importar también las filas sin correo» convierte el error en aviso para todas las filas sin correo (más simple que marcar fila a fila). |
 | Excluir filas | Una fila excluida no se importa ni bloquea la confirmación (`skip_excluded`). |
-| R7 vehículo existente | La fila se omite (`skip_duplicate`) y sus otros errores no bloquean, porque no se importa. |
+| R7 vehículo existente | La fila se omite (`skip_duplicate`) y sus otros errores no bloquean, porque no se importa. Con «Completar los vehículos existentes» se valida y completa el vehículo (ver R7). |
 | Separador CSV | Detección propia en la línea de cabecera (la automática de PapaParse fallaba con pocas columnas y líneas vacías al final). |
 | Confirmación | `app.commit_import` (SECURITY INVOKER: con RLS, permisos y triggers de límites del usuario). Bloquea el lote (`FOR UPDATE`), comprueba estado, errores, caducidad y archivo repetido, e inserta clientes, vehículos y la última revisión de cada vehículo con **una sentencia por tabla**. Cualquier fallo revierte todo. 2.000 filas: ~0,1 s de staging y ~1,2 s de confirmación en local. |
 | Límites del plan | Comprobación previa visible en la vista previa (cuántos caben) y comprobación definitiva de la BD al confirmar. |

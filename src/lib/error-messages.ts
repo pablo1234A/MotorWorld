@@ -34,6 +34,7 @@ const CONFLICT_REASON: Record<string, string> = {
   organization_members_unique: "Esa persona ya forma parte del taller.",
   vehicles_plate_unique: "Ya existe un vehículo con esa matrícula en este taller.",
   sending_domains_unique: "Ese dominio ya está añadido.",
+  appointments_open_per_reminder: "Ya tienes una solicitud de cita pendiente para este aviso. El taller te contestará pronto.",
   email_suppressions_pkey: "Esa dirección ya está bloqueada.",
 };
 
@@ -48,6 +49,14 @@ const VALIDATION_REASON: Record<string, string> = {
   logo_empty: "El archivo del logo está vacío.",
   logo_too_large: "El logo no puede superar 1 MB.",
   logo_type: "El logo debe ser una imagen PNG, JPG o WebP.",
+  quote_not_editable: "Este presupuesto ya está emitido y no se puede modificar. Duplícalo para hacer otro.",
+  quote_not_issued: "Emite el presupuesto antes de enviarlo.",
+  slot_unavailable: "Ese hueco ya no está libre. Elige otro, por favor.",
+  booking_closed: "Este taller no acepta citas en línea ahora mismo. Llámale o escríbele directamente.",
+  booking_date: "Elige un día a partir de mañana (y dentro de los próximos 3 meses).",
+  booking_slot_required: "Elige uno de los huecos disponibles.",
+  bot_check: "No hemos podido comprobar que no eres un robot. Vuelve a intentarlo.",
+  appointments_open_per_reminder: "Ya tienes una solicitud de cita pendiente para este aviso. El taller te contestará pronto.",
   domain_rejected: "El proveedor de correo no acepta ese dominio. Comprueba que esté bien escrito y que sea tuyo.",
   too_many_domains: "Puedes tener como máximo 3 dominios. Elimina uno que no uses.",
   sending_domain_not_verified: "El dominio todavía no está verificado. Comprueba los registros DNS y vuelve a intentarlo.",

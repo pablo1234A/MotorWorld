@@ -64,3 +64,19 @@ export function formatDateTime(value: Date | string | null | undefined, timeZone
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   return `${get("day")}/${get("month")}/${get("year")}, ${get("hour")}:${get("minute")}`;
 }
+
+/** Día (AAAA-MM-DD) y hora (HH:MM) locales de un instante en una zona horaria. */
+export function localParts(value: Date | string, timeZone = DEFAULT_TIMEZONE): { date: string; time: string } {
+  const d = typeof value === "string" ? new Date(value) : value;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
+}

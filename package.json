@@ -21,8 +21,10 @@
     "mailpit:smtp-url": "echo smtp://$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' supabase_inbucket_revisaya):1025"
   },
   "dependencies": {
+    "@react-pdf/renderer": "4.9.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+    "decimal.js": "10.6.0",
     "exceljs": "^4.4.0",
     "kysely": "^0.29.8",
     "next": "16.4.5",

@@ -1,8 +1,9 @@
 import { formatDate } from "@/lib/dates";
 
 /**
- * Correo de recordatorio: plantilla (por defecto o del taller), variables y
- * maquetación con la marca del taller. Función pura (se prueba sin red).
+ * Correos del taller a sus clientes: avisos de revisión (Fase 5) y correos de
+ * citas (Fase 7). Plantilla (por defecto o del taller), variables y
+ * maquetación con la marca del taller. Funciones puras (se prueban sin red).
  *
  * Seguridad: el texto del taller y los datos del cliente se ESCAPAN antes de
  * insertarse en el HTML (sin XSS) y el asunto se limpia de saltos de línea
@@ -10,6 +11,8 @@ import { formatDate } from "@/lib/dates";
  */
 
 export type ReminderKind = "reminder_service_date" | "reminder_service_km";
+export type BookingKind = "booking_received" | "booking_confirmed" | "booking_rejected" | "booking_rescheduled" | "booking_canceled";
+export type EmailKind = ReminderKind | BookingKind;
 
 export interface TemplateContent {
   subject: string;
@@ -18,8 +21,9 @@ export interface TemplateContent {
   buttonEnabled: boolean;
 }
 
-/** Plantillas originales (PDF §8). "Restaurar plantilla" vuelve a estas. */
-export const DEFAULT_TEMPLATES: Record<ReminderKind, TemplateContent> = {
+/** Plantillas originales. "Restaurar plantilla" vuelve a estas. */
+export const DEFAULT_TEMPLATES: Record<EmailKind, TemplateContent> = {
+  // Texto del PDF (§8).
   reminder_service_date: {
     subject: "Revisión de tu {modelo} en {taller}",
     body:
@@ -36,10 +40,67 @@ export const DEFAULT_TEMPLATES: Record<ReminderKind, TemplateContent> = {
     buttonLabel: "Pedir cita",
     buttonEnabled: true,
   },
+  booking_received: {
+    subject: "Hemos recibido tu solicitud de cita en {taller}",
+    body:
+      "Hola {nombre}, hemos recibido tu solicitud de cita para tu {modelo} ({matricula}).\n\n" +
+      "Todavía no es una cita confirmada: te escribiremos con el día y la hora en cuanto lo revisemos.\n\n{taller}.",
+    buttonLabel: "Pedir otra cita",
+    buttonEnabled: false,
+  },
+  booking_confirmed: {
+    subject: "Cita confirmada en {taller}: {fecha_cita} a las {hora_cita}",
+    body:
+      "Hola {nombre}, tu cita para el {modelo} ({matricula}) está confirmada el {fecha_cita} a las {hora_cita}.\n\n" +
+      "Te adjuntamos la cita para que la añadas a tu calendario. Si no puedes venir, responde a este correo.\n\n{taller}.",
+    buttonLabel: "Pedir otra cita",
+    buttonEnabled: false,
+  },
+  booking_rejected: {
+    subject: "Sobre tu solicitud de cita en {taller}",
+    body:
+      "Hola {nombre}, lo sentimos: no podemos atenderte en la fecha que pediste para tu {modelo} ({matricula}).\n\n" +
+      "Responde a este correo o pide otra cita con el botón de abajo y buscaremos otro hueco.\n\n{taller}.",
+    buttonLabel: "Pedir otra cita",
+    buttonEnabled: true,
+  },
+  booking_rescheduled: {
+    subject: "Hemos cambiado tu cita en {taller}: {fecha_cita} a las {hora_cita}",
+    body:
+      "Hola {nombre}, tu cita para el {modelo} ({matricula}) ha cambiado: ahora es el {fecha_cita} a las {hora_cita}.\n\n" +
+      "Te adjuntamos la cita actualizada. Si no te viene bien, responde a este correo.\n\n{taller}.",
+    buttonLabel: "Pedir otra cita",
+    buttonEnabled: false,
+  },
+  booking_canceled: {
+    subject: "Tu cita en {taller} se ha cancelado",
+    body:
+      "Hola {nombre}, tu cita para el {modelo} ({matricula}) del {fecha_cita} se ha cancelado.\n\n" +
+      "Si quieres otra fecha, responde a este correo o pide una nueva cita con el botón de abajo.\n\n{taller}.",
+    buttonLabel: "Pedir otra cita",
+    buttonEnabled: true,
+  },
 };
 
+/** Variables de los avisos (lista cerrada del PDF + {taller}). */
 export const TEMPLATE_VARIABLES = ["nombre", "modelo", "matricula", "fecha_revision", "taller"] as const;
 export type TemplateVariable = (typeof TEMPLATE_VARIABLES)[number];
+
+export const BOOKING_VARIABLES = ["nombre", "modelo", "matricula", "fecha_cita", "hora_cita", "taller"] as const;
+
+export function variablesFor(kind: EmailKind): readonly string[] {
+  return kind.startsWith("reminder_") ? TEMPLATE_VARIABLES : BOOKING_VARIABLES;
+}
+
+export interface WorkshopBrand {
+  name: string;
+  brandColor?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  /** URL pública absoluta del logo (o relativa en la vista previa del panel). */
+  logoUrl?: string | null;
+}
 
 export interface ReminderEmailInput {
   template: TemplateContent;
@@ -48,16 +109,8 @@ export interface ReminderEmailInput {
   vehicleModel: string | null;
   plate: string;
   dueDate: string; // AAAA-MM-DD
-  workshop: {
-    name: string;
-    brandColor?: string | null;
-    address?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    /** URL pública absoluta del logo (o relativa en la vista previa del panel). */
-    logoUrl?: string | null;
-  };
-  /** Destino del botón (mailto: o página de cita). Sin destino, no hay botón. */
+  workshop: WorkshopBrand;
+  /** Destino del botón (página de cita o mailto:). Sin destino, no hay botón. */
   ctaHref?: string | null;
   unsubscribeUrl: string;
 }
@@ -72,15 +125,8 @@ export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-function variables(input: ReminderEmailInput): Record<TemplateVariable, string> {
-  const vehicle = [input.vehicleMake, input.vehicleModel].filter(Boolean).join(" ").trim();
-  return {
-    nombre: input.customerFirstName.trim() || "cliente",
-    modelo: vehicle || "vehículo",
-    matricula: input.plate,
-    fecha_revision: formatDate(input.dueDate),
-    taller: input.workshop.name,
-  };
+export function vehicleLabel(make: string | null, model: string | null): string {
+  return [make, model].filter(Boolean).join(" ").trim() || "vehículo";
 }
 
 function fill(text: string, vars: Record<string, string>, transform: (v: string) => string = (v) => v): string {
@@ -88,14 +134,26 @@ function fill(text: string, vars: Record<string, string>, transform: (v: string)
 }
 
 /** Variables desconocidas en un texto de plantilla (para validarla al guardar). */
-export function unknownVariables(text: string): string[] {
-  return [...text.matchAll(/\{([a-z_]+)\}/g)].map((m) => m[1]).filter((k) => !(TEMPLATE_VARIABLES as readonly string[]).includes(k));
+export function unknownVariables(text: string, kind: EmailKind = "reminder_service_date"): string[] {
+  const allowed = variablesFor(kind);
+  return [...text.matchAll(/\{([a-z_]+)\}/g)].map((m) => m[1]).filter((k) => !allowed.includes(k));
 }
 
 const SAFE_COLOR = /^#[0-9a-fA-F]{6}$/;
 
-export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
-  const vars = variables(input);
+export interface WorkshopEmailInput {
+  template: TemplateContent;
+  vars: Record<string, string>;
+  workshop: WorkshopBrand;
+  ctaHref?: string | null;
+  /** Avisos: enlace de baja. Correos de una cita (transaccionales): sin él. */
+  unsubscribeUrl?: string | null;
+  /** Mensaje opcional del taller (motivo de un rechazo o una cancelación). */
+  note?: string | null;
+}
+
+export function renderWorkshopEmail(input: WorkshopEmailInput): RenderedEmail {
+  const vars = input.vars;
   const subject = fill(input.template.subject, vars)
     .replace(/[\r\n\t\u0000-\u001f]+/g, " ")
     .trim()
@@ -106,6 +164,7 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .filter(Boolean);
+  const note = input.note?.trim() || null;
   const color = input.workshop.brandColor && SAFE_COLOR.test(input.workshop.brandColor) ? input.workshop.brandColor : "#1f4fd8";
   const name = escapeHtml(input.workshop.name);
   const showButton = input.template.buttonEnabled && Boolean(input.ctaHref);
@@ -114,6 +173,12 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
   const htmlParagraphs = paragraphs
     .map((p) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${fill(escapeHtml(p), vars, escapeHtml).replace(/\n/g, "<br>")}</p>`)
     .join("");
+  const htmlNote = note
+    ? `<p style="margin:0 0 16px;padding:12px 16px;border-left:3px solid ${color};background:#f4f5f7;font-size:14px;line-height:1.6">${escapeHtml(note).replace(/\n/g, "<br>")}</p>`
+    : "";
+  const footer = input.unsubscribeUrl
+    ? `Recibes este aviso porque tu vehículo se revisa en ${name}. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:#5b616e">No quiero recibir más avisos</a>.`
+    : `Recibes este correo por tu cita en ${name}.`;
 
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(subject)}</title></head>
@@ -126,6 +191,7 @@ ${
 }
 <tr><td style="padding:28px">
 ${htmlParagraphs}
+${htmlNote}
 ${
   showButton
     ? `<p style="margin:24px 0"><a href="${escapeHtml(input.ctaHref!)}" style="display:inline-block;background:${color};color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">${escapeHtml(fill(input.template.buttonLabel, vars))}</a></p>`
@@ -134,19 +200,36 @@ ${
 ${contact.length ? `<p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#5b616e">${contact.map(escapeHtml).join("<br>")}</p>` : ""}
 </td></tr>
 <tr><td style="padding:16px 28px;background:#f4f5f7;font-size:12px;line-height:1.6;color:#5b616e">
-Recibes este aviso porque tu vehículo se revisa en ${name}. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:#5b616e">No quiero recibir más avisos</a>.
+${footer}
 </td></tr>
 </table>
 </body></html>`;
 
   const text = [
     ...paragraphs.map((p) => fill(p, vars)),
+    note,
     showButton ? `${fill(input.template.buttonLabel, vars)}: ${input.ctaHref}` : null,
     contact.length ? contact.join("\n") : null,
-    `Para no recibir más avisos: ${input.unsubscribeUrl}`,
+    input.unsubscribeUrl ? `Para no recibir más avisos: ${input.unsubscribeUrl}` : null,
   ]
     .filter(Boolean)
     .join("\n\n");
 
   return { subject, html, text };
+}
+
+export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
+  return renderWorkshopEmail({
+    template: input.template,
+    vars: {
+      nombre: input.customerFirstName.trim() || "cliente",
+      modelo: vehicleLabel(input.vehicleMake, input.vehicleModel),
+      matricula: input.plate,
+      fecha_revision: formatDate(input.dueDate),
+      taller: input.workshop.name,
+    },
+    workshop: input.workshop,
+    ctaHref: input.ctaHref,
+    unsubscribeUrl: input.unsubscribeUrl,
+  });
 }

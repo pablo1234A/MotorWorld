@@ -278,3 +278,52 @@ begin
 end;
 $$;
 
+
+-- -----------------------------------------------------------------------------
+-- Huecos disponibles para pedir cita (modo "slots"): reglas semanales de la
+-- sucursal, en SU zona horaria, sin festivos, con el preaviso mínimo y la
+-- ocupación (solicitudes con hueco + citas confirmadas) de cada hueco.
+-- -----------------------------------------------------------------------------
+create function app.available_slots(p_branch uuid, p_from date, p_days int default 21, p_now timestamptz default now())
+returns table (slot_start timestamptz, slot_end timestamptz, capacity int, taken int)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with cfg as (
+    select bs.slot_minutes::int as slot_minutes, bs.booking_notice_hours::int as notice_hours,
+           coalesce(b.timezone, o.timezone) as tz
+      from public.branch_settings bs
+      join public.branches b on b.id = bs.branch_id and b.status = 'active'
+      join public.organizations o on o.id = b.organization_id and o.status = 'active'
+     where bs.branch_id = p_branch and bs.booking_enabled and bs.booking_mode = 'slots'
+  ),
+  days as (
+    select (p_from + i)::date as d from generate_series(0, least(greatest(p_days, 1), 60) - 1) as i
+  ),
+  starts as (
+    select distinct on (st) st, r.capacity::int as capacity, c.slot_minutes, c.notice_hours
+      from cfg c
+      cross join days dd
+      join public.availability_rules r on r.branch_id = p_branch and r.weekday = extract(isodow from dd.d)
+      cross join lateral generate_series(dd.d + r.start_time,
+                                         dd.d + r.end_time - make_interval(mins => c.slot_minutes),
+                                         make_interval(mins => c.slot_minutes)) as g(local_start)
+      cross join lateral (select g.local_start at time zone c.tz as st) z
+     where not exists (select 1 from public.blackout_dates bd where bd.branch_id = p_branch and bd.day = dd.d)
+     order by st, r.capacity desc
+  )
+  select s.st, s.st + make_interval(mins => s.slot_minutes), s.capacity,
+         app.slot_load(p_branch, s.st, s.st + make_interval(mins => s.slot_minutes))
+    from starts s
+   where s.st >= p_now + make_interval(hours => s.notice_hours)
+   order by s.st;
+$$;
+revoke all on function app.available_slots(uuid, date, int, timestamptz) from public, anon;
+grant execute on function app.available_slots(uuid, date, int, timestamptz) to authenticated, service_role;
+
+-- NIF-IVA intracomunitarios de hasta 14 caracteres (p. ej. Francia: 13). Solo
+-- amplía lo admitido; ningún dato existente deja de cumplir la regla.
+alter table public.organizations drop constraint organizations_tax_id_check,
+  add constraint organizations_tax_id_check check (tax_id ~ '^[A-Z0-9]{8,14}$');

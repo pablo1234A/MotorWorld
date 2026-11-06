@@ -5,6 +5,8 @@ import { Alert, Card } from "@/components/ui/feedback";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { PLANS } from "@/lib/plans";
 import { requireOrgPage } from "@/server/auth/guards";
+import { can } from "@/server/auth/context";
+import { pendingRequestsCount } from "@/server/modules/appointments/service";
 import { getDashboardSummary } from "@/server/modules/dashboard/service";
 
 export const metadata: Metadata = { title: "Inicio · RevisaYa" };
@@ -24,7 +26,8 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", { dateStyle: "long", timeZone: 
 
 export default async function DashboardPage() {
   const ctx = await requireOrgPage("/app");
-  const summary = await getDashboardSummary(ctx);
+  const canAppointments = can(ctx, "appointments.manage");
+  const [summary, pendingRequests] = await Promise.all([getDashboardSummary(ctx), canAppointments ? pendingRequestsCount(ctx) : Promise.resolve(0)]);
   const plan = ctx.subscription.planCode ? PLANS[ctx.subscription.planCode] : null;
   const limit = (n: number | null | undefined) => (n == null ? "ilimitados" : n.toLocaleString("es-ES"));
 
@@ -57,6 +60,15 @@ export default async function DashboardPage() {
           ) : null}
         </Card>
       )}
+
+      {pendingRequests ? (
+        <Alert tone="info" title={`${pendingRequests} ${pendingRequests === 1 ? "cliente ha pedido cita" : "clientes han pedido cita"}`}>
+          <Link href="/app/citas?estado=solicitudes" className="font-medium text-[var(--accent)]">
+            Revisar las solicitudes
+          </Link>{" "}
+          y confírmalas o recházalas.
+        </Alert>
+      ) : null}
 
       <section aria-labelledby="revisiones" className="flex flex-col gap-3">
         <h2 id="revisiones" className="text-lg font-semibold">Revisiones</h2>

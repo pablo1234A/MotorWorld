@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ReadOnlyNotice } from "@/components/app/read-only-notice";
+import { buttonClass } from "@/components/ui/button-styles";
 import { Alert, Card } from "@/components/ui/feedback";
 import { NextServiceBadge, VehicleStatusBadge } from "@/components/workshop/badges";
 import { DeleteRecordButton, MaintenanceForm } from "@/components/workshop/maintenance-form";
@@ -11,6 +12,7 @@ import { formatDate, formatKm, todayIn } from "@/lib/dates";
 import { param } from "@/lib/pagination";
 import { formatPhone } from "@/lib/phone";
 import { capabilities } from "@/server/auth/capabilities";
+import { can } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
 import { getVehicle } from "@/server/modules/vehicles/service";
 
@@ -48,6 +50,16 @@ export default async function VehiclePage({ params, searchParams }: Props) {
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-2xl font-semibold tracking-tight">{v.plate}</h1>
           <VehicleStatusBadge status={v.status} />
+          {v.status === "active" && ctx.subscription.active && can(ctx, "appointments.manage") ? (
+            <Link href={`/app/citas/nueva?cliente=${v.customer.id}&vehiculo=${v.id}`} className={buttonClass("secondary", "ml-auto")}>
+              Nueva cita
+            </Link>
+          ) : null}
+          {ctx.subscription.active && can(ctx, "quotes.manage") ? (
+            <Link href={`/app/presupuestos/nuevo?cliente=${v.customer.id}&vehiculo=${v.id}`} className={buttonClass("ghost")}>
+              Nuevo presupuesto
+            </Link>
+          ) : null}
         </div>
         <p className="text-sm text-[var(--muted)]">
           {title || "Marca y modelo sin indicar"} · propietario{" "}

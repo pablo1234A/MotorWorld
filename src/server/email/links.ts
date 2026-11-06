@@ -26,3 +26,21 @@ export function verifyUnsubscribeToken(token: string, secret: string): string | 
   const given = Buffer.from(sig);
   return expected.length === given.length && timingSafeEqual(expected, given) ? id : null;
 }
+
+/**
+ * Enlace "Pedir cita" de un aviso: identifica el recordatorio (y con él el
+ * cliente, el vehículo y la sucursal) sin exponer datos. Es determinista: un
+ * reintento del envío genera el mismo enlace. La caducidad la decide la
+ * página (fecha de la revisión + 60 días).
+ */
+export function bookingToken(reminderId: string, secret: string): string {
+  return `${reminderId}.${sign("booking", reminderId, secret)}`;
+}
+
+export function verifyBookingToken(token: string, secret: string): string | null {
+  const [id, sig, extra] = token.split(".");
+  if (extra !== undefined || !id || !sig || !UUID.test(id)) return null;
+  const expected = Buffer.from(sign("booking", id, secret));
+  const given = Buffer.from(sig);
+  return expected.length === given.length && timingSafeEqual(expected, given) ? id : null;
+}

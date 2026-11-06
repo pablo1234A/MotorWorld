@@ -289,6 +289,7 @@ Ninguna política confía en un `organization_id` enviado por el cliente: todas 
 | `1400_hardening` | Revoca privilegios a `anon` y **falla la migración** si alguna tabla queda sin RLS forzada, si `anon` tiene acceso a algo más que `plans`, si `private` es accesible o si una función SECURITY DEFINER no fija `search_path`. |
 | `20261106000100_reminder_engine` | Fase 5: `reminders.cycle_anchor`, `private.is_send_day`, `private.next_send_slot`, `private.plan_reminders`, `private.claim_reminders`, `private.release_expired_reminder_leases` (solo `service_role`), `pg_cron` del planificador (hora, minuto 5) y de la recuperación (5 min); `smtp` admitido en `email_logs`/`email_events`. |
 | `20261107000100_email_system` | Fase 6: `private.apply_email_event` (eventos idempotentes, orden de estados, supresión), `app.requeue_skipped_reminders` + trigger en `subscriptions`, `usage_counters.alert_80_sent_at`/`alert_100_sent_at`, `private.digest_runs`, tipos `digest`/`usage_alert` en `email_logs`, slugs reservados. Todo aditivo. |
+| `20261108000100_appointments_quotes` | Fase 7: tipos de correo (`invitation`, `booking_request`, `booking_canceled`, `quote`), solicitud abierta única por aviso, `app.slot_load` y `app.available_slots` (huecos en la zona horaria de la sucursal), `quotes.sent_at`/`decided_at` con sello automático, `private.expire_quotes` (`pg_cron` diario), NIF-IVA de hasta 14 caracteres. Importación R7 (`update_existing_vehicle` en `app.commit_import`, lecturas de km `import`). Todo aditivo. |
 
 Ajustes respecto al diseño de la Fase 0:
 

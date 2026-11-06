@@ -72,7 +72,7 @@ mientras quede presupuesto de tiempo (50 s) y lotes:
 - Plantilla original del PDF (`src/lib/email/reminder-email.ts`, variables `{nombre}`, `{modelo}`, `{matricula}`, `{fecha_revision}`, `{taller}`) o la personalizada del taller si existe (`email_templates`; editor en la Fase 6).
 - Todo lo que viene del taller o del cliente se **escapa** en el HTML; el asunto se limpia de saltos de línea (sin inyección de cabeceras).
 - Remitente: `"<Taller>" <slug@EMAIL_SHARED_DOMAIN>` (dominio compartido de RevisaYa, P1) o el dominio propio verificado del taller. `Reply-To`: la dirección "Responder a" del taller.
-- Botón "Pedir cita": de momento un `mailto:` al taller (la página de citas llega en la Fase 7). Sin dirección de respuesta, sin botón.
+- Botón «Pedir cita»: lleva a la página de citas del taller con un enlace firmado del aviso (Fase 7, ver [CITAS-PRESUPUESTOS](CITAS-PRESUPUESTOS.md)). Si el taller desactiva las citas en línea, abre un correo al taller (`mailto:`); sin dirección de respuesta, no hay botón.
 - **Baja en un clic**: enlace firmado con HMAC (`EMAIL_LINK_SECRET`) a `/baja/<token>` y cabeceras `List-Unsubscribe` + `List-Unsubscribe-Post` (RFC 8058) hacia `/api/public/unsubscribe/<token>`. La baja marca al cliente, añade la dirección a `email_suppressions` y salta sus avisos pendientes (`opted_out`).
 
 ## 4. Límite mensual de correos (P5)

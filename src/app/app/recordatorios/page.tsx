@@ -179,6 +179,13 @@ export default async function RemindersPage({ searchParams }: { searchParams: Se
                     </span>
                     {r.skipReason ? <div className="mt-1 text-xs text-[var(--muted)]">{SKIP_REASON_LABELS[r.skipReason] ?? r.skipReason}</div> : null}
                     {r.status === "retrying" ? <div className="mt-1 text-xs text-[var(--muted)]">Intento {r.attempts}. Se volverá a intentar.</div> : null}
+                    {r.appointmentId ? (
+                      <div className="mt-1">
+                        <Link href={`/app/citas/${r.appointmentId}`} className={`${BADGE} bg-[var(--accent-soft)] text-[var(--foreground)]`}>
+                          Cita pedida
+                        </Link>
+                      </div>
+                    ) : null}
                     {r.lastError && ["failed", "retrying"].includes(r.status) ? (
                       <div className="mt-1 max-w-xs truncate text-xs text-[var(--muted)]" title={r.lastError}>
                         {r.lastError}

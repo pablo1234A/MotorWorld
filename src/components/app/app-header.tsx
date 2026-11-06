@@ -55,6 +55,8 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
             ["/app/clientes", "Clientes"],
             ["/app/vehiculos", "Vehículos"],
             ["/app/historial", "Historial"],
+            ...(admin || ctx.membership.permissions.includes("appointments.manage") ? [["/app/citas", "Citas"]] : []),
+            ...(admin || ctx.membership.permissions.includes("quotes.manage") ? [["/app/presupuestos", "Presupuestos"]] : []),
             ...(admin || ctx.membership.permissions.includes("reminders.read") ? [["/app/recordatorios", "Recordatorios"]] : []),
             ...(admin || ctx.membership.permissions.includes("imports.run") ? [["/app/importar", "Importar"]] : []),
           ].map(([href, label]) => (

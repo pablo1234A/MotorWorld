@@ -49,9 +49,6 @@ jobs:
       - name: Tests de base de datos (pgTAP — RLS, límites, integridad)
         run: pnpm db:test
 
-      - name: Tests de integración (concurrencia, contexto RLS)
-        run: pnpm test:integration
-
       - name: Variables de entorno locales (Supabase de CI, valores no secretos)
         run: |
           pnpm exec supabase status -o json > "$RUNNER_TEMP/supabase.json"
@@ -71,6 +68,9 @@ jobs:
             echo "CRON_SECRET=$(openssl rand -hex 32)"
             echo "RESEND_WEBHOOK_SECRET=whsec_$(openssl rand -base64 32)"
           } > .env.local
+
+      - name: Tests de integración (concurrencia, contexto RLS)
+        run: pnpm test:integration
 
       - name: Build
         run: pnpm build

@@ -96,6 +96,7 @@ export interface MailpitMessage {
   From: { Name: string; Address: string };
   HTML: string;
   Text: string;
+  Attachments?: Array<{ FileName: string; ContentType: string; Size: number }>;
 }
 
 /** Espera el correo para `to` cuyo asunto contiene `subject` y lo devuelve completo. */

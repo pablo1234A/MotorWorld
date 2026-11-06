@@ -34,6 +34,8 @@ export class ResendEmailAdapter implements EmailPort {
           text: email.text,
           headers: email.headers,
           tags: Object.entries(email.tags ?? {}).map(([name, value]) => ({ name, value: value.replace(/[^A-Za-z0-9_-]/g, "_") })),
+          // Resend: contenido en base64 (https://resend.com/docs/api-reference/emails/send-email).
+          attachments: email.attachments?.map((a) => ({ filename: a.filename, content: a.content.toString("base64"), content_type: a.contentType })),
         }),
         signal: AbortSignal.timeout(15_000),
       });

@@ -6,10 +6,11 @@ import { sql } from "kysely";
 
 import { DEFAULT_TEMPLATES, type ReminderKind, renderReminderEmail, type TemplateContent } from "@/lib/email/reminder-email";
 import { withSystem } from "@/server/db/client";
-import { unsubscribeToken } from "@/server/email/links";
+import { bookingToken, unsubscribeToken } from "@/server/email/links";
 import { type EmailPort, sanitizeProviderMessage, type SendResult } from "@/server/email/port";
 import type { SenderConfig } from "@/server/email/provider";
 import { logger } from "@/server/logger";
+import { bookingPageUrl } from "@/server/modules/appointments/notify";
 import { logoUrl } from "@/server/modules/organizations/profile";
 
 /**
@@ -90,6 +91,7 @@ interface ReminderContext {
   org_active: boolean;
   brand_primary: string | null;
   logo_path: string | null;
+  booking_enabled: boolean;
   contact_phone: string | null;
   contact_email: string | null;
   contact_address: string | null;
@@ -123,7 +125,7 @@ async function loadContext(id: string): Promise<ReminderContext | undefined> {
              coalesce(b.phone, o.phone) as contact_phone,
              coalesce(bs.reply_to_email::text, b.email::text, o.email::text) as contact_email,
              nullif(concat_ws(', ', coalesce(b.address_line1, o.address_line1), coalesce(b.city, o.city)), '') as contact_address,
-             bs.reminders_enabled, bs.km_reminders_enabled as km_enabled,
+             bs.reminders_enabled, bs.km_reminders_enabled as km_enabled, bs.booking_enabled,
              coalesce(app.subscription_is_active(s.status, s.past_due_since), false) as subscription_active,
              coalesce(p.features, '{}') as features,
              exists (select 1 from email_suppressions es where es.organization_id = r.organization_id and es.email = c.email) as suppressed,
@@ -240,8 +242,14 @@ async function processOne(id: string, opts: { email: EmailPort; sender: SenderCo
   const token = unsubscribeToken(c.customer_id, opts.sender.linkSecret);
   const unsubscribePage = new URL(`/baja/${token}`, opts.sender.appUrl).toString();
   const oneClick = new URL(`/api/public/unsubscribe/${token}`, opts.sender.appUrl).toString();
-  // Hasta que exista la página pública de citas (Fase 7) el botón abre un correo al taller.
-  const cta = c.reply_to ? `mailto:${c.reply_to}?subject=${encodeURIComponent(`Cita para ${c.plate}`)}` : null;
+  // Botón "Pedir cita": la página de citas del taller con el enlace firmado del
+  // aviso (cliente y vehículo ya identificados). Con las citas en línea
+  // desactivadas, un correo al taller.
+  const cta = c.booking_enabled
+    ? `${bookingPageUrl(opts.sender.appUrl, c.org_slug)}?t=${encodeURIComponent(bookingToken(c.id, opts.sender.linkSecret))}`
+    : c.reply_to
+      ? `mailto:${c.reply_to}?subject=${encodeURIComponent(`Cita para ${c.plate}`)}`
+      : null;
 
   const rendered = renderReminderEmail({
     template,

@@ -1,8 +1,8 @@
 /**
  * NIF, NIE y CIF españoles: normalización y dígito de control. Sirve para los
- * datos fiscales del taller en los presupuestos. Un número extranjero (UE) se
- * admite si cumple el formato general (8–12 letras y números): no se puede
- * comprobar su control aquí.
+ * datos fiscales del taller en los presupuestos. Un NIF-IVA de otro país de la
+ * UE se admite si cumple el formato general (hasta 14 letras y números): no se
+ * puede comprobar su control aquí.
  */
 
 const LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE";
@@ -51,7 +51,7 @@ export function checkTaxId(input: string): TaxIdCheck {
   if (/^\d{8}[A-Z]$/.test(v)) return validNif(v) ? "nif" : "invalid";
   if (/^[XYZ]\d{7}[A-Z]$/.test(v)) return validNie(v) ? "nie" : "invalid";
   if (/^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/.test(v)) return validCif(v) ? "cif" : "invalid";
-  // Formato de otro país de la UE (prefijo de país + 6–10 caracteres).
-  if (/^[A-Z]{2}[A-Z0-9]{6,10}$/.test(v) && !v.startsWith("ES")) return "foreign";
+  // NIF-IVA de otro país de la UE (prefijo de país + 2–12 caracteres; máx. 14 en total).
+  if (/^[A-Z]{2}[A-Z0-9]{6,12}$/.test(v) && !v.startsWith("ES")) return "foreign";
   return "invalid";
 }

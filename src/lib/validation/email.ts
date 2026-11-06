@@ -1,42 +1,45 @@
 import { z } from "zod";
 
-import { TEMPLATE_VARIABLES, unknownVariables } from "@/lib/email/reminder-email";
+import { unknownVariables, variablesFor } from "@/lib/email/reminder-email";
 
 /**
  * Plantillas de correo y configuración del remitente (compartido
  * cliente/servidor). La BD vuelve a imponer longitudes y formatos.
  */
 
-export const EDITABLE_TEMPLATE_KINDS = ["reminder_service_date", "reminder_service_km"] as const;
+export const EDITABLE_TEMPLATE_KINDS = [
+  "reminder_service_date",
+  "reminder_service_km",
+  "booking_received",
+  "booking_confirmed",
+  "booking_rescheduled",
+  "booking_rejected",
+  "booking_canceled",
+] as const;
 export type EditableTemplateKind = (typeof EDITABLE_TEMPLATE_KINDS)[number];
 
 export const TEMPLATE_KIND_LABELS: Record<EditableTemplateKind, string> = {
   reminder_service_date: "Aviso de revisión por fecha",
   reminder_service_km: "Aviso de revisión por kilometraje",
+  booking_received: "Solicitud de cita recibida",
+  booking_confirmed: "Cita confirmada",
+  booking_rescheduled: "Cita cambiada de fecha",
+  booking_rejected: "Solicitud de cita rechazada",
+  booking_canceled: "Cita cancelada",
 };
 
-export const VARIABLE_HELP: Record<(typeof TEMPLATE_VARIABLES)[number], string> = {
+export const VARIABLE_HELP: Record<string, string> = {
   nombre: "Nombre del cliente",
   modelo: "Marca y modelo del vehículo",
   matricula: "Matrícula",
   fecha_revision: "Fecha de la próxima revisión",
+  fecha_cita: "Día de la cita",
+  hora_cita: "Hora de la cita",
   taller: "Nombre del taller",
 };
 
-const known = TEMPLATE_VARIABLES.map((v) => `{${v}}`).join(", ");
-
-function withVariables(max: number, label: string) {
-  return z
-    .string()
-    .trim()
-    .min(1, `Escribe ${label}`)
-    .max(max, `Máximo ${max} caracteres`)
-    .superRefine((v, ctx) => {
-      const unknown = unknownVariables(v);
-      if (unknown.length) {
-        ctx.addIssue({ code: "custom", message: `Variable desconocida: {${unknown[0]}}. Puedes usar ${known}.` });
-      }
-    });
+function text(max: number, label: string) {
+  return z.string().trim().min(1, `Escribe ${label}`).max(max, `Máximo ${max} caracteres`);
 }
 
 const checkbox = z
@@ -44,13 +47,22 @@ const checkbox = z
   .optional()
   .transform((v) => v === "on" || v === "true");
 
-export const templateSchema = z.object({
-  kind: z.enum(EDITABLE_TEMPLATE_KINDS),
-  subject: withVariables(200, "el asunto").refine((v) => !/[\r\n]/.test(v), "El asunto debe ir en una sola línea"),
-  body: withVariables(5000, "el texto"),
-  buttonLabel: withVariables(40, "el texto del botón"),
-  buttonEnabled: checkbox,
-});
+export const templateSchema = z
+  .object({
+    kind: z.enum(EDITABLE_TEMPLATE_KINDS),
+    subject: text(200, "el asunto").refine((v) => !/[\r\n]/.test(v), "El asunto debe ir en una sola línea"),
+    body: text(5000, "el texto"),
+    buttonLabel: text(40, "el texto del botón"),
+    buttonEnabled: checkbox,
+  })
+  .superRefine((v, ctx) => {
+    // Cada tipo de correo tiene sus variables (los avisos no saben de horas de cita).
+    const known = variablesFor(v.kind).map((x) => `{${x}}`).join(", ");
+    for (const field of ["subject", "body", "buttonLabel"] as const) {
+      const unknown = unknownVariables(v[field], v.kind);
+      if (unknown.length) ctx.addIssue({ code: "custom", path: [field], message: `Variable desconocida: {${unknown[0]}}. Puedes usar ${known}.` });
+    }
+  });
 export type TemplateInput = z.infer<typeof templateSchema>;
 
 export const templateKindSchema = z.object({ kind: z.enum(EDITABLE_TEMPLATE_KINDS) });
