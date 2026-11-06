@@ -1,6 +1,6 @@
 # RevisaYa — Motor de automatizaciones
 
-> Estado: **motor de recordatorios implementado (Fase 5)**. Plantillas editables, dominios propios, webhooks de entrega y resúmenes al taller: Fase 6.
+> Estado: **implementado** — motor de recordatorios (Fase 5) y sistema de correos: plantillas, dominio propio, eventos de entrega, avisos de consumo y resúmenes (Fase 6).
 
 Código: `supabase/migrations/20261106000100_reminder_engine.sql` (planificador, reclamación, recuperación) y `src/server/reminders/dispatcher.ts` (envío). Pruebas: `supabase/tests/database/110_reminder_engine.sql`, `tests/integration/dispatcher.test.ts`, `tests/integration/reminders-service.test.ts`, `tests/e2e/reminders.spec.ts`.
 
@@ -11,6 +11,7 @@ Código: `supabase/migrations/20261106000100_reminder_engine.sql` (planificador,
 | **planificador** `private.plan_reminders()` | PostgreSQL (`pg_cron`, job `revisaya-plan-reminders`) | cada hora, minuto 5 | Cancela los avisos obsoletos y crea los que tocan, idempotentes. |
 | **dispatcher** `runDispatcher()` | Next.js, `POST/GET /api/internal/jobs/dispatch-reminders` (Vercel Cron) | cada minuto | Reclama lotes, revalida, reserva cuota, renderiza, envía y registra. |
 | **recuperación de leases** `private.release_expired_reminder_leases()` | PostgreSQL (`pg_cron`, job `revisaya-release-leases`) | cada 5 min | Devuelve a la cola los avisos de un proceso caído. |
+| **mantenimiento del correo** | `/api/internal/jobs/email-maintenance` (Vercel Cron) | cada 30 min | Verifica dominios propios pendientes (72 h) y los verificados (a diario), avisos de consumo al 80 %/100 % y resúmenes al taller. |
 | **estado** | `GET /api/internal/jobs/status` (Vercel Cron, monitorización) | cada hora | Últimas ejecuciones; **503** si el planificador lleva > 26 h sin éxito (*dead-man switch*). |
 | **purga** `private.purge_expired_data()` | `pg_cron` | diario 03:17 | Retención de datos (Fase 3). |
 
@@ -76,15 +77,32 @@ mientras quede presupuesto de tiempo (50 s) y lotes:
 
 ## 4. Límite mensual de correos (P5)
 
-`app.reserve_usage` reserva una unidad de forma atómica (mes natural en la zona del taller). Si el plan no da para más, el aviso queda `skipped/quota_exceeded`, visible en el panel. Si el envío falla, la unidad se libera. Avisos al 80 %/100 % y reprogramación al mejorar el plan: Fase 6/8.
+`app.reserve_usage` reserva una unidad de forma atómica (mes natural en la zona del taller). Si el plan no da para más, el aviso queda `skipped/quota_exceeded`, visible en el panel. Si el envío falla, la unidad se libera. Cuentan los avisos y los correos de prueba; no cuentan los correos de RevisaYa al propio taller (resúmenes, avisos de consumo).
+
+- **Avisos de consumo** (Fase 6): al llegar al 80 % y al 100 % se avisa a los administradores, una vez por umbral y mes (`usage_counters.alert_80_sent_at` / `alert_100_sent_at`, reservados de forma atómica; si el correo no sale, se libera y se reintenta).
+- **Reprogramación al mejorar el plan o reactivar la suscripción** (trigger `subscriptions_requeue_reminders` → `app.requeue_skipped_reminders`): los avisos saltados por cuota o por suscripción inactiva en los últimos 31 días, cuya revisión todavía no ha pasado, vuelven a la cola con un nuevo momento de envío. Bajar de plan no reprograma nada.
 
 ## 5. Panel y configuración (Fase 5)
 
 - `/app/configuracion/avisos` (administradores): activar avisos, días de antelación (hasta 5), ventana horaria, días de envío, festivos y días de cierre, intervalo por defecto (meses/km), avisos por km (Max+), dirección "Responder a". Con la suscripción inactiva, solo lectura.
 - `/app/recordatorios` (permiso `reminders.read`): resumen (pendientes, enviados este mes, problemas en 30 días, correos usados/límite), filtros por estado y búsqueda, motivo de cada aviso no enviado, y **cancelar** un aviso pendiente (solo administradores; RLS solo permite pasar a `canceled/canceled_by_user`).
 
-## 6. Pendiente (fases siguientes)
+## 6. Eventos de entrega (Fase 6)
 
-- Webhooks del proveedor (`delivered`, `bounced`, `complained` → supresión): Fase 6.
-- Resumen periódico al taller y avisos de cuota: Fase 6.
-- Métricas de reputación por organización (alerta si quejas > 0,1 % o rebotes > 4 %): Fase 6/11.
+`POST /api/webhooks/email/resend` (firma Svix obligatoria, ver INTEGRACIONES §2.6) → `private.apply_email_event`:
+
+- **Idempotente**: el identificador del evento (`svix-id`) es único; el segundo envío responde `duplicate`.
+- **Sin retroceder**: `accepted < delivery_delayed < delivered < bounced < complained`. Un "entregado" que llega tarde no deshace un rebote (`stale`).
+- **Supresión automática**: rebote definitivo → `hard_bounce`; queja → `complaint`. Los siguientes avisos a esa dirección quedan `skipped/suppressed`. Un rebote temporal no suprime (se trata como retraso).
+- El recordatorio refleja el estado (`delivered`, `bounced`, `complained`) en el panel. No se guardan direcciones ni contenido en el evento.
+- Aperturas y clics no se procesan (P8: desactivado hasta revisión jurídica).
+- Con SMTP no hay eventos de entrega: el estado se queda en "Enviado" (aceptado por el servidor).
+
+## 7. Resumen al taller (Fase 6)
+
+Por sucursal, `digest_frequency` = `daily` (cada día) o `weekly` (lunes), a partir de las **08:00** de su zona horaria, a los administradores con acceso a esa sucursal. Contenido: avisos enviados y entregados, con problemas, no enviados por falta de correo, por baja o bloqueo, por límite del mes, avisos programados y vehículos con la revisión vencida. Uno por periodo (`private.digest_runs`); si no hay nada que contar no se envía. Remitente: `"RevisaYa" <no_reply@EMAIL_SHARED_DOMAIN>` (el `_` no puede aparecer en el slug de un taller).
+
+## 8. Pendiente (fases siguientes)
+
+- Métricas de reputación por organización (alerta si quejas > 0,1 % o rebotes > 4 %): Fase 11.
+- Eventos de entrega con Amazon SES (SNS): solo si se usa SES en producción.

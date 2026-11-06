@@ -22,6 +22,8 @@ export type DomainErrorCode =
   | "integrity_violation"
   | "validation_error"
   | "not_found"
+  | "email_not_configured"
+  | "email_send_failed"
   | "internal_error";
 
 const HTTP_STATUS: Record<DomainErrorCode, number> = {
@@ -39,6 +41,8 @@ const HTTP_STATUS: Record<DomainErrorCode, number> = {
   integrity_violation: 409,
   validation_error: 400,
   not_found: 404,
+  email_not_configured: 503,
+  email_send_failed: 502,
   internal_error: 500,
 };
 
@@ -88,6 +92,8 @@ const KNOWN_MESSAGES = new Set([
   "duplicate_offsets",
   "duplicate_weekdays",
   "invalid_timezone",
+  "slug_reserved",
+  "invalid_bounce_type",
 ]);
 
 export function mapDatabaseError(err: unknown): DomainError {

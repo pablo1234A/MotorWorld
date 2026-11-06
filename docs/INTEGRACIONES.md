@@ -30,7 +30,9 @@ interface RateLimiter  { consume(key: string, cost?: number): Promise<{ allowed:
 | `ResendEmailAdapter` | `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` | API HTTP de Resend con `Idempotency-Key: reminder-<id>`, timeout 15 s. 429, 409 y 5xx → reintento; resto de 4xx → definitivo. |
 | `SmtpEmailAdapter` | `EMAIL_PROVIDER=smtp`, `SMTP_URL` | nodemailer (Amazon SES por SMTP, Mailpit en local). Timeouts acotados. 5xx → definitivo; 4xx y red → reintento. SMTP no tiene idempotencia: protege la comprobación de `email_logs`. |
 
-`getEmailProvider()` devuelve `null` si falta la configuración: entonces **no se envía nada** (no hay adaptador "falso" fuera de `tests/`). Los mensajes de error del proveedor se guardan sin direcciones de correo (`sanitizeProviderMessage`). Pendiente para la Fase 6: `createDomain`, `getDomainStatus` y `verifyWebhook`.
+`getEmailProvider()` devuelve `null` si falta la configuración: entonces **no se envía nada** (no hay adaptador "falso" fuera de `tests/`). Los mensajes de error del proveedor se guardan sin direcciones de correo (`sanitizeProviderMessage`).
+
+**Implementado (Fase 6)**: dominios propios con la API de dominios de Resend (`src/server/email/domains.ts`, región `eu-west-1`), webhooks con firma Svix (`src/server/email/webhooks.ts`), editor de plantillas, correos de prueba, resúmenes y avisos de consumo. **Probado con respuestas simuladas del proveedor** (tests); falta probarlo con una cuenta real de Resend antes de producción (no hay credenciales en este entorno).
 
 ### 2.1 Modos de remitente
 
@@ -41,20 +43,21 @@ interface RateLimiter  { consume(key: string, cost?: number): Promise<{ allowed:
 
 Nunca se usa el dominio del taller en el `From` sin verificar (sería suplantación y acabaría en spam o rechazado).
 
-### 2.2 Verificación de dominio (guía para el taller)
+### 2.2 Verificación de dominio (implementado en la Fase 6)
 
-1. En *Configuración → Correo*, el taller escribe su dominio (`tallersur.es`).
-2. RevisaYa llama a `EmailPort.createDomain` y muestra los registros exactos (TXT SPF, CNAME/TXT DKIM, MX/TXT del subdominio de retorno, y un DMARC recomendado `v=DMARC1; p=none; rua=…`).
-3. Guías paso a paso para los registradores más habituales en España (se redactan en la Fase 6 con capturas).
-4. Comprobación automática cada 30 min durante 72 h (job) + botón "Comprobar ahora".
-5. Verificado → se ofrece cambiar a `custom_domain` y enviar un correo de prueba.
+1. En *Configuración → Correo*, el administrador escribe su dominio (`tallersur.es`) y la dirección de envío (`avisos`). Se rechazan Gmail, Hotmail y otros correos gratuitos (no se pueden verificar). Máximo 3 dominios por taller.
+2. RevisaYa lo da de alta en Resend y muestra los registros DNS **exactos** que devuelve el proveedor (SPF, DKIM, MX de retorno). Recomendado añadir DMARC (`v=DMARC1; p=none; rua=…`).
+3. Comprobación automática cada 30 min durante 72 h (`email-maintenance`) y botón "Comprobar ahora" (máx. 30/h). Los verificados se vuelven a comprobar a diario: si alguien borra los registros, la sucursal vuelve sola al remitente compartido (trigger `sending_domains_unverified`).
+4. Verificado → se puede elegir como remitente por sucursal. La BD impide usar uno no verificado (`sending_domain_not_verified`).
+5. Solo con `EMAIL_PROVIDER=resend`. Con SMTP (SES, Mailpit) la pantalla dice que no está disponible; no se simula.
+6. Pendiente: guías con capturas para los registradores habituales en España (Fase 10, con el diseño definitivo).
 
 ### 2.3 Plantillas
 
-- Editables por **todos los planes**: asunto, texto, texto del botón y activar/desactivar botón.
-- Variables (lista cerrada, del PDF): `{nombre}`, `{modelo}`, `{matricula}`, `{fecha_revision}`. Propuestas adicionales: `{marca}`, `{taller}`, `{telefono_taller}`, `{km}`. Una variable desconocida se marca como error al guardar.
-- Renderizado: el texto del taller es **texto plano** (saltos de línea → párrafos), las variables se sustituyen ya escapadas, y el diseño (logo, colores, pie legal, enlace de baja) lo genera RevisaYa con React Email. Siempre hay versión de texto plano.
-- Vista previa con datos de un vehículo real del taller (o de ejemplo si no hay), correo de prueba al email del administrador (máx. 20/día, cuenta en el consumo) y "restaurar original".
+- Editables por **todos los planes** (`/app/configuracion/plantillas`): asunto, texto, texto del botón y activar/desactivar botón, para el aviso por fecha y el aviso por kilometraje. Las plantillas de citas llegan con la Fase 7.
+- Variables (lista cerrada): `{nombre}`, `{modelo}`, `{matricula}`, `{fecha_revision}` (del PDF) y `{taller}`. Una variable desconocida es un error al guardar; el asunto no admite saltos de línea.
+- Renderizado: el texto del taller es **texto plano** (línea en blanco → párrafo), las variables se sustituyen ya escapadas y el diseño (nombre y color del taller, contacto, enlace de baja) lo genera RevisaYa (`src/lib/email/reminder-email.ts`, sin React Email: una función pura probada). Siempre hay versión de texto.
+- Vista previa en vivo (iframe aislado) con el próximo vehículo con revisión del taller (o datos de ejemplo), correo de prueba al administrador (máx. 20/día, cuenta en el consumo) y "restaurar la plantilla original". Una personalización por taller; cada cambio sube la versión y queda auditado.
 - **"Plantillas a medida" (Excelencia)**: propuesta P10 — diseño HTML específico para el taller (maquetado por RevisaYa), varias plantillas por tipo de aviso y A/B. No recorta lo que el PDF da a todos los planes.
 
 ### 2.4 Cuenta como consumo (propuesta P5)
@@ -64,6 +67,16 @@ Cuentan contra el límite mensual los correos enviados a clientes del taller: re
 ### 2.5 Requisitos de entregabilidad
 
 SPF + DKIM + DMARC alineados, `List-Unsubscribe` one-click (RFC 8058), tasa de quejas < 0,1 %, supresión automática de rebotes definitivos, calentamiento progresivo del subdominio compartido, pruebas en Gmail y Outlook antes de vender (riesgo nº 1 del PDF).
+
+### 2.6 Webhooks del proveedor
+
+`POST /api/webhooks/email/resend`. Resend firma con el esquema Svix/"Standard Webhooks": cabeceras `svix-id`, `svix-timestamp`, `svix-signature` (`v1,<base64>`), HMAC-SHA256 sobre `id.timestamp.cuerpo` con el secreto `whsec_…` (`RESEND_WEBHOOK_SECRET`). Se rechazan firmas no válidas y marcas de más de 5 minutos (401), cuerpos de más de 256 KB (413), y sin secreto configurado el endpoint responde 503. Eventos usados: `email.delivered`, `email.delivery_delayed`, `email.bounced` (`bounce.type`: `Permanent` → definitivo, `Transient` → temporal), `email.complained`. Lógica en AUTOMATIZACIONES §6.
+
+En el panel de Resend: endpoint `https://<dominio>/api/webhooks/email/resend`, eventos anteriores, y copiar el *signing secret* a `RESEND_WEBHOOK_SECRET`.
+
+### 2.7 Correos de la plataforma al taller
+
+Resúmenes y avisos de consumo salen de `"RevisaYa" <no_reply@EMAIL_SHARED_DOMAIN>`, no cuentan en el consumo del taller y quedan en `email_logs` (`digest`, `usage_alert`). Los slugs que coinciden con buzones de servicio (`postmaster`, `abuse`, `admin`, `no-reply`…) están reservados (trigger `organizations_reserved_slug`).
 
 ## 3. Stripe (modo TEST)
 

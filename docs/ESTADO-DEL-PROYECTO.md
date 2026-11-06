@@ -11,14 +11,61 @@
 | 2 — Backend y autenticación | ✅ Completada | 2026-11-05 |
 | 3 — Clientes, vehículos e historial | ✅ Completada (incluidos sus pendientes: purga y papelera) | 2026-11-05 |
 | 4 — Importación Excel/CSV | ✅ Completada | 2026-11-05 |
-| 5 — Motor de automatizaciones | ✅ Completada (pendiente de revisión) | 2026-11-06 |
-| 6 — Sistema de correos | ⏭ Siguiente | — |
-| 7 — Citas y presupuestos | ⏸ No iniciada | — |
+| 5 — Motor de automatizaciones | ✅ Completada | 2026-11-06 |
+| 6 — Sistema de correos | ✅ Completada (pendiente de revisión) | 2026-11-06 |
+| 7 — Citas y presupuestos | ⏭ Siguiente | — |
 | 8 — Suscripciones y límites (Stripe TEST) | ⏸ No iniciada | — |
 | 9 — Google Calendar, informes y API | ⏸ No iniciada | — |
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 6 — Sistema de correos
+
+### Qué se ha construido
+Detalle en [INTEGRACIONES §2](INTEGRACIONES.md) y [AUTOMATIZACIONES §4–7](AUTOMATIZACIONES.md).
+1. **Plantillas editables** (`/app/configuracion/plantillas`, todos los planes): asunto, texto, botón sí/no y su texto, para el aviso por fecha y por kilometraje; variables insertables con un clic; vista previa en vivo con el próximo vehículo real del taller (o datos de ejemplo); validación de variables desconocidas; **correo de prueba** real al administrador (máx. 20/día, cuenta en el consumo); **restaurar la plantilla original**. Los avisos usan la plantilla guardada.
+2. **Dominio propio** (`/app/configuracion/correo`): alta en el proveedor (Resend, región UE), registros DNS exactos, "Comprobar ahora" y comprobación automática (72 h los pendientes; a diario los verificados). Solo un dominio **verificado** puede ser remitente; si deja de estarlo, la sucursal vuelve sola al remitente compartido. Se rechazan Gmail, Hotmail y similares.
+3. **Remitente por sucursal** (compartido con el nombre del taller, P1, o dominio propio) y **resumen para el taller** (no / diario / semanal).
+4. **Eventos de entrega** (webhook de Resend con firma Svix): entregado, retraso, rebote y queja; idempotentes y sin retroceder aunque lleguen desordenados; rebote definitivo o queja → la dirección se bloquea y los siguientes avisos no se envían.
+5. **Direcciones bloqueadas**: lista con el motivo; bloqueo y desbloqueo manual (los rebotes, quejas y bajas no se pueden desbloquear desde el panel).
+6. **Avisos de consumo** al 80 % y al 100 % del límite mensual, una vez por umbral y mes; **reprogramación automática** de los avisos saltados por cuota al mejorar el plan o reactivar la suscripción (P5).
+7. **Resumen diario o semanal** para los administradores (a partir de las 08:00 locales): enviados, entregados, con problemas, no enviados por motivo, programados y revisiones vencidas.
+8. **Configuración** agrupada en `/app/configuracion` (Avisos, Plantillas, Correo, Usuarios).
+9. **Slugs reservados** (`postmaster`, `abuse`, `admin`…), porque el slug es el buzón del taller en el dominio compartido.
+
+### Pruebas ejecutadas (2026-11-06, desde base de datos nueva, todas en verde)
+
+| Comando | Resultado |
+|---|---|
+| `pnpm db:test` (pgTAP) | **275/275** (nuevo: `120_email_system.sql`, 30: slugs reservados, eventos entregado/retraso/rebote/queja, duplicados, desorden, supresión, reprogramación al mejorar el plan y al reactivar) |
+| `pnpm test` (Vitest) | **225/225** (nuevos: `email-system.test.ts` 15 unitarios — firma Svix, eventos, plantillas, dominios, adaptador con `fetch` simulado —; `email-system.test.ts` 10 de integración; slug reservado al crear un taller) |
+| `pnpm test:e2e` (Playwright) | **22/22** (nuevos: plantilla con vista previa, validación, guardado, **prueba real por SMTP a Mailpit** y restaurar; remitente, resumen, direcciones bloqueadas y webhook firmado/no firmado/duplicado por HTTP) |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm audit` | sin errores · 0 vulnerabilidades |
+
+Casos críticos reforzados: **7** (un webhook duplicado no duplica operaciones: por SQL, por el servicio y por HTTP), **1/2** (otro taller no ve ni cambia plantillas, dominios ni bloqueos; un operario no puede, ni falsificando su rol en el contexto).
+
+### Errores encontrados y corregidos durante la fase
+- **Seguridad**: el alta de dominio y el correo de prueba escriben con la conexión del sistema; la comprobación de administrador estaba solo en la acción. Un test de integración demostró que un operario que llamara al servicio directamente podía dar de alta un dominio. Ahora se comprueba en la base de datos (ADR-047). No llegó a publicarse.
+- Un "entregado" desordenado devolvía un resultado engañoso (aunque no cambiaba el estado): ahora `stale`.
+- Restaurar la plantilla no devolvía el formulario al texto original (el botón desaparecía antes de aplicar el cambio): corregido.
+- En móvil, el asunto de la vista previa ensanchaba la página: corregido (comprobado a 390 px).
+- Un test de pgTAP antiguo dependía de una base de datos vacía (slug fijo): el helper ahora evita la colisión.
+
+### Pendiente (documentado)
+- **Probar dominios y webhooks con una cuenta real de Resend** antes de producción: aquí se han probado con respuestas simuladas del proveedor (no hay credenciales).
+- Con SMTP (SES) no hay eventos de entrega ni dominios propios (ADR-050).
+- "Plantillas a medida" de Excelencia (P10) es un servicio de diseño de RevisaYa, no una función del producto.
+- Seguimiento de aperturas (P8): desactivado hasta la revisión jurídica.
+- Plantillas de los correos de citas → Fase 7.
+
+### Credenciales que deben configurarse (staging/producción)
+`RESEND_API_KEY` con `EMAIL_PROVIDER=resend` (dominios propios) y `RESEND_WEBHOOK_SECRET` (webhook de entregas), además de las de la Fase 5.
+
+### Siguiente fase
+**Fase 7 — Citas y presupuestos**: página pública de citas (destino del botón «Pedir cita»), gestión de citas, presupuestos en PDF.
 
 ---
 
@@ -66,7 +113,7 @@ Casos críticos cubiertos en esta fase:
 `CRON_SECRET`, `EMAIL_PROVIDER` + `RESEND_API_KEY` (o `SMTP_URL`), `EMAIL_SHARED_DOMAIN` (subdominio de envío verificado con SPF/DKIM/DMARC) y `EMAIL_LINK_SECRET`, como secretos del hosting. **No se ha enviado ningún correo a direcciones reales**: todo el envío probado va a Mailpit (local).
 
 ### Siguiente fase
-**Fase 6 — Sistema de correos**: editor de plantillas con vista previa y prueba, verificación de dominio propio, webhooks del proveedor (entregas, rebotes, quejas → supresión), avisos de cuota, resumen al taller.
+Fase 6 (completada, ver arriba).
 
 ---
 
@@ -225,7 +272,7 @@ Cobertura de los casos críticos:
 | 4 | No se pueden superar los límites del plan | `040_plan_limits.sql` (29 tests) + altas y reservas de correo simultáneas |
 | 5 | Importación incorrecta sin registros parciales | `tests/integration/imports.test.ts` (fallo por límite y fallo a mitad de transacción ⇒ 0 fichas) |
 | 6 | Un error de correo no detiene otros envíos | `dispatcher.test.ts` (Fase 5) |
-| 7 | Webhook duplicado no duplica operaciones | Unicidad de `email_events` y `stripe_events` probada; procesadores en Fases 6 y 8 |
+| 7 | Webhook duplicado no duplica operaciones | Correo: `120_email_system.sql`, `email-system.test.ts` y E2E por HTTP (Fase 6); Stripe en la Fase 8 |
 | 8 | La cancelación se refleja | Acceso de solo lectura con suscripción cancelada probado en `040`; webhook de Stripe en Fase 8 |
 | 9 | Los vehículos mantienen su historial | `060_vehicle_history.sql` (15 tests) |
 | 10 | Las sucursales permanecen aisladas | `030_branch_isolation.sql` (12 tests) |

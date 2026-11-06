@@ -40,7 +40,10 @@ export async function createOrganization(auth: AuthContext, input: CreateOrganiz
       });
     } catch (err) {
       lastError = err;
-      if (!(err instanceof DomainError && err.code === "conflict")) throw err;
+      // Ocupada o reservada (p. ej. "admin"): si la dirección no la eligió el
+      // usuario, se prueba la siguiente candidata con sufijo.
+      const retry = err instanceof DomainError && (err.code === "conflict" || (!explicit && err.detail === "slug_reserved"));
+      if (!retry) throw err;
     }
   }
   throw lastError;

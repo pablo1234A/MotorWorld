@@ -58,8 +58,8 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
           ))}
           {admin ? (
             <>
-              <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/configuracion/avisos">
-                Avisos
+              <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/configuracion">
+                Configuración
               </Link>
               <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/usuarios">
                 Usuarios

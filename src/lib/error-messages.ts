@@ -33,6 +33,8 @@ const CONFLICT_REASON: Record<string, string> = {
   invitations_pending_unique: "Ya hay una invitación pendiente para ese correo.",
   organization_members_unique: "Esa persona ya forma parte del taller.",
   vehicles_plate_unique: "Ya existe un vehículo con esa matrícula en este taller.",
+  sending_domains_unique: "Ese dominio ya está añadido.",
+  email_suppressions_pkey: "Esa dirección ya está bloqueada.",
 };
 
 const VALIDATION_REASON: Record<string, string> = {
@@ -42,6 +44,10 @@ const VALIDATION_REASON: Record<string, string> = {
   vehicles_next_after_last: "La próxima revisión debe ser posterior a la última.",
   maintenance_records_next_after: "La próxima revisión recomendada debe ser posterior a la fecha de la revisión.",
   vehicles_vin_check: "El bastidor no es válido.",
+  slug_reserved: "Esa dirección pública está reservada. Elige otra.",
+  domain_rejected: "El proveedor de correo no acepta ese dominio. Comprueba que esté bien escrito y que sea tuyo.",
+  too_many_domains: "Puedes tener como máximo 3 dominios. Elimina uno que no uses.",
+  sending_domain_not_verified: "El dominio todavía no está verificado. Comprueba los registros DNS y vuelve a intentarlo.",
 };
 
 const INTEGRITY_REASON: Record<string, string> = {
@@ -101,6 +107,12 @@ export function errorMessage(code: string, detail?: string): string {
       return (detail && VALIDATION_REASON[detail]) || "Revisa los datos del formulario.";
     case "not_found":
       return "No se ha encontrado lo que buscas.";
+    case "email_not_configured":
+      return "El envío de correo todavía no está configurado en RevisaYa. Los avisos quedan programados hasta que lo esté.";
+    case "email_send_failed":
+      return detail === "domain"
+        ? "No se ha podido contactar con el proveedor de correo. Inténtalo de nuevo en unos minutos."
+        : "El proveedor de correo no ha aceptado el envío. Inténtalo de nuevo en unos minutos.";
     default:
       return "Ha ocurrido un error inesperado. Inténtalo de nuevo; si persiste, contacta con soporte.";
   }

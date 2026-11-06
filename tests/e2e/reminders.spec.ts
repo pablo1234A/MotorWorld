@@ -33,7 +33,8 @@ test.describe("avisos de revisión", () => {
     await page.reload();
 
     // 1. Configuración (administrador): avisos activados, ventana amplia para no depender de la hora del test.
-    await page.getByRole("link", { name: "Avisos", exact: true }).click();
+    await page.getByRole("link", { name: "Configuración", exact: true }).click();
+    await page.getByRole("link", { name: /^Avisos/ }).click();
     await expect(page.getByRole("heading", { name: "Configuración de avisos" })).toBeVisible();
     await expect(page.getByText("Los avisos están desactivados")).toBeVisible();
     await page.getByLabel("Enviar avisos automáticos a los clientes").check();

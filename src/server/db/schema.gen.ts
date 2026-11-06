@@ -492,6 +492,12 @@ export interface Plans {
   sort_order: number;
 }
 
+export interface PrivateDigestRuns {
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  period_key: string;
+}
+
 export interface PrivateIntegrationSecrets {
   auth_tag: Buffer;
   ciphertext: Buffer;
@@ -662,6 +668,8 @@ export interface Subscriptions {
 }
 
 export interface UsageCounters {
+  alert_100_sent_at: Timestamp | null;
+  alert_80_sent_at: Timestamp | null;
   limit_snapshot: number | null;
   organization_id: string;
   period_start: string;
@@ -728,6 +736,7 @@ export interface DB {
   organization_members: OrganizationMembers;
   organizations: Organizations;
   plans: Plans;
+  "private.digest_runs": PrivateDigestRuns;
   "private.integration_secrets": PrivateIntegrationSecrets;
   "private.job_runs": PrivateJobRuns;
   "private.jobs": PrivateJobs;

@@ -68,6 +68,7 @@ jobs:
             echo "EMAIL_SHARED_DOMAIN=avisos.revisaya.test"
             echo "EMAIL_LINK_SECRET=$(openssl rand -hex 32)"
             echo "CRON_SECRET=$(openssl rand -hex 32)"
+            echo "RESEND_WEBHOOK_SECRET=whsec_$(openssl rand -base64 32)"
           } > .env.local
 
       - name: Build

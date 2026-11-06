@@ -1,7 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    { "path": "/api/internal/jobs/dispatch-reminders", "schedule": "* * * * *" },
-    { "path": "/api/internal/jobs/status", "schedule": "13 * * * *" }
+    {
+      "path": "/api/internal/jobs/dispatch-reminders",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/internal/jobs/email-maintenance",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/internal/jobs/status",
+      "schedule": "13 * * * *"
+    }
   ]
 }

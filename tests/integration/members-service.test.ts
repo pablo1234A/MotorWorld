@@ -146,6 +146,17 @@ describe("alta de taller", () => {
     await expect(createOrganization({ userId: user }, { tradeName: "Otro", slug, timezone: "Europe/Madrid" })).rejects.toMatchObject({ code: "conflict" });
   });
 
+  it("un nombre que coincide con un buzón reservado (postmaster@, admin@…) recibe otro slug; elegido a mano, se rechaza", async () => {
+    const user = await createUser();
+    const id = await createOrganization({ userId: user }, { tradeName: "Admin", timezone: "Europe/Madrid" });
+    const [{ slug }] = await query<{ slug: string }>("select slug from organizations where id = $1", [id]);
+    expect(slug).toMatch(/^admin-[0-9a-f]{6}$/);
+    await expect(createOrganization({ userId: user }, { tradeName: "Otro", slug: "postmaster", timezone: "Europe/Madrid" })).rejects.toMatchObject({
+      code: "validation_error",
+      detail: "slug_reserved",
+    });
+  });
+
   it("sin email verificado no se puede crear un taller", async () => {
     const user = await createUser(undefined, false);
     await expect(createOrganization({ userId: user }, { tradeName: "Taller X", timezone: "Europe/Madrid" })).rejects.toMatchObject({

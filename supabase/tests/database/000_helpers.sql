@@ -41,8 +41,12 @@ as $$
 declare
   v_org uuid;
 begin
+  -- Si el slug ya existe (base de datos con datos de otras pruebas), se añade
+  -- un sufijo: los tests usan el id, no el slug.
   insert into public.organizations (slug, trade_name, created_by)
-  values (p_slug, initcap(replace(p_slug, '-', ' ')), p_owner)
+  values (case when exists (select 1 from public.organizations where slug = p_slug)
+               then left(p_slug, 40) || '-' || substr(md5(random()::text), 1, 6) else p_slug end,
+          initcap(replace(p_slug, '-', ' ')), p_owner)
   returning id into v_org;
   insert into public.branches (organization_id, name, slug, is_primary)
   values (v_org, 'Principal', 'principal', true);

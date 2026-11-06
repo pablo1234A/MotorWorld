@@ -2,9 +2,12 @@ import { sql } from "kysely";
 import { NextResponse } from "next/server";
 
 import { withSystem } from "@/server/db/client";
+import { getDomainProvider } from "@/server/email/domains";
 import { getEmailProvider, getSenderConfig } from "@/server/email/provider";
 import { isAuthorizedJobRequest } from "@/server/jobs/auth";
 import { logger } from "@/server/logger";
+import { checkPendingDomains } from "@/server/modules/email/domains";
+import { notifyUsage, sendDigests } from "@/server/modules/email/notifications";
 import { runDispatcher } from "@/server/reminders/dispatcher";
 
 /**
@@ -12,6 +15,8 @@ import { runDispatcher } from "@/server/reminders/dispatcher";
  *   dispatch-reminders · cada minuto (Vercel Cron, pg_net u otro planificador)
  *   plan-reminders     · también lo ejecuta pg_cron cada hora; aquí, a demanda
  *   release-leases     · recuperación de envíos bloqueados
+ *   email-maintenance  · cada 30 min: verificación de dominios, avisos de
+ *                        consumo (80 %/100 %) y resúmenes al taller
  *   status             · últimas ejecuciones (monitorización / dead-man switch)
  * GET (Vercel Cron) o POST, con Authorization: Bearer CRON_SECRET.
  */
@@ -28,6 +33,21 @@ async function handle(request: Request, job: string) {
       }
       case "plan-reminders": {
         const stats = await withSystem(async (tx) => (await sql<{ s: unknown }>`select private.plan_reminders() as s`.execute(tx)).rows[0].s);
+        return NextResponse.json({ ok: true, stats });
+      }
+      case "email-maintenance": {
+        const deps = { email: getEmailProvider(), sender: getSenderConfig() };
+        const run = await withSystem(async (tx) => (await sql<{ id: string }>`insert into private.job_runs (job_name) values ('email_maintenance') returning id::text`.execute(tx)).rows[0].id);
+        const stats = {
+          domains: await checkPendingDomains(getDomainProvider()),
+          usage: await notifyUsage(deps),
+          digests: await sendDigests(deps),
+          provider: deps.email ? "configured" : "not_configured",
+        };
+        const partial = stats.domains.failed + stats.usage.failed + stats.digests.failed > 0;
+        await withSystem((tx) =>
+          sql`update private.job_runs set finished_at = now(), status = ${partial ? "partial" : "succeeded"}, stats = ${JSON.stringify(stats)}::jsonb where id = ${run}::bigint`.execute(tx),
+        );
         return NextResponse.json({ ok: true, stats });
       }
       case "release-leases": {
