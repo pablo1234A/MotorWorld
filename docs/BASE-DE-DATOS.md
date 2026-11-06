@@ -149,7 +149,7 @@ No se fuerza email único (familias que comparten correo); la duplicidad se dete
 ### 3.5 Recordatorios y correo
 
 **`reminders`**
-`id`, `organization_id`, `branch_id`, `customer_id`, `vehicle_id` (FK compuestas), `type` (`service_date`, `service_km`), `due_date date` (fecha prevista de revisión, real o estimada), `offset_days int`, `scheduled_for timestamptz`, `status` (`scheduled`, `processing`, `retrying`, `sent`, `delivered`, `bounced`, `complained`, `failed`, `skipped`, `canceled`), `skip_reason` (`no_email`, `opted_out`, `suppressed`, `quota_exceeded`, `subscription_inactive`, `feature_unavailable`, `superseded`, `reminders_disabled`), `attempts smallint`, `max_attempts smallint` default 5, `next_attempt_at`, `locked_until`, `locked_by`, `provider`, `provider_message_id`, `sent_at`, `last_error` (código + mensaje saneado), `booking_token_hash bytea unique null`, `booking_token_expires_at`, `created_at`, `updated_at`.
+`id`, `organization_id`, `branch_id`, `customer_id`, `vehicle_id` (FK compuestas), `type` (`service_date`, `service_km`), `due_date date` (fecha prevista de revisión, real o estimada), `offset_days int`, `scheduled_for timestamptz`, `status` (`scheduled`, `processing`, `retrying`, `sent`, `delivered`, `bounced`, `complained`, `failed`, `skipped`, `canceled`), `skip_reason` (`no_email`, `opted_out`, `suppressed`, `quota_exceeded`, `subscription_inactive`, `feature_unavailable`, `superseded`, `reminders_disabled`, `vehicle_inactive`, `canceled_by_user`), `cycle_anchor date` (avisos por km: fecha de la última revisión del ciclo; único por vehículo y ciclo), `attempts smallint`, `max_attempts smallint` default 5, `next_attempt_at`, `locked_until`, `locked_by`, `provider`, `provider_message_id`, `sent_at`, `last_error` (código + mensaje saneado), `booking_token_hash bytea unique null`, `booking_token_expires_at`, `created_at`, `updated_at`.
 **Idempotencia del evento**: `unique (vehicle_id, type, due_date, offset_days)`. Una segunda ejecución del planificador no puede crear el mismo recordatorio.
 Índice del dispatcher: `(status, scheduled_for) where status in ('scheduled','processing','retrying')` e `(organization_id, status, created_at desc)` para el panel.
 
@@ -287,6 +287,7 @@ Ninguna política confía en un `organization_id` enviado por el cliente: todas 
 | `1200_ops_audit_compliance` | `private.jobs`, `private.job_runs`, `private.rate_limit_buckets` + token bucket, `audit_logs` con trigger genérico, `data_subject_requests`, `legal_acceptances`. |
 | `1300_storage` | Buckets privados `org-assets`, `imports`, `documents` y políticas por organización. |
 | `1400_hardening` | Revoca privilegios a `anon` y **falla la migración** si alguna tabla queda sin RLS forzada, si `anon` tiene acceso a algo más que `plans`, si `private` es accesible o si una función SECURITY DEFINER no fija `search_path`. |
+| `20261106000100_reminder_engine` | Fase 5: `reminders.cycle_anchor`, `private.is_send_day`, `private.next_send_slot`, `private.plan_reminders`, `private.claim_reminders`, `private.release_expired_reminder_leases` (solo `service_role`), `pg_cron` del planificador (hora, minuto 5) y de la recuperación (5 min); `smtp` admitido en `email_logs`/`email_events`. |
 
 Ajustes respecto al diseño de la Fase 0:
 

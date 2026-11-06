@@ -48,10 +48,12 @@ Estructura:
 | Ruta | Contenido |
 |---|---|
 | `supabase/tests/database/000_helpers.sql` | Helpers de test (`tests.create_org`, `tests.authenticate_as`…). Solo en la BD local; no es una migración. |
-| `supabase/tests/database/0x0_*.sql` | Un archivo por área: esquema, aislamiento, roles, sucursales, límites, recordatorios, historial, presupuestos/citas, anónimo. |
-| `tests/unit/` | Funciones puras (matrículas, planes, entorno, errores). |
-| `tests/integration/` | Contexto RLS del servidor, sincronía de planes, concurrencia, servicios de miembros y alta de talleres (incluidos contextos falsificados). |
-| `tests/e2e/` | Playwright: registro → correo (Mailpit) → verificación → alta de taller; acceso, recuperación y cambio de contraseña; invitaciones; límites de usuarios; rate limiting; redirecciones abiertas; clientes, vehículos e historial de principio a fin; borrado seguro; solo lectura. |
+| `supabase/tests/database/0x0_*.sql` | Un archivo por área: esquema, aislamiento, roles, sucursales, límites, recordatorios, historial, presupuestos/citas, anónimo, purga, motor de recordatorios (`110`). |
+| `tests/unit/` | Funciones puras (matrículas, planes, entorno, errores, importación, plantilla del correo, enlaces de baja, backoff, adaptador de Resend con `fetch` simulado, configuración de avisos). |
+| `tests/integration/` | Contexto RLS del servidor, sincronía de planes, concurrencia, servicios de miembros y alta de talleres (incluidos contextos falsificados), importación, papelera, dispatcher (con un puerto de correo de prueba y un envío SMTP real a Mailpit) y servicio de recordatorios. |
+| `tests/e2e/` | Playwright: registro → correo (Mailpit) → verificación → alta de taller; acceso, recuperación y cambio de contraseña; invitaciones; límites de usuarios; rate limiting; redirecciones abiertas; clientes, vehículos e historial de principio a fin; borrado seguro; solo lectura; importación; avisos de punta a punta (configuración → planificador → dispatcher → correo real en Mailpit → baja). |
+
+El E2E de avisos necesita en `.env.local` `EMAIL_PROVIDER=smtp`, `SMTP_URL` (`pnpm -s mailpit:smtp-url`), `EMAIL_SHARED_DOMAIN`, `EMAIL_LINK_SECRET` y `CRON_SECRET`; el CI los genera en cada ejecución (secretos efímeros, no reales). Si faltan, el test falla indicando qué variable falta (no se salta).
 
 Con Cache Components, Next mantiene la página anterior oculta en el DOM (`<Activity>`): en los E2E los selectores se acotan a la tarjeta o sección visible.
 

@@ -1,80 +1,90 @@
 # RevisaYa — Motor de automatizaciones
 
-> Estado: **diseño (Fase 0)**. Implementación en la Fase 5 (motor) y la Fase 6 (correo).
+> Estado: **motor de recordatorios implementado (Fase 5)**. Plantillas editables, dominios propios, webhooks de entrega y resúmenes al taller: Fase 6.
+
+Código: `supabase/migrations/20261106000100_reminder_engine.sql` (planificador, reclamación, recuperación) y `src/server/reminders/dispatcher.ts` (envío). Pruebas: `supabase/tests/database/110_reminder_engine.sql`, `tests/integration/dispatcher.test.ts`, `tests/integration/reminders-service.test.ts`, `tests/e2e/reminders.spec.ts`.
 
 ## 1. Componentes
 
-| Proceso | Frecuencia | Qué hace |
-|---|---|---|
-| **planner** | cada hora (procesa las sucursales cuya hora local acaba de cruzar el inicio de su ventana de envío) | Calcula qué recordatorios tocan y crea filas `reminders` idempotentes. |
-| **dispatcher** | cada minuto | Reclama recordatorios vencidos en lotes, reserva cuota, renderiza y envía, registra el resultado. |
-| **reaper** | cada 5 min | Libera recordatorios con `locked_until` vencido (proceso caído) y los devuelve a la cola. |
-| **email-webhook** | por evento | Actualiza entregas, rebotes y quejas; alimenta la lista de supresión. |
-| **jobs-runner** | cada minuto | Cola genérica: sincronización de Google Calendar, resúmenes al taller, PDFs, exportaciones, purgas. |
-| **housekeeping** | diario | Caducar presupuestos, purgar staging y borrados lógicos, retención de logs, avisos de cuota al 80 %/100 %. |
+| Proceso | Dónde | Frecuencia | Qué hace |
+|---|---|---|---|
+| **planificador** `private.plan_reminders()` | PostgreSQL (`pg_cron`, job `revisaya-plan-reminders`) | cada hora, minuto 5 | Cancela los avisos obsoletos y crea los que tocan, idempotentes. |
+| **dispatcher** `runDispatcher()` | Next.js, `POST/GET /api/internal/jobs/dispatch-reminders` (Vercel Cron) | cada minuto | Reclama lotes, revalida, reserva cuota, renderiza, envía y registra. |
+| **recuperación de leases** `private.release_expired_reminder_leases()` | PostgreSQL (`pg_cron`, job `revisaya-release-leases`) | cada 5 min | Devuelve a la cola los avisos de un proceso caído. |
+| **estado** | `GET /api/internal/jobs/status` (Vercel Cron, monitorización) | cada hora | Últimas ejecuciones; **503** si el planificador lleva > 26 h sin éxito (*dead-man switch*). |
+| **purga** `private.purge_expired_data()` | `pg_cron` | diario 03:17 | Retención de datos (Fase 3). |
 
-Disparo: `pg_cron` + `pg_net` hacen un `POST` a `/api/internal/jobs/<nombre>` con un secreto en cabecera (comparación en tiempo constante). Así funciona con cualquier hosting. El mismo código de `src/server/jobs` puede ejecutarse como worker Node independiente cuando la escala lo pida. Cada ejecución queda en `job_runs` y avisa a un *dead-man switch* externo: si el planner no informa en 26 h, salta una alerta.
+Los endpoints `/api/internal/jobs/*` exigen `Authorization: Bearer CRON_SECRET` (comparación en tiempo constante, `src/server/jobs/auth.ts`). Sin `CRON_SECRET` (o con menos de 32 caracteres) responden 401 siempre. También permiten lanzar `plan-reminders` y `release-leases` a demanda.
 
-## 2. Planner (por sucursal)
+Cada ejecución queda en `private.job_runs` (estado y estadísticas: creados, cancelados, enviados, reintentos, fallidos, reprogramados…).
 
-Para cada organización **activa** (suscripción `trialing`/`active`, o `past_due` dentro del periodo de gracia) y cada sucursal con `reminders_enabled = true`:
+## 2. Planificador
 
-1. Lee `branch_settings` (offsets, ventana, días de envío, festivos).
-2. Selecciona por lotes (keyset, 500 filas) los vehículos `active`, no borrados, cuyo `next_service_date - offset` cae en el horizonte `[hoy, hoy + 2 días]` para algún offset configurado.
-3. Para cada combinación `(vehículo, tipo, due_date, offset)` hace `insert … on conflict do nothing` sobre la clave única → **no puede haber duplicados** aunque el planner se ejecute dos veces o en paralelo.
-4. Calcula `scheduled_for`: fecha `due_date - offset` en hora local de la sucursal, dentro de la ventana; si cae en un día no permitido o festivo se **adelanta** al día hábil anterior (para que el aviso llegue antes de la revisión, nunca después). Si ese día ya pasó, se envía en la ventana de hoy.
-5. **Supersesión**: si la fecha de próxima revisión cambia (nuevo registro de historial o edición), los recordatorios `scheduled` del `due_date` anterior pasan a `canceled` con `skip_reason = superseded`.
-6. Comprobaciones que se registran como `skipped` con motivo (no se envían, pero quedan visibles en el panel): cliente sin email, email suprimido, cliente dado de baja, plan sin la funcionalidad, suscripción inactiva.
+Se ejecuta cada hora para **todas** las sucursales; cada una usa **su** zona horaria (`branches.timezone` o la de la organización), así que el "hoy" de Canarias y el de la Península se calculan por separado. Horizonte: hoy + 2 días.
 
-### 2.1 Recordatorios por kilometraje (Max y superiores)
+Requisitos para planificar en una sucursal: organización y sucursal activas, suscripción activa (`trialing`/`active`, o `past_due` dentro de la gracia), plan con `date_reminders`, `reminders_enabled = true`. Vehículos: `active`, no borrados, cliente no borrado, con `next_service_date` futura o de hoy.
 
-RevisaYa no lee el cuentakilómetros (sin conexión a la DGT ni telemetría). El PDF pide avisar "cuando un coche supera los kilómetros de la última revisión"; como solo conocemos los km cuando el taller los registra, el sistema **estima**:
+1. **Obsoletos**: los avisos `scheduled`/`retrying` cuyo vehículo ya no está activo, cuya fecha de revisión ha cambiado (nueva revisión registrada o edición) o cuyo ciclo de km ha cambiado pasan a `canceled` con `skip_reason = superseded`.
+2. **Avisos por fecha**: para cada offset configurado (p. ej. 30 y 7 días), si `next_service_date − offset` cae entre hoy y el horizonte se inserta un recordatorio. Clave única `(vehículo, tipo, fecha, offset)` + `on conflict do nothing` → **no puede haber duplicados** aunque el planificador se ejecute varias veces o en paralelo (probado).
+3. **Aviso perdido** (vehículo dado de alta tarde, importación, planificador parado): si ya pasó la fecha de algún aviso, se crea **uno solo**, el más reciente, y solo si no hay otro aviso previsto en los próximos 3 días (para no mandar dos correos seguidos).
+4. **Momento de envío** `private.next_send_slot()`: el día ideal, dentro de la ventana horaria de la sucursal (por defecto 09:00–19:00, lunes a viernes). Si el día ideal no es de envío o es festivo (`blackout_dates`), se **adelanta** al día hábil anterior (que llegue antes de la revisión, nunca después). Si ese día ya pasó, el primer hueco permitido desde ahora. Si ahora está dentro de la ventana, ahora mismo; si ya pasó la ventana de hoy, mañana a la hora de inicio.
 
-- Ritmo diario = diferencia de km / días entre lecturas de `mileage_readings` (mínimo 2 lecturas separadas ≥ 30 días; acotado entre 5 y 300 km/día para descartar errores). Sin datos suficientes: no se genera aviso por km y la ficha lo indica.
-- Fecha estimada en la que se alcanzará `next_service_km` (o `last_service_km + default_interval_km`) menos `km_offset_before`.
-- Se genera un recordatorio `service_km` con `due_date` = fecha estimada. El correo y el panel lo presentan como **estimación** ("según tu kilometraje habitual").
-- Si existe recordatorio por fecha y por km para la misma revisión, se envía **el que ocurra antes** y el otro se cancela (`superseded`), para no avisar dos veces.
+### 2.1 Avisos por kilometraje (plan Max o superior, P6)
 
-Pendiente de aprobación (P6): confirmar este enfoque de estimación.
+RevisaYa no lee el cuentakilómetros (sin DGT ni telemetría): **estima** con las lecturas que registra el taller.
+
+- Ritmo diario = diferencia de km entre la última lectura y la anterior separada **≥ 30 días**; solo si está entre **5 y 300 km/día** (descarta errores de tecleo).
+- Objetivo: `next_service_km` o, si no hay, `last_service_km + default_interval_km`; se avisa `km_offset_before` km antes (por defecto 1.000).
+- Se crea **un** aviso `service_km` por ciclo de mantenimiento (`cycle_anchor` = fecha de la última revisión; índice único). Una nueva revisión abre un ciclo nuevo y cancela el anterior.
+- Solo si la fecha estimada llega **antes** que la revisión por fecha (más de 7 días antes) y no se ha enviado ya el aviso por fecha de ese ciclo: nunca dos avisos para la misma revisión.
+- El correo lo presenta como estimación ("según el kilometraje habitual de tu vehículo… estimamos que hacia el…").
 
 ## 3. Dispatcher
 
 ```text
-loop (lote ≤ 200, presupuesto de tiempo ≤ 50 s):
-  BEGIN
-    SELECT … FROM reminders
-     WHERE status = 'scheduled' AND scheduled_for <= now()
-        OR status = 'retrying' AND next_attempt_at <= now()
-     ORDER BY scheduled_for
-     LIMIT n FOR UPDATE SKIP LOCKED;          -- varios workers sin pisarse
-    UPDATE … SET status='processing', locked_until=now()+'5 min', locked_by=worker, attempts=attempts+1;
-  COMMIT
-  para cada recordatorio (reparto justo: máx. k por organización y lote):
-    revalidar (vehículo activo, email válido, no suprimido, plan activo)   → skipped
-    reservar cuota (usage_counters, atómico)                              → skipped/quota_exceeded
+mientras quede presupuesto de tiempo (50 s) y lotes:
+  ids = private.claim_reminders(worker, 100, 20)   -- FOR UPDATE SKIP LOCKED, lease 5 min,
+                                                    -- reparto justo: ≤ 20 por taller y lote
+  para cada id (5 en paralelo, cada uno aislado con try/catch):
+    ¿hay email_logs aceptado de un intento anterior? → 'sent' sin reenviar (recuperación)
+    revalidar con los datos ACTUALES              → skipped / canceled con motivo
+    ¿fuera de la ventana o día sin envíos?        → reprogramar (no gasta intento)
+    reservar cuota mensual (app.reserve_usage)    → skipped / quota_exceeded
     renderizar plantilla (variables escapadas, marca del taller)
-    EmailPort.send({ idempotencyKey: reminder.id, … })
-      ok        → status='sent', provider_message_id, sent_at, email_logs(accepted)
-      temporal  → status='retrying', next_attempt_at = now() + backoff(attempts), cuota liberada
-      definitivo→ status='failed', last_error, cuota liberada
-    cualquier excepción queda aislada a ESE recordatorio (try/catch), el lote continúa
+    EmailPort.send({ idempotencyKey: "reminder-<id>" })
+      aceptado   → 'sent' + provider_message_id + email_logs('accepted')
+      temporal   → 'retrying' con backoff (cuota liberada)
+      definitivo → 'failed' + email_logs('failed') (cuota liberada)
+  si > 50 % del lote falla porque el proveedor no responde (5xx/red) → corte del circuito
 ```
 
-- **Nunca se marca como enviado antes de la respuesta del proveedor.** `sent` significa "aceptado por el proveedor"; `delivered` solo llega por webhook.
-- **Idempotencia frente a caídas**: si el proceso muere tras enviar pero antes de guardar, el reaper devuelve el recordatorio a la cola y el reenvío usa la **misma clave de idempotencia** (`reminder.id`), que el proveedor deduplica (Resend la respeta durante 24 h). Además se comprueba `email_logs` por `reminder_id` antes de reenviar.
-- **Backoff exponencial con jitter**: 1 min, 5 min, 30 min, 2 h, 6 h (máx. 5 intentos). Errores 4xx no recuperables (dirección inválida, dominio no verificado) no se reintentan.
-- **Circuit breaker global**: si el proveedor falla en > 50 % de un lote por errores 5xx/timeout, el dispatcher pausa 5 min sin quemar intentos.
-- **Aislamiento entre talleres**: el fallo de un taller (plantilla, dominio, cuota) no afecta al resto; reparto justo para que un taller grande no acapare el lote.
-- **Concurrencia**: `SKIP LOCKED` + lease; el planner y el dispatcher pueden ejecutarse en paralelo sin efectos dobles.
+- **"Enviado" solo con confirmación del proveedor** (`provider_message_id`; lo impone también un CHECK). `delivered` llegará por webhook (Fase 6).
+- **Revalidación** antes de enviar, en este orden: suscripción, avisos activados, funcionalidad del plan, vehículo/cliente activos (`canceled`), fecha o ciclo cambiados (`canceled/superseded`), cliente dado de baja (`opted_out`), sin correo (`no_email`), dirección suprimida (`suppressed`).
+- **Backoff con jitter ±20 %**: 1 min, 5 min, 30 min, 2 h, 6 h; máximo 5 intentos (`max_attempts`). Errores definitivos (4xx de Resend, 5xx de SMTP) no se reintentan.
+- **Caídas**: si el proceso muere con avisos en `processing`, a los 5 min la recuperación los devuelve a `retrying` (o `failed` si agotaron intentos). El reintento comprueba `email_logs` y usa la **misma clave de idempotencia** (Resend la respeta 24 h).
+- **Aislamiento entre talleres**: un fallo (plantilla, cuota, rebote) solo afecta a ese aviso; el reparto justo evita que un taller grande acapare el lote (probado: el fallo de un taller no detiene los envíos de otro).
+- **Corte del circuito**: si el proveedor está caído, el dispatcher para tras el lote en curso; el resto de la cola no gasta intentos.
+- **Sin proveedor configurado** (`EMAIL_PROVIDER` vacío) **no se envía ni se simula nada**: los avisos se quedan programados y la ejecución lo registra como `provider_not_configured`.
 
-## 4. Límite de correos agotado
+### 3.1 Contenido del correo
 
-Propuesta (P5): el recordatorio queda `skipped/quota_exceeded`, visible en el panel; el administrador recibe aviso al 80 % y al 100 %, con opción de mejorar el plan. Si mejora el plan en el mismo mes, los recordatorios saltados cuya fecha aún sea útil se reprograman automáticamente.
+- Plantilla original del PDF (`src/lib/email/reminder-email.ts`, variables `{nombre}`, `{modelo}`, `{matricula}`, `{fecha_revision}`, `{taller}`) o la personalizada del taller si existe (`email_templates`; editor en la Fase 6).
+- Todo lo que viene del taller o del cliente se **escapa** en el HTML; el asunto se limpia de saltos de línea (sin inyección de cabeceras).
+- Remitente: `"<Taller>" <slug@EMAIL_SHARED_DOMAIN>` (dominio compartido de RevisaYa, P1) o el dominio propio verificado del taller. `Reply-To`: la dirección "Responder a" del taller.
+- Botón "Pedir cita": de momento un `mailto:` al taller (la página de citas llega en la Fase 7). Sin dirección de respuesta, sin botón.
+- **Baja en un clic**: enlace firmado con HMAC (`EMAIL_LINK_SECRET`) a `/baja/<token>` y cabeceras `List-Unsubscribe` + `List-Unsubscribe-Post` (RFC 8058) hacia `/api/public/unsubscribe/<token>`. La baja marca al cliente, añade la dirección a `email_suppressions` y salta sus avisos pendientes (`opted_out`).
 
-## 5. Webhooks del proveedor de correo
+## 4. Límite mensual de correos (P5)
 
-`/api/webhooks/email/resend`: verificación de firma (Svix), idempotencia por `provider_event_id`, actualización de `email_logs` y del estado del recordatorio (`delivered`, `bounced`, `complained`). Rebote definitivo o queja → `email_suppressions` y aviso en la ficha del cliente ("email no válido").
+`app.reserve_usage` reserva una unidad de forma atómica (mes natural en la zona del taller). Si el plan no da para más, el aviso queda `skipped/quota_exceeded`, visible en el panel. Si el envío falla, la unidad se libera. Avisos al 80 %/100 % y reprogramación al mejorar el plan: Fase 6/8.
 
-## 6. Monitorización
+## 5. Panel y configuración (Fase 5)
 
-Panel interno (`/admin` de plataforma, Fase 11) y métricas en `job_runs`: recordatorios planificados/enviados/fallidos por ejecución, latencia, tasa de rebote y de queja por organización (alerta si quejas > 0,1 % o rebotes > 4 %, umbrales para proteger la reputación del remitente).
+- `/app/configuracion/avisos` (administradores): activar avisos, días de antelación (hasta 5), ventana horaria, días de envío, festivos y días de cierre, intervalo por defecto (meses/km), avisos por km (Max+), dirección "Responder a". Con la suscripción inactiva, solo lectura.
+- `/app/recordatorios` (permiso `reminders.read`): resumen (pendientes, enviados este mes, problemas en 30 días, correos usados/límite), filtros por estado y búsqueda, motivo de cada aviso no enviado, y **cancelar** un aviso pendiente (solo administradores; RLS solo permite pasar a `canceled/canceled_by_user`).
+
+## 6. Pendiente (fases siguientes)
+
+- Webhooks del proveedor (`delivered`, `bounced`, `complained` → supresión): Fase 6.
+- Resumen periódico al taller y avisos de cuota: Fase 6.
+- Métricas de reputación por organización (alerta si quejas > 0,1 % o rebotes > 4 %): Fase 6/11.

@@ -33,9 +33,12 @@ export const serverEnvSchema = z
       .refine((v) => Buffer.from(v, "base64").length === 32, "Debe ser una clave de 32 bytes en base64")
       .optional(),
 
+    EMAIL_PROVIDER: z.enum(["smtp", "resend"]).optional(),
+    SMTP_URL: z.string().regex(/^smtps?:\/\//, "Debe empezar por smtp:// o smtps://").optional(),
     RESEND_API_KEY: optionalString,
     RESEND_WEBHOOK_SECRET: optionalString,
     EMAIL_SHARED_DOMAIN: optionalString,
+    EMAIL_LINK_SECRET: z.string().min(32).optional(),
 
     STRIPE_SECRET_KEY: z.string().regex(/^sk_(test|live)_/, "Clave secreta de Stripe no válida").optional(),
     STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_/).optional(),
@@ -47,6 +50,15 @@ export const serverEnvSchema = z
     SENTRY_DSN: z.url().optional(),
   })
   .superRefine((env, ctx) => {
+    if (env.EMAIL_PROVIDER === "smtp" && !env.SMTP_URL) {
+      ctx.addIssue({ code: "custom", path: ["SMTP_URL"], message: "EMAIL_PROVIDER=smtp exige SMTP_URL" });
+    }
+    if (env.EMAIL_PROVIDER === "resend" && !env.RESEND_API_KEY) {
+      ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "EMAIL_PROVIDER=resend exige RESEND_API_KEY" });
+    }
+    if (env.EMAIL_PROVIDER && (!env.EMAIL_LINK_SECRET || !env.EMAIL_SHARED_DOMAIN)) {
+      ctx.addIssue({ code: "custom", path: ["EMAIL_LINK_SECRET"], message: "Para enviar correos hacen falta EMAIL_LINK_SECRET y EMAIL_SHARED_DOMAIN" });
+    }
     const live = env.STRIPE_SECRET_KEY?.startsWith("sk_live_") ?? false;
     if (live && !env.PAYMENTS_LIVE_ENABLED) {
       ctx.addIssue({

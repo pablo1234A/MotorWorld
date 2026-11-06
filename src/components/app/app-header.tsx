@@ -6,7 +6,7 @@ import { switchOrganizationAction } from "@/server/modules/organizations/actions
 
 /**
  * Cabecera del panel. Solo enlaza a pantallas que ya existen; el resto de
- * módulos (recordatorios, citas, presupuestos…) se añaden en su fase. El
+ * módulos (citas, presupuestos…) se añaden en su fase. El
  * diseño definitivo con barra lateral llega en la Fase 10.
  */
 export function AppHeader({ ctx }: { ctx: OrgContext }) {
@@ -49,6 +49,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
             ["/app/clientes", "Clientes"],
             ["/app/vehiculos", "Vehículos"],
             ["/app/historial", "Historial"],
+            ...(admin || ctx.membership.permissions.includes("reminders.read") ? [["/app/recordatorios", "Recordatorios"]] : []),
             ...(admin || ctx.membership.permissions.includes("imports.run") ? [["/app/importar", "Importar"]] : []),
           ].map(([href, label]) => (
             <Link key={href} className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href={href}>
@@ -56,9 +57,14 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
             </Link>
           ))}
           {admin ? (
-            <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/usuarios">
-              Usuarios
-            </Link>
+            <>
+              <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/configuracion/avisos">
+                Avisos
+              </Link>
+              <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/usuarios">
+                Usuarios
+              </Link>
+            </>
           ) : null}
           <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/cuenta">
             Mi cuenta

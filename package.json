@@ -17,7 +17,8 @@
     "db:test": "supabase test db",
     "check": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm db:test && pnpm test:integration && pnpm build",
     "db:types": "kysely-codegen",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "mailpit:smtp-url": "echo smtp://$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' supabase_inbucket_revisaya):1025"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -25,6 +26,7 @@
     "exceljs": "^4.4.0",
     "kysely": "^0.29.8",
     "next": "16.4.5",
+    "nodemailer": "^10.3.1",
     "papaparse": "^5.7.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -35,6 +37,7 @@
     "@playwright/test": "1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/papaparse": "^5.5.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",

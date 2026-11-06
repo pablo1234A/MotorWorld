@@ -593,6 +593,7 @@ export interface Reminders {
   branch_id: string;
   created_at: Generated<Timestamp>;
   customer_id: string;
+  cycle_anchor: string | null;
   due_date: string;
   id: Generated<string>;
   last_error: string | null;

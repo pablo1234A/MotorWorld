@@ -46,3 +46,21 @@ export function daysUntil(isoDate: string, today = todayIn()): number {
 export function formatKm(km: number | null | undefined): string {
   return km == null ? "" : `${km.toLocaleString("es-ES")} km`;
 }
+
+/** dd/mm/aaaa, hh:mm en la zona horaria indicada (instantes: envíos, eventos). */
+export function formatDateTime(value: Date | string | null | undefined, timeZone = DEFAULT_TIMEZONE): string {
+  if (!value) return "";
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("es-ES", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("day")}/${get("month")}/${get("year")}, ${get("hour")}:${get("minute")}`;
+}

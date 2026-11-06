@@ -23,6 +23,15 @@ interface RateLimiter  { consume(key: string, cost?: number): Promise<{ allowed:
 
 **Proveedor principal: Resend.** Alternativa preparada: Amazon SES (más barato a gran volumen, sin límite práctico de dominios). SendGrid queda como opción documentada. Elegir región UE si el proveedor lo ofrece.
 
+**Implementado (Fase 5)** — `src/server/email/`:
+
+| Adaptador | Variable | Detalles |
+|---|---|---|
+| `ResendEmailAdapter` | `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` | API HTTP de Resend con `Idempotency-Key: reminder-<id>`, timeout 15 s. 429, 409 y 5xx → reintento; resto de 4xx → definitivo. |
+| `SmtpEmailAdapter` | `EMAIL_PROVIDER=smtp`, `SMTP_URL` | nodemailer (Amazon SES por SMTP, Mailpit en local). Timeouts acotados. 5xx → definitivo; 4xx y red → reintento. SMTP no tiene idempotencia: protege la comprobación de `email_logs`. |
+
+`getEmailProvider()` devuelve `null` si falta la configuración: entonces **no se envía nada** (no hay adaptador "falso" fuera de `tests/`). Los mensajes de error del proveedor se guardan sin direcciones de correo (`sanitizeProviderMessage`). Pendiente para la Fase 6: `createDomain`, `getDomainStatus` y `verifyWebhook`.
+
 ### 2.1 Modos de remitente
 
 | Modo | From | Cuándo |

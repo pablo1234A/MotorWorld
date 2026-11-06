@@ -10,15 +10,63 @@
 | 1 — Infraestructura y base de datos | ✅ Completada | 2026-11-04 |
 | 2 — Backend y autenticación | ✅ Completada | 2026-11-05 |
 | 3 — Clientes, vehículos e historial | ✅ Completada (incluidos sus pendientes: purga y papelera) | 2026-11-05 |
-| 4 — Importación Excel/CSV | ✅ Completada (pendiente de revisión) | 2026-11-05 |
-| 5 — Motor de automatizaciones | ⏭ Siguiente | — |
-| 6 — Sistema de correos | ⏸ No iniciada | — |
+| 4 — Importación Excel/CSV | ✅ Completada | 2026-11-05 |
+| 5 — Motor de automatizaciones | ✅ Completada (pendiente de revisión) | 2026-11-06 |
+| 6 — Sistema de correos | ⏭ Siguiente | — |
 | 7 — Citas y presupuestos | ⏸ No iniciada | — |
 | 8 — Suscripciones y límites (Stripe TEST) | ⏸ No iniciada | — |
 | 9 — Google Calendar, informes y API | ⏸ No iniciada | — |
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 5 — Motor de automatizaciones (recordatorios)
+
+### Qué se ha construido
+Detalle en [AUTOMATIZACIONES](AUTOMATIZACIONES.md).
+1. **Planificador** (`private.plan_reminders`, `pg_cron` cada hora): por sucursal y en su zona horaria; avisos según los días de antelación del taller (por defecto 30 y 7); aviso perdido único para altas tardías e importaciones; cancela los avisos obsoletos (nueva revisión, fecha cambiada, vehículo dado de baja); **sin duplicados** por clave única aunque se ejecute varias veces o en paralelo.
+2. **Momento de envío** (`private.next_send_slot`): ventana horaria, días de envío y festivos de cada sucursal; si el día no vale, se adelanta al día hábil anterior.
+3. **Avisos por kilometraje** (plan Max o superior): estimación por ritmo de km entre lecturas (≥ 30 días, 5–300 km/día), uno por ciclo de mantenimiento y solo si llega antes que el aviso por fecha.
+4. **Dispatcher** (`/api/internal/jobs/dispatch-reminders`, Vercel Cron cada minuto): lotes con `SKIP LOCKED` + lease + reparto justo por taller; revalidación con los datos actuales; reserva atómica de la cuota mensual; "enviado" solo con el identificador del proveedor; reintentos con backoff y jitter; corte si el proveedor cae; recuperación tras caídas (lease vencido → cola; `email_logs` evita reenviar).
+5. **Correo**: plantilla del PDF con variables escapadas y marca del taller, remitente compartido con el nombre del taller y `Reply-To` (P1), botón "Pedir cita" (`mailto:` hasta la Fase 7), versión de texto.
+6. **Proveedores**: adaptadores reales **SMTP** (Amazon SES, Mailpit) y **Resend** (con clave de idempotencia). Sin proveedor configurado no se envía ni se simula nada.
+7. **Baja de avisos**: enlace firmado (HMAC) en `/baja/<token>` y cabeceras `List-Unsubscribe` one-click (RFC 8058); marca al cliente, suprime la dirección y salta sus avisos pendientes.
+8. **Pantallas**: `/app/configuracion/avisos` (administradores: activar, antelación, ventana, días, festivos, intervalo por defecto, km en Max+, "Responder a") y `/app/recordatorios` (resumen del mes, filtros, motivo de cada aviso no enviado, cancelar un aviso pendiente).
+9. **Monitorización**: cada ejecución en `job_runs`; `/api/internal/jobs/status` responde 503 si el planificador lleva más de 26 h sin éxito. Endpoints internos protegidos con `CRON_SECRET`.
+
+### Pruebas ejecutadas (2026-11-06, desde base de datos nueva, todas en verde)
+
+| Comando | Resultado |
+|---|---|
+| `pnpm db:test` (pgTAP) | **245/245** (nuevo: `110_reminder_engine.sql`, 29: momento de envío con ventana, fin de semana, festivo y Canarias; planificador; idempotencia; obsoletos; avisos desactivados; suscripción cancelada; km Max frente a Pro; reclamación y recuperación) |
+| `pnpm test` (Vitest) | **199/199** (nuevos: `email.test.ts` 17 y `reminder-settings.test.ts` 8 unitarios; `dispatcher.test.ts` 12 y `reminders-service.test.ts` 9 de integración) |
+| `pnpm test:e2e` (Playwright) | **20/20** (nuevos: configurar avisos → planificar → enviar por SMTP real → correo en Mailpit con las variables → baja del cliente → panel; endpoints internos sin secreto → 401) |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm audit` | sin errores · 0 vulnerabilidades |
+
+Casos críticos cubiertos en esta fase:
+- **3** (no se duplican recordatorios): planificador ejecutado varias veces (pgTAP) y **dos dispatchers simultáneos con 30 avisos: cada uno se envía exactamente una vez** (`dispatcher.test.ts`); el segundo `dispatch-reminders` del E2E no reenvía nada.
+- **6** (un error de correo no detiene los demás): el fallo del proveedor para un taller no impide los envíos de otro; un error definitivo queda como fallido y uno temporal se reintenta con la cuota liberada.
+- **1/2** en las nuevas pantallas: otro taller no puede leer ni cambiar la configuración ni cancelar avisos (ni cambiando los identificadores del formulario); un operario no puede cambiar la configuración ni cancelar; sin `reminders.read` no ve los avisos.
+
+### Errores encontrados y corregidos durante la fase
+- El aviso perdido podía crear un segundo aviso el mismo día que otro previsto: se exige que no haya otro en los 3 días siguientes (test).
+- La lectura del lote reclamado usaba un nombre de columna inexistente (`setof uuid`): detectado por los tests de integración y corregido.
+- `email_logs` no admitía el proveedor `smtp`: restricción ampliada (no destructiva, ADR-044).
+- El filtro del panel aceptaba nombres heredados del objeto (`"toString"`): detectado por un test unitario, corregido con `Object.hasOwn`.
+- En móvil, el texto oculto de la columna de acciones ensanchaba la página del panel: corregido (comprobado a 390 px).
+
+### Pendiente (documentado)
+- Webhooks de entrega, rebote y queja; avisos de cuota al 80 %/100 %; editor de plantillas; dominios propios; resúmenes al taller → **Fase 6**.
+- Página de citas como destino del botón "Pedir cita" → Fase 7 (hasta entonces, `mailto:` al taller).
+- En local, el puerto SMTP de Mailpit no se publica con esta versión de la CLI de Supabase: se usa la IP del contenedor (`pnpm mailpit:smtp-url`), también en CI.
+
+### Credenciales que deben configurarse (staging/producción)
+`CRON_SECRET`, `EMAIL_PROVIDER` + `RESEND_API_KEY` (o `SMTP_URL`), `EMAIL_SHARED_DOMAIN` (subdominio de envío verificado con SPF/DKIM/DMARC) y `EMAIL_LINK_SECRET`, como secretos del hosting. **No se ha enviado ningún correo a direcciones reales**: todo el envío probado va a Mailpit (local).
+
+### Siguiente fase
+**Fase 6 — Sistema de correos**: editor de plantillas con vista previa y prueba, verificación de dominio propio, webhooks del proveedor (entregas, rebotes, quejas → supresión), avisos de cuota, resumen al taller.
 
 ---
 
@@ -56,7 +104,7 @@ Flujo completo del PDF (§3) y del encargo (§8) — detalle en [IMPORTACION](IM
 - Importación con «actualizar los datos de un vehículo existente» en lugar de omitirlo: fuera del alcance actual (IMPORTACION R7).
 
 ### Siguiente fase
-**Fase 5 — Motor de automatizaciones**: planificador diario por zona horaria con ventanas de envío y festivos, recordatorios idempotentes, dispatcher con cola, lease, reintentos con backoff, reparto justo por taller, recuperación tras caídas, avisos por kilometraje estimado (Max+), monitorización.
+Fase 5 (completada, ver arriba). Las fichas importadas reciben avisos automáticamente (el planificador lee `next_service_date`).
 
 ---
 
@@ -173,10 +221,10 @@ Cobertura de los casos críticos:
 |---|---|---|
 | 1 | Un taller no puede ver/modificar datos de otro | `010_tenant_isolation.sql` (36 tests, 19 tablas) + `rls-context.test.ts` |
 | 2 | Un operario no puede hacer acciones de administrador | `020_roles_permissions.sql` (27 tests) |
-| 3 | No se pueden duplicar recordatorios | `050_reminders_email.sql` + 10 planificadores simultáneos en `concurrency.test.ts` |
+| 3 | No se pueden duplicar recordatorios | `050_reminders_email.sql` + 10 planificadores simultáneos en `concurrency.test.ts` + `110_reminder_engine.sql` y dos dispatchers simultáneos en `dispatcher.test.ts` (Fase 5) |
 | 4 | No se pueden superar los límites del plan | `040_plan_limits.sql` (29 tests) + altas y reservas de correo simultáneas |
 | 5 | Importación incorrecta sin registros parciales | `tests/integration/imports.test.ts` (fallo por límite y fallo a mitad de transacción ⇒ 0 fichas) |
-| 6 | Un error de correo no detiene otros envíos | Fase 5 (motor) |
+| 6 | Un error de correo no detiene otros envíos | `dispatcher.test.ts` (Fase 5) |
 | 7 | Webhook duplicado no duplica operaciones | Unicidad de `email_events` y `stripe_events` probada; procesadores en Fases 6 y 8 |
 | 8 | La cancelación se refleja | Acceso de solo lectura con suscripción cancelada probado en `040`; webhook de Stripe en Fase 8 |
 | 9 | Los vehículos mantienen su historial | `060_vehicle_history.sql` (15 tests) |

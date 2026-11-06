@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 
 import pg from "pg";
 
@@ -57,6 +58,54 @@ export async function waitForEmailLink(to: string, subject: string, after = new 
       if (!href) throw new Error(`El correo "${msg.Subject}" no contiene enlace con token_hash`);
       return href.replace(/&amp;/g, "&");
     }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`No ha llegado el correo "${subject}" a ${to}`);
+}
+
+/**
+ * Variable de la aplicación: del entorno o de `.env.local` (el mismo archivo
+ * que lee `next start`). Solo para secretos LOCALES de prueba.
+ */
+export function appEnv(name: string): string {
+  if (process.env[name]) return process.env[name]!;
+  try {
+    const file = readFileSync(".env.local", "utf8");
+    const line = file.split("\n").find((l) => l.startsWith(`${name}=`));
+    const value = line?.slice(name.length + 1).replace(/\s+#.*$/, "").trim();
+    if (value) return value;
+  } catch {
+    // sin .env.local
+  }
+  throw new Error(`Falta ${name} (en el entorno o en .env.local) para este test`);
+}
+
+/** Ejecuta un proceso programado como lo haría el cron (Bearer CRON_SECRET). */
+export async function runJob(baseURL: string, job: string): Promise<{ ok: boolean; stats?: Record<string, unknown> }> {
+  const res = await fetch(new URL(`/api/internal/jobs/${job}`, baseURL), {
+    method: "POST",
+    headers: { authorization: `Bearer ${appEnv("CRON_SECRET")}` },
+  });
+  if (!res.ok) throw new Error(`El job ${job} respondió ${res.status}`);
+  return (await res.json()) as { ok: boolean; stats?: Record<string, unknown> };
+}
+
+export interface MailpitMessage {
+  ID: string;
+  Subject: string;
+  From: { Name: string; Address: string };
+  HTML: string;
+  Text: string;
+}
+
+/** Espera el correo para `to` cuyo asunto contiene `subject` y lo devuelve completo. */
+export async function waitForEmail(to: string, subject: string): Promise<MailpitMessage> {
+  const deadline = Date.now() + 20_000;
+  while (Date.now() < deadline) {
+    const res = await fetch(`${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
+    const data = (await res.json()) as { messages: MailpitSummary[] };
+    const msg = data.messages.find((m) => m.Subject.includes(subject));
+    if (msg) return (await (await fetch(`${MAILPIT_URL}/api/v1/message/${msg.ID}`)).json()) as MailpitMessage;
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`No ha llegado el correo "${subject}" a ${to}`);
