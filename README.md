@@ -4,6 +4,18 @@ Creador de webs profesionales con IA. Describes tu negocio y World Builder AI pl
 
 > Informe inicial de auditoría (skills, proveedores, arquitectura, limitaciones): [`docs/AUDIT.md`](docs/AUDIT.md)
 
+## Edición de un solo archivo (sin instalar nada)
+
+[`standalone/world-builder-ai.html`](standalone/world-builder-ai.html) contiene el creador completo en un único archivo: se abre con doble clic, desde disco y sin servidor. Usa el mismo motor, el mismo renderizador y los mismos componentes del editor que la versión con servidor. Los proyectos se guardan en el navegador (IndexedDB).
+
+- **Funciona en el archivo:** generación desde el brief y asistente de 4 pasos, editor visual completo, chat con el motor local, deshacer y rehacer, autoguardado, historial de versiones, QA con autocorrección, subida de imágenes, componentes reutilizables, exportación ZIP y JSON, importación y copia de seguridad.
+- **Formularios:** en *Sitio › Webhook de formularios*, configura un endpoint HTTPS que acepte JSON (Formspree, Make, n8n o tu servidor de World Builder AI).
+- **Pagos:** con Stripe Payment Links en cada producto.
+- **Necesita el servidor:** alojar la web en `/s/<slug>`, guardar los envíos en BD, Claude Opus 5.5 (la clave no puede ir en un archivo público), Unsplash/Pexels, Stripe Checkout y Vercel. En el archivo, «Publicar» te indica cómo subir el ZIP a Netlify Drop, Vercel o Cloudflare Pages.
+- **Conexión a Internet:** GSAP, Three.js y las tipografías se cargan desde jsDelivr y Google Fonts. Sin conexión, el editor funciona igual y las páginas 3D muestran su fondo alternativo.
+
+Para regenerarlo: `npm run build:standalone`.
+
 ## Puesta en marcha
 
 ```bash

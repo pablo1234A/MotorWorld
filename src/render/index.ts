@@ -24,6 +24,18 @@ export interface RenderTarget {
   externalAssets?: boolean;
 }
 
+/**
+ * Single-file mode (standalone/world-builder-ai.html): there is no server, so vendor libraries
+ * come from a pinned CDN and forms post to the endpoint the user configures (Formspree, Make…).
+ * The server-backed app never sets this.
+ */
+interface StandaloneConfig {
+  vendor: Record<string, string>;
+}
+function standalone(): StandaloneConfig | null {
+  return ((globalThis as { __WB_STANDALONE__?: StandaloneConfig }).__WB_STANDALONE__) ?? null;
+}
+
 function depthOf(path: string) {
   return path === "/" ? 0 : path.split("/").filter(Boolean).length;
 }
@@ -54,6 +66,8 @@ export function linkMapper(doc: SiteDocument, page: Page, t: RenderTarget) {
 export function assetMapper(page: Page, t: RenderTarget) {
   return (src: string): string => {
     if (!src || /^(data:|https?:)/.test(src)) return src;
+    const sa = standalone();
+    if (sa && src.startsWith("/vendor/")) return sa.vendor[src.slice(8)] ?? src;
     if (t.mode === "export") {
       const up = "../".repeat(depthOf(page.path));
       const mapped = t.assetMap?.[src];
@@ -72,7 +86,7 @@ function ctxFor(doc: SiteDocument, page: Page, t: RenderTarget): RenderCtx {
     mode: t.mode,
     link: linkMapper(doc, page, t),
     asset: assetMapper(page, t),
-    formAction: `${t.appUrl}/api/forms/${t.projectId}`,
+    formAction: standalone() ? (/^https:\/\//.test(doc.settings.formWebhook ?? "") ? doc.settings.formWebhook! : "") : `${t.appUrl}/api/forms/${t.projectId}`,
     checkoutAction: t.checkoutEnabled ? `${t.appUrl}/api/checkout/${t.projectId}` : null,
     projectId: t.projectId,
     h1Used: false,
@@ -104,7 +118,7 @@ export function renderCss(doc: SiteDocument): string {
 
 function runtimeConfig(doc: SiteDocument, page: Page, t: RenderTarget) {
   const asset = assetMapper(page, t);
-  const vendor = (f: string) => (t.mode === "export" ? asset(`/vendor/${f}`) : `${t.appUrl}/vendor/${f}`);
+  const vendor = (f: string) => (standalone() || t.mode === "export" ? asset(`/vendor/${f}`) : `${t.appUrl}/vendor/${f}`);
   const cfg = {
     mode: t.mode,
     projectId: t.projectId,

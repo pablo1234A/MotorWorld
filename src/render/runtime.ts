@@ -148,6 +148,7 @@ function initForms(){
       $$("[required]",form).forEach(function(f){var bad=f.type==="checkbox"?!f.checked:!String(f.value).trim()||(f.type==="email"&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.value));f.setAttribute("aria-invalid",bad?"true":"false");if(bad&&ok){ok=false;f.focus()}});
       if(!ok){msg.textContent="Revisa los campos marcados.";msg.classList.add("is-err");return}
       if(editing){msg.textContent="Vista previa: el formulario se enviará en el sitio publicado.";msg.classList.add("is-ok");return}
+      if(!form.getAttribute("action")){msg.textContent="Este formulario aún no tiene destino configurado.";msg.classList.add("is-err");return}
       var btn=$("button[type=submit]",form);btn.disabled=true;
       var data={};new FormData(form).forEach(function(v,k){data[k]=v});
       fetch(form.action,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(data)})

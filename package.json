@@ -15,6 +15,7 @@
     "test:e2e": "node scripts/e2e.cjs",
     "db:generate": "drizzle-kit generate",
     "vendor": "node scripts/copy-vendor.mjs",
+    "build:standalone": "node scripts/build-standalone.mjs",
     "postinstall": "node scripts/copy-vendor.mjs"
   },
   "engines": {

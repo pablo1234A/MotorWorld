@@ -100,9 +100,12 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
                 <ExternalLink className="size-3.5" /> Ver sitio publicado
               </MenuItem>
             ) : null}
-            <MenuItem onSelect={() => navigator.clipboard.writeText(`${location.origin}/s/${p.slug}`).then(() => toast.success("Enlace copiado"))}>
-              <Copy className="size-3.5" /> Copiar enlace
-            </MenuItem>
+            {/* The single-file edition has no hosting, so there is no public link to copy. */}
+            {!(globalThis as { __WB_STANDALONE__?: unknown }).__WB_STANDALONE__ ? (
+              <MenuItem onSelect={() => navigator.clipboard.writeText(`${location.origin}/s/${p.slug}`).then(() => toast.success("Enlace copiado"))}>
+                <Copy className="size-3.5" /> Copiar enlace
+              </MenuItem>
+            ) : null}
             <MenuSeparator />
             <MenuItem danger onSelect={() => setConfirm(true)}>
               <Trash2 className="size-3.5" /> Eliminar
