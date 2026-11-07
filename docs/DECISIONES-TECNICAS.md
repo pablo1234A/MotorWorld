@@ -67,6 +67,11 @@
 | 057 | **Tras un cambio de estado el resultado viaja en la URL (`?ok=…`)** | Mensaje en el estado del formulario | El formulario que lanza la acción puede desaparecer al cambiar el estado (cita confirmada, presupuesto emitido); los E2E lo detectaron. | Aceptada (Fase 7) |
 | 058 | **Importación R7: completar sin sobrescribir** | Sobrescribir con el archivo | El Excel suele estar menos actualizado que la ficha; completar huecos (correo, marca, km mayores, revisión más reciente) es seguro y útil para añadir correos a clientes existentes. | Aceptada |
 | 059 | **NIF-IVA de hasta 14 caracteres** | Mantener 12 | Los NIF-IVA de la UE llegan a 14 (Francia 13). Restricción ampliada, no destructiva; el test unitario lo detectó. | Aceptada (Fase 7) |
+| 060 | **SDK oficial `stripe` (23.0.1) y Stripe Checkout + portal de cliente** | Formularios de tarjeta propios | La tarjeta nunca pasa por RevisaYa (PCI); prueba, IVA, NIF-IVA y facturas los gestiona Stripe. | Aceptada (Fase 8) |
+| 061 | **Varias barreras independientes del modo TEST, incluida `livemode` en cada objeto y evento** | Fiarse solo del prefijo de la clave | Aunque llegase una clave o un evento live, no se procesa nada sin `PAYMENTS_LIVE_ENABLED=true` en producción. | Aceptada (Fase 8) |
+| 062 | **Stripe es la fuente de verdad; la BD refleja la suscripción por webhook (idempotente, ordenado) y por reconciliación diaria** | Consultar Stripe en cada petición | Acceso y límites se calculan en la BD sin depender de la red; la reconciliación cubre webhooks perdidos. | Aceptada (Fase 8) |
+| 063 | **Pruebas con stripe-mock (oficial) y webhooks firmados** | Mocks propios de la API | stripe-mock valida cada llamada contra la especificación de Stripe; no hacen falta claves ni red. La prueba con una cuenta TEST real queda pendiente de una clave válida. | Aceptada (Fase 8) |
+| 064 | **Una prueba gratuita por taller y bajar de plan solo si cabe** | Permitir bajar y bloquear después | Evita talleres por encima de su plan; el mensaje dice exactamente qué sobra. | Aceptada (Fase 8) |
 
 ## 2. Cuestiones abiertas: contradicciones, ambigüedades y propuestas
 

@@ -8,6 +8,7 @@ import { requireOrgPage } from "@/server/auth/guards";
 export const metadata: Metadata = { title: "Configuración · RevisaYa" };
 
 const SECTIONS = [
+  { href: "/app/facturacion", title: "Facturación", text: "Tu plan, la prueba gratuita, la tarjeta y las facturas." },
   { href: "/app/configuracion/taller", title: "Datos del taller", text: "Nombre, logo, color, datos fiscales y de contacto." },
   { href: "/app/configuracion/avisos", title: "Avisos", text: "Activar los avisos, días de antelación, horario de envío, festivos y avisos por kilometraje." },
   { href: "/app/configuracion/citas", title: "Citas", text: "Página para pedir cita, huecos libres y horario." },

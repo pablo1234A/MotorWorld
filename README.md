@@ -2,7 +2,7 @@
 
 SaaS para talleres mecánicos: el taller registra sus clientes, vehículos e historial de revisiones, y RevisaYa envía cada día avisos por correo a los clientes a los que les toca la revisión, con un botón para pedir cita.
 
-> **Estado: Fase 7 completada**: autenticación, talleres, usuarios e invitaciones (Fase 2); clientes, vehículos, historial, papelera y purga a 30 días (Fase 3); importación Excel/CSV con revisión de errores y confirmación atómica (Fase 4); motor de recordatorios automáticos por correo con planificador, envío con reintentos y recuperación, avisos por kilometraje (Max+) y baja en un clic (Fase 5); plantillas editables con prueba, dominio propio, eventos de entrega con bloqueo automático, avisos de consumo y resumen al taller (Fase 6); datos y logo del taller, página pública para pedir cita (desde el aviso o con enlace propio, por día o por huecos), gestión de citas con .ics, y presupuestos con IVA en PDF (Fase 7). Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
+> **Estado: Fase 8 completada**: autenticación, talleres, usuarios e invitaciones (Fase 2); clientes, vehículos, historial, papelera y purga a 30 días (Fase 3); importación Excel/CSV con revisión de errores y confirmación atómica (Fase 4); motor de recordatorios automáticos por correo con planificador, envío con reintentos y recuperación, avisos por kilometraje (Max+) y baja en un clic (Fase 5); plantillas editables con prueba, dominio propio, eventos de entrega con bloqueo automático, avisos de consumo y resumen al taller (Fase 6); datos y logo del taller, página pública para pedir cita (desde el aviso o con enlace propio, por día o por huecos), gestión de citas con .ics, y presupuestos con IVA en PDF (Fase 7); suscripciones con Stripe en modo TEST: prueba de 7 días, cambio de plan, portal, impagos con gracia y cancelación (Fase 8). Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
 > "RevisaYa" es un nombre provisional: falta comprobar la marca y el dominio.
 
 ## Puesta en marcha local
@@ -46,6 +46,7 @@ legacy/           contenido previo del repositorio (web MOTORWORLD), sin uso
 | [SEGURIDAD](docs/SEGURIDAD.md) | Modelo de amenazas, autorización, secretos, RGPD, backups |
 | [AUTOMATIZACIONES](docs/AUTOMATIZACIONES.md) | Planner, dispatcher, reintentos, idempotencia, monitorización |
 | [CITAS-PRESUPUESTOS](docs/CITAS-PRESUPUESTOS.md) | Página pública de citas, solicitud frente a cita, huecos, correos y presupuestos con IVA en PDF |
+| [FACTURACION](docs/FACTURACION.md) | Suscripciones con Stripe (siempre TEST): flujo, webhook, puesta en marcha y pruebas |
 | [GUIA-DOMINIO-PROPIO](docs/GUIA-DOMINIO-PROPIO.md) | Guía para el taller: registros DNS de su dominio de envío |
 | [IMPORTACION](docs/IMPORTACION.md) | Plantilla, validación, staging y confirmación atómica |
 | [INTEGRACIONES](docs/INTEGRACIONES.md) | Correo, Stripe (TEST), Google Calendar y otros |

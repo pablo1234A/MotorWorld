@@ -44,7 +44,14 @@ export default async function DashboardPage() {
       {!ctx.subscription.active ? (
         <Alert tone="warning" title={ctx.subscription.status ? `Suscripción: ${STATUS_LABELS[ctx.subscription.status] ?? ctx.subscription.status}` : "Tu taller aún no tiene un plan activo"}>
           Mientras no haya un plan activo, los datos del taller están en modo de solo lectura: no se pueden añadir
-          clientes, vehículos ni usuarios, y no se envían avisos.
+          clientes, vehículos ni usuarios, y no se envían avisos.{" "}
+          {ctx.membership.role === "admin" ? (
+            <Link href="/app/facturacion" className="font-medium text-[var(--accent)]">
+              Elegir un plan (7 días gratis)
+            </Link>
+          ) : (
+            "Pídele a un administrador que elija un plan."
+          )}
         </Alert>
       ) : (
         <Card>
@@ -60,6 +67,17 @@ export default async function DashboardPage() {
           ) : null}
         </Card>
       )}
+
+      {ctx.subscription.status === "past_due" ? (
+        <Alert tone="warning" title="Pago pendiente">
+          No hemos podido cobrar la última factura. Actualiza la tarjeta para que el taller no pase a solo lectura.{" "}
+          {ctx.membership.role === "admin" ? (
+            <Link href="/app/facturacion" className="font-medium text-[var(--accent)]">
+              Ir a facturación
+            </Link>
+          ) : null}
+        </Alert>
+      ) : null}
 
       {pendingRequests ? (
         <Alert tone="info" title={`${pendingRequests} ${pendingRequests === 1 ? "cliente ha pedido cita" : "clientes han pedido cita"}`}>

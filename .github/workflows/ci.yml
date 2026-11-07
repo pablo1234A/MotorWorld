@@ -43,6 +43,9 @@ jobs:
         env:
           SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
 
+      - name: stripe-mock (servidor oficial de pruebas de Stripe; sin claves reales)
+        run: docker run -d --name revisaya-stripe-mock -p 12111:12111 stripe/stripe-mock:v0.206.0
+
       - name: Migraciones desde cero
         run: pnpm db:reset
 
@@ -67,6 +70,10 @@ jobs:
             echo "EMAIL_LINK_SECRET=$(openssl rand -hex 32)"
             echo "CRON_SECRET=$(openssl rand -hex 32)"
             echo "RESEND_WEBHOOK_SECRET=whsec_$(openssl rand -base64 32)"
+            # Pagos contra stripe-mock: clave ficticia de formato TEST, nunca una real.
+            echo "STRIPE_SECRET_KEY=sk_test_StripeMockCi123"
+            echo "STRIPE_API_BASE=http://127.0.0.1:12111"
+            echo "STRIPE_WEBHOOK_SECRET=whsec_$(openssl rand -hex 24)"
           } > .env.local
 
       - name: Tests de integración (concurrencia, contexto RLS)
@@ -78,7 +85,7 @@ jobs:
       - name: Navegador para E2E
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Tests E2E (registro, invitaciones, taller, importación, avisos por correo)
+      - name: Tests E2E (registro, taller, importación, avisos, citas, presupuestos, suscripción)
         run: pnpm test:e2e
 
       - uses: actions/upload-artifact@v4

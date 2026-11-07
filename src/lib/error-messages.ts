@@ -34,6 +34,7 @@ const CONFLICT_REASON: Record<string, string> = {
   organization_members_unique: "Esa persona ya forma parte del taller.",
   vehicles_plate_unique: "Ya existe un vehículo con esa matrícula en este taller.",
   sending_domains_unique: "Ese dominio ya está añadido.",
+  subscription_exists: "Tu taller ya tiene una suscripción. Cambia de plan desde esta misma página.",
   appointments_open_per_reminder: "Ya tienes una solicitud de cita pendiente para este aviso. El taller te contestará pronto.",
   email_suppressions_pkey: "Esa dirección ya está bloqueada.",
 };
@@ -116,9 +117,12 @@ export function errorMessage(code: string, detail?: string): string {
     case "integrity_violation":
       return (detail && INTEGRITY_REASON[detail]) || "La operación no es coherente con los datos existentes.";
     case "validation_error":
+      if (detail?.startsWith("plan_too_small:")) return `No puedes pasar a ese plan: ${detail.slice("plan_too_small:".length)}. Reduce primero lo que sobra.`;
       return (detail && VALIDATION_REASON[detail]) || "Revisa los datos del formulario.";
     case "not_found":
       return "No se ha encontrado lo que buscas.";
+    case "payments_not_configured":
+      return "Los pagos todavía no están configurados en RevisaYa. No se ha hecho ningún cargo.";
     case "email_not_configured":
       return "El envío de correo todavía no está configurado en RevisaYa. Los avisos quedan programados hasta que lo esté.";
     case "email_send_failed":

@@ -13,12 +13,54 @@
 | 4 — Importación Excel/CSV | ✅ Completada | 2026-11-05 |
 | 5 — Motor de automatizaciones | ✅ Completada | 2026-11-06 |
 | 6 — Sistema de correos | ✅ Completada | 2026-11-06 |
-| 7 — Citas y presupuestos | ✅ Completada (pendiente de revisión) | 2026-11-06 |
-| 8 — Suscripciones y límites (Stripe TEST) | ⏭ Siguiente | — |
-| 9 — Google Calendar, informes y API | ⏸ No iniciada | — |
+| 7 — Citas y presupuestos | ✅ Completada | 2026-11-06 |
+| 8 — Suscripciones y límites (Stripe TEST) | ✅ Completada (pendiente de revisión y de la prueba con una cuenta TEST real) | 2026-11-07 |
+| 9 — Google Calendar, informes y API | ⏭ Siguiente | — |
 | 10 — Frontend completo | ⏸ No iniciada | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 8 — Suscripciones con Stripe (siempre en modo TEST)
+
+### Qué se ha construido
+Detalle en [FACTURACION](FACTURACION.md).
+1. **Facturación** (`/app/facturacion`, solo administradores):
+   - los 4 planes con los precios **exactos del PDF**, sin IVA, mensual o anual;
+   - contratar con **7 días de prueba** (tarjeta al empezar, sin cobro hasta el final, una prueba por taller), mediante Stripe Checkout con dirección y NIF-IVA, e IVA con Stripe Tax si se activa;
+   - cambiar de plan o de periodicidad con prorrateo; bajar de plan solo si el taller cabe en el nuevo (se dice qué sobra);
+   - portal de cliente de Stripe (tarjeta, datos y facturas), lista de facturas y cancelar al final del periodo o deshacerlo.
+2. **Webhook de Stripe**: firma obligatoria, idempotente, sin retroceder aunque los eventos lleguen desordenados, e ignora eventos de suscripciones anteriores. Refleja plan, estado, prueba, periodo, cancelación y facturas. El plan y sus límites se aplican al instante.
+3. **Impagos y bajas**:
+   - impago con **7 días de gracia** (P7): aviso en el panel y correo a los administradores; después, solo lectura;
+   - correo cuando la prueba está a punto de terminar;
+   - baja: solo lectura y datos conservados **60 días**, con la fecha visible (P9);
+   - al mejorar el plan vuelven a la cola los avisos saltados por cuota (P5).
+4. **Procesos programados**: catálogo de productos y precios en Stripe (idempotente) y reconciliación diaria de suscripciones por si se perdió algún webhook.
+5. **Varias barreras del modo TEST**: clave live bloqueada, y cualquier objeto o evento `livemode` rechazado. Lo comprueban los tests.
+
+### Pruebas ejecutadas (2026-11-07, desde base de datos nueva, todas en verde)
+| Comando | Resultado |
+|---|---|
+| `pnpm db:test` (pgTAP) | **301/301** (nuevo: `140_billing.sql`, 8) |
+| `pnpm test` (Vitest) | **269/269** (nuevos: `billing.test.ts` 5 unitarios y 8 de integración contra **stripe-mock**, el servidor oficial de pruebas de Stripe, y webhooks firmados) |
+| `pnpm test:e2e` (Playwright) | **25/25**. Nuevo: sin plan → elegir plan → la app redirige a la página de pago de Stripe (stripe-mock) → webhook firmado → prueba de 7 días → cancelar. |
+| `pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm audit` | sin errores · 0 vulnerabilidades |
+
+### Lo que NO se ha podido probar (y por qué)
+- **Con una cuenta real de Stripe en modo TEST**: la clave introducida en el entorno no era una clave de Stripe válida (Stripe respondió «Invalid API Key»). Todo lo demás está probado con stripe-mock y con webhooks firmados. Pasos para completarlo en [FACTURACION §5](FACTURACION.md).
+- **No se ha hecho ningún cobro, ni real ni de prueba.**
+
+### Pendiente (documentado)
+- Borrado automático de los datos de un taller dado de baja tras los 60 días, con aviso 7 días antes → Fase 12, con revisión (hoy se fija y se muestra la fecha; no se borra nada).
+- Activar pagos reales: solo con la autorización expresa del responsable adulto y la revisión fiscal y legal.
+
+### Credenciales que deben configurarse
+`STRIPE_SECRET_KEY` (**sk_test_**), `STRIPE_WEBHOOK_SECRET`; opcional `STRIPE_AUTOMATIC_TAX=true` con Stripe Tax activado en la cuenta.
+
+### Siguiente fase
+**Fase 9 — Google Calendar (Max), informes (Max) y API (Excelencia).**
 
 ---
 
@@ -84,7 +126,7 @@ He revisado también, a ojo, el PDF generado (renderizado a imagen) y las pantal
 `SUPABASE_SECRET_KEY` (almacenamiento de logos y PDF), y recomendadas `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`.
 
 ### Siguiente fase
-**Fase 8 — Suscripciones y límites (Stripe en modo TEST)**: alta del plan y prueba gratuita de 7 días, cambios de plan, portal de cliente, webhooks idempotentes, impagos con gracia y cancelación. **Siempre con claves TEST; no se activan cobros reales.**
+Fase 8 (completada, ver arriba).
 
 ---
 
@@ -292,7 +334,7 @@ Caso crítico 2 (operario ≠ administrador) cubierto ahora también de extremo 
 - Envío automático por correo de las invitaciones → **hecho el 2026-11-06** (además del enlace copiable).
 - Aceptación de condiciones y privacidad en el registro → Fase 10 con los textos legales (ADR-025).
 - 2FA para administradores y CSP con nonces → Fase 11.
-- Contratación de plan desde el panel → Fase 8 (Stripe TEST). Hasta entonces una organización nueva queda en solo lectura, y lo indica.
+- Contratación de plan desde el panel → **hecho en la Fase 8** (Stripe en modo TEST).
 
 ### Credenciales que deben configurarse
 - Ninguna nueva para desarrollo local. Para staging: proyecto Supabase (UE) con la configuración de Auth de [DESPLIEGUE §2](DESPLIEGUE.md) (Site URL, Redirect URLs, plantillas, SMTP propio).

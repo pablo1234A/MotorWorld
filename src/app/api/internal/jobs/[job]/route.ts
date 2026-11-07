@@ -6,6 +6,9 @@ import { getDomainProvider } from "@/server/email/domains";
 import { getEmailProvider, getSenderConfig } from "@/server/email/provider";
 import { isAuthorizedJobRequest } from "@/server/jobs/auth";
 import { logger } from "@/server/logger";
+import { syncCatalog } from "@/server/billing/catalog";
+import { getStripe } from "@/server/billing/stripe";
+import { reconcileSubscriptions } from "@/server/modules/billing/service";
 import { checkPendingDomains } from "@/server/modules/email/domains";
 import { notifyUsage, sendDigests } from "@/server/modules/email/notifications";
 import { runDispatcher } from "@/server/reminders/dispatcher";
@@ -49,6 +52,16 @@ async function handle(request: Request, job: string) {
           sql`update private.job_runs set finished_at = now(), status = ${partial ? "partial" : "succeeded"}, stats = ${JSON.stringify(stats)}::jsonb where id = ${run}::bigint`.execute(tx),
         );
         return NextResponse.json({ ok: true, stats });
+      }
+      case "billing-reconcile": {
+        // Respaldo de los webhooks: vuelve a leer de Stripe las suscripciones vivas.
+        return NextResponse.json({ ok: true, stats: await reconcileSubscriptions() });
+      }
+      case "stripe-sync-catalog": {
+        // Alta (idempotente) de productos y precios de los planes en Stripe (modo TEST).
+        const stripe = getStripe();
+        if (!stripe) return NextResponse.json({ error: { code: "payments_not_configured" } }, { status: 503 });
+        return NextResponse.json({ ok: true, prices: await syncCatalog(stripe) });
       }
       case "release-leases": {
         const n = await withSystem(async (tx) => (await sql<{ n: number }>`select private.release_expired_reminder_leases() as n`.execute(tx)).rows[0].n);

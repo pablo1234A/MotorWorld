@@ -18,7 +18,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm db:test && pnpm test:integration && pnpm build",
     "db:types": "kysely-codegen",
     "test:e2e": "playwright test",
-    "mailpit:smtp-url": "echo smtp://$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' supabase_inbucket_revisaya):1025"
+    "mailpit:smtp-url": "echo smtp://$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' supabase_inbucket_revisaya):1025",
+    "stripe:mock": "docker start revisaya-stripe-mock 2>/dev/null || docker run -d --name revisaya-stripe-mock -p 12111:12111 stripe/stripe-mock:v0.206.0"
   },
   "dependencies": {
     "@react-pdf/renderer": "4.9.0",
@@ -33,6 +34,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "stripe": "23.0.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {

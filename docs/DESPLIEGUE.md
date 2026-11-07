@@ -59,6 +59,7 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/i
 | Recuperación de leases | `pg_cron` | cada 5 min |
 | Purga por retención | `pg_cron` | diario 03:17 |
 | Caducidad de presupuestos | `pg_cron` (`private.expire_quotes`) | diario 03:37 |
+| Reconciliación de suscripciones con Stripe | Vercel Cron → `/api/internal/jobs/billing-reconcile` | diario 04:41 |
 | Dispatcher de avisos | Vercel Cron → `/api/internal/jobs/dispatch-reminders` (`vercel.json`) | cada minuto |
 | Mantenimiento del correo (dominios, avisos de consumo, resúmenes) | Vercel Cron → `/api/internal/jobs/email-maintenance` | cada 30 min |
 | Estado (dead-man switch) | Vercel Cron → `/api/internal/jobs/status`; un monitor externo debe alertar si responde 503 | cada hora |
@@ -67,6 +68,7 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/i
 - La frecuencia de un minuto requiere un plan de Vercel que la permita; si no, el dispatcher puede lanzarse desde `pg_cron` + `pg_net` con el mismo secreto, o con menos frecuencia (los avisos se envían igualmente, algo más tarde).
 - Variables de correo: `EMAIL_PROVIDER` (`resend` o `smtp`), `RESEND_API_KEY` o `SMTP_URL`, `EMAIL_SHARED_DOMAIN` (subdominio de RevisaYa con SPF/DKIM/DMARC), `EMAIL_LINK_SECRET` y `RESEND_WEBHOOK_SECRET` (webhook de entregas, ver INTEGRACIONES §2.6). **Sin `EMAIL_PROVIDER` no se envía ningún aviso**: quedan programados. Los dominios propios de los talleres requieren `EMAIL_PROVIDER=resend`.
 - Almacenamiento (logos y PDF de presupuestos): `SUPABASE_SECRET_KEY` (solo servidor). En local se obtiene con `supabase status` (`SECRET_KEY`); el CI lo genera igual.
+- Pagos (Fase 8, **solo TEST**): `STRIPE_SECRET_KEY=sk_test_…`, `STRIPE_WEBHOOK_SECRET`, opcional `STRIPE_AUTOMATIC_TAX`. Puesta en marcha del catálogo, el webhook y el portal en [FACTURACION §4](FACTURACION.md). `PAYMENTS_LIVE_ENABLED` se queda en `false` hasta la autorización expresa del responsable adulto.
 - Página pública de citas: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` y `TURNSTILE_SECRET_KEY` (Cloudflare Turnstile). Recomendado en producción.
 - Antes de enviar a clientes reales: dominio de envío verificado y calentado, pruebas en Gmail y Outlook (checklist §5). No se activan envíos comerciales masivos sin autorización.
 

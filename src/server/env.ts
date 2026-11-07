@@ -43,6 +43,10 @@ export const serverEnvSchema = z
     STRIPE_SECRET_KEY: z.string().regex(/^sk_(test|live)_/, "Clave secreta de Stripe no válida").optional(),
     STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_/).optional(),
     PAYMENTS_LIVE_ENABLED: booleanFlag,
+    /** Stripe Tax calcula el IVA (P11). Requiere activarlo en la cuenta de Stripe. */
+    STRIPE_AUTOMATIC_TAX: booleanFlag,
+    /** Solo pruebas locales (stripe-mock). Prohibido en producción. */
+    STRIPE_API_BASE: z.url().optional(),
 
     GOOGLE_CLIENT_ID: optionalString,
     GOOGLE_CLIENT_SECRET: optionalString,
@@ -73,6 +77,9 @@ export const serverEnvSchema = z
         path: ["PAYMENTS_LIVE_ENABLED"],
         message: "Los pagos reales solo se pueden activar en producción",
       });
+    }
+    if (env.STRIPE_API_BASE && env.APP_ENV === "production") {
+      ctx.addIssue({ code: "custom", path: ["STRIPE_API_BASE"], message: "STRIPE_API_BASE solo se usa en pruebas locales" });
     }
     if (env.PAYMENTS_LIVE_ENABLED && !live) {
       ctx.addIssue({
