@@ -34,6 +34,7 @@ export const RATE_LIMITS = {
   bookingPerOrg: { capacity: 60, windowSeconds: 3600 },
   /** Documentos y fotos: 200 subidas por hora y taller. */
   documentUploadsPerOrg: { capacity: 200, windowSeconds: 3600 },
+  pciEmailsPerOrg: { capacity: 100, windowSeconds: 3600 },
   /** Códigos de la verificación en dos pasos: 10 intentos cada 15 min por usuario. */
   mfaVerifyPerUser: { capacity: 10, windowSeconds: 900 },
   /** API pública: 60 peticiones/min sostenidas, ráfaga de 120, por clave… */
@@ -42,7 +43,10 @@ export const RATE_LIMITS = {
   apiPerOrg: { capacity: 600, windowSeconds: 300 },
 } as const satisfies Record<string, RateLimitRule>;
 
-export async function consumeRateLimit(key: string, rule: RateLimitRule): Promise<boolean> {
+export async function consumeRateLimit(
+  key: string,
+  rule: RateLimitRule,
+): Promise<boolean> {
   const refillPerSecond = rule.capacity / rule.windowSeconds;
   return withSystem(async (tx) => {
     const { rows } = await sql<{ allowed: boolean }>`
@@ -53,7 +57,9 @@ export async function consumeRateLimit(key: string, rule: RateLimitRule): Promis
 }
 
 /** Lanza `rate_limited` si se supera cualquiera de las reglas indicadas. */
-export async function enforceRateLimits(checks: ReadonlyArray<readonly [key: string, rule: RateLimitRule]>): Promise<void> {
+export async function enforceRateLimits(
+  checks: ReadonlyArray<readonly [key: string, rule: RateLimitRule]>,
+): Promise<void> {
   for (const [key, rule] of checks) {
     if (!(await consumeRateLimit(key, rule))) {
       throw new DomainError("rate_limited");

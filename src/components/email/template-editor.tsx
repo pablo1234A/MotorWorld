@@ -5,11 +5,22 @@ import { useActionState, useId, useMemo, useRef, useState } from "react";
 import { SubmitButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/feedback";
 import { fieldErrors, FormMessage } from "@/components/ui/form-state";
-import { DEFAULT_TEMPLATES, type TemplateContent, variablesFor } from "@/lib/email/reminder-email";
+import {
+  DEFAULT_TEMPLATES,
+  type TemplateContent,
+  variablesFor,
+} from "@/lib/email/reminder-email";
 import { renderSampleEmail } from "@/lib/email/sample";
-import { type EditableTemplateKind, TEMPLATE_KIND_LABELS, VARIABLE_HELP } from "@/lib/validation/email";
+import {
+  type EditableTemplateKind,
+  TEMPLATE_KIND_LABELS,
+  VARIABLE_HELP,
+} from "@/lib/validation/email";
 import type { ActionState } from "@/server/actions/result";
-import { restoreTemplateAction, saveTemplateAction } from "@/server/modules/email/actions";
+import {
+  restoreTemplateAction,
+  saveTemplateAction,
+} from "@/server/modules/email/actions";
 
 const idle: ActionState = { status: "idle" };
 
@@ -22,7 +33,16 @@ export interface PreviewData {
   vehicleModel: string | null;
   plate: string;
   dueDate: string;
-  workshop: { name: string; brandColor: string | null; address: string | null; phone: string | null; email: string | null; logoUrl: string | null };
+  installationName?: string;
+  installationAddress?: string;
+  workshop: {
+    name: string;
+    brandColor: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    logoUrl: string | null;
+  };
   ctaHref: string | null;
   fromExample: boolean;
 }
@@ -54,7 +74,10 @@ export function TemplateEditor({
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const uid = useId();
 
-  const preview = useMemo(() => renderSampleEmail(kind, values, sample, "#"), [kind, values, sample]);
+  const preview = useMemo(
+    () => renderSampleEmail(kind, values, sample, "#"),
+    [kind, values, sample],
+  );
 
   function insertVariable(v: string) {
     const el = bodyRef.current;
@@ -70,14 +93,24 @@ export function TemplateEditor({
     });
   }
 
-  const set = (k: keyof TemplateContent) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setValues({ ...values, [k]: k === "buttonEnabled" ? (e.target as HTMLInputElement).checked : e.target.value });
+  const set =
+    (k: keyof TemplateContent) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setValues({
+        ...values,
+        [k]:
+          k === "buttonEnabled"
+            ? (e.target as HTMLInputElement).checked
+            : e.target.value,
+      });
 
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{TEMPLATE_KIND_LABELS[kind]}</h2>
-        <span className="text-sm text-[var(--muted)]">{custom ? "Personalizada" : "Plantilla original"}</span>
+        <span className="text-sm text-[var(--muted)]">
+          {custom ? "Personalizada" : "Plantilla original"}
+        </span>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <form action={action} className="flex min-w-0 flex-col gap-4">
@@ -98,7 +131,11 @@ export function TemplateEditor({
               aria-invalid={fieldErrors(state, "subject") ? true : undefined}
               className={CONTROL}
             />
-            {fieldErrors(state, "subject") ? <p className="text-sm text-[var(--danger)]">{fieldErrors(state, "subject")![0]}</p> : null}
+            {fieldErrors(state, "subject") ? (
+              <p className="text-sm text-[var(--danger)]">
+                {fieldErrors(state, "subject")![0]}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor={`body-${uid}`} className="text-sm font-medium">
@@ -117,12 +154,19 @@ export function TemplateEditor({
               className={CONTROL}
             />
             {fieldErrors(state, "body") ? (
-              <p className="text-sm text-[var(--danger)]">{fieldErrors(state, "body")![0]}</p>
+              <p className="text-sm text-[var(--danger)]">
+                {fieldErrors(state, "body")![0]}
+              </p>
             ) : (
-              <p className="text-sm text-[var(--muted)]">Deja una línea en blanco para separar párrafos.</p>
+              <p className="text-sm text-[var(--muted)]">
+                Deja una línea en blanco para separar párrafos.
+              </p>
             )}
             {readOnly ? null : (
-              <div className="flex flex-wrap gap-2" aria-label="Insertar variable">
+              <div
+                className="flex flex-wrap gap-2"
+                aria-label="Insertar variable"
+              >
                 {variablesFor(kind).map((v) => (
                   <button
                     key={v}
@@ -152,11 +196,28 @@ export function TemplateEditor({
                 className={CONTROL}
               />
               {/* Un campo desactivado no se envía: se conserva su valor. */}
-              {!values.buttonEnabled ? <input type="hidden" name="buttonLabel" value={values.buttonLabel} /> : null}
-              {fieldErrors(state, "buttonLabel") ? <p className="text-sm text-[var(--danger)]">{fieldErrors(state, "buttonLabel")![0]}</p> : null}
+              {!values.buttonEnabled ? (
+                <input
+                  type="hidden"
+                  name="buttonLabel"
+                  value={values.buttonLabel}
+                />
+              ) : null}
+              {fieldErrors(state, "buttonLabel") ? (
+                <p className="text-sm text-[var(--danger)]">
+                  {fieldErrors(state, "buttonLabel")![0]}
+                </p>
+              ) : null}
             </div>
             <label className="flex items-center gap-2 pb-2.5 text-sm">
-              <input type="checkbox" name="buttonEnabled" checked={values.buttonEnabled} onChange={set("buttonEnabled")} disabled={readOnly} className="size-4" />
+              <input
+                type="checkbox"
+                name="buttonEnabled"
+                checked={values.buttonEnabled}
+                onChange={set("buttonEnabled")}
+                disabled={readOnly}
+                className="size-4"
+              />
               Mostrar el botón «Pedir cita»
             </label>
           </div>
@@ -165,7 +226,12 @@ export function TemplateEditor({
               <SubmitButton name="intent" value="save">
                 Guardar plantilla
               </SubmitButton>
-              <SubmitButton name="intent" value="test" variant="secondary" pendingLabel="Enviando…">
+              <SubmitButton
+                name="intent"
+                value="test"
+                variant="secondary"
+                pendingLabel="Enviando…"
+              >
                 Enviarme una prueba
               </SubmitButton>
             </div>
@@ -187,13 +253,16 @@ export function TemplateEditor({
           />
           {values.buttonEnabled && !sample.ctaHref ? (
             <p className="text-sm text-[var(--muted)]">
-              El botón no aparece porque falta la dirección «Responder a» del taller (Configuración → Avisos).
+              El botón no aparece porque falta la dirección «Responder a» de la
+              empresa (Configuración → Avisos).
             </p>
           ) : null}
           <p className="text-xs text-[var(--muted)]">
             {sample.fromExample
-              ? "Con datos de ejemplo (aún no hay vehículos con próxima revisión)."
-              : `Con los datos de ${sample.customerFirstName} (${sample.plate}), el próximo vehículo con revisión.`}
+              ? "Con datos de ejemplo (aún no hay equipos con próximo vencimiento)."
+              : sample.installationName
+                ? `Con los datos de ${sample.customerFirstName} (${sample.installationName}), la próxima instalación con vencimientos.`
+                : `Con los datos de ${sample.customerFirstName} (${sample.plate}), el próximo vehículo con revisión.`}
           </p>
         </div>
       </div>
@@ -210,7 +279,12 @@ function RestoreButton({ action }: { action: (formData: FormData) => void }) {
         formAction={action}
         formNoValidate
         onClick={(e) => {
-          if (!window.confirm("¿Volver a la plantilla original? Se perderá tu versión.")) e.preventDefault();
+          if (
+            !window.confirm(
+              "¿Volver a la plantilla original? Se perderá tu versión.",
+            )
+          )
+            e.preventDefault();
         }}
         className="self-start text-sm font-medium text-[var(--danger)] hover:underline"
       >

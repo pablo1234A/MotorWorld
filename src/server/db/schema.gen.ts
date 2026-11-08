@@ -285,6 +285,7 @@ export interface EmailLogs {
   error_message: string | null;
   from_email: string;
   id: Generated<Int8>;
+  incident_id: string | null;
   installation_id: string | null;
   kind: string;
   opened_at: Timestamp | null;

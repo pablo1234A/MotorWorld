@@ -6,7 +6,11 @@ import { todayIn } from "@/lib/dates";
 import { normalizePlate } from "@/lib/plate";
 import { escapeLike, type Page } from "@/lib/pagination";
 import { PLANS, planHasFeature } from "@/lib/plans";
-import { REMINDER_FILTERS, type ReminderFilter, type ReminderSettingsInput } from "@/lib/validation/reminders";
+import {
+  REMINDER_FILTERS,
+  type ReminderFilter,
+  type ReminderSettingsInput,
+} from "@/lib/validation/reminders";
 import type { OrgContext } from "@/server/auth/context";
 import { withRls } from "@/server/db/client";
 import { DomainError } from "@/server/db/errors";
@@ -43,7 +47,10 @@ export interface ReminderSettings {
   blackouts: Array<{ day: string; reason: string | null }>;
 }
 
-export async function getReminderSettings(ctx: Ctx, branchId: string): Promise<ReminderSettings | null> {
+export async function getReminderSettings(
+  ctx: Ctx,
+  branchId: string,
+): Promise<ReminderSettings | null> {
   const orgId = ctx.membership.organizationId;
   return withRls(ctx.auth, async (tx) => {
     const row = await tx
@@ -55,7 +62,9 @@ export async function getReminderSettings(ctx: Ctx, branchId: string): Promise<R
         "b.name as branchName",
         "s.reminders_enabled as remindersEnabled",
         "s.offsets_days as offsetsDays",
-        sql<string>`to_char(s.send_window_start, 'HH24:MI')`.as("sendWindowStart"),
+        sql<string>`to_char(s.send_window_start, 'HH24:MI')`.as(
+          "sendWindowStart",
+        ),
         sql<string>`to_char(s.send_window_end, 'HH24:MI')`.as("sendWindowEnd"),
         "s.send_weekdays as sendWeekdays",
         "s.default_interval_months as defaultIntervalMonths",
@@ -91,7 +100,10 @@ export async function getReminderSettings(ctx: Ctx, branchId: string): Promise<R
   });
 }
 
-export async function updateReminderSettings(ctx: Ctx, input: ReminderSettingsInput): Promise<void> {
+export async function updateReminderSettings(
+  ctx: Ctx,
+  input: ReminderSettingsInput,
+): Promise<void> {
   assertWritable(ctx);
   const orgId = ctx.membership.organizationId;
   const plan = ctx.subscription.planCode;
@@ -118,27 +130,43 @@ export async function updateReminderSettings(ctx: Ctx, input: ReminderSettingsIn
       .executeTakeFirst();
     // RLS filtra en silencio: 0 filas = sin permiso o sucursal ajena.
     if (Number(res.numUpdatedRows) === 0) throw new DomainError("not_found");
-    await sql`select app.write_audit(${orgId}::uuid, 'reminder_settings.updated', 'branch_settings', ${input.branchId}, ${JSON.stringify({
-      reminders_enabled: input.remindersEnabled,
-      offsets_days: input.offsets,
-    })}::jsonb)`.execute(tx);
+    await sql`select app.write_audit(${orgId}::uuid, 'reminder_settings.updated', 'branch_settings', ${input.branchId}, ${JSON.stringify(
+      {
+        reminders_enabled: input.remindersEnabled,
+        offsets_days: input.offsets,
+      },
+    )}::jsonb)`.execute(tx);
   });
 }
 
-export async function addBlackout(ctx: Ctx, input: { branchId: string; day: string; reason: string | null }): Promise<void> {
+export async function addBlackout(
+  ctx: Ctx,
+  input: { branchId: string; day: string; reason: string | null },
+): Promise<void> {
   assertWritable(ctx);
   const orgId = ctx.membership.organizationId;
   await withRls(ctx.auth, async (tx) => {
     const res = await tx
       .insertInto("blackout_dates")
-      .values({ organization_id: orgId, branch_id: input.branchId, day: input.day, reason: input.reason })
-      .onConflict((oc) => oc.columns(["branch_id", "day"]).doUpdateSet({ reason: input.reason }))
+      .values({
+        organization_id: orgId,
+        branch_id: input.branchId,
+        day: input.day,
+        reason: input.reason,
+      })
+      .onConflict((oc) =>
+        oc.columns(["branch_id", "day"]).doUpdateSet({ reason: input.reason }),
+      )
       .executeTakeFirst();
-    if (Number(res.numInsertedOrUpdatedRows ?? 0) === 0) throw new DomainError("not_found");
+    if (Number(res.numInsertedOrUpdatedRows ?? 0) === 0)
+      throw new DomainError("not_found");
   });
 }
 
-export async function removeBlackout(ctx: Ctx, input: { branchId: string; day: string }): Promise<void> {
+export async function removeBlackout(
+  ctx: Ctx,
+  input: { branchId: string; day: string },
+): Promise<void> {
   assertWritable(ctx);
   await withRls(ctx.auth, async (tx) => {
     const res = await tx
@@ -164,9 +192,13 @@ export interface ReminderRow {
   scheduledFor: Date;
   sentAt: Date | null;
   attempts: number;
-  vehicleId: string;
-  plate: string;
-  vehicleName: string;
+  /** Avisos de vehículos (etapa anterior). */
+  vehicleId: string | null;
+  plate: string | null;
+  vehicleName: string | null;
+  /** Avisos de vencimiento de una instalación (PCI). */
+  installationId: string | null;
+  installationName: string | null;
   customerId: string;
   customerName: string;
   branchName: string;
@@ -182,7 +214,10 @@ export interface ReminderFilters {
   pageSize: number;
 }
 
-export async function listReminders(ctx: Ctx, f: ReminderFilters): Promise<Page<ReminderRow>> {
+export async function listReminders(
+  ctx: Ctx,
+  f: ReminderFilters,
+): Promise<Page<ReminderRow>> {
   const orgId = ctx.membership.organizationId;
   const q = f.q?.trim().toLowerCase();
   const like = q ? `%${escapeLike(q)}%` : null;
@@ -192,17 +227,20 @@ export async function listReminders(ctx: Ctx, f: ReminderFilters): Promise<Page<
   return withRls(ctx.auth, async (tx) => {
     let query = tx
       .selectFrom("reminders as r")
-      .innerJoin("vehicles as v", "v.id", "r.vehicle_id")
+      .leftJoin("vehicles as v", "v.id", "r.vehicle_id")
+      .leftJoin("installations as i", "i.id", "r.installation_id")
       .innerJoin("customers as c", "c.id", "r.customer_id")
       .innerJoin("branches as b", "b.id", "r.branch_id")
       .where("r.organization_id", "=", orgId);
-    if (f.filter) query = query.where("r.status", "in", [...REMINDER_FILTERS[f.filter]]);
+    if (f.filter)
+      query = query.where("r.status", "in", [...REMINDER_FILTERS[f.filter]]);
     if (f.branchId) query = query.where("r.branch_id", "=", f.branchId);
     if (like) {
       query = query.where((eb) =>
         eb.or([
           ...(plateLike ? [eb("v.plate_normalized", "like", plateLike)] : []),
           eb(sql`lower(c.first_name || ' ' || c.last_name)`, "like", like),
+          eb(sql`lower(coalesce(i.name, ''))`, "like", like),
         ]),
       );
     }
@@ -220,15 +258,31 @@ export async function listReminders(ctx: Ctx, f: ReminderFilters): Promise<Page<
         "r.attempts",
         "v.id as vehicleId",
         "v.plate",
-        sql<string>`trim(coalesce(v.make, '') || ' ' || coalesce(v.model, ''))`.as("vehicleName"),
+        sql<
+          string | null
+        >`case when v.id is null then null else trim(coalesce(v.make, '') || ' ' || coalesce(v.model, '')) end`.as(
+          "vehicleName",
+        ),
+        "i.id as installationId",
+        "i.name as installationName",
         "c.id as customerId",
-        sql<string>`trim(c.first_name || ' ' || c.last_name)`.as("customerName"),
+        sql<string>`trim(c.first_name || ' ' || c.last_name)`.as(
+          "customerName",
+        ),
         "b.name as branchName",
-        sql<string | null>`(select ap.id from appointments ap where ap.reminder_id = r.id order by ap.created_at desc limit 1)`.as("appointmentId"),
+        sql<
+          string | null
+        >`(select ap.id from appointments ap where ap.reminder_id = r.id order by ap.created_at desc limit 1)`.as(
+          "appointmentId",
+        ),
         sql<string>`count(*) over ()`.as("total"),
       ])
       // Pendientes: lo próximo primero. Resto: lo más reciente primero.
-      .orderBy(f.filter === "pendientes" ? sql`r.scheduled_for asc` : sql`coalesce(r.sent_at, r.scheduled_for) desc`)
+      .orderBy(
+        f.filter === "pendientes"
+          ? sql`r.scheduled_for asc`
+          : sql`coalesce(r.sent_at, r.scheduled_for) desc`,
+      )
       .orderBy("r.id")
       .limit(f.pageSize)
       .offset((f.page - 1) * f.pageSize)
@@ -255,7 +309,13 @@ export interface ReminderSummary {
 export async function reminderSummary(ctx: Ctx): Promise<ReminderSummary> {
   const orgId = ctx.membership.organizationId;
   return withRls(ctx.auth, async (tx) => {
-    const { rows } = await sql<{ pending: number; sent: number; problems: number; used: number; timezone: string }>`
+    const { rows } = await sql<{
+      pending: number;
+      sent: number;
+      problems: number;
+      used: number;
+      timezone: string;
+    }>`
       with month as (select app.usage_period(${orgId}::uuid) as start,
                             (select timezone from organizations where id = ${orgId}) as tz)
       select
@@ -284,7 +344,10 @@ export async function reminderSummary(ctx: Ctx): Promise<ReminderSummary> {
   });
 }
 
-export async function cancelReminder(ctx: Ctx, reminderId: string): Promise<void> {
+export async function cancelReminder(
+  ctx: Ctx,
+  reminderId: string,
+): Promise<void> {
   assertWritable(ctx);
   const orgId = ctx.membership.organizationId;
   await withRls(ctx.auth, async (tx) => {
@@ -298,6 +361,8 @@ export async function cancelReminder(ctx: Ctx, reminderId: string): Promise<void
     // RLS: solo administradores y solo si sigue pendiente (no se puede
     // cancelar uno que el motor ya está enviando).
     if (Number(res.numUpdatedRows) === 0) throw new DomainError("not_found");
-    await sql`select app.write_audit(${orgId}::uuid, 'reminder.canceled', 'reminder', ${reminderId}, '{}'::jsonb)`.execute(tx);
+    await sql`select app.write_audit(${orgId}::uuid, 'reminder.canceled', 'reminder', ${reminderId}, '{}'::jsonb)`.execute(
+      tx,
+    );
   });
 }

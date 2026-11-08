@@ -8,7 +8,15 @@ import { isValidIsoDate } from "@/lib/dates";
  * branch_settings, ADR-022).
  */
 
-export const WEEKDAY_LABELS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
+export const WEEKDAY_LABELS = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
+] as const;
 
 const checkbox = z
   .union([z.literal("on"), z.literal("true"), z.literal("")])
@@ -29,7 +37,10 @@ export const offsetsSchema = z
     const parts = v.split(/[\s,;]+/).filter(Boolean);
     const nums = parts.map((p) => (/^\d{1,3}$/.test(p) ? Number(p) : NaN));
     if (nums.some((n) => !Number.isInteger(n) || n < 0 || n > 365)) {
-      ctx.addIssue({ code: "custom", message: "Cada aviso debe ser un número de días entre 0 y 365" });
+      ctx.addIssue({
+        code: "custom",
+        message: "Cada aviso debe ser un número de días entre 0 y 365",
+      });
       return z.NEVER;
     }
     const unique = [...new Set(nums)].sort((a, b) => b - a);
@@ -38,7 +49,10 @@ export const offsetsSchema = z
       return z.NEVER;
     }
     if (unique.length > 5) {
-      ctx.addIssue({ code: "custom", message: "Como máximo 5 avisos por revisión" });
+      ctx.addIssue({
+        code: "custom",
+        message: "Como máximo 5 avisos por revisión",
+      });
       return z.NEVER;
     }
     return unique;
@@ -50,7 +64,12 @@ const weekdays = z
   .transform((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]))
   .pipe(
     z
-      .array(z.string().regex(/^[1-7]$/, "Día no válido").transform(Number))
+      .array(
+        z
+          .string()
+          .regex(/^[1-7]$/, "Día no válido")
+          .transform(Number),
+      )
       .min(1, "Elige al menos un día de envío")
       .transform((days) => [...new Set(days)].sort((a, b) => a - b)),
   );
@@ -61,7 +80,10 @@ const optionalEmail = z
   .max(254)
   .optional()
   .transform((v) => (v ? v.toLowerCase() : null))
-  .refine((v) => v === null || z.email().safeParse(v).success, "Correo no válido");
+  .refine(
+    (v) => v === null || z.email().safeParse(v).success,
+    "Correo no válido",
+  );
 
 export const reminderSettingsSchema = z
   .object({
@@ -71,18 +93,32 @@ export const reminderSettingsSchema = z
     sendWindowStart: time,
     sendWindowEnd: time,
     "weekdays[]": weekdays,
-    defaultIntervalMonths: z.coerce.number({ error: "Indica un número de meses" }).int("Sin decimales").min(1, "Mínimo 1 mes").max(60, "Máximo 60 meses"),
+    defaultIntervalMonths: z.coerce
+      .number({ error: "Indica un número de meses" })
+      .int("Sin decimales")
+      .min(1, "Mínimo 1 mes")
+      .max(60, "Máximo 60 meses"),
     defaultIntervalKm: z.coerce
       .number({ error: "Indica un número de kilómetros" })
       .int("Sin decimales")
       .min(1000, "Mínimo 1.000 km")
       .max(100_000, "Máximo 100.000 km"),
     kmRemindersEnabled: checkbox,
-    kmOffsetBefore: z.coerce.number({ error: "Indica un número de kilómetros" }).int("Sin decimales").min(0, "No puede ser negativo").max(10_000, "Máximo 10.000 km"),
+    kmOffsetBefore: z.coerce
+      .number({ error: "Indica un número de kilómetros" })
+      .int("Sin decimales")
+      .min(0, "No puede ser negativo")
+      .max(10_000, "Máximo 10.000 km"),
     replyToEmail: optionalEmail,
   })
-  .refine((v) => v.sendWindowEnd > v.sendWindowStart, { path: ["sendWindowEnd"], message: "La hora de fin debe ser posterior a la de inicio" })
-  .transform(({ "weekdays[]": sendWeekdays, ...rest }) => ({ ...rest, sendWeekdays }));
+  .refine((v) => v.sendWindowEnd > v.sendWindowStart, {
+    path: ["sendWindowEnd"],
+    message: "La hora de fin debe ser posterior a la de inicio",
+  })
+  .transform(({ "weekdays[]": sendWeekdays, ...rest }) => ({
+    ...rest,
+    sendWeekdays,
+  }));
 
 export type ReminderSettingsInput = z.infer<typeof reminderSettingsSchema>;
 
@@ -97,7 +133,10 @@ export const blackoutSchema = z.object({
     .transform((v) => (v ? v : null)),
 });
 
-export const blackoutRemoveSchema = blackoutSchema.pick({ branchId: true, day: true });
+export const blackoutRemoveSchema = blackoutSchema.pick({
+  branchId: true,
+  day: true,
+});
 
 // ----------------------------------------------------------- panel de avisos
 
@@ -121,10 +160,12 @@ export const SKIP_REASON_LABELS: Record<string, string> = {
   quota_exceeded: "Límite mensual de correos alcanzado",
   subscription_inactive: "Suscripción inactiva",
   feature_unavailable: "No incluido en el plan",
-  superseded: "La fecha de revisión cambió",
+  superseded: "La fecha de vencimiento cambió",
   reminders_disabled: "Avisos desactivados",
   vehicle_inactive: "Vehículo dado de baja o borrado",
-  canceled_by_user: "Cancelado por el taller",
+  installation_inactive:
+    "Instalación inactiva, borrada o sin equipos pendientes",
+  canceled_by_user: "Cancelado por la empresa",
 };
 
 /** Filtros del panel: grupos de estados comprensibles para el taller. */
