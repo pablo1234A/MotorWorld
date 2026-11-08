@@ -8,6 +8,7 @@ import { requireOrgPage } from "@/server/auth/guards";
 import { can } from "@/server/auth/context";
 import { pendingRequestsCount } from "@/server/modules/appointments/service";
 import { getDashboardSummary } from "@/server/modules/dashboard/service";
+import { dashboardActivity } from "@/server/modules/reports/service";
 
 export const metadata: Metadata = { title: "Inicio · RevisaYa" };
 
@@ -27,7 +28,12 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", { dateStyle: "long", timeZone: 
 export default async function DashboardPage() {
   const ctx = await requireOrgPage("/app");
   const canAppointments = can(ctx, "appointments.manage");
-  const [summary, pendingRequests] = await Promise.all([getDashboardSummary(ctx), canAppointments ? pendingRequestsCount(ctx) : Promise.resolve(0)]);
+  const [summary, pendingRequests, activity] = await Promise.all([
+    getDashboardSummary(ctx),
+    canAppointments ? pendingRequestsCount(ctx) : Promise.resolve(0),
+    dashboardActivity(ctx),
+  ]);
+  const reportsLink = can(ctx, "reports.read") && ctx.subscription.planCode && PLANS[ctx.subscription.planCode].features.includes("reports");
   const plan = ctx.subscription.planCode ? PLANS[ctx.subscription.planCode] : null;
   const limit = (n: number | null | undefined) => (n == null ? "ilimitados" : n.toLocaleString("es-ES"));
 
@@ -96,6 +102,23 @@ export default async function DashboardPage() {
           <LinkStat href="/app/vehiculos?revision=sin-fecha" label="Vehículos sin próxima revisión" value={summary.withoutNextService} />
           <LinkStat href="/app/clientes?correo=sin" label="Clientes sin correo (no reciben avisos)" value={summary.customersWithoutEmail} />
         </div>
+      </section>
+
+      <section aria-labelledby="actividad" className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="actividad" className="text-lg font-semibold">Últimos 30 días</h2>
+          {reportsLink ? (
+            <Link href="/app/informes" className="text-sm font-medium text-[var(--accent)]">
+              Ver los informes
+            </Link>
+          ) : null}
+        </div>
+        <dl className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Avisos enviados" value={activity.remindersSent30d} />
+          <Stat label="Citas pedidas" value={activity.appointments30d} />
+          <Stat label="Clientes que han vuelto tras un aviso" value={activity.returned30d} />
+        </dl>
+        <p className="text-xs text-[var(--muted)]">«Han vuelto»: vehículos con una revisión anotada en el historial en los 90 días siguientes a un aviso.</p>
       </section>
 
       <h2 className="text-lg font-semibold">Tu cuenta</h2>

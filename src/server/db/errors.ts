@@ -100,6 +100,7 @@ const KNOWN_MESSAGES = new Set([
   "invalid_timezone",
   "slug_reserved",
   "invalid_bounce_type",
+  "invalid_report_range",
 ]);
 
 export function mapDatabaseError(err: unknown): DomainError {

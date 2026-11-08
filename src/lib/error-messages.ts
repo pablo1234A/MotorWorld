@@ -40,6 +40,7 @@ const CONFLICT_REASON: Record<string, string> = {
 };
 
 const VALIDATION_REASON: Record<string, string> = {
+  invalid_report_range: "El periodo no es válido: la fecha de inicio tiene que ser anterior a la de fin y abarcar como máximo dos años.",
   km_lower_than_current: "Los kilómetros son menores que los actuales. Si se ha cambiado el cuentakilómetros, márcalo para confirmarlo.",
   read_on_in_future: "La fecha de la lectura no puede ser futura.",
   service_date_in_future: "La fecha de la revisión no puede ser futura.",

@@ -24,7 +24,7 @@ export function csvSafe(value: unknown): string {
   return /[";\r\n]/.test(guarded) ? `"${guarded.replace(/"/g, '""')}"` : guarded;
 }
 
-function toCsv(rows: unknown[][]): Buffer {
+export function toCsv(rows: unknown[][]): Buffer {
   // BOM + punto y coma: es lo que espera Excel con configuración regional española.
   return Buffer.from("﻿" + rows.map((r) => r.map(csvSafe).join(";")).join("\r\n") + "\r\n", "utf8");
 }

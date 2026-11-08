@@ -58,6 +58,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
             ...(admin || ctx.membership.permissions.includes("appointments.manage") ? [["/app/citas", "Citas"]] : []),
             ...(admin || ctx.membership.permissions.includes("quotes.manage") ? [["/app/presupuestos", "Presupuestos"]] : []),
             ...(admin || ctx.membership.permissions.includes("reminders.read") ? [["/app/recordatorios", "Recordatorios"]] : []),
+            ...(admin || ctx.membership.permissions.includes("reports.read") ? [["/app/informes", "Informes"]] : []),
             ...(admin || ctx.membership.permissions.includes("imports.run") ? [["/app/importar", "Importar"]] : []),
           ].map(([href, label]) => (
             <Link key={href} className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href={href}>
