@@ -560,6 +560,12 @@ export interface PrivateRateLimitBuckets {
   updated_at: Generated<Timestamp>;
 }
 
+export interface PrivateRetentionNotices {
+  organization_id: string;
+  retention_until: string;
+  sent_at: Generated<Timestamp>;
+}
+
 export interface Profiles {
   created_at: Generated<Timestamp>;
   email: string;
@@ -764,6 +770,7 @@ export interface DB {
   "private.job_runs": PrivateJobRuns;
   "private.jobs": PrivateJobs;
   "private.rate_limit_buckets": PrivateRateLimitBuckets;
+  "private.retention_notices": PrivateRetentionNotices;
   profiles: Profiles;
   quote_items: QuoteItems;
   quotes: Quotes;

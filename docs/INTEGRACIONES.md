@@ -136,10 +136,10 @@ Código: `src/server/integrations/google.ts` (OAuth y API REST v3, sin SDK), `sr
 | Servicio | Uso | Credenciales |
 |---|---|---|
 | Cloudflare Turnstile | captcha en la página pública de citas (implementado en la Fase 7; verificación en servidor con `siteverify`, si Cloudflare no responde se rechaza) | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (pública), `TURNSTILE_SECRET_KEY`. Sin ellas no se exige y siguen activos el límite de peticiones y el campo trampa. |
-| Sentry | errores frontend/backend, con *scrubbing* de datos personales | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN` (CI) |
+| Sentry (no integrado) | se puede añadir para errores; hoy los errores van a los registros de Vercel con datos personales redactados (DESPLIEGUE §5) | — |
 | healthchecks.io (o similar) | *dead-man switch* de jobs | URL de ping |
 | Upstash Redis (opcional, escala) | rate limiting distribuido | `UPSTASH_REDIS_REST_URL/TOKEN` |
 
 ## 6. Credenciales que deberá configurar el responsable (no se incluyen en el código)
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (pooler), `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY` (test), `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (test), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INTEGRATIONS_ENCRYPTION_KEY` (32 bytes base64), `API_KEY_PEPPER`, `CRON_SECRET`, `BOOKING_TOKEN_SECRET`, `TURNSTILE_*`, `SENTRY_*`. Se documentan en `.env.example` en la Fase 1.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (pooler), `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY` (test), `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (test), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INTEGRATIONS_ENCRYPTION_KEY` (32 bytes base64), `API_KEY_PEPPER`, `CRON_SECRET`, `EMAIL_LINK_SECRET`, `TURNSTILE_*` y `LEGAL_OWNER_*`. Todas están en `.env.example`; `pnpm check:env` comprueba la configuración (DESPLIEGUE §6.5).

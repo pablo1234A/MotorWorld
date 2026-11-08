@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": [
+    "fra1"
+  ],
   "crons": [
     {
       "path": "/api/internal/jobs/dispatch-reminders",
@@ -16,6 +19,10 @@
     {
       "path": "/api/internal/jobs/calendar-sync",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/internal/jobs/retention",
+      "schedule": "53 3 * * *"
     },
     {
       "path": "/api/internal/jobs/billing-reconcile",

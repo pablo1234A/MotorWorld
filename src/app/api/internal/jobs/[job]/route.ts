@@ -12,6 +12,7 @@ import { reconcileSubscriptions } from "@/server/modules/billing/service";
 import { syncPendingCalendar } from "@/server/modules/integrations/calendar";
 import { checkPendingDomains } from "@/server/modules/email/domains";
 import { checkEmailReputation, notifyUsage, sendDigests } from "@/server/modules/email/notifications";
+import { purgeExpiredOrganizations, sendRetentionWarnings } from "@/server/modules/retention/service";
 import { runDispatcher } from "@/server/reminders/dispatcher";
 
 /**
@@ -23,9 +24,13 @@ import { runDispatcher } from "@/server/reminders/dispatcher";
  *                        consumo (80 %/100 %) y resúmenes al taller
  *   billing-reconcile  · diario: respaldo de los webhooks de Stripe
  *   calendar-sync      · cada 15 min: reintenta lo pendiente en Google Calendar
+ *   retention          · diario: aviso 7 días antes y borrado a los 60 días de la baja (P9)
  *   status             · últimas ejecuciones (monitorización / dead-man switch)
  * GET (Vercel Cron) o POST, con Authorization: Bearer CRON_SECRET.
  */
+
+/** El dispatcher y las purgas pueden tardar más que el límite por defecto. */
+export const maxDuration = 300;
 
 async function handle(request: Request, job: string) {
   if (!isAuthorizedJobRequest(request)) {
@@ -66,6 +71,10 @@ async function handle(request: Request, job: string) {
         const stripe = getStripe();
         if (!stripe) return NextResponse.json({ error: { code: "payments_not_configured" } }, { status: 503 });
         return NextResponse.json({ ok: true, prices: await syncCatalog(stripe) });
+      }
+      case "retention": {
+        const deps = { email: getEmailProvider(), sender: getSenderConfig() };
+        return NextResponse.json({ ok: true, stats: { warnings: await sendRetentionWarnings(deps), purge: await purgeExpiredOrganizations() } });
       }
       case "calendar-sync": {
         return NextResponse.json({ ok: true, stats: await syncPendingCalendar() });

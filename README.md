@@ -2,7 +2,7 @@
 
 SaaS para talleres mecánicos: el taller registra sus clientes, vehículos e historial de revisiones, y RevisaYa envía cada día avisos por correo a los clientes a los que les toca la revisión, con un botón para pedir cita.
 
-> **Estado: Fase 8 completada**: autenticación, talleres, usuarios e invitaciones (Fase 2); clientes, vehículos, historial, papelera y purga a 30 días (Fase 3); importación Excel/CSV con revisión de errores y confirmación atómica (Fase 4); motor de recordatorios automáticos por correo con planificador, envío con reintentos y recuperación, avisos por kilometraje (Max+) y baja en un clic (Fase 5); plantillas editables con prueba, dominio propio, eventos de entrega con bloqueo automático, avisos de consumo y resumen al taller (Fase 6); datos y logo del taller, página pública para pedir cita (desde el aviso o con enlace propio, por día o por huecos), gestión de citas con .ics, y presupuestos con IVA en PDF (Fase 7); suscripciones con Stripe en modo TEST: prueba de 7 días, cambio de plan, portal, impagos con gracia y cancelación (Fase 8). Ver [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
+> **Estado: Fases 0–12 completadas.** El producto está construido de punta a punta: talleres y usuarios con 2FA, clientes, vehículos e historial, importación de Excel, avisos automáticos por correo, citas, presupuestos, suscripciones con Stripe (**siempre en modo TEST**), Google Calendar, informes, API, web pública, textos legales (borrador para revisión jurídica) y preparación para producción. Para publicarlo: [docs/DESPLIEGUE.md §6](docs/DESPLIEGUE.md) y [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md). Estado detallado y lo que falta probar con cuentas reales: [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
 > "RevisaYa" es un nombre provisional: falta comprobar la marca y el dominio.
 
 ## Puesta en marcha local
@@ -17,6 +17,8 @@ pnpm db:reset                # aplica las migraciones
 pnpm check                   # typecheck, lint, tests (unit, pgTAP, integración) y build
 pnpm test:e2e                # E2E con Playwright (tras pnpm build)
 pnpm dev                     # http://localhost:3000 · correos locales en http://127.0.0.1:54324
+pnpm stripe:mock             # stripe-mock (pagos de prueba sin claves reales) para los tests de facturación
+pnpm check:env .env.local    # comprueba la configuración (también antes de desplegar)
 ```
 
 ## Estructura
@@ -52,7 +54,9 @@ legacy/           contenido previo del repositorio (web MOTORWORLD), sin uso
 | [INTEGRACIONES](docs/INTEGRACIONES.md) | Correo, Stripe (TEST), Google Calendar y otros |
 | [API](docs/API.md) | API pública v1 (plan Excelencia) |
 | [TESTING](docs/TESTING.md) | Estrategia, casos críticos y cómo ejecutar las pruebas |
-| [DESPLIEGUE](docs/DESPLIEGUE.md) | Entornos, procedimiento y checklist de lanzamiento |
+| [DESPLIEGUE](docs/DESPLIEGUE.md) | Entornos, publicar paso a paso (Supabase + Vercel), monitorización, copias e incidentes |
+| [LANZAMIENTO](docs/LANZAMIENTO.md) | Lista de lo que hay que hacer antes de abrir a talleres reales |
+| [INFORMES](docs/INFORMES.md) | Informes (plan Max) y contadores del inicio |
 | [DECISIONES-TECNICAS](docs/DECISIONES-TECNICAS.md) | ADR y cuestiones resueltas |
 | [ESTADO-DEL-PROYECTO](docs/ESTADO-DEL-PROYECTO.md) | Qué está hecho, qué se ha probado y qué sigue |
 

@@ -4,13 +4,14 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { sql } from "kysely";
 import { unstable_rethrow } from "next/navigation";
-import { connection, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { errorMessage } from "@/lib/error-messages";
 import { loadSubscription, type SubscriptionState } from "@/server/auth/context";
 import { withSystem } from "@/server/db/client";
 import { DomainError, mapDatabaseError } from "@/server/db/errors";
+import { dynamicRequest } from "@/server/http/dynamic";
 import { logger } from "@/server/logger";
 import { consumeRateLimit, RATE_LIMITS } from "@/server/security/rate-limit";
 
@@ -165,12 +166,7 @@ type Handler = (c: ApiContext) => Promise<ApiResult>;
 export function apiRoute(opts: Options, handler: Handler) {
   return async (request: Request, segment?: { params: Promise<Record<string, string>> }): Promise<Response> => {
     // Siempre dinámica: nunca se pregenera ni se cachea una respuesta de la API.
-    // (Fuera de una petición de Next, p. ej. en las pruebas, connection() lanza un error normal que se ignora.)
-    try {
-      await connection();
-    } catch (err) {
-      unstable_rethrow(err);
-    }
+    await dynamicRequest();
     const rid = requestId();
     const started = Date.now();
     let principal: ApiPrincipal | null = null;

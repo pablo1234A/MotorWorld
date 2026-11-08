@@ -15,6 +15,7 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
+    "check:env": "node --conditions=react-server --experimental-strip-types --no-warnings scripts/check-env.ts",
     "check": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm db:test && pnpm test:integration && pnpm build",
     "db:types": "kysely-codegen",
     "test:e2e": "playwright test",

@@ -18,7 +18,64 @@
 | 9 — Google Calendar, informes y API | ✅ Completada (Google y la API, sin probar con cuentas reales) | 2026-11-08 |
 | 10 — Frontend completo | ✅ Completada (textos legales pendientes de revisión jurídica) | 2026-11-08 |
 | 11 — Seguridad y testing global | ✅ Completada (falta una prueba de intrusión externa) | 2026-11-08 |
-| 12 — Preparación para producción | ⏭ Siguiente | — |
+| 12 — Preparación para producción | ✅ Completada | 2026-11-08 |
+
+---
+
+## Resumen final: qué falta para publicar
+
+Todo el producto del PDF está construido y probado de forma automática (pgTAP 310, Vitest 317 y Playwright 35, desde una base de datos nueva, el 2026-11-08). Lo que queda **no se puede hacer desde el código**:
+
+| Qué | Quién | Dónde |
+|---|---|---|
+| Crear el proyecto de Supabase (UE), `supabase db push` y configurar Auth (URLs, plantillas, SMTP y TOTP) | Responsable | DESPLIEGUE §6.1 |
+| Crear el proyecto de Vercel, las variables (`pnpm check:env`) y el dominio | Responsable | DESPLIEGUE §6.5 |
+| Cuenta de Resend, dominio de envío verificado y webhook; pruebas en Gmail y Outlook | Responsable | DESPLIEGUE §6.2 |
+| Stripe en modo **TEST**: claves, catálogo, webhook y portal | Responsable | FACTURACION §4 |
+| **Activar cobros reales** | Solo el responsable adulto, tras la revisión fiscal y legal | LANZAMIENTO §4 |
+| Google Calendar: proyecto de Google Cloud y verificación de la app (opcional) | Responsable | INTEGRACIONES §4 |
+| **Revisión jurídica** de los textos legales y datos del titular (`LEGAL_OWNER_*`) | Abogado / responsable | LANZAMIENTO §1 |
+| Alta de actividad e IVA | Gestor | LANZAMIENTO §1 |
+
+**Probado solo con dobles oficiales o simulados (falta con cuentas reales)**:
+- Stripe: con stripe-mock y webhooks firmados.
+- Resend: con respuestas simuladas y firmas Svix reales.
+- Google Calendar: con un servidor que imita su API.
+- Correo real: con Mailpit (SMTP).
+
+---
+
+## Fase 12 — Preparación para producción
+
+### Qué se ha construido
+- **`/api/health`** (BD incluida) para el monitor externo, además de `/api/internal/jobs/status`.
+- **Fin de la conservación tras la baja (P9)**:
+  - proceso `retention` diario: aviso por correo a los administradores 7 días antes, una sola vez;
+  - a los 60 días, borrado de los datos de negocio y de sus archivos;
+  - se conservan la organización (`deleted`), la suscripción, las facturas, las aceptaciones y la auditoría (ADR-077);
+  - si se vuelve a contratar, no se borra nada.
+- **Derechos de protección de datos**:
+  - exportar un cliente (JSON) y todo el taller (Excel, también en solo lectura);
+  - supresión inmediata a petición del cliente, con los registros de correo anonimizados;
+  - registro de solicitudes en *Configuración → Datos y privacidad*;
+  - purga de registros de correo, de auditoría y de eventos de Stripe a los 24 meses.
+- **`pnpm check:env`**: comprueba la configuración antes de desplegar, sin mostrar valores.
+- `vercel.json` con región `fra1` (UE) y todos los procesos programados; `maxDuration` en los procesos.
+- **Documentación**:
+  - guía para publicar paso a paso (DESPLIEGUE §6), monitorización (§5), copias y restauración (§7) e incidentes (§8);
+  - lista de lanzamiento (`LANZAMIENTO.md`).
+
+### Pruebas ejecutadas (2026-11-08, desde base de datos nueva, todas en verde)
+| Prueba | Resultado |
+|---|---|
+| pgTAP | 310/310 |
+| Vitest (con stripe-mock) | 317/317 (nuevos: `privacy`, `retention`: conservación, `/api/health`, `check:env`) |
+| Playwright E2E | 35/35 |
+| typecheck, lint, build, `pnpm audit` | OK, 0 vulnerabilidades |
+
+### Errores encontrados y corregidos
+- `connection()` falla fuera de una petición de Next (pruebas, procesos). Hay una utilidad común (`dynamicRequest`) que lo tolera y relanza las señales internas de Next.
+- Variables que no se usaban (`BOOKING_TOKEN_SECRET`, `SENTRY_DSN`) se retiran para no dar a entender integraciones que no existen (ADR-078).
 
 ---
 

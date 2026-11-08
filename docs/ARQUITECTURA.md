@@ -71,7 +71,7 @@ flowchart LR
     STRIPE[Stripe TEST]
     GCAL[Google Calendar]
     TURN[Turnstile]
-    SENTRY[Sentry]
+    SENTRY[Registros / log drain]
   end
 
   WEB --> SA

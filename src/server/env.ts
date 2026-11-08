@@ -26,7 +26,6 @@ export const serverEnvSchema = z
     DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\//, "Debe ser una URL de PostgreSQL"),
 
     CRON_SECRET: z.string().min(32).optional(),
-    BOOKING_TOKEN_SECRET: z.string().min(32).optional(),
     API_KEY_PEPPER: z.string().min(32).optional(),
     INTEGRATIONS_ENCRYPTION_KEY: z
       .string()
@@ -60,7 +59,6 @@ export const serverEnvSchema = z
     LEGAL_OWNER_ADDRESS: optionalString,
     LEGAL_OWNER_EMAIL: z.email().optional(),
     LEGAL_OWNER_REGISTRY: optionalString,
-    SENTRY_DSN: z.url().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.EMAIL_PROVIDER === "smtp" && !env.SMTP_URL) {
