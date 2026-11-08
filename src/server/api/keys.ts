@@ -27,19 +27,35 @@ export const API_SCOPES = [
   "appointments:read",
   "appointments:write",
   "reminders:read",
+  "installations:read",
+  "installations:write",
+  "equipment:read",
+  "equipment:write",
+  "work_orders:read",
+  "work_orders:write",
+  "incidents:read",
+  "incidents:write",
 ] as const;
 export type ApiScope = (typeof API_SCOPES)[number];
 
 export const SCOPE_LABELS: Record<ApiScope, string> = {
   "customers:read": "Ver clientes",
   "customers:write": "Crear y editar clientes",
-  "vehicles:read": "Ver vehículos",
-  "vehicles:write": "Crear y editar vehículos y kilómetros",
-  "maintenance:read": "Ver el historial",
-  "maintenance:write": "Añadir revisiones al historial",
-  "appointments:read": "Ver citas",
-  "appointments:write": "Crear, confirmar y cancelar citas",
+  "vehicles:read": "Vehículos (etapa anterior, obsoleto): ver",
+  "vehicles:write": "Vehículos (etapa anterior, obsoleto): crear y editar",
+  "maintenance:read": "Ver el historial de actuaciones",
+  "maintenance:write": "Registrar actuaciones",
+  "appointments:read": "Ver solicitudes de visita",
+  "appointments:write": "Crear, confirmar y cancelar visitas",
   "reminders:read": "Ver avisos",
+  "installations:read": "Ver instalaciones",
+  "installations:write": "Crear y editar instalaciones",
+  "equipment:read": "Ver equipos PCI",
+  "equipment:write": "Crear y editar equipos PCI",
+  "work_orders:read": "Ver órdenes de trabajo",
+  "work_orders:write": "Crear órdenes y cambiar su estado",
+  "incidents:read": "Ver incidencias",
+  "incidents:write": "Registrar y actualizar incidencias",
 };
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -59,12 +75,15 @@ function randomString(n: number, alphabet: string): string {
 
 function pepper(): string {
   const p = process.env.API_KEY_PEPPER;
-  if (!p || p.length < 32) throw new DomainError("integration_not_configured", "api_key_pepper");
+  if (!p || p.length < 32)
+    throw new DomainError("integration_not_configured", "api_key_pepper");
   return p;
 }
 
 export function apiConfigured(): boolean {
-  return Boolean(process.env.API_KEY_PEPPER && process.env.API_KEY_PEPPER.length >= 32);
+  return Boolean(
+    process.env.API_KEY_PEPPER && process.env.API_KEY_PEPPER.length >= 32,
+  );
 }
 
 export function hashKey(key: string): Buffer {
@@ -77,7 +96,10 @@ export function keyMode(): "live" | "test" {
 
 export function generateKey(mode = keyMode()): { prefix: string; key: string } {
   const prefix = `ry_${mode}_${randomString(8, ALPHABET)}`;
-  return { prefix, key: `${prefix}_${randomString(32, ALPHABET + "ABCDEFGHIJKLMNOPQRSTUVWXYZ")}` };
+  return {
+    prefix,
+    key: `${prefix}_${randomString(32, ALPHABET + "ABCDEFGHIJKLMNOPQRSTUVWXYZ")}`,
+  };
 }
 
 export function parseKey(key: string): { prefix: string } | null {
@@ -92,7 +114,11 @@ export function sameHash(a: Buffer, b: Buffer): boolean {
 type Ctx = Pick<OrgContext, "auth" | "membership" | "subscription">;
 
 export function apiAvailable(ctx: Pick<Ctx, "subscription">): boolean {
-  return Boolean(ctx.subscription.active && ctx.subscription.planCode && planHasFeature(ctx.subscription.planCode, "api"));
+  return Boolean(
+    ctx.subscription.active &&
+    ctx.subscription.planCode &&
+    planHasFeature(ctx.subscription.planCode, "api"),
+  );
 }
 
 export interface ApiKeyRow {
@@ -114,7 +140,19 @@ export async function listApiKeys(ctx: Ctx): Promise<ApiKeyRow[]> {
     tx
       .selectFrom("api_keys as k")
       .leftJoin("profiles as p", "p.id", "k.created_by")
-      .select(["k.id", "k.name", "k.prefix", "k.scopes", "k.branch_ids", "k.created_by", sql<string | null>`p.email::text`.as("email"), "k.last_used_at", "k.expires_at", "k.revoked_at", "k.created_at"])
+      .select([
+        "k.id",
+        "k.name",
+        "k.prefix",
+        "k.scopes",
+        "k.branch_ids",
+        "k.created_by",
+        sql<string | null>`p.email::text`.as("email"),
+        "k.last_used_at",
+        "k.expires_at",
+        "k.revoked_at",
+        "k.created_at",
+      ])
       .where("k.organization_id", "=", ctx.membership.organizationId)
       .orderBy("k.revoked_at", (ob) => ob.desc().nullsFirst())
       .orderBy("k.created_at", "desc")
@@ -137,11 +175,17 @@ export async function listApiKeys(ctx: Ctx): Promise<ApiKeyRow[]> {
 
 export async function createApiKey(
   ctx: Ctx,
-  input: { name: string; scopes: ApiScope[]; branchIds: string[] | null; expiresAt: Date | null },
+  input: {
+    name: string;
+    scopes: ApiScope[];
+    branchIds: string[] | null;
+    expiresAt: Date | null;
+  },
 ): Promise<{ id: string; key: string; prefix: string }> {
   await assertOrgAdmin(ctx);
   if (!apiAvailable(ctx)) throw new DomainError("feature_unavailable", "api");
-  if (!input.scopes.length) throw new DomainError("validation_error", "api_scopes");
+  if (!input.scopes.length)
+    throw new DomainError("validation_error", "api_scopes");
   const orgId = ctx.membership.organizationId;
   const { key, prefix } = generateKey();
   const hash = hashKey(key);
@@ -152,10 +196,17 @@ export async function createApiKey(
       .where("organization_id", "=", orgId)
       .where("revoked_at", "is", null)
       .executeTakeFirstOrThrow();
-    if (Number(active.n) >= MAX_KEYS_PER_ORG) throw new DomainError("validation_error", "api_key_limit");
+    if (Number(active.n) >= MAX_KEYS_PER_ORG)
+      throw new DomainError("validation_error", "api_key_limit");
     if (input.branchIds?.length) {
-      const ok = await tx.selectFrom("branches").select("id").where("organization_id", "=", orgId).where("id", "in", input.branchIds).execute();
-      if (ok.length !== new Set(input.branchIds).size) throw new DomainError("validation_error", "invalid_branches");
+      const ok = await tx
+        .selectFrom("branches")
+        .select("id")
+        .where("organization_id", "=", orgId)
+        .where("id", "in", input.branchIds)
+        .execute();
+      if (ok.length !== new Set(input.branchIds).size)
+        throw new DomainError("validation_error", "invalid_branches");
     }
     const row = await tx
       .insertInto("api_keys")
@@ -171,7 +222,9 @@ export async function createApiKey(
       })
       .returning("id")
       .executeTakeFirstOrThrow();
-    await sql`select app.write_audit(${orgId}::uuid, 'api_key.created', 'api_key', ${row.id}, ${JSON.stringify({ prefix, scopes: input.scopes })}::jsonb)`.execute(tx);
+    await sql`select app.write_audit(${orgId}::uuid, 'api_key.created', 'api_key', ${row.id}, ${JSON.stringify({ prefix, scopes: input.scopes })}::jsonb)`.execute(
+      tx,
+    );
     return row.id;
   });
   return { id, key, prefix };
@@ -189,16 +242,23 @@ export async function revokeApiKey(ctx: Ctx, id: string): Promise<void> {
       .where("revoked_at", "is", null)
       .executeTakeFirst();
     if (Number(r.numUpdatedRows) === 0) throw new DomainError("not_found");
-    await sql`select app.write_audit(${orgId}::uuid, 'api_key.revoked', 'api_key', ${id}, '{}'::jsonb)`.execute(tx);
+    await sql`select app.write_audit(${orgId}::uuid, 'api_key.revoked', 'api_key', ${id}, '{}'::jsonb)`.execute(
+      tx,
+    );
   });
 }
 
 /** Uso de la API en los últimos 30 días (para el panel). */
-export async function apiUsage(ctx: Ctx): Promise<{ requests: number; errors: number }> {
+export async function apiUsage(
+  ctx: Ctx,
+): Promise<{ requests: number; errors: number }> {
   const r = await withRls(ctx.auth, (tx) =>
     tx
       .selectFrom("api_request_logs")
-      .select([sql<string>`count(*)`.as("n"), sql<string>`count(*) filter (where status >= 400)`.as("e")])
+      .select([
+        sql<string>`count(*)`.as("n"),
+        sql<string>`count(*) filter (where status >= 400)`.as("e"),
+      ])
       .where("organization_id", "=", ctx.membership.organizationId)
       .where("created_at", ">", sql<Date>`now() - interval '30 days'`)
       .executeTakeFirstOrThrow(),
@@ -211,7 +271,17 @@ export async function findKeyByHash(hash: Buffer) {
   return withSystem((tx) =>
     tx
       .selectFrom("api_keys")
-      .select(["id", "organization_id", "key_hash", "scopes", "branch_ids", "created_by", "expires_at", "revoked_at", "last_used_at"])
+      .select([
+        "id",
+        "organization_id",
+        "key_hash",
+        "scopes",
+        "branch_ids",
+        "created_by",
+        "expires_at",
+        "revoked_at",
+        "last_used_at",
+      ])
       .where("key_hash", "=", hash)
       .executeTakeFirst(),
   );
