@@ -15,6 +15,7 @@ const SECTIONS = [
   { href: "/app/configuracion/plantillas", title: "Plantillas de correo", text: "El texto que reciben tus clientes, con vista previa y correo de prueba." },
   { href: "/app/configuracion/correo", title: "Correo", text: "Remitente o dominio propio, resumen para el taller y direcciones bloqueadas." },
   { href: "/app/configuracion/integraciones", title: "Integraciones", text: "Google Calendar: las citas en la agenda del taller (plan Max)." },
+  { href: "/app/configuracion/api", title: "API", text: "Claves para conectar tu programa de gestión (plan Excelencia)." },
   { href: "/app/usuarios", title: "Usuarios", text: "Quién puede entrar en el panel y qué puede hacer." },
 ] as const;
 

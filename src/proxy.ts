@@ -14,6 +14,8 @@ import { type NextRequest, NextResponse } from "next/server";
 const PROTECTED_PREFIXES = ["/app", "/onboarding", "/cuenta"];
 
 export async function proxy(request: NextRequest) {
+  // La API pública se autentica con clave (Bearer), no con la sesión.
+  if (request.nextUrl.pathname.startsWith("/api/v1/")) return NextResponse.next();
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;

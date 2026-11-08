@@ -73,7 +73,7 @@ export async function listMemberships(user: AuthUser): Promise<Membership[]> {
   }));
 }
 
-async function loadSubscription(user: AuthUser, organizationId: string): Promise<SubscriptionState> {
+export async function loadSubscription(user: Pick<AuthUser, "id">, organizationId: string): Promise<SubscriptionState> {
   const row = await withRls({ userId: user.id }, (tx) =>
     tx
       .selectFrom("subscriptions as s")

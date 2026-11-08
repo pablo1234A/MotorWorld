@@ -327,7 +327,12 @@ export async function syncPendingCalendar(limit = 100): Promise<Record<SyncOutco
 
 /** Tras responder al usuario, refleja la cita en Google (si el taller lo tiene conectado). */
 export function syncAppointmentLater(appointmentId: string): void {
-  after(async () => {
-    await syncAppointment(appointmentId);
-  });
+  try {
+    after(async () => {
+      await syncAppointment(appointmentId);
+    });
+  } catch {
+    // Fuera de una petición (procesos, pruebas): en segundo plano; el proceso programado reintenta.
+    void syncAppointment(appointmentId);
+  }
 }

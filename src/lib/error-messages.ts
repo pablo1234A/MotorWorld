@@ -40,6 +40,8 @@ const CONFLICT_REASON: Record<string, string> = {
 };
 
 const VALIDATION_REASON: Record<string, string> = {
+  api_scopes: "Elige al menos un permiso para la clave.",
+  api_key_limit: "Has llegado al máximo de 20 claves activas: revoca alguna que no uses.",
   invalid_report_range: "El periodo no es válido: la fecha de inicio tiene que ser anterior a la de fin y abarcar como máximo dos años.",
   km_lower_than_current: "Los kilómetros son menores que los actuales. Si se ha cambiado el cuentakilómetros, márcalo para confirmarlo.",
   read_on_in_future: "La fecha de la lectura no puede ser futura.",
@@ -125,7 +127,7 @@ export function errorMessage(code: string, detail?: string): string {
     case "not_found":
       return "No se ha encontrado lo que buscas.";
     case "integration_not_configured":
-      return "La conexión con Google todavía no está configurada en RevisaYa.";
+      return detail === "api_key_pepper" ? "La API todavía no está configurada en RevisaYa." : "La conexión con Google todavía no está configurada en RevisaYa.";
     case "integration_failed":
       return "Google no ha completado la conexión. Vuelve a intentarlo y acepta los permisos de Google Calendar.";
     case "payments_not_configured":

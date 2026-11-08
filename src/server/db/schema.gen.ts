@@ -492,6 +492,15 @@ export interface Plans {
   sort_order: number;
 }
 
+export interface PrivateApiIdempotency {
+  api_key_id: string;
+  created_at: Generated<Timestamp>;
+  idem_key: string;
+  request_hash: Buffer;
+  response: Json | null;
+  status: number | null;
+}
+
 export interface PrivateDigestRuns {
   branch_id: string;
   created_at: Generated<Timestamp>;
@@ -738,6 +747,7 @@ export interface DB {
   organization_members: OrganizationMembers;
   organizations: Organizations;
   plans: Plans;
+  "private.api_idempotency": PrivateApiIdempotency;
   "private.digest_runs": PrivateDigestRuns;
   "private.integration_secrets": PrivateIntegrationSecrets;
   "private.job_runs": PrivateJobRuns;

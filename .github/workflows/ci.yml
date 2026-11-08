@@ -74,6 +74,9 @@ jobs:
             echo "STRIPE_SECRET_KEY=sk_test_StripeMockCi123"
             echo "STRIPE_API_BASE=http://127.0.0.1:12111"
             echo "STRIPE_WEBHOOK_SECRET=whsec_$(openssl rand -hex 24)"
+            # API pública (Fase 9) y cifrado de integraciones: secretos efímeros.
+            echo "API_KEY_PEPPER=$(openssl rand -hex 32)"
+            echo "INTEGRATIONS_ENCRYPTION_KEY=$(openssl rand -base64 32)"
           } > .env.local
 
       - name: Tests de integración (concurrencia, contexto RLS)

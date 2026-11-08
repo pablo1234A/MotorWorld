@@ -32,6 +32,10 @@ export const RATE_LIMITS = {
   domainCreatesPerOrg: { capacity: 5, windowSeconds: 86_400 },
   bookingPerIp: { capacity: 5, windowSeconds: 3600 },
   bookingPerOrg: { capacity: 60, windowSeconds: 3600 },
+  /** API pública: 60 peticiones/min sostenidas, ráfaga de 120, por clave… */
+  apiPerKey: { capacity: 120, windowSeconds: 120 },
+  /** …y 120/min, ráfaga de 600, por taller (todas sus claves). */
+  apiPerOrg: { capacity: 600, windowSeconds: 300 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export async function consumeRateLimit(key: string, rule: RateLimitRule): Promise<boolean> {

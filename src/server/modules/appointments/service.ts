@@ -265,7 +265,7 @@ export async function saveNotes(ctx: Ctx, id: string, notes: string | null): Pro
 /** Cita creada en el taller (llamada, mostrador): nace confirmada. */
 export async function createManualAppointment(
   ctx: Ctx,
-  input: { customerId: string; vehicleId: string | null; date: string; time: string; durationMinutes: number; notes: string | null },
+  input: { customerId: string; vehicleId: string | null; date: string; time: string; durationMinutes: number; notes: string | null; source?: "manual" | "api" },
 ): Promise<string> {
   assertWritable(ctx);
   return withRls(ctx.auth, async (tx) => {
@@ -299,7 +299,7 @@ export async function createManualAppointment(
         branch_id: customer.branch_id,
         customer_id: customer.id,
         vehicle_id: input.vehicleId,
-        source: "manual",
+        source: input.source ?? "manual",
         requester_name: `${customer.first_name} ${customer.last_name}`.trim(),
         requester_email: customer.email,
         requester_phone: customer.phone,

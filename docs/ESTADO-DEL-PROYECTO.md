@@ -15,10 +15,61 @@
 | 6 — Sistema de correos | ✅ Completada | 2026-11-06 |
 | 7 — Citas y presupuestos | ✅ Completada | 2026-11-06 |
 | 8 — Suscripciones y límites (Stripe TEST) | ✅ Completada (pendiente de revisión y de la prueba con una cuenta TEST real) | 2026-11-07 |
-| 9 — Google Calendar, informes y API | ⏭ Siguiente | — |
-| 10 — Frontend completo | ⏸ No iniciada | — |
+| 9 — Google Calendar, informes y API | ✅ Completada (Google y la API, sin probar con cuentas reales) | 2026-11-08 |
+| 10 — Frontend completo | ⏭ Siguiente | — |
 | 11 — Seguridad y testing global | ⏸ No iniciada | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 9 — Google Calendar (Max), informes (Max) y API (Excelencia)
+
+### Qué se ha construido
+- **Google Calendar** (`docs/INTEGRACIONES.md` §4):
+  - conexión OAuth por taller desde *Configuración → Integraciones*, con `state` firmado, cookie y comprobación de la sesión;
+  - tokens cifrados con AES-256-GCM;
+  - las solicitudes aparecen como «sin confirmar», las confirmadas con su hora y las rechazadas o canceladas se quitan;
+  - el id del evento es determinista, así que repetir no duplica;
+  - reintentos con el proceso `calendar-sync` (cada 15 min);
+  - si Google retira el permiso, el panel pide volver a conectar;
+  - al desconectar se revoca el permiso en Google y se borran los tokens.
+- **Informes** (`docs/INFORMES.md`):
+  - avisos → citas → clientes que vuelven (P17), mes a mes;
+  - correos a clientes por tipo y estado;
+  - listados de clientes que no han vuelto, revisiones pendientes y correos enviados, con filtro de fechas y de taller y exportación a CSV;
+  - todo el control de acceso se hace en funciones SQL.
+- **Contadores básicos para todos los planes** (P16), en el inicio: avisos enviados, citas pedidas y clientes que han vuelto, de los últimos 30 días.
+- **API pública v1** (`docs/API.md`):
+  - claves con HMAC y pepper, permisos (*scopes*), limitación por talleres, caducidad y revocación inmediata;
+  - endpoints de clientes, vehículos, kilómetros, historial, citas y avisos;
+  - paginación por cursor, `Idempotency-Key`, límite de peticiones, errores JSON estables, registro sin datos personales (30 días) y especificación OpenAPI 3.1;
+  - pantalla *Configuración → API*.
+
+### Pruebas ejecutadas (2026-11-08, desde base de datos nueva, todas en verde)
+| Prueba | Resultado |
+|---|---|
+| pgTAP (`pnpm db:test`) | 310/310 (nuevo: `150_reports.sql`) |
+| Vitest unit + integración (`pnpm test`, con stripe-mock) | 302/302 (nuevos: `calendar`, `reports`, `api`) |
+| Playwright E2E (`pnpm test:e2e`) | 28/28 (nuevo: `phase9.spec.ts`: crear una clave en el panel, usarla, revocarla; informes; plan Pro bloqueado) |
+| typecheck, lint, build | OK |
+
+### Errores encontrados y corregidos durante la fase
+- El prefijo `ry` del id de evento no es base32hex (la «y» no está permitida): Google habría rechazado todos los eventos. Ahora es `rv`.
+- La auditoría exige acciones `recurso.acción`: `integration.google_calendar.connected` no era válida.
+- La API no podía dar de alta clientes porque intentaba escribir una columna sin permiso (`opted_out_at`). Además, la política de citas solo admitía el origen `manual`: se amplió a `api`, sin cambiar el resto de condiciones.
+- El mensaje «Clave revocada» se perdía porque el botón desaparece con la clave: ahora viaja en la URL (ADR-057).
+
+### Lo que NO se ha podido probar (y por qué)
+- **Google Calendar con una cuenta real**: hacen falta `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` de un proyecto de Google Cloud. Se ha probado con un servidor que imita las respuestas documentadas de Google (solo en `tests/`).
+  - Para publicarla, Google tiene que verificar la app: `calendar.events` es un ámbito sensible.
+- **La API desde un programa externo real**: se ha probado con peticiones HTTP reales a las rutas (integración y E2E).
+
+### Credenciales que deben configurarse
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INTEGRATIONS_ENCRYPTION_KEY` (`openssl rand -base64 32`) y `API_KEY_PEPPER` (`openssl rand -base64 48`).
+- **Ninguna de las dos claves se puede cambiar después sin consecuencias**: con otra `INTEGRATIONS_ENCRYPTION_KEY` hay que volver a conectar las agendas, y con otro `API_KEY_PEPPER` dejan de valer todas las claves de API.
+
+### Siguiente fase
+**Fase 10 — Frontend completo**: web pública con precios, textos legales, consentimiento en el registro y navegación móvil.
 
 ---
 
