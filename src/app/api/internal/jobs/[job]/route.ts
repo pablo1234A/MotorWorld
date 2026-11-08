@@ -9,6 +9,7 @@ import { logger } from "@/server/logger";
 import { syncCatalog } from "@/server/billing/catalog";
 import { getStripe } from "@/server/billing/stripe";
 import { reconcileSubscriptions } from "@/server/modules/billing/service";
+import { syncPendingCalendar } from "@/server/modules/integrations/calendar";
 import { checkPendingDomains } from "@/server/modules/email/domains";
 import { notifyUsage, sendDigests } from "@/server/modules/email/notifications";
 import { runDispatcher } from "@/server/reminders/dispatcher";
@@ -20,6 +21,8 @@ import { runDispatcher } from "@/server/reminders/dispatcher";
  *   release-leases     · recuperación de envíos bloqueados
  *   email-maintenance  · cada 30 min: verificación de dominios, avisos de
  *                        consumo (80 %/100 %) y resúmenes al taller
+ *   billing-reconcile  · diario: respaldo de los webhooks de Stripe
+ *   calendar-sync      · cada 15 min: reintenta lo pendiente en Google Calendar
  *   status             · últimas ejecuciones (monitorización / dead-man switch)
  * GET (Vercel Cron) o POST, con Authorization: Bearer CRON_SECRET.
  */
@@ -62,6 +65,9 @@ async function handle(request: Request, job: string) {
         const stripe = getStripe();
         if (!stripe) return NextResponse.json({ error: { code: "payments_not_configured" } }, { status: 503 });
         return NextResponse.json({ ok: true, prices: await syncCatalog(stripe) });
+      }
+      case "calendar-sync": {
+        return NextResponse.json({ ok: true, stats: await syncPendingCalendar() });
       }
       case "release-leases": {
         const n = await withSystem(async (tx) => (await sql<{ n: number }>`select private.release_expired_reminder_leases() as n`.execute(tx)).rows[0].n);

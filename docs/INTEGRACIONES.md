@@ -89,14 +89,47 @@ Resúmenes y avisos de consumo salen de `"RevisaYa" <no_reply@EMAIL_SHARED_DOMAI
 - **Impuestos**: precios del PDF **sin IVA** (propuesta P11, habitual en B2B) y Stripe Tax para calcular el IVA; facturas emitidas por Stripe. **Pendiente de validar con el gestor** que las facturas de Stripe cumplen la normativa española de facturación (incl. VeriFactu cuando aplique).
 - **TEST/LIVE**: claves `sk_test_`/`pk_test_` en todos los entornos. El paso a LIVE exige `PAYMENTS_LIVE_ENABLED=true`, precios LIVE en `billing_prices` y la autorización del responsable adulto del proyecto, tras revisar obligaciones fiscales y legales (alta de actividad, textos legales).
 
-## 4. Google Calendar (Max y superiores)
+## 4. Google Calendar (Max y superiores) — implementado en la Fase 9
 
-- OAuth 2.0 con `access_type=offline`, `prompt=consent`, parámetro `state` firmado (anti-CSRF) y PKCE.
-- Scope mínimo: crear/editar eventos (`calendar.events`) o, si encaja, solo calendarios creados por la app; se decide en la Fase 9 según la clasificación de Google en ese momento.
-- Tokens (refresh y access) **cifrados** en `private.integration_secrets` (AES-256-GCM, clave en el entorno, versión de clave para rotación).
-- Sincronización unidireccional RevisaYa → Google (citas **confirmadas**): job con idempotencia por `appointment_id` (`calendar_event_links`), `insert` o `patch` según exista el evento, borrado al cancelar, gestión de 401/`invalid_grant` (estado `revoked` + aviso), 404/410 (recrear), 429/5xx (backoff).
-- Desconectar = revocar el token en Google + borrar secretos + conservar el registro de integración como `disconnected`.
-- **Paso externo pendiente**: la app de Google debe pasar la verificación de OAuth (pantalla de consentimiento, política de privacidad publicada, dominio verificado). Hasta entonces funciona solo con usuarios de prueba (máx. 100) y con aviso de "app no verificada".
+Código: `src/server/integrations/google.ts` (OAuth y API REST v3, sin SDK), `src/server/integrations/crypto.ts` (AES-256-GCM), `src/server/modules/integrations/` (servicio y acciones), `src/app/api/integrations/google/callback/route.ts` y `/app/configuracion/integraciones`. Pruebas: `tests/unit/calendar.test.ts` y `tests/integration/calendar.test.ts` (con un servidor que imita a Google, solo en `tests/`).
+
+**Qué hace**
+- Una conexión por taller (la hace un administrador; plan Max, Business o Excelencia con la suscripción activa).
+- Sincronización en un solo sentido, de RevisaYa a Google:
+  - solicitud de cita → evento «Solicitud (sin confirmar)», provisional y sin ocupar la agenda (de día completo si el cliente solo pidió un día);
+  - cita confirmada o cambiada → evento con día y hora;
+  - rechazada o cancelada → se borra el evento.
+- El evento lleva el nombre del cliente, la matrícula, el vehículo, el teléfono, el correo, el mensaje y el enlace a la cita en RevisaYa. No se invita al cliente: ya recibe su correo con el `.ics`.
+- Id de evento **determinista** (`rv` + id de la cita, base32hex): repetir nunca duplica.
+- Se sincroniza justo después de cada cambio (`after()`, sin hacer esperar al usuario).
+  - Si Google falla, la cita no se ve afectada: queda `pending` en `calendar_event_links`.
+  - El proceso `calendar-sync` (cada 15 min) la reintenta y sube las citas próximas que falten.
+
+**Seguridad**
+- Ámbitos mínimos: `openid`, `email` y `calendar.events`. RevisaYa no lee el resto de la cuenta ni otros calendarios.
+- `access_type=offline` y `prompt=consent`.
+- `state` firmado con HMAC: lleva el taller, el usuario, un nonce y caduca a los 10 minutos.
+  - Viaja también en una cookie httpOnly (`SameSite=Lax`, ruta `/api/integrations/google`).
+  - La vuelta exige la misma sesión, el mismo taller, la cookie y el permiso de la agenda; si no, no conecta.
+- Tokens (refresh y access) **cifrados** con AES-256-GCM en `private.integration_secrets`:
+  - clave `INTEGRATIONS_ENCRYPTION_KEY`, que no está en la base de datos;
+  - el id de la integración va como dato asociado (AAD), así que el cifrado no se puede copiar a otra fila;
+  - `key_version` permite rotar la clave.
+- Si Google responde `invalid_grant` o 401 (contraseña cambiada, acceso retirado), la integración pasa a `error` y el panel pide volver a conectar. Las citas nuevas esperan y se suben al reconectar.
+- Desconectar revoca el token en Google, borra los secretos, deja la integración `disconnected` y lo registra en la auditoría.
+- `GOOGLE_OAUTH_BASE` y `GOOGLE_API_BASE` existen solo para las pruebas y están **prohibidas en producción** (`env.ts`).
+
+**Puesta en marcha (la hace el responsable; no hay credenciales en este entorno)**
+1. Google Cloud Console → crear un proyecto → *APIs y servicios* → habilitar **Google Calendar API**.
+2. *Pantalla de consentimiento de OAuth*:
+   - tipo **Externo**, con el nombre «RevisaYa», el correo de soporte, el dominio y los enlaces a la política de privacidad y a los términos (`/legal/privacidad`, `/legal/terminos`);
+   - ámbitos `openid`, `.../auth/userinfo.email` y `.../auth/calendar.events`.
+3. *Credenciales* → **ID de cliente OAuth** de tipo «Aplicación web», con la URI de redirección autorizada `https://<dominio>/api/integrations/google/callback`.
+4. En el hosting: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `INTEGRATIONS_ENCRYPTION_KEY` (`openssl rand -base64 32`). **No se puede cambiar esa clave sin volver a conectar** las agendas.
+5. Mientras Google no verifique la app, solo funcionan los «usuarios de prueba» que añadas (máximo 100), con el aviso de «app no verificada».
+   - `calendar.events` es un ámbito **sensible**: para publicarla hay que pedir la verificación a Google (con un vídeo del uso y la política de privacidad publicada).
+   - Tarda días o semanas.
+6. **Pendiente: probarlo con una cuenta real de Google.** Aquí se ha probado con un servidor que imita las respuestas documentadas de Google.
 
 ## 5. Otros
 

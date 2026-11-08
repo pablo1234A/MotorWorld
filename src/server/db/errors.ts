@@ -24,6 +24,8 @@ export type DomainErrorCode =
   | "not_found"
   | "email_not_configured"
   | "payments_not_configured"
+  | "integration_not_configured"
+  | "integration_failed"
   | "email_send_failed"
   | "internal_error";
 
@@ -44,6 +46,8 @@ const HTTP_STATUS: Record<DomainErrorCode, number> = {
   not_found: 404,
   email_not_configured: 503,
   payments_not_configured: 503,
+  integration_not_configured: 503,
+  integration_failed: 502,
   email_send_failed: 502,
   internal_error: 500,
 };

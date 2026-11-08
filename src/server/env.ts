@@ -50,6 +50,9 @@ export const serverEnvSchema = z
 
     GOOGLE_CLIENT_ID: optionalString,
     GOOGLE_CLIENT_SECRET: optionalString,
+    /** Solo pruebas locales (servidor de Google de prueba). Prohibidos en producción. */
+    GOOGLE_OAUTH_BASE: z.url().optional(),
+    GOOGLE_API_BASE: z.url().optional(),
     TURNSTILE_SECRET_KEY: optionalString,
     SENTRY_DSN: z.url().optional(),
   })
@@ -80,6 +83,12 @@ export const serverEnvSchema = z
     }
     if (env.STRIPE_API_BASE && env.APP_ENV === "production") {
       ctx.addIssue({ code: "custom", path: ["STRIPE_API_BASE"], message: "STRIPE_API_BASE solo se usa en pruebas locales" });
+    }
+    for (const key of ["GOOGLE_OAUTH_BASE", "GOOGLE_API_BASE"] as const) {
+      if (env[key] && env.APP_ENV === "production") ctx.addIssue({ code: "custom", path: [key], message: `${key} solo se usa en pruebas locales` });
+    }
+    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && !env.INTEGRATIONS_ENCRYPTION_KEY) {
+      ctx.addIssue({ code: "custom", path: ["INTEGRATIONS_ENCRYPTION_KEY"], message: "Google Calendar exige INTEGRATIONS_ENCRYPTION_KEY (cifra los tokens)" });
     }
     if (env.PAYMENTS_LIVE_ENABLED && !live) {
       ctx.addIssue({

@@ -50,6 +50,8 @@ const VALIDATION_REASON: Record<string, string> = {
   logo_empty: "El archivo del logo está vacío.",
   logo_too_large: "El logo no puede superar 1 MB.",
   logo_type: "El logo debe ser una imagen PNG, JPG o WebP.",
+  oauth_state: "La conexión ha caducado o no es válida. Vuelve a pulsar «Conectar Google Calendar».",
+  google_scope: "Hace falta aceptar el permiso de Google Calendar para conectar la agenda.",
   quote_not_editable: "Este presupuesto ya está emitido y no se puede modificar. Duplícalo para hacer otro.",
   quote_not_issued: "Emite el presupuesto antes de enviarlo.",
   slot_unavailable: "Ese hueco ya no está libre. Elige otro, por favor.",
@@ -121,6 +123,10 @@ export function errorMessage(code: string, detail?: string): string {
       return (detail && VALIDATION_REASON[detail]) || "Revisa los datos del formulario.";
     case "not_found":
       return "No se ha encontrado lo que buscas.";
+    case "integration_not_configured":
+      return "La conexión con Google todavía no está configurada en RevisaYa.";
+    case "integration_failed":
+      return "Google no ha completado la conexión. Vuelve a intentarlo y acepta los permisos de Google Calendar.";
     case "payments_not_configured":
       return "Los pagos todavía no están configurados en RevisaYa. No se ha hecho ningún cargo.";
     case "email_not_configured":

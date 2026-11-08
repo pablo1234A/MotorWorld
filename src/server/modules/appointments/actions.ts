@@ -15,6 +15,7 @@ import {
 import { type ActionState, parseForm, runAction } from "@/server/actions/result";
 import { assertAdmin, assertPermission, requireOrg } from "@/server/auth/guards";
 import { getEmailProvider, getSenderConfig } from "@/server/email/provider";
+import { syncAppointmentLater } from "@/server/modules/integrations/calendar";
 
 import { type NotifyOutcome, sendAppointmentEmail } from "./notify";
 import * as appointments from "./service";
@@ -27,6 +28,7 @@ const deps = () => ({ email: getEmailProvider(), sender: getSenderConfig() });
  * página: el resultado viaja en la URL y lo muestra la propia página.
  */
 function done(id: string, ok: string, outcome: NotifyOutcome | null): never {
+  syncAppointmentLater(id);
   redirect(`/app/citas/${id}?ok=${ok}${outcome ? `&aviso=${outcome}` : ""}`);
 }
 const idSchema = z.object({ id: z.uuid() });
@@ -120,6 +122,7 @@ export async function createManualAppointmentAction(_prev: ActionState, formData
       const input = parseForm(manualAppointmentSchema, formData);
       const id = await appointments.createManualAppointment(ctx, input);
       if (input.notify) await sendAppointmentEmail("booking_confirmed", id, deps());
+      syncAppointmentLater(id);
       redirect(`/app/citas/${id}?creada=1`);
     },
     formData,

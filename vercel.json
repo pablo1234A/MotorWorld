@@ -14,6 +14,10 @@
       "schedule": "13 * * * *"
     },
     {
+      "path": "/api/internal/jobs/calendar-sync",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/internal/jobs/billing-reconcile",
       "schedule": "41 4 * * *"
     }
