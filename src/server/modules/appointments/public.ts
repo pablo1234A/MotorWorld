@@ -48,7 +48,7 @@ export interface BookingPage {
   branches: BookingBranch[];
   branch: BookingBranch | null;
   tokenStatus: "none" | "valid" | "invalid" | "expired";
-  prefill: { name: string; email: string | null; phone: string | null; plate: string | null; vehicle: string | null } | null;
+  prefill: { name: string; email: string | null; phone: string | null; plate: string | null; vehicle: string | null; installation: string | null; address: string | null } | null;
   slots: BookingSlot[];
   today: string;
 }
@@ -57,11 +57,14 @@ interface TokenTarget {
   reminderId: string;
   branchId: string;
   customerId: string;
-  vehicleId: string;
+  vehicleId: string | null;
+  installationId: string | null;
+  installation: string | null;
+  installationAddress: string | null;
   name: string;
   email: string | null;
   phone: string | null;
-  plate: string;
+  plate: string | null;
   vehicle: string | null;
   expired: boolean;
 }
@@ -74,13 +77,16 @@ async function tokenTarget(orgId: string, token: string | null): Promise<TokenTa
   const row = await withSystem(async (tx) => {
     const { rows } = await sql<Omit<TokenTarget, "reminderId"> & { expired: boolean }>`
       select r.branch_id as "branchId", r.customer_id as "customerId", r.vehicle_id as "vehicleId",
+             r.installation_id as "installationId", i.name as installation,
+             nullif(concat_ws(', ', i.address_line1, i.city), '') as "installationAddress",
              trim(c.first_name || ' ' || c.last_name) as name, c.email::text as email, c.phone,
              v.plate, nullif(trim(coalesce(v.make, '') || ' ' || coalesce(v.model, '')), '') as vehicle,
              (r.due_date + 60 < (now() at time zone coalesce(b.timezone, o.timezone))::date
-               or c.deleted_at is not null or v.deleted_at is not null) as expired
+               or c.deleted_at is not null or v.deleted_at is not null or i.deleted_at is not null) as expired
         from reminders r
         join customers c on c.id = r.customer_id
-        join vehicles v on v.id = r.vehicle_id
+        left join vehicles v on v.id = r.vehicle_id
+        left join installations i on i.id = r.installation_id
         join branches b on b.id = r.branch_id
         join organizations o on o.id = r.organization_id
        where r.id = ${reminderId} and r.organization_id = ${orgId}
@@ -170,7 +176,9 @@ export async function resolveBookingPage(slug: string, opts: { token?: string | 
     branches: typed,
     branch,
     tokenStatus,
-    prefill: valid ? { name: valid.name, email: valid.email, phone: valid.phone, plate: valid.plate, vehicle: valid.vehicle } : null,
+    prefill: valid
+      ? { name: valid.name, email: valid.email, phone: valid.phone, plate: valid.plate, vehicle: valid.vehicle, installation: valid.installation, address: valid.installationAddress }
+      : null,
     slots,
     today,
   };
@@ -178,7 +186,7 @@ export async function resolveBookingPage(slug: string, opts: { token?: string | 
 
 /** Crea la solicitud. Devuelve el id (o null si se descartó como robot). */
 export async function createPublicRequest(
-  input: PublicBookingInput,
+  input: Omit<PublicBookingInput, "serviceType" | "requesterAddress"> & Partial<Pick<PublicBookingInput, "serviceType" | "requesterAddress">>,
   ip: string,
   deps: { email: EmailPort | null; sender: SenderConfig | null },
 ): Promise<string | null> {
@@ -256,6 +264,9 @@ export async function createPublicRequest(
         requester_email: input.email,
         requester_phone: input.phone,
         plate_entered: input.plate ?? linked?.plate ?? null,
+        installation_id: linked?.installationId ?? null,
+        service_type: input.serviceType ?? null,
+        requester_address: input.requesterAddress ?? linked?.installationAddress ?? null,
         requested_date: requestedDate,
         requested_slot: slotRange,
         customer_message: input.message,

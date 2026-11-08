@@ -10,7 +10,7 @@ import { addDays } from "@/lib/dates";
 import { formatPhone } from "@/lib/phone";
 import { BOOKING_MAX_DAYS_AHEAD, resolveBookingPage } from "@/server/modules/appointments/public";
 
-export const metadata: Metadata = { title: "Pedir cita", robots: { index: false } };
+export const metadata: Metadata = { title: "Pedir una visita técnica", robots: { index: false } };
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -25,7 +25,7 @@ export default function BookingPage({ params, searchParams }: { params: Params; 
           <Content params={params} searchParams={searchParams} />
         </Suspense>
         <p className="mt-4 text-center text-xs text-[var(--muted)]">
-          El taller es el responsable de tus datos y los usa solo para gestionar tu cita. {BRAND.name} presta este servicio por encargo del taller ·{" "}
+          La empresa es la responsable de tus datos y los usa solo para gestionar tu solicitud. {BRAND.name} presta este servicio por encargo de la empresa ·{" "}
           <Link href="/legal/privacidad" className="underline">
             Privacidad
           </Link>
@@ -72,20 +72,20 @@ async function Content({ params, searchParams }: { params: Params; searchParams:
       </header>
       <div className="flex flex-col gap-5 p-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pedir cita{page.org.logoSrc ? ` en ${page.org.name}` : ""}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Pedir una visita técnica{page.org.logoSrc ? ` en ${page.org.name}` : ""}</h1>
           {page.org.address ? <p className="text-sm text-[var(--muted)]">{page.org.address}</p> : null}
         </div>
 
         {!page.open ? (
-          <Alert tone="info" title="Ahora mismo no se pueden pedir citas en línea">
-            {contact ? `Contacta directamente con el taller: ${contact}.` : "Contacta directamente con el taller."}
+          <Alert tone="info" title="Ahora mismo no se pueden pedir visitas en línea">
+            {contact ? `Contacta directamente con la empresa: ${contact}.` : "Contacta directamente con la empresa."}
           </Alert>
         ) : (
           <>
             {page.tokenStatus === "expired" ? (
-              <Alert tone="info">El enlace del aviso ha caducado, pero puedes pedir cita igualmente.</Alert>
+              <Alert tone="info">El enlace del aviso ha caducado, pero puedes pedir la visita igualmente.</Alert>
             ) : page.tokenStatus === "invalid" ? (
-              <Alert tone="info">No hemos reconocido el enlace del aviso. Puedes pedir cita igualmente.</Alert>
+              <Alert tone="info">No hemos reconocido el enlace del aviso. Puedes pedir la visita igualmente.</Alert>
             ) : page.prefill?.vehicle ? (
               <p className="text-sm">
                 Cita para tu <strong>{page.prefill.vehicle}</strong> ({page.prefill.plate}).
@@ -108,7 +108,7 @@ async function Content({ params, searchParams }: { params: Params; searchParams:
             ) : (
               <form method="get" className="flex flex-col gap-3">
                 <label htmlFor="taller" className="text-sm font-medium">
-                  ¿En qué taller?
+                  ¿Qué delegación?
                 </label>
                 <select id="taller" name="taller" className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5">
                   {page.branches.map((b) => (
@@ -122,7 +122,7 @@ async function Content({ params, searchParams }: { params: Params; searchParams:
                 </button>
               </form>
             )}
-            {contact ? <p className="text-xs text-[var(--muted)]">¿Prefieres hablar con el taller? {contact}</p> : null}
+            {contact ? <p className="text-xs text-[var(--muted)]">¿Prefieres llamarnos? {contact}</p> : null}
           </>
         )}
       </div>

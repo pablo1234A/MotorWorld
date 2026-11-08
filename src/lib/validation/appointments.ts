@@ -1,3 +1,4 @@
+import { SERVICE_TYPES } from "@/lib/pci/labels";
 import { z } from "zod";
 
 import { isValidIsoDate } from "@/lib/dates";
@@ -88,6 +89,12 @@ export const publicBookingSchema = z
       .max(20, "Matrícula demasiado larga")
       .optional()
       .transform((v) => v || null),
+    /** Visita técnica (PCI): qué se necesita y dónde. */
+    serviceType: z
+      .union([z.literal(""), z.enum(SERVICE_TYPES)])
+      .optional()
+      .transform((v) => v || null),
+    requesterAddress: optionalText(200),
     requestedDate: z
       .union([z.literal(""), isoDate])
       .optional()
@@ -103,7 +110,7 @@ export const publicBookingSchema = z
     website: z.string().max(200).optional(),
     turnstileToken: z.string().max(4096).optional(),
   })
-  .refine((v) => v.email || v.phone, { path: ["email"], message: "Déjanos un correo o un teléfono para confirmarte la cita" });
+  .refine((v) => v.email || v.phone, { path: ["email"], message: "Déjanos un correo o un teléfono para confirmarte la visita" });
 export type PublicBookingInput = z.infer<typeof publicBookingSchema>;
 
 // ------------------------------------------------------------------- panel

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
+import { SERVICE_TYPE_LABELS } from "@/lib/pci/labels";
 import { notFound } from "next/navigation";
 
 import { ConfirmForm, DecisionForm, LinkCustomerForm, NotesForm, OutcomeButtons } from "@/components/appointments/appointment-forms";
@@ -92,17 +94,43 @@ export default async function AppointmentPage({ params, searchParams }: { params
                 </div>
               ) : null}
               <div>
-                <dt className="text-[var(--muted)]">Vehículo</dt>
+                <dt className="text-[var(--muted)]">Servicio</dt>
+                <dd className="font-medium">{a.serviceType ? (SERVICE_TYPE_LABELS[a.serviceType as keyof typeof SERVICE_TYPE_LABELS] ?? a.serviceType) : "Sin indicar"}</dd>
+              </div>
+              <div>
+                <dt className="text-[var(--muted)]">Instalación</dt>
                 <dd className="font-medium">
-                  {a.vehicleId ? (
-                    <Link href={`/app/vehiculos/${a.vehicleId}`} className="text-[var(--accent)]">
-                      {[a.plate, a.vehicleName].filter(Boolean).join(" · ")}
-                    </Link>
+                  {a.installationId ? (
+                    <>
+                      <Link href={`/app/instalaciones/${a.installationId}`} className="text-[var(--accent)]">
+                        {a.installationName}
+                      </Link>
+                      {can(ctx, "work_orders.manage") ? (
+                        <Link href={`/app/ordenes-trabajo/nueva?instalacion=${a.installationId}`} className="ml-2 text-xs font-normal text-[var(--accent)] underline">
+                          Crear orden de trabajo
+                        </Link>
+                      ) : null}
+                    </>
                   ) : (
-                    a.plate ?? "Sin indicar"
+                    (a.requesterAddress ?? "Sin indicar")
                   )}
+                  {a.installationId && a.requesterAddress ? <span className="block text-xs font-normal text-[var(--muted)]">{a.requesterAddress}</span> : null}
                 </dd>
               </div>
+              {a.vehicleId || a.plate ? (
+                <div>
+                  <dt className="text-[var(--muted)]">Vehículo (etapa anterior)</dt>
+                  <dd className="font-medium">
+                    {a.vehicleId ? (
+                      <Link href={`/app/vehiculos/${a.vehicleId}`} className="text-[var(--accent)]">
+                        {[a.plate, a.vehicleName].filter(Boolean).join(" · ")}
+                      </Link>
+                    ) : (
+                      a.plate
+                    )}
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt className="text-[var(--muted)]">Contacto</dt>
                 <dd className="font-medium break-all">{[a.requesterEmail, a.requesterPhone ? formatPhone(a.requesterPhone) : null].filter(Boolean).join(" · ") || "—"}</dd>

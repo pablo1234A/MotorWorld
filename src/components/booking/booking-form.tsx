@@ -4,8 +4,9 @@ import Script from "next/script";
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
+import { Field, SelectField } from "@/components/ui/field";
 import { fieldErrors, FormMessage, sentValue } from "@/components/ui/form-state";
+import { SERVICE_TYPE_LABELS, SERVICE_TYPES } from "@/lib/pci/labels";
 import type { ActionState } from "@/server/actions/result";
 import { createBookingRequestAction } from "@/server/modules/appointments/public-actions";
 
@@ -32,7 +33,7 @@ export function BookingForm({
   token: string | null;
   branchId: string;
   mode: "free_request" | "slots";
-  prefill: { name: string; email: string | null; phone: string | null; plate: string | null } | null;
+  prefill: { name: string; email: string | null; phone: string | null; plate: string | null; installation?: string | null; address?: string | null } | null;
   minDate: string;
   maxDate: string;
   days: SlotDay[];
@@ -60,7 +61,26 @@ export function BookingForm({
         <Field label="Correo electrónico" name="email" type="email" autoComplete="email" defaultValue={v("email", prefill?.email)} errors={fieldErrors(state, "email")} />
         <Field label="Teléfono" name="phone" type="tel" autoComplete="tel" defaultValue={v("phone", prefill?.phone)} errors={fieldErrors(state, "phone")} />
       </div>
-      <Field label="Matrícula" name="plate" defaultValue={v("plate", prefill?.plate)} errors={fieldErrors(state, "plate")} placeholder="1234 BCD" />
+      {prefill?.plate ? (
+        // Enlace de un aviso de vehículo (cuentas de la etapa anterior).
+        <Field label="Matrícula" name="plate" defaultValue={v("plate", prefill.plate)} errors={fieldErrors(state, "plate")} />
+      ) : null}
+      <SelectField label="¿Qué necesitas?" name="serviceType" defaultValue={v("serviceType", "periodic_maintenance")} errors={fieldErrors(state, "serviceType")}>
+        {SERVICE_TYPES.map((t) => (
+          <option key={t} value={t}>
+            {SERVICE_TYPE_LABELS[t]}
+          </option>
+        ))}
+      </SelectField>
+      <Field
+        label="Dirección de la instalación"
+        name="requesterAddress"
+        maxLength={200}
+        autoComplete="street-address"
+        defaultValue={v("requesterAddress", prefill?.address)}
+        errors={fieldErrors(state, "requesterAddress")}
+        hint={prefill?.installation ? `Instalación: ${prefill.installation}` : "Calle, número y municipio del local, edificio o nave."}
+      />
 
       {mode === "free_request" ? (
         <Field
@@ -72,7 +92,7 @@ export function BookingForm({
           max={maxDate}
           defaultValue={v("requestedDate", "")}
           errors={fieldErrors(state, "requestedDate")}
-          hint="El taller te confirmará el día y la hora."
+          hint="Te confirmaremos el día y la hora."
         />
       ) : days.length ? (
         <fieldset className="flex flex-col gap-3">
@@ -95,7 +115,7 @@ export function BookingForm({
           <style>{`input[name="slot"]:checked + span { background: ${color}; }`}</style>
         </fieldset>
       ) : (
-        <p className="rounded-lg bg-[var(--surface-2)] px-4 py-3 text-sm">No quedan huecos libres en las próximas semanas. Llama al taller o vuelve a intentarlo más adelante.</p>
+        <p className="rounded-lg bg-[var(--surface-2)] px-4 py-3 text-sm">No quedan huecos libres en las próximas semanas. Llámanos o vuelve a intentarlo más adelante.</p>
       )}
 
       <div className="flex flex-col gap-1.5">
@@ -119,9 +139,9 @@ export function BookingForm({
         </>
       ) : null}
 
-      <p className="text-xs text-[var(--muted)]">Tus datos se envían al taller solo para gestionar esta cita.</p>
+      <p className="text-xs text-[var(--muted)]">Tus datos se envían a la empresa solo para gestionar esta solicitud.</p>
       <SubmitButton pendingLabel="Enviando…" disabled={mode === "slots" && days.length === 0} style={{ background: color }}>
-        Pedir cita
+        Pedir la visita
       </SubmitButton>
     </form>
   );

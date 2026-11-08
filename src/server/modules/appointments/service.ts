@@ -123,6 +123,11 @@ export interface AppointmentDetail extends AppointmentRow {
   internalNotes: string | null;
   customerName: string | null;
   slotMinutes: number;
+  /** Visita técnica (PCI). */
+  serviceType: string | null;
+  requesterAddress: string | null;
+  installationId: string | null;
+  installationName: string | null;
   /** Cliente de la sucursal con el mismo correo (para vincular la solicitud). */
   suggestedCustomer: { id: string; name: string } | null;
   events: Array<{ fromStatus: string | null; toStatus: string; newStart: Date | null; createdAt: Date; actor: string | null }>;
@@ -137,7 +142,12 @@ export async function getAppointment(ctx: Ctx, id: string): Promise<AppointmentD
       .innerJoin("branch_settings as bs", "bs.branch_id", "a.branch_id")
       .leftJoin("vehicles as v", "v.id", "a.vehicle_id")
       .leftJoin("customers as c", "c.id", "a.customer_id")
+      .leftJoin("installations as i", "i.id", "a.installation_id")
       .select([
+        "a.service_type as serviceType",
+        "a.requester_address as requesterAddress",
+        "a.installation_id as installationId",
+        "i.name as installationName",
         "a.id",
         "a.status",
         "a.source",
