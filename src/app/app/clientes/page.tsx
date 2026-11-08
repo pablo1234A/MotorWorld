@@ -58,6 +58,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
       </div>
       {caps.readOnly ? <ReadOnlyNotice /> : null}
       {param(sp.borrado) ? <Alert tone="success">Cliente borrado.</Alert> : null}
+      {param(sp.suprimido) ? <Alert tone="success">Cliente borrado definitivamente, con todos sus datos. Queda constancia en el registro de solicitudes de protección de datos.</Alert> : null}
 
       <form method="get" className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-[1fr_auto_auto_auto_auto]">
         <label className="sr-only" htmlFor="q">

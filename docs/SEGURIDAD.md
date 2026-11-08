@@ -80,13 +80,18 @@ El rol de sistema (jobs, webhooks) evita RLS; por eso su código vive aislado en
 - **Roles**: el taller es **responsable** de los datos de sus clientes; RevisaYa es **encargado del tratamiento** (art. 28 RGPD) mediante un acuerdo de tratamiento (DPA) que se acepta al contratar y queda registrado en `legal_acceptances`. RevisaYa es responsable de los datos de sus propios usuarios (los talleres).
 - **Residencia**: proyecto de Supabase en región UE; funciones del hosting en región UE; proveedor de correo con región UE si está disponible. Los proveedores con sede en EE. UU. (Stripe, Google, Vercel, Sentry) se cubren con sus DPA y cláusulas contractuales tipo / Marco de Privacidad de Datos; queda documentado en la lista de subencargados.
 - **Minimización**: solo los campos del producto; las notas internas avisan de no guardar datos de categorías especiales.
-- **Derechos de los interesados**: exportación por cliente (JSON/CSV), rectificación (edición), supresión (anonimización/borrado inmediato), limitación (marcar y excluir de avisos), oposición (baja de avisos). Registro en `data_subject_requests` con plazo de un mes.
-- **Exportación de toda la organización**: job asíncrono que genera un ZIP en Storage con URL firmada de 24 h.
+- **Derechos de los interesados** (implementado; solo administradores):
+  - **acceso y portabilidad**: «Descargar sus datos (JSON)» en la ficha del cliente;
+  - rectificación: editando la ficha;
+  - **supresión inmediata**: «Borrar definitivamente ahora» (`app.erase_customer`). Borra ficha, vehículos, historial, citas, avisos y presupuestos (con sus PDF) y anonimiza los registros de correo. Se conserva la dirección en la lista de bajas para no volver a escribirle;
+  - limitación y oposición: «sin avisos» y la baja de los avisos.
+- Todo queda registrado en `data_subject_requests` (visible en *Configuración → Datos y privacidad*) y en la auditoría, sin datos personales.
+- **Exportación de todo el taller** (implementado): un Excel con clientes, vehículos, historial, citas y presupuestos, también en solo lectura (durante los 60 días tras cancelar). Se descarga en el momento: para el tamaño de los planes no hace falta un proceso en segundo plano.
 - **Retención** (propuesta, pendiente de aprobación, P9):
   - Cuenta cancelada: datos conservados **60 días** (reactivación y exportación) → purga definitiva y aviso previo por email a los 7 días del borrado.
   - Borrado lógico de clientes y vehículos: restaurables desde la papelera 30 días; después purga definitiva diaria (`private.purge_expired_data`, pg_cron). **Implementado.**
   - Staging de importaciones: 7 días (incluido en la purga diaria). Los archivos subidos no se guardan: solo las filas en staging.
-  - `email_logs`: 24 meses; `audit_logs`: 24 meses; `api_request_logs`: 30 días.
+  - `email_logs`, `audit_logs` y `stripe_events`: 24 meses (`private.purge_old_logs`, a diario); `api_request_logs`: 30 días (`private.purge_api_data`). **Implementado.**
 - **Comunicaciones**: los recordatorios de un servicio ya contratado se tratan como avisos de servicio (según el PDF, normalmente sin consentimiento específico, **pendiente de revisión jurídica**). Aun así, cada correo incluye enlace de baja y cabecera `List-Unsubscribe` + `List-Unsubscribe-Post` (también exigidas por Gmail/Yahoo a remitentes masivos). Si el taller quisiera enviar promociones, eso sería otra funcionalidad con consentimiento explícito: queda fuera del alcance actual.
 - **Seguimiento de aperturas**: el píxel de apertura puede requerir consentimiento (art. 22.2 LSSI / criterio de la AEPD). Propuesta: **desactivado por defecto**, activable solo tras la revisión jurídica (P8).
 - **Brechas**: procedimiento de notificación (72 h a la AEPD por parte del responsable; RevisaYa avisa al taller sin dilación indebida) documentado en DESPLIEGUE.

@@ -6,11 +6,13 @@ import { ReadOnlyNotice } from "@/components/app/read-only-notice";
 import { Alert, Card } from "@/components/ui/feedback";
 import { NextServiceBadge, VehicleStatusBadge } from "@/components/workshop/badges";
 import { DeleteCustomerForm, EditCustomerForm } from "@/components/workshop/customer-forms";
+import { EraseCustomerForm } from "@/components/workshop/privacy-forms";
 import { CreateVehicleForm } from "@/components/workshop/vehicle-forms";
 import { formatDate, formatKm, todayIn } from "@/lib/dates";
 import { param } from "@/lib/pagination";
 import { CUSTOMER_SOURCE_LABELS } from "@/lib/validation/workshop";
 import { capabilities } from "@/server/auth/capabilities";
+import { isAdmin } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
 import { getCustomer } from "@/server/modules/customers/service";
 
@@ -121,6 +123,21 @@ export default async function CustomerPage({ params, searchParams }: Props) {
             Deja de aparecer en las listas y no recibe avisos. Se puede restaurar desde la papelera durante 30 días; después se elimina definitivamente con su historial.
           </p>
           <DeleteCustomerForm id={customer.id} name={name} vehicleCount={customer.vehicles.length} canDeleteVehicles={caps.vehiclesDelete} />
+        </Card>
+      ) : null}
+
+      {isAdmin(ctx) ? (
+        <Card className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">Protección de datos</h2>
+          <p className="text-sm text-[var(--muted)]">
+            Si el cliente te pide sus datos, descárgalos y envíaselos. Si te pide que los borres, el borrado definitivo elimina al momento la ficha, sus
+            vehículos, su historial, sus citas, sus avisos y sus presupuestos (no pasa por la papelera y no se puede deshacer). Su correo se mantiene en la
+            lista de bajas para no volver a escribirle.
+          </p>
+          <a href={`/api/app/customers/${customer.id}/export`} className="self-start text-sm font-medium text-[var(--accent)] underline" download>
+            Descargar sus datos (JSON)
+          </a>
+          <EraseCustomerForm id={customer.id} name={name} />
         </Card>
       ) : null}
     </div>

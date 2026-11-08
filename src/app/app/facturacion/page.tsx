@@ -82,7 +82,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Sear
           {!s.cancelAtPeriodEnd && s.currentPeriodEnd && s.status === "active" ? <p className="text-sm text-[var(--muted)]">Próxima renovación: {day(s.currentPeriodEnd)}.</p> : null}
           {s.status === "canceled" || s.status === "incomplete_expired" ? (
             <Alert tone="warning" title="Suscripción terminada">
-              El taller está en solo lectura.{o.dataRetentionUntil ? ` Tus datos se conservan hasta el ${formatDate(o.dataRetentionUntil)}; contrata un plan antes para no perderlos.` : ""}
+              El taller está en solo lectura.{o.dataRetentionUntil ? ` Tus datos se conservan hasta el ${formatDate(o.dataRetentionUntil)}; contrata un plan antes para no perderlos.` : ""}{" "}
+              <a href="/api/app/export" className="font-medium underline" download>
+                Descargar todos los datos (Excel)
+              </a>
             </Alert>
           ) : null}
           {o.configured && open ? (
