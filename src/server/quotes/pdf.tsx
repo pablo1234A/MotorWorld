@@ -77,18 +77,26 @@ function QuoteDocument({ q, snap, logo }: { q: QuoteDetail; snap: QuoteSnapshot;
             {snap.customer.email ? <Text>{snap.customer.email}</Text> : null}
             {snap.customer.phone ? <Text>{snap.customer.phone}</Text> : null}
           </View>
-          <View style={s.box}>
-            <Text style={s.label}>Vehículo</Text>
-            {snap.vehicle ? (
-              <>
-                <Text style={s.bold}>{snap.vehicle.plate}</Text>
-                {snap.vehicle.name ? <Text>{snap.vehicle.name}</Text> : null}
-                {snap.vehicle.km != null ? <Text>{snap.vehicle.km.toLocaleString("es-ES")} km</Text> : null}
-              </>
-            ) : (
-              <Text style={s.muted}>Sin vehículo</Text>
-            )}
-          </View>
+          {snap.vehicle ? (
+            <View style={s.box}>
+              <Text style={s.label}>Vehículo</Text>
+              <Text style={s.bold}>{snap.vehicle.plate}</Text>
+              {snap.vehicle.name ? <Text>{snap.vehicle.name}</Text> : null}
+              {snap.vehicle.km != null ? <Text>{snap.vehicle.km.toLocaleString("es-ES")} km</Text> : null}
+            </View>
+          ) : (
+            <View style={s.box}>
+              <Text style={s.label}>Instalación</Text>
+              {snap.installation ? (
+                <>
+                  <Text style={s.bold}>{snap.installation.name}</Text>
+                  {snap.installation.address ? <Text>{snap.installation.address}</Text> : null}
+                </>
+              ) : (
+                <Text style={s.muted}>Sin instalación concreta</Text>
+              )}
+            </View>
+          )}
         </View>
 
         <View style={s.table}>
@@ -101,7 +109,10 @@ function QuoteDocument({ q, snap, logo }: { q: QuoteDetail; snap: QuoteSnapshot;
           </View>
           {q.items.map((i) => (
             <View key={i.position} style={s.tr} wrap={false}>
-              <Text style={s.cDesc}>{i.description}</Text>
+              <Text style={s.cDesc}>
+                {i.lineKind === "material" ? "Material · " : ""}
+                {i.description}
+              </Text>
               <Text style={s.cQty}>{formatQuantity(i.quantity)}</Text>
               <Text style={s.cPrice}>{formatEuro(i.unitPrice)}</Text>
               <Text style={s.cTax}>{Number(i.taxRate)} %</Text>

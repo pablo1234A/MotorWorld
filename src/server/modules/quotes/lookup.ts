@@ -24,6 +24,13 @@ export async function customerWithVehicles(ctx: Pick<ServiceCtx, "auth" | "membe
       .where("deleted_at", "is", null)
       .orderBy("created_at")
       .execute();
-    return { ...c, vehicles };
+    const installations = await tx
+      .selectFrom("installations")
+      .select(["id", sql<string>`name || coalesce(' · ' || nullif(city, ''), '')`.as("label")])
+      .where("customer_id", "=", c.id)
+      .where("deleted_at", "is", null)
+      .orderBy("name")
+      .execute();
+    return { ...c, vehicles, installations };
   });
 }

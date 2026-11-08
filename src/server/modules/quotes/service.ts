@@ -6,7 +6,7 @@ import { addDays, todayIn } from "@/lib/dates";
 import { escapeLike, type Page } from "@/lib/pagination";
 import { planHasFeature } from "@/lib/plans";
 import { lineAmounts, quoteTotals } from "@/lib/quotes/money";
-import type { QuoteInput, QuoteLine } from "@/lib/validation/quotes";
+import type { QuoteServiceInput } from "@/lib/validation/quotes";
 import type { OrgContext } from "@/server/auth/context";
 import { type Tx, withRls } from "@/server/db/client";
 import { DomainError } from "@/server/db/errors";
@@ -95,7 +95,8 @@ export interface QuoteDetail {
   decidedAt: Date | null;
   customer: { id: string; name: string; email: string | null; phone: string | null };
   vehicle: { id: string; plate: string; name: string | null; km: number | null } | null;
-  items: Array<{ position: number; description: string; quantity: string; unitPrice: string; taxRate: string; lineSubtotal: string; lineTax: string; lineTotal: string }>;
+  installation: { id: string; name: string; address: string } | null;
+  items: Array<{ position: number; lineKind: string; description: string; quantity: string; unitPrice: string; taxRate: string; lineSubtotal: string; lineTax: string; lineTotal: string }>;
   snapshot: QuoteSnapshot | null;
 }
 
@@ -105,11 +106,15 @@ export async function getQuote(ctx: Pick<Ctx, "auth" | "membership">, id: string
       .selectFrom("quotes as q")
       .innerJoin("customers as c", "c.id", "q.customer_id")
       .leftJoin("vehicles as v", "v.id", "q.vehicle_id")
+      .leftJoin("installations as i", "i.id", "q.installation_id")
       .select([
         "q.id",
         "q.number",
         "q.status",
         "q.branch_id as branchId",
+        "i.id as installationId",
+        "i.name as installationName",
+        sql<string | null>`concat_ws(', ', i.address_line1, i.postal_code, i.city)`.as("installationAddress"),
         sql<string>`q.issue_date::text`.as("issueDate"),
         sql<string>`q.valid_until::text`.as("validUntil"),
         "q.subtotal",
@@ -137,6 +142,7 @@ export async function getQuote(ctx: Pick<Ctx, "auth" | "membership">, id: string
       .selectFrom("quote_items")
       .select([
         "position",
+        "line_kind as lineKind",
         "description",
         "quantity",
         "unit_price as unitPrice",
@@ -164,13 +170,14 @@ export async function getQuote(ctx: Pick<Ctx, "auth" | "membership">, id: string
       decidedAt: q.decidedAt,
       customer: { id: q.customerId, name: q.customerName, email: q.customerEmail, phone: q.customerPhone },
       vehicle: q.vehicleId ? { id: q.vehicleId, plate: q.plate!, name: q.vehicleName, km: q.km } : null,
+      installation: q.installationId ? { id: q.installationId, name: q.installationName!, address: q.installationAddress ?? "" } : null,
       items,
       snapshot: (q.snapshot as unknown as QuoteSnapshot | null) ?? null,
     };
   });
 }
 
-async function insertItems(tx: Tx, orgId: string, branchId: string, quoteId: string, items: QuoteLine[]) {
+async function insertItems(tx: Tx, orgId: string, branchId: string, quoteId: string, items: QuoteServiceInput["items"]) {
   await tx
     .insertInto("quote_items")
     .values(
@@ -181,6 +188,7 @@ async function insertItems(tx: Tx, orgId: string, branchId: string, quoteId: str
           branch_id: branchId,
           quote_id: quoteId,
           position: i + 1,
+          line_kind: it.lineKind ?? "service",
           description: it.description,
           quantity: it.quantity,
           unit_price: it.unitPrice,
@@ -194,7 +202,7 @@ async function insertItems(tx: Tx, orgId: string, branchId: string, quoteId: str
     .execute();
 }
 
-async function customerBranch(tx: Tx, ctx: Ctx, customerId: string, vehicleId: string | null): Promise<string> {
+async function customerBranch(tx: Tx, ctx: Ctx, customerId: string, vehicleId: string | null, installationId: string | null = null): Promise<string> {
   const c = await tx
     .selectFrom("customers")
     .select("branch_id")
@@ -207,14 +215,18 @@ async function customerBranch(tx: Tx, ctx: Ctx, customerId: string, vehicleId: s
     const v = await tx.selectFrom("vehicles").select("id").where("id", "=", vehicleId).where("customer_id", "=", customerId).where("deleted_at", "is", null).executeTakeFirst();
     if (!v) throw new DomainError("integrity_violation", "owner_other_branch");
   }
+  if (installationId) {
+    const i = await tx.selectFrom("installations").select("id").where("id", "=", installationId).where("customer_id", "=", customerId).where("deleted_at", "is", null).executeTakeFirst();
+    if (!i) throw new DomainError("integrity_violation", "installation_customer_mismatch");
+  }
   return c.branch_id;
 }
 
-export async function createQuote(ctx: Ctx, input: QuoteInput): Promise<string> {
+export async function createQuote(ctx: Ctx, input: QuoteServiceInput): Promise<string> {
   assertWritable(ctx);
   const totals = quoteTotals(input.items);
   return withRls(ctx.auth, async (tx) => {
-    const branchId = await customerBranch(tx, ctx, input.customerId, input.vehicleId);
+    const branchId = await customerBranch(tx, ctx, input.customerId, input.vehicleId, input.installationId ?? null);
     const row = await tx
       .insertInto("quotes")
       .values({
@@ -222,6 +234,7 @@ export async function createQuote(ctx: Ctx, input: QuoteInput): Promise<string> 
         branch_id: branchId,
         customer_id: input.customerId,
         vehicle_id: input.vehicleId,
+        installation_id: input.installationId ?? null,
         issue_date: input.issueDate,
         valid_until: input.validUntil,
         status: "draft",
@@ -238,7 +251,7 @@ export async function createQuote(ctx: Ctx, input: QuoteInput): Promise<string> 
   });
 }
 
-export async function updateQuote(ctx: Ctx, id: string, input: QuoteInput): Promise<void> {
+export async function updateQuote(ctx: Ctx, id: string, input: QuoteServiceInput): Promise<void> {
   assertWritable(ctx);
   const totals = quoteTotals(input.items);
   await withRls(ctx.auth, async (tx) => {
@@ -251,7 +264,7 @@ export async function updateQuote(ctx: Ctx, id: string, input: QuoteInput): Prom
       .executeTakeFirst();
     if (!current) throw new DomainError("not_found");
     if (current.status !== "draft") throw new DomainError("validation_error", "quote_not_editable");
-    const branchId = await customerBranch(tx, ctx, input.customerId, input.vehicleId);
+    const branchId = await customerBranch(tx, ctx, input.customerId, input.vehicleId, input.installationId ?? null);
     if (branchId !== current.branch_id) throw new DomainError("integrity_violation", "owner_other_branch");
     await tx.deleteFrom("quote_items").where("quote_id", "=", id).execute();
     await tx
@@ -259,6 +272,7 @@ export async function updateQuote(ctx: Ctx, id: string, input: QuoteInput): Prom
       .set({
         customer_id: input.customerId,
         vehicle_id: input.vehicleId,
+        installation_id: input.installationId ?? null,
         issue_date: input.issueDate,
         valid_until: input.validUntil,
         subtotal: totals.subtotal,
@@ -303,10 +317,11 @@ export async function duplicateQuote(ctx: Ctx, id: string): Promise<string> {
   return createQuote(ctx, {
     customerId: q.customer.id,
     vehicleId: q.vehicle?.id ?? null,
+    installationId: q.installation?.id ?? null,
     issueDate: today,
     validUntil: addDays(today, 30),
     notes: q.notes,
-    items: q.items.map((it) => ({ description: it.description, quantity: it.quantity, unitPrice: it.unitPrice, taxRate: Number(it.taxRate) })),
+    items: q.items.map((it) => ({ lineKind: it.lineKind as "service" | "material" | "other", description: it.description, quantity: it.quantity, unitPrice: it.unitPrice, taxRate: Number(it.taxRate) })),
   });
 }
 
@@ -328,6 +343,8 @@ export interface QuoteSnapshot {
   };
   customer: { name: string; email: string | null; phone: string | null };
   vehicle: { plate: string; name: string | null; km: number | null } | null;
+  /** PCI: instalación del presupuesto (opcional en los emitidos antes del cambio). */
+  installation?: { name: string; address: string } | null;
 }
 
 export async function buildSnapshot(ctx: Pick<Ctx, "auth" | "membership">, q: QuoteDetail): Promise<QuoteSnapshot> {
@@ -348,6 +365,7 @@ export async function buildSnapshot(ctx: Pick<Ctx, "auth" | "membership">, q: Qu
     workshop: w,
     customer: { name: q.customer.name, email: q.customer.email, phone: q.customer.phone },
     vehicle: q.vehicle ? { plate: q.vehicle.plate, name: q.vehicle.name, km: q.vehicle.km } : null,
+    installation: q.installation ? { name: q.installation.name, address: q.installation.address } : null,
   };
 }
 

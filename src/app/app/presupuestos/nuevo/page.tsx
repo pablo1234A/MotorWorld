@@ -37,7 +37,14 @@ export default async function NewQuotePage({ searchParams }: { searchParams: Sea
         <QuoteEditor
           customer={customer}
           vehicles={customer.vehicles}
-          initial={{ vehicleId: param(sp.vehiculo, 40) ?? customer.vehicles[0]?.id ?? null, issueDate: today, validUntil: addDays(today, 30), notes: null, items: [] }}
+          installations={customer.installations}
+          initial={{
+            vehicleId: param(sp.vehiculo, 40) ?? null,
+            installationId: param(sp.instalacion, 40) ?? (customer.installations.length === 1 ? customer.installations[0].id : null),
+            issueDate: today, validUntil: addDays(today, 30),
+            notes: null,
+            items: [],
+          }}
         />
       ) : (
         <Card>

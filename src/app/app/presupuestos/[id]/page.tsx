@@ -66,12 +66,14 @@ export default async function QuotePage({ params, searchParams }: { params: Para
             id={q.id}
             customer={customer}
             vehicles={customer.vehicles}
+            installations={customer.installations}
             initial={{
               vehicleId: q.vehicle?.id ?? null,
+              installationId: q.installation?.id ?? null,
               issueDate: q.issueDate,
               validUntil: q.validUntil,
               notes: q.notes,
-              items: q.items.map((i) => ({ description: i.description, quantity: formatQuantity(i.quantity).replace(/\./g, ""), unitPrice: i.unitPrice, taxRate: Number(i.taxRate) })),
+              items: q.items.map((i) => ({ lineKind: i.lineKind as "service" | "material" | "other", description: i.description, quantity: formatQuantity(i.quantity).replace(/\./g, ""), unitPrice: i.unitPrice, taxRate: Number(i.taxRate) })),
             }}
           />
           <Card className="flex flex-col gap-3">
@@ -84,6 +86,7 @@ export default async function QuotePage({ params, searchParams }: { params: Para
           <div className="flex flex-wrap gap-x-8 gap-y-1 text-sm">
             <span>Fecha: {formatDate(q.issueDate)}</span>
             <span>Válido hasta: {formatDate(q.validUntil)}</span>
+            {q.installation ? <span>Instalación: {q.installation.name}</span> : null}
             {q.vehicle ? <span>Vehículo: {[q.vehicle.plate, q.vehicle.name].filter(Boolean).join(" · ")}</span> : null}
           </div>
           <div className="relative overflow-x-auto">

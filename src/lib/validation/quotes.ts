@@ -30,6 +30,8 @@ export const quoteLineSchema = z.object({
       return n;
     }),
   taxRate: z.coerce.number().refine((v) => (TAX_RATES as readonly number[]).includes(v), "Tipo de IVA no válido"),
+  /** PCI: servicio (mano de obra, revisión), material (recambio, extintor) u otro. */
+  lineKind: z.enum(["service", "material", "other"]).default("service"),
 });
 export type QuoteLine = z.infer<typeof quoteLineSchema>;
 
@@ -37,6 +39,10 @@ export const quoteSchema = z
   .object({
     customerId: z.uuid({ error: "Elige el cliente" }),
     vehicleId: z
+      .union([z.literal(""), z.uuid()])
+      .optional()
+      .transform((v) => v || null),
+    installationId: z
       .union([z.literal(""), z.uuid()])
       .optional()
       .transform((v) => v || null),
@@ -63,6 +69,11 @@ export const quoteSchema = z
   })
   .refine((v) => v.validUntil >= v.issueDate, { path: ["validUntil"], message: "La validez debe terminar en la fecha del presupuesto o después" });
 export type QuoteInput = z.infer<typeof quoteSchema>;
+/** Entrada de los servicios: la instalación y el tipo de línea son opcionales (llamadores anteriores a PCI). */
+export type QuoteServiceInput = Omit<QuoteInput, "installationId" | "items"> & {
+  installationId?: string | null;
+  items: Array<Omit<QuoteLine, "lineKind"> & { lineKind?: QuoteLine["lineKind"] }>;
+};
 
 export const QUOTE_STATUS_LABELS: Record<string, string> = {
   draft: "Borrador",

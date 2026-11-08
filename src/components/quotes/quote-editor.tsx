@@ -22,13 +22,19 @@ const INPUT =
   "w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] aria-[invalid=true]:border-[var(--danger)]";
 
 export interface EditorLine {
+  lineKind?: "service" | "material" | "other";
   description: string;
   quantity: string;
   unitPrice: string;
   taxRate: number;
 }
 
-const emptyLine = (): EditorLine => ({ description: "", quantity: "1", unitPrice: "", taxRate: 21 });
+const emptyLine = (): EditorLine => ({ lineKind: "service", description: "", quantity: "1", unitPrice: "", taxRate: 21 });
+const LINE_KINDS = [
+  ["service", "Servicio"],
+  ["material", "Material"],
+  ["other", "Otro"],
+] as const;
 
 /** Cifras con coma decimal para mostrar en los campos ("4.5" → "4,5"). */
 const toInput = (v: string) => v.replace(".", ",");
@@ -37,12 +43,14 @@ export function QuoteEditor({
   id,
   customer,
   vehicles,
+  installations = [],
   initial,
 }: {
   id?: string;
   customer: { id: string; name: string };
   vehicles: Array<{ id: string; label: string }>;
-  initial: { vehicleId: string | null; issueDate: string; validUntil: string; notes: string | null; items: EditorLine[] };
+  installations?: Array<{ id: string; label: string }>;
+  initial: { vehicleId: string | null; installationId?: string | null; issueDate: string; validUntil: string; notes: string | null; items: EditorLine[] };
 }) {
   const [state, action] = useActionState(saveQuoteAction, idle);
   const [lines, setLines] = useState<EditorLine[]>(initial.items.length ? initial.items.map((l) => ({ ...l, quantity: toInput(l.quantity), unitPrice: toInput(l.unitPrice) })) : [emptyLine()]);
@@ -67,14 +75,24 @@ export function QuoteEditor({
           Cliente: <strong>{customer.name}</strong>
         </p>
         <div className="grid gap-4 sm:grid-cols-3">
-          <SelectField label="Vehículo" name="vehicleId" defaultValue={initial.vehicleId ?? ""}>
-            <option value="">Sin vehículo</option>
-            {vehicles.map((v) => (
+          <SelectField label="Instalación" name="installationId" defaultValue={initial.installationId ?? ""} errors={fieldErrors(state, "installationId")}>
+            <option value="">Sin instalación concreta</option>
+            {installations.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.label}
               </option>
             ))}
           </SelectField>
+          {vehicles.length ? (
+            <SelectField label="Vehículo (etapa anterior)" name="vehicleId" defaultValue={initial.vehicleId ?? ""}>
+              <option value="">Sin vehículo</option>
+              {vehicles.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
+            </SelectField>
+          ) : null}
           <Field label="Fecha" name="issueDate" type="date" required defaultValue={initial.issueDate} errors={fieldErrors(state, "issueDate")} />
           <Field label="Válido hasta" name="validUntil" type="date" required defaultValue={initial.validUntil} errors={fieldErrors(state, "validUntil")} />
         </div>
@@ -88,10 +106,20 @@ export function QuoteEditor({
             const p = parsed[i];
             const amounts = p.q && p.p ? lineAmounts({ quantity: p.q, unitPrice: p.p, taxRate: l.taxRate }) : null;
             return (
-              <div key={i} className="grid gap-2 rounded-lg border border-[var(--border)] p-3 sm:grid-cols-[1fr_6rem_8rem_6rem_7rem_auto] sm:items-start">
+              <div key={i} className="grid gap-2 rounded-lg border border-[var(--border)] p-3 sm:grid-cols-[7rem_1fr_6rem_8rem_6rem_7rem_auto] sm:items-start">
+                <label className="flex flex-col gap-1 text-xs">
+                  <span className="text-[var(--muted)]">Tipo</span>
+                  <select aria-label={`Tipo ${i + 1}`} value={l.lineKind ?? "service"} onChange={(e) => set(i, { lineKind: e.target.value as EditorLine["lineKind"] })} className={INPUT}>
+                    {LINE_KINDS.map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label className="flex flex-col gap-1 text-xs">
                   <span className="text-[var(--muted)]">Concepto {i + 1}</span>
-                  <input aria-label={`Concepto ${i + 1}`} value={l.description} maxLength={300} onChange={(e) => set(i, { description: e.target.value })} className={INPUT} aria-invalid={lineError(i, "description") ? true : undefined} placeholder="Cambio de aceite y filtro" />
+                  <input aria-label={`Concepto ${i + 1}`} value={l.description} maxLength={300} onChange={(e) => set(i, { description: e.target.value })} className={INPUT} aria-invalid={lineError(i, "description") ? true : undefined} placeholder="Mantenimiento anual de extintores" />
                   {lineError(i, "description") ? <span className="text-[var(--danger)]">{lineError(i, "description")}</span> : null}
                 </label>
                 <label className="flex flex-col gap-1 text-xs">

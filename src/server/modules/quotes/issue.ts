@@ -95,7 +95,7 @@ export async function emailQuote(ctx: Ctx, id: string, deps: Deps): Promise<Noti
       subject: `Presupuesto ${q.number} de ${w.name}`,
       body:
         `Hola ${q.snapshot.customer.name.split(" ")[0]}, te enviamos el presupuesto ${q.number}` +
-        `${q.snapshot.vehicle ? ` para tu ${q.snapshot.vehicle.name ?? "vehículo"} (${q.snapshot.vehicle.plate})` : ""}.\n\n` +
+        `${q.snapshot.vehicle ? ` para tu ${q.snapshot.vehicle.name ?? "vehículo"} (${q.snapshot.vehicle.plate})` : q.snapshot.installation ? ` para ${q.snapshot.installation.name}` : ""}.\n\n` +
         `Importe total: ${formatEuro(q.total)} (IVA incluido). Válido hasta el ${formatDate(q.validUntil)}.\n\n` +
         `Lo tienes adjunto en PDF. Si quieres que hagamos el trabajo o tienes cualquier duda, responde a este correo.\n\n${w.name}.`,
       buttonLabel: "",
