@@ -63,7 +63,7 @@ const errors = Object.fromEntries(
       "403",
       "Sin el permiso de la clave o plan sin API (forbidden, plan_feature_unavailable)",
     ],
-    ["404", "No existe o es de otro taller (not_found)"],
+    ["404", "No existe o es de otra empresa (not_found)"],
     ["409", "Conflicto (conflict, idempotency_conflict)"],
     ["422", "Límite del plan (plan_limit_reached)"],
     ["429", "Demasiadas peticiones (rate_limited)"],
@@ -166,7 +166,7 @@ export function openApiDocument(serverUrl: string) {
           properties: {
             branch_id: {
               ...id,
-              description: "Por defecto, el taller principal",
+              description: "Por defecto, la delegación principal",
             },
             first_name: { type: "string", maxLength: 80 },
             last_name: { type: "string", maxLength: 120 },
@@ -924,7 +924,7 @@ export function openApiDocument(serverUrl: string) {
               time: {
                 type: "string",
                 pattern: "^\\d{2}:\\d{2}$",
-                description: "Hora local del taller",
+                description: "Hora local de la delegación",
               },
               duration_minutes: { type: "integer", minimum: 15, maximum: 480 },
               notes: nullable({ type: "string" }),

@@ -37,7 +37,7 @@ export async function notifyBilling(organizationId: string, kind: "payment_faile
     kind === "payment_failed"
       ? renderPlatformEmail({
           title: "No hemos podido cobrar tu suscripción",
-          intro: `El cobro de la suscripción de ${info.org_name} a RevisaYa ha fallado. Actualiza la tarjeta: si en 7 días no se ha podido cobrar, el taller pasará a solo lectura y se pausarán los avisos a tus clientes.`,
+          intro: `El cobro de la suscripción de ${info.org_name} a RevisaYa ha fallado. Actualiza la tarjeta: si en 7 días no se ha podido cobrar, la cuenta pasará a solo lectura y se pausarán los avisos a tus clientes.`,
           link,
         })
       : renderPlatformEmail({

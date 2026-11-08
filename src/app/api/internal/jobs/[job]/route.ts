@@ -21,7 +21,7 @@ import { runDispatcher } from "@/server/reminders/dispatcher";
  *   plan-reminders     · también lo ejecuta pg_cron cada hora; aquí, a demanda
  *   release-leases     · recuperación de envíos bloqueados
  *   email-maintenance  · cada 30 min: verificación de dominios, avisos de
- *                        consumo (80 %/100 %) y resúmenes al taller
+ *                        consumo (80 %/100 %) y resúmenes a la empresa
  *   billing-reconcile  · diario: respaldo de los webhooks de Stripe
  *   calendar-sync      · cada 15 min: reintenta lo pendiente en Google Calendar
  *   retention          · diario: aviso 7 días antes y borrado a los 60 días de la baja (P9)

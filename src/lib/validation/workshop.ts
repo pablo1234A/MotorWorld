@@ -47,8 +47,8 @@ export const checkbox = z
 
 export const CUSTOMER_SOURCES = ["manual", "walk_in", "referral", "booking_page", "import", "api", "other"] as const;
 export const CUSTOMER_SOURCE_LABELS: Record<(typeof CUSTOMER_SOURCES)[number], string> = {
-  manual: "Alta en el taller",
-  walk_in: "Vino al taller",
+  manual: "Alta en la empresa",
+  walk_in: "Contacto en persona",
   referral: "Recomendación",
   booking_page: "Página de citas",
   import: "Importación",
@@ -118,7 +118,7 @@ const customerCompanyFields = {
 export const createCustomerSchema = z.object({
   ...customerFields,
   ...customerCompanyFields,
-  branchId: z.uuid("Elige un taller"),
+  branchId: z.uuid("Elige una delegación"),
   confirmDuplicate: checkbox,
 });
 

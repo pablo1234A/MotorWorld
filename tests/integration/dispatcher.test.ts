@@ -45,12 +45,14 @@ async function readyOrg(plan = "pro"): Promise<TestOrg> {
   return org;
 }
 
+let plateSeq = Math.floor(Math.random() * 9000);
 async function reminderFor(org: TestOrg, opts: { email?: string | null; name?: string; due?: string } = {}) {
   const [{ id: customerId }] = await query<{ id: string }>(
     "insert into customers (organization_id, branch_id, first_name, email) values ($1, $2, $3, $4) returning id",
     [org.orgId, org.branchId, opts.name ?? "Laura", opts.email === undefined ? `c-${randomUUID().slice(0, 8)}@cliente.test` : opts.email],
   );
-  const digits = String(Math.floor(1000 + Math.random() * 8999));
+  // Matrículas únicas en la ejecución (antes eran aleatorias y podían coincidir dentro del mismo taller).
+  const digits = String(1000 + (plateSeq++ % 9000));
   const [{ id: vehicleId }] = await query<{ id: string }>(
     "insert into vehicles (organization_id, branch_id, customer_id, plate, make, model, next_service_date, next_service_source) values ($1, $2, $3, $4, 'Seat', 'Ibiza', $5, 'manual') returning id",
     [org.orgId, org.branchId, customerId, `${digits} BCD`, opts.due ?? "2027-03-15"],

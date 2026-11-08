@@ -16,7 +16,7 @@ const FEATURE_LABELS: Partial<Record<string, string>> = {
   km_reminders: "Avisos por kilometraje",
   google_calendar: "Google Calendar",
   reports: "Informes",
-  multi_branch: "Varios talleres",
+  multi_branch: "Varias delegaciones",
   priority_support: "Soporte prioritario",
   api: "API",
   custom_templates: "Plantillas a medida",
@@ -77,7 +77,7 @@ export function PlanPicker({
                 <li>{limit(p.maxActiveVehicles, "vehículos activos")}</li>
                 <li>{p.monthlyEmails.toLocaleString("es-ES")} correos al mes</li>
                 <li>{limit(p.maxUsers, p.maxUsers === 1 ? "usuario" : "usuarios")}</li>
-                {p.maxBranches !== null && p.maxBranches > 1 ? <li>Hasta {p.maxBranches} talleres</li> : p.maxBranches === null ? <li>Talleres ilimitados</li> : null}
+                {p.maxBranches !== null && p.maxBranches > 1 ? <li>Hasta {p.maxBranches} delegaciones</li> : p.maxBranches === null ? <li>Delegaciones ilimitadas</li> : null}
                 {extras.map((e) => (
                   <li key={e}>✓ {e}</li>
                 ))}
@@ -126,7 +126,7 @@ export function CancelButton({ cancelAtPeriodEnd, until }: { cancelAtPeriodEnd: 
       action={action}
       className="flex flex-col gap-2"
       onSubmit={(e) => {
-        if (!cancelAtPeriodEnd && !window.confirm(`¿Cancelar la suscripción? Seguirás teniendo acceso hasta ${until ?? "el final del periodo"}; después el taller quedará en solo lectura y los datos se conservarán 60 días.`))
+        if (!cancelAtPeriodEnd && !window.confirm(`¿Cancelar la suscripción? Seguirás teniendo acceso hasta ${until ?? "el final del periodo"}; después la cuenta quedará en solo lectura y los datos se conservarán 60 días.`))
           e.preventDefault();
       }}
     >

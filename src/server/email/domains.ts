@@ -3,7 +3,7 @@ import "server-only";
 import { sanitizeProviderMessage } from "./port";
 
 /**
- * Dominios de envío propios del taller (API de dominios de Resend:
+ * Dominios de envío propios de la empresa (API de dominios de Resend:
  * https://resend.com/docs/api-reference/domains). Región UE (eu-west-1).
  * Sin EMAIL_PROVIDER=resend y RESEND_API_KEY la funcionalidad aparece como
  * "no configurada": no se simula ninguna verificación.

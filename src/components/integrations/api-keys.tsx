@@ -36,7 +36,7 @@ export function CreateApiKeyForm({ scopes, branches }: { scopes: { value: string
         <FormMessage state={state} />
       )}
       <form action={action} className="flex flex-col gap-4">
-        <Field label="Nombre" name="name" required maxLength={80} placeholder="Programa de gestión del taller" errors={fieldErrors(state, "name")} />
+        <Field label="Nombre" name="name" required maxLength={80} placeholder="Programa de gestión de la empresa" errors={fieldErrors(state, "name")} />
         <fieldset className="flex flex-col gap-2">
           <legend className="text-sm font-medium">Permisos</legend>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -53,7 +53,7 @@ export function CreateApiKeyForm({ scopes, branches }: { scopes: { value: string
         </fieldset>
         {branches.length > 1 ? (
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">Talleres (si no marcas ninguno, todos)</legend>
+            <legend className="text-sm font-medium">Delegaciones (si no marcas ninguna, todas)</legend>
             {branches.map((b) => (
               <label key={b.id} className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="branchIds" value={b.id} />

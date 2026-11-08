@@ -6,7 +6,7 @@ import { getEmailProvider, getSenderConfig } from "@/server/email/provider";
 import { platformFrom } from "@/server/email/sender";
 import { logger } from "@/server/logger";
 
-/** Correo de bienvenida al crear el taller (PDF §11). No cuenta en el consumo. */
+/** Correo de bienvenida al crear la empresa (PDF §11). No cuenta en el consumo. */
 export async function sendWelcomeEmail(organizationId: string, to: string): Promise<boolean> {
   const email = getEmailProvider();
   const sender = getSenderConfig();
@@ -25,12 +25,14 @@ export async function sendWelcomeEmail(organizationId: string, to: string): Prom
     const subject = `Bienvenido a RevisaYa, ${org.trade_name}`;
     const msg = renderPlatformEmail({
       title: `${org.trade_name} ya está en RevisaYa`,
-      intro: "Estos son los pasos para tener los avisos funcionando hoy mismo:",
+      intro: "Estos son los pasos para poner en marcha el mantenimiento de tus instalaciones:",
       rows: [
         ["1. Elige un plan (7 días gratis)", "Facturación"],
-        ["2. Pon tu logo y tus datos", "Configuración → Datos del taller"],
-        ["3. Sube tu Excel de clientes", "Importar"],
-        ["4. Activa los avisos", "Configuración → Avisos"],
+        ["2. Pon tu logo y tus datos", "Configuración → Datos de la empresa"],
+        ["3. Revisa las operaciones de mantenimiento", "Configuración → Mantenimiento"],
+        ["4. Importa clientes, instalaciones y equipos", "Importar"],
+        ["5. Crea tu primera orden de trabajo", "Instalaciones → Nueva orden de trabajo"],
+        ["6. Activa los avisos de vencimiento", "Configuración → Avisos"],
       ],
       notes: [`La guía de inicio, paso a paso: ${url("/ayuda")}`, "Si tienes cualquier duda, responde a este correo."],
       link: { href: url("/app"), label: "Ir a mi panel" },

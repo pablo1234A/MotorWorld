@@ -12,7 +12,7 @@ import { platformFrom } from "@/server/email/sender";
 import { logger } from "@/server/logger";
 
 /**
- * Correos de la plataforma a los administradores del taller (no cuentan en
+ * Correos de la plataforma a los administradores de la empresa (no cuentan en
  * su consumo, P5):
  *  - Aviso de consumo al 80 % y al 100 % del límite mensual de correos.
  *  - Resumen diario o semanal (lunes) por sucursal, a partir de las 08:00
@@ -179,6 +179,9 @@ interface DigestStats {
   quota: number;
   upcoming: number;
   overdue: number;
+  /** PCI: equipos en servicio con alguna actuación vencida, y órdenes abiertas. */
+  equipmentOverdue: number;
+  openWorkOrders: number;
 }
 
 export async function sendDigests(deps: Deps, now = new Date(), limit = 200): Promise<{ sent: number; skipped: number; failed: number }> {
@@ -235,7 +238,10 @@ export async function sendDigests(deps: Deps, now = new Date(), limit = 200): Pr
           count(*) filter (where r.status = 'skipped' and r.skip_reason = 'quota_exceeded' and r.updated_at > ${now}::timestamptz - make_interval(days => ${days}))::int as quota,
           (select count(*)::int from reminders r2 where r2.branch_id = ${d.branch_id} and r2.status in ('scheduled', 'retrying')) as upcoming,
           (select count(*)::int from vehicles v where v.branch_id = ${d.branch_id} and v.status = 'active' and v.deleted_at is null
-              and v.next_service_date < (${now}::timestamptz at time zone ${d.tz})::date) as overdue
+              and v.next_service_date < (${now}::timestamptz at time zone ${d.tz})::date) as overdue,
+          (select count(*)::int from equipment e where e.branch_id = ${d.branch_id} and e.status = 'in_service' and e.deleted_at is null
+              and e.next_action_on < (${now}::timestamptz at time zone ${d.tz})::date) as "equipmentOverdue",
+          (select count(*)::int from work_orders w where w.branch_id = ${d.branch_id} and w.status in ('pending', 'scheduled', 'assigned', 'in_progress')) as "openWorkOrders"
         from reminders r
         where r.branch_id = ${d.branch_id}
       `.execute(tx);
@@ -257,7 +263,9 @@ export async function sendDigests(deps: Deps, now = new Date(), limit = 200): Pr
       ["No enviados: baja o dirección bloqueada", fmt(s.optedOut)],
       ...(s.quota ? ([["No enviados: límite de correos del mes", fmt(s.quota)]] as Array<[string, string]>) : []),
       ["Avisos programados", fmt(s.upcoming)],
-      ["Vehículos con la revisión vencida", fmt(s.overdue)],
+      ["Equipos con alguna actuación vencida", fmt(s.equipmentOverdue)],
+      ["Órdenes de trabajo abiertas", fmt(s.openWorkOrders)],
+      ...(s.overdue ? ([["Vehículos (etapa anterior) con la revisión vencida", fmt(s.overdue)]] as Array<[string, string]>) : []),
     ];
     const notes: string[] = [];
     if (s.noEmail) notes.push("Añade el correo de esos clientes en su ficha para que reciban los próximos avisos.");
@@ -301,7 +309,7 @@ export function reputationLevel(bounceRate: number, complaintRate: number): "ok"
  * Rebotes y quejas de los últimos 7 días por taller (mínimo 50 envíos). Si
  * pasan de los umbrales, avisa a los administradores (como mucho una vez por
  * semana y nivel) y deja una alerta para la plataforma en el registro. Un
- * remitente con muchas quejas perjudica la entrega de TODOS los talleres que
+ * remitente con muchas quejas perjudica la entrega de TODAS las empresas que
  * usan el dominio compartido.
  */
 export async function checkEmailReputation(deps: Deps): Promise<{ checked: number; warning: number; critical: number; notified: number }> {
@@ -343,8 +351,8 @@ export async function checkEmailReputation(deps: Deps): Promise<{ checked: numbe
       ],
       notes: [
         "Gmail y Outlook mandan a spam, o bloquean, a los remitentes con muchos rebotes o quejas: tus avisos dejarían de llegar.",
-        "Revisa los correos de tus clientes (los que rebotan ya no reciben avisos) y no añadas personas que no sean clientes del taller.",
-        ...(level === "critical" ? ["Si sigue así, RevisaYa puede tener que pausar los envíos del taller para proteger la entrega del resto (términos, «Uso aceptable»)."] : []),
+        "Revisa los correos de tus clientes (los que rebotan ya no reciben avisos) y no añadas personas que no sean clientes de la empresa.",
+        ...(level === "critical" ? ["Si sigue así, RevisaYa puede tener que pausar los envíos de la empresa para proteger la entrega del resto (términos, «Uso aceptable»)."] : []),
       ],
       link: { href: new URL("/app/configuracion/correo", deps.sender.appUrl).toString(), label: "Ver el estado del correo" },
     });

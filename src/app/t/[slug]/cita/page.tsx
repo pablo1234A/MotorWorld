@@ -64,7 +64,7 @@ async function Content({ params, searchParams }: { params: Params; searchParams:
     <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
       <header className="flex items-center gap-4 border-b-4 px-6 py-5" style={{ borderColor: color }}>
         {page.org.logoSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element -- logo servido por la ruta pública del taller
+          // eslint-disable-next-line @next/next/no-img-element -- logo servido por la ruta pública de la empresa
           <img src={page.org.logoSrc} alt={page.org.name} className="h-12 max-w-48 object-contain" />
         ) : (
           <p className="text-xl font-semibold">{page.org.name}</p>

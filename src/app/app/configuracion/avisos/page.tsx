@@ -17,16 +17,16 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 export default async function ReminderSettingsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/configuracion/avisos");
   if (!isAdmin(ctx)) {
-    return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden configurar los avisos.</Alert>;
+    return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden configurar los avisos.</Alert>;
   }
   const sp = await searchParams;
   const branches = await listAccessibleBranches(ctx);
   const requested = param(sp.taller, 40);
   const branch = branches.find((b) => b.id === requested) ?? branches[0];
-  if (!branch) return <Alert tone="error">No hay ningún taller activo.</Alert>;
+  if (!branch) return <Alert tone="error">No hay ninguna delegación activa.</Alert>;
 
   const settings = await getReminderSettings(ctx, branch.id);
-  if (!settings) return <Alert tone="error">No se ha encontrado la configuración de este taller.</Alert>;
+  if (!settings) return <Alert tone="error">No se ha encontrado la configuración de esta delegación.</Alert>;
   const readOnly = !ctx.subscription.active;
 
   return (
@@ -34,7 +34,7 @@ export default async function ReminderSettingsPage({ searchParams }: { searchPar
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Configuración de avisos</h1>
-          <p className="text-sm text-[var(--muted)]">Cuándo y cómo se avisa a los clientes de su próxima revisión.</p>
+          <p className="text-sm text-[var(--muted)]">Cuándo y cómo se avisa a los clientes de los próximos vencimientos de sus instalaciones.</p>
         </div>
         <RemindersLink />
       </div>

@@ -123,7 +123,7 @@ function AccessFields({
 
       {branches.length > 1 ? (
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Talleres a los que accede</span>
+          <span className="text-sm font-medium">Delegaciones a las que accede</span>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input type="radio" name="branchScope" value="all" checked={scope === "all"} onChange={() => setScope("all")} />
@@ -195,7 +195,7 @@ function MemberItem({ member, branches, isSelf }: { member: MemberRow; branches:
   const [statusState, setStatus] = useActionState(setMemberStatusAction, idle);
   const [removeState, remove] = useActionState(removeMemberAction, idle);
   const name = `${member.firstName} ${member.lastName}`.trim() || member.email;
-  const branchNames = member.branchScope === "all" ? "Todos los talleres" : branches.filter((b) => member.branchIds.includes(b.id)).map((b) => b.name).join(", ");
+  const branchNames = member.branchScope === "all" ? "Todas las delegaciones" : branches.filter((b) => member.branchIds.includes(b.id)).map((b) => b.name).join(", ");
 
   return (
     <li className="flex flex-col gap-3 py-4">
@@ -232,7 +232,7 @@ function MemberItem({ member, branches, isSelf }: { member: MemberRow; branches:
             </form>
             <form action={remove}>
               <input type="hidden" name="id" value={member.memberId} />
-              <ConfirmButton label="Eliminar" variant="danger" confirmText={`¿Eliminar a ${name} del taller? Perderá el acceso inmediatamente.`} />
+              <ConfirmButton label="Eliminar" variant="danger" confirmText={`¿Eliminar a ${name} de la empresa? Perderá el acceso inmediatamente.`} />
             </form>
           </div>
         ) : null}
@@ -321,7 +321,7 @@ export function MembersManager({
       ) : null}
 
       <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 pt-4">
-        <h2 className="text-lg font-semibold">Usuarios del taller</h2>
+        <h2 className="text-lg font-semibold">Usuarios de la empresa</h2>
         <ul className="divide-y divide-[var(--border)]">
           {members.map((m) => (
             <MemberItem key={m.memberId} member={m} branches={branches} isSelf={m.memberId === selfMemberId} />

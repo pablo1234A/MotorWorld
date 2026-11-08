@@ -1,6 +1,6 @@
 /**
  * NIF, NIE y CIF españoles: normalización y dígito de control. Sirve para los
- * datos fiscales del taller en los presupuestos. Un NIF-IVA de otro país de la
+ * datos fiscales de la empresa en los presupuestos. Un NIF-IVA de otro país de la
  * UE se admite si cumple el formato general (hasta 14 letras y números): no se
  * puede comprobar su control aquí.
  */

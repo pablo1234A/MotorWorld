@@ -199,7 +199,7 @@ export async function getEquipment(ctx: ServiceCtx, id: string): Promise<Equipme
 }
 
 /**
- * Resuelve el QR o el código escrito a mano. Solo dentro del taller activo y
+ * Resuelve el QR o el código escrito a mano. Solo dentro de la empresa activa y
  * con la RLS del usuario: un QR de otra empresa (o de una sucursal sin acceso)
  * no devuelve nada.
  */
@@ -377,7 +377,7 @@ export async function deleteEquipment(ctx: ServiceCtx, id: string): Promise<{ in
   });
 }
 
-/** Configuración del taller sobre una operación del catálogo (solo administradores; RLS). */
+/** Configuración de la empresa sobre una operación del catálogo (solo administradores; RLS). */
 export async function setActionSetting(ctx: ServiceCtx, actionTypeId: string, enabled: boolean, intervalMonths: number | null): Promise<void> {
   await withRls(ctx.auth, async (tx) => {
     // La periodicidad de referencia (RIPCI) se puede acortar, nunca alargar.

@@ -17,7 +17,7 @@ export interface Membership {
   organizationId: string;
   organizationName: string;
   organizationSlug: string;
-  /** Logo del taller (ruta en el almacenamiento), para el panel. */
+  /** Logo de la empresa (ruta en el almacenamiento), para el panel. */
   logoPath: string | null;
   role: Role;
   isOwner: boolean;

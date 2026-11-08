@@ -132,7 +132,7 @@ export default async function ImportBatchPage({
           {s.committed?.updatedVehicles
             ? `; se han completado ${s.committed.updatedVehicles} vehículos que ya tenías`
             : ""}
-          . Los avisos se programarán según la configuración del taller.{" "}
+          . Los avisos se programarán según la configuración de la empresa.{" "}
           <Link
             href="/app/clientes"
             className="font-medium text-[var(--accent)]"

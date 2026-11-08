@@ -9,7 +9,7 @@ import type { ServiceCtx } from "../branches/service";
 
 /**
  * Técnicos: ficha operativa (nombre, contacto, notas de cualificación) que
- * puede vincularse a un usuario del taller para que vea sus órdenes en el
+ * puede vincularse a un usuario de la empresa para que vea sus órdenes en el
  * móvil. RevisaYa no verifica ni atribuye habilitaciones o carnés: la nota
  * es responsabilidad de la empresa. Solo administradores escriben (RLS).
  */
@@ -68,7 +68,7 @@ export async function saveTechnician(
   });
 }
 
-/** Ficha de técnico del usuario actual en el taller activo (si la tiene). */
+/** Ficha de técnico del usuario actual en la empresa activa (si la tiene). */
 export async function myTechnicianId(ctx: ServiceCtx): Promise<string | null> {
   return withRls(ctx.auth, async (tx) => {
     const r = await tx.selectFrom("technicians").select("id").where("member_id", "=", ctx.membership.memberId).where("active", "=", true).executeTakeFirst();

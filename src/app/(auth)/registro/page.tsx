@@ -15,7 +15,7 @@ export default function SignUpPage({ searchParams }: { searchParams: SearchParam
   return (
     <>
       <h1 className="mb-1 text-2xl font-semibold tracking-tight">Crea tu cuenta</h1>
-      <p className="mb-6 text-sm text-[var(--muted)]">Después podrás dar de alta tu taller o unirte al de tu equipo.</p>
+      <p className="mb-6 text-sm text-[var(--muted)]">Después podrás dar de alta tu empresa o unirte a la de tu equipo.</p>
       <Suspense fallback={<Skeleton className="h-96 w-full" />}>
         <SignUpContent searchParams={searchParams} />
       </Suspense>

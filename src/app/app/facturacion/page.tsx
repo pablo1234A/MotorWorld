@@ -27,7 +27,7 @@ const INVOICE: Record<string, string> = { open: "Pendiente", paid: "Pagada", unc
 
 export default async function BillingPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/facturacion");
-  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden gestionar la suscripción.</Alert>;
+  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden gestionar la suscripción.</Alert>;
   const sp = await searchParams;
   const o = await getOverview(ctx);
   const s = o.subscription;
@@ -74,15 +74,15 @@ export default async function BillingPage({ searchParams }: { searchParams: Sear
           ) : null}
           {s.status === "past_due" ? (
             <Alert tone="warning" title="No hemos podido cobrar la última factura">
-              Actualiza la tarjeta {graceEnd ? `antes del ${day(graceEnd)}` : "cuanto antes"}: después, el taller pasará a solo lectura y se pausarán los avisos.
+              Actualiza la tarjeta {graceEnd ? `antes del ${day(graceEnd)}` : "cuanto antes"}: después, la cuenta pasará a solo lectura y se pausarán los avisos.
             </Alert>
           ) : null}
-          {s.status === "unpaid" ? <Alert tone="error">La suscripción está impagada: el taller está en solo lectura y no se envían avisos. Actualiza la tarjeta para reactivarla.</Alert> : null}
+          {s.status === "unpaid" ? <Alert tone="error">La suscripción está impagada: la cuenta está en solo lectura y no se envían avisos. Actualiza la tarjeta para reactivarla.</Alert> : null}
           {s.cancelAtPeriodEnd && s.currentPeriodEnd ? <p className="text-sm">Se cancelará el {day(s.currentPeriodEnd)}.</p> : null}
           {!s.cancelAtPeriodEnd && s.currentPeriodEnd && s.status === "active" ? <p className="text-sm text-[var(--muted)]">Próxima renovación: {day(s.currentPeriodEnd)}.</p> : null}
           {s.status === "canceled" || s.status === "incomplete_expired" ? (
             <Alert tone="warning" title="Suscripción terminada">
-              El taller está en solo lectura.{o.dataRetentionUntil ? ` Tus datos se conservan hasta el ${formatDate(o.dataRetentionUntil)}; contrata un plan antes para no perderlos.` : ""}{" "}
+              La empresa está en solo lectura.{o.dataRetentionUntil ? ` Tus datos se conservan hasta el ${formatDate(o.dataRetentionUntil)}; contrata un plan antes para no perderlos.` : ""}{" "}
               <a href="/api/app/export" className="font-medium underline" download>
                 Descargar todos los datos (Excel)
               </a>
@@ -98,7 +98,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Sear
           ) : null}
         </Card>
       ) : (
-        <Alert tone="info" title="Tu taller todavía no tiene plan">
+        <Alert tone="info" title="Tu empresa todavía no tiene plan">
           Elige uno para empezar. {o.trialEligible ? "Los 7 primeros días son gratis: pedimos la tarjeta al empezar, pero no se cobra nada hasta que termine la prueba." : ""}
         </Alert>
       )}

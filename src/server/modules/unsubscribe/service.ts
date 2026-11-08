@@ -6,7 +6,7 @@ import { verifyUnsubscribeToken } from "@/server/email/links";
 /**
  * Baja de avisos desde el enlace del correo (y one-click, RFC 8058). Idempotente:
  * repetirla no cambia nada. Marca al cliente, añade su correo a la lista de
- * supresión del taller y cancela sus avisos pendientes.
+ * supresión de la empresa y cancela sus avisos pendientes.
  */
 
 export interface UnsubscribeTarget {

@@ -27,7 +27,7 @@ const RESULT: Record<string, { tone: "success" | "error" | "info"; text: string 
 
 export default async function IntegrationsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/configuracion/integraciones");
-  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden gestionar las integraciones.</Alert>;
+  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden gestionar las integraciones.</Alert>;
   const sp = await searchParams;
   const status = await getCalendarStatus(ctx);
   const result = RESULT[param(sp.google) ?? ""];
@@ -37,7 +37,7 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Integraciones</h1>
-        <p className="text-sm text-[var(--muted)]">Conecta RevisaYa con otras herramientas del taller.</p>
+        <p className="text-sm text-[var(--muted)]">Conecta RevisaYa con otras herramientas de la empresa.</p>
       </div>
       {result ? <Alert tone={result.tone}>{result.text}</Alert> : null}
 
@@ -45,7 +45,7 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
         <div>
           <h2 className="text-lg font-semibold">Google Calendar</h2>
           <p className="text-sm text-[var(--muted)]">
-            Las citas aparecen en la agenda de Google del taller: las solicitudes como «sin confirmar» y las confirmadas con su día y hora. Al rechazar o
+            Las citas aparecen en la agenda de Google de la empresa: las solicitudes como «sin confirmar» y las confirmadas con su día y hora. Al rechazar o
             cancelar una cita se quita de la agenda. RevisaYa solo crea y cambia sus propios eventos; no lee el resto de tu calendario.
           </p>
         </div>

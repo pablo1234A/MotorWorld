@@ -50,7 +50,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
           <>
             <p className="text-sm text-[var(--muted)]">
               Además de la contraseña, al entrar te pediremos un código de tu móvil. Si alguien consigue tu contraseña, no podrá entrar.
-              {ctx.membership.role === "admin" ? " Muy recomendable para los administradores: pueden ver y cambiar todo el taller." : ""}
+              {ctx.membership.role === "admin" ? " Muy recomendable para los administradores: pueden ver y cambiar toda la empresa." : ""}
             </p>
             <EnableMfa />
           </>

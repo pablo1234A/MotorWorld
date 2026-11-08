@@ -65,7 +65,7 @@ export function SenderForm({
           <label className="flex items-start gap-3 text-[15px]">
             <input type="radio" name="senderMode" value="shared" checked={mode === "shared"} onChange={() => setMode("shared")} disabled={readOnly} className="mt-1" />
             <span>
-              <span className="font-medium">Remitente de RevisaYa con el nombre de tu taller</span>
+              <span className="font-medium">Remitente de RevisaYa con el nombre de tu empresa</span>
               <span className="block break-all font-mono text-sm text-[var(--muted)]">{sharedFrom}</span>
               <span className="block text-sm text-[var(--muted)]">
                 {replyTo ? `Las respuestas llegan a ${replyTo}.` : "Configura la dirección «Responder a» en Avisos para recibir las respuestas."}
@@ -100,7 +100,7 @@ export function SenderForm({
           ) : null}
         </fieldset>
         <SelectField
-          label="Resumen para el taller"
+          label="Resumen para la empresa"
           name="digestFrequency"
           defaultValue={digestFrequency}
           hint="Avisos enviados, problemas de entrega y próximas revisiones, a los administradores."
@@ -140,13 +140,13 @@ export function DomainsManager({ domains, configured, readOnly }: { domains: Dom
       {!configured ? (
         <p className="rounded-lg bg-[var(--surface-2)] px-4 py-3 text-sm">
           La verificación de dominios propios no está disponible todavía en esta instalación de RevisaYa. Mientras tanto, tus avisos salen con
-          el remitente de RevisaYa y el nombre de tu taller.
+          el remitente de RevisaYa y el nombre de tu empresa.
         </p>
       ) : readOnly ? null : (
         <form action={action} className="flex flex-col gap-3">
           <FormMessage state={state} />
           <div className="grid gap-3 sm:grid-cols-[1fr_12rem_auto] sm:items-end">
-            <Field label="Dominio" name="domain" placeholder="tallersur.es" required errors={fieldErrors(state, "domain")} autoComplete="off" />
+            <Field label="Dominio" name="domain" placeholder="extintoresnorte.es" required errors={fieldErrors(state, "domain")} autoComplete="off" />
             <Field label="Dirección de envío" name="fromLocalPart" defaultValue="avisos" errors={fieldErrors(state, "fromLocalPart")} />
             <SubmitButton variant="secondary" pendingLabel="Añadiendo…">
               Añadir dominio

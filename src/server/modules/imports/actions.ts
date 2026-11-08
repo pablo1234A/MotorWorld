@@ -39,7 +39,7 @@ export async function uploadImportAction(_prev: ActionState, formData: FormData)
     const branches = await listAccessibleBranches(ctx);
     const requested = formData.get("branchId");
     const branch = branches.find((b) => b.id === requested) ?? (branches.length === 1 ? branches[0] : undefined);
-    if (!branch) return { status: "error", code: "validation_error", message: "Elige el taller al que importar.", fieldErrors: { branchId: ["Elige un taller"] } };
+    if (!branch) return { status: "error", code: "validation_error", message: "Elige la delegación a la que importar.", fieldErrors: { branchId: ["Elige una delegación"] } };
 
     const id = await imports.uploadImport(ctx, { branchId: branch.id, fileName: file.name, data: Buffer.from(await file.arrayBuffer()) });
     redirect(`/app/importar/${id}`);

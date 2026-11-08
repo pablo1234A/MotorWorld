@@ -41,7 +41,7 @@ export function ReminderSettingsForm({ values, readOnly }: { values: ReminderSet
       <FormMessage state={state} />
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Avisos de revisión por correo</h2>
+        <h2 className="text-lg font-semibold">Avisos de vencimiento por correo</h2>
         <label className="flex items-start gap-3 text-[15px]">
           <input type="checkbox" name="remindersEnabled" defaultChecked={values.remindersEnabled} disabled={readOnly} className="mt-1 size-4" />
           <span>
@@ -66,7 +66,7 @@ export function ReminderSettingsForm({ values, readOnly }: { values: ReminderSet
           type="email"
           defaultValue={v("replyToEmail", values.replyToEmail ?? "")}
           errors={fieldErrors(state, "replyToEmail")}
-          hint="Dirección del taller a la que llegan las respuestas de los clientes. Sin ella, el correo no lleva botón para pedir cita."
+          hint="Dirección de la empresa a la que llegan las respuestas de los clientes. Sin ella, el correo no lleva botón para pedir cita."
           disabled={readOnly}
         />
       </Card>
@@ -111,13 +111,13 @@ export function ReminderSettingsForm({ values, readOnly }: { values: ReminderSet
           {fieldErrors(state, "weekdays[]") ? <p className="text-sm text-[var(--danger)]">{fieldErrors(state, "weekdays[]")![0]}</p> : null}
         </fieldset>
         <p className="text-sm text-[var(--muted)]">
-          Hora de {values.timezone.replace("_", " ")} (la zona horaria del taller). Si el día del aviso no es de envío o es festivo, se adelanta al
+          Hora de {values.timezone.replace("_", " ")} (la zona horaria de la delegación). Si el día del aviso no es de envío o es festivo, se adelanta al
           último día hábil anterior.
         </p>
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Intervalo de revisión por defecto</h2>
+        <h2 className="text-lg font-semibold">Vehículos (etapa anterior): intervalo de revisión por defecto</h2>
         <p className="text-sm text-[var(--muted)]">
           Se usa para calcular la próxima revisión cuando registras una sin indicar fecha ni kilómetros recomendados.
         </p>
@@ -153,7 +153,7 @@ export function ReminderSettingsForm({ values, readOnly }: { values: ReminderSet
             <label className="flex items-start gap-3 text-[15px]">
               <input type="checkbox" name="kmRemindersEnabled" defaultChecked={values.kmRemindersEnabled} disabled={readOnly} className="mt-1 size-4" />
               <span>
-                <span className="font-medium">Avisar también cuando el coche se acerque a los kilómetros de su revisión</span>
+                <span className="font-medium">Vehículos (etapa anterior): avisar también cuando el coche se acerque a los kilómetros de su revisión</span>
                 <span className="block text-sm text-[var(--muted)]">
                   Se estima el ritmo de cada vehículo con sus lecturas de kilómetros (al menos dos, separadas un mes). Un aviso por revisión, y solo
                   si llega antes que el aviso por fecha.

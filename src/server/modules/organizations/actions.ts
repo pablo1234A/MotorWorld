@@ -38,7 +38,7 @@ export async function createOrganizationAction(_prev: ActionState, formData: For
   );
 }
 
-/** Cambia el taller activo. Solo a organizaciones de las que el usuario es miembro activo. */
+/** Cambia la empresa activa. Solo a organizaciones de las que el usuario es miembro activo. */
 export async function switchOrganizationAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const orgId = z.uuid().parse(formData.get("organizationId"));
@@ -47,7 +47,7 @@ export async function switchOrganizationAction(formData: FormData): Promise<void
   redirect("/app");
 }
 
-// ------------------------------------------------------------ datos del taller
+// ------------------------------------------------------------ datos de la empresa
 
 export async function updateOrganizationProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(
@@ -57,7 +57,7 @@ export async function updateOrganizationProfileAction(_prev: ActionState, formDa
       assertAdmin(ctx);
       await profile.updateProfile(ctx, parseForm(organizationProfileSchema, formData));
       refresh();
-      return { status: "success", message: "Datos del taller guardados." };
+      return { status: "success", message: "Datos de la empresa guardados." };
     },
     formData,
   );

@@ -41,7 +41,7 @@ export interface ApiPrincipal {
   keyId: string;
   orgId: string;
   scopes: ApiScope[];
-  /** null = todas las sucursales del taller */
+  /** null = todas las sucursales de la empresa */
   branchIds: string[] | null;
   ctx: {
     auth: { userId: string };
@@ -177,7 +177,7 @@ async function authenticate(request: Request): Promise<ApiPrincipal> {
     throw new ApiError(
       401,
       "unauthenticated",
-      "La persona que creó esta clave ya no es administradora del taller: crea una clave nueva",
+      "La persona que creó esta clave ya no es administradora de la empresa: crea una clave nueva",
     );
   if (!owner.api)
     throw new ApiError(

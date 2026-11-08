@@ -18,10 +18,10 @@ export function CreateOrganizationForm() {
     <form action={action} className="flex flex-col gap-4" noValidate>
       {state.status === "error" && !state.fieldErrors ? <Alert tone="error">{state.message}</Alert> : null}
       <Field
-        label="Nombre del taller"
+        label="Nombre de la empresa"
         name="tradeName"
         required
-        placeholder="Taller Sur"
+        placeholder="Extintores Norte"
         defaultValue={values?.tradeName}
         errors={errors?.tradeName}
         hint="Es el nombre que verán tus clientes en los avisos."
@@ -29,7 +29,7 @@ export function CreateOrganizationForm() {
       <Field
         label="Dirección pública (opcional)"
         name="slug"
-        placeholder="taller-sur"
+        placeholder="extintores-norte"
         defaultValue={values?.slug}
         errors={errors?.slug}
         hint="Se usa en el enlace para pedir cita. Si la dejas vacía la creamos a partir del nombre."
@@ -49,7 +49,7 @@ export function CreateOrganizationForm() {
         </span>
       </label>
       {errors?.acceptDpa ? <p className="-mt-2 text-sm text-[var(--danger)]">{errors.acceptDpa[0]}</p> : null}
-      <SubmitButton pendingLabel="Creando taller…">Crear taller</SubmitButton>
+      <SubmitButton pendingLabel="Creando empresa…">Crear empresa</SubmitButton>
     </form>
   );
 }

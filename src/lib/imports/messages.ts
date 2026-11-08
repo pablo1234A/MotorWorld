@@ -1,7 +1,7 @@
 import { COLUMN_LABELS } from "./columns";
 import type { Issue, IssueCode } from "./validate";
 
-/** Mensajes en español para el taller (vista previa e informe de errores). */
+/** Mensajes en español para la empresa (vista previa e informe de errores). */
 const MESSAGES: Record<IssueCode, string> = {
   name_missing: "Falta el nombre del cliente",
   name_too_long: "El nombre es demasiado largo (máximo 120 caracteres)",
@@ -13,7 +13,7 @@ const MESSAGES: Record<IssueCode, string> = {
   plate_invalid: "Matrícula no válida (solo letras y números, de 4 a 10)",
   plate_unrecognized: "Formato de matrícula poco habitual: revísala",
   plate_repeated_in_file: "Matrícula repetida en el archivo",
-  plate_exists: "Ese vehículo ya existe en el taller: se omite",
+  plate_exists: "Ese vehículo ya existe en la empresa: se omite",
   plate_exists_update: "Ese vehículo ya existe: se completarán sus datos (marca, modelo, km, revisión más reciente y contacto que falte)",
   last_service_missing: "Falta la fecha de la última revisión",
   date_invalid: "Fecha no válida (usa dd/mm/aaaa)",

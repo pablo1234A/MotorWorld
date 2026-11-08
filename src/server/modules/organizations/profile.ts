@@ -14,7 +14,7 @@ import type { ServiceCtx } from "@/server/modules/branches/service";
 import { getObject, putObject, removeObject } from "@/server/storage";
 
 /**
- * Datos del taller (PDF §5: logo, nombre y colores en el panel y en los
+ * Datos de la empresa (PDF §5: logo, nombre y colores en el panel y en los
  * correos) y datos fiscales para los presupuestos. Solo administradores (RLS).
  */
 
@@ -125,7 +125,7 @@ export async function removeLogo(ctx: Ctx): Promise<void> {
 
 /**
  * URL pública del logo para correos, PDF y la página de citas. El logo es
- * marca pública del taller; el nombre del archivo cambia con cada subida
+ * marca pública de la empresa; el nombre del archivo cambia con cada subida
  * (caché sin riesgo de mostrar uno antiguo).
  */
 export function logoUrl(appUrl: string, organizationId: string, logoPath: string | null): string | null {

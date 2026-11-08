@@ -125,7 +125,7 @@ export async function eraseCustomer(ctx: Ctx, customerId: string): Promise<Recor
   return counts as Record<string, number>;
 }
 
-/** Exportación de todo el taller en un Excel (portabilidad del responsable; también en solo lectura). */
+/** Exportación de toda la empresa en un Excel (portabilidad del responsable; también en solo lectura). */
 export async function exportWorkshop(ctx: Ctx): Promise<Buffer> {
   assertAdmin(ctx);
   const orgId = ctx.membership.organizationId;

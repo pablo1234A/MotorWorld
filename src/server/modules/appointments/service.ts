@@ -272,7 +272,7 @@ export async function saveNotes(ctx: Ctx, id: string, notes: string | null): Pro
   });
 }
 
-/** Cita creada en el taller (llamada, mostrador): nace confirmada. */
+/** Cita creada en la empresa (llamada, mostrador): nace confirmada. */
 export async function createManualAppointment(
   ctx: Ctx,
   input: { customerId: string; vehicleId: string | null; date: string; time: string; durationMinutes: number; notes: string | null; source?: "manual" | "api" },

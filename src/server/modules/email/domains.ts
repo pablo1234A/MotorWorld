@@ -13,7 +13,7 @@ import { enforceRateLimits, RATE_LIMITS } from "@/server/security/rate-limit";
 import { assertOrgAdmin } from "@/server/auth/db-guards";
 
 /**
- * Dominio propio del taller (modo `custom_domain` del PDF). Solo se usa como
+ * Dominio propio de la empresa (modo `custom_domain` del PDF). Solo se usa como
  * remitente cuando el proveedor lo da por VERIFICADO (SPF + DKIM). Mientras
  * tanto, y si deja de estarlo, los avisos salen con el remitente compartido
  * (P1) — lo impone la base de datos (app.validate_sender_mode y
@@ -74,7 +74,7 @@ export async function listDomains(ctx: Ctx): Promise<SendingDomainView[]> {
   }));
 }
 
-/** El dominio pertenece al taller del usuario (RLS: solo administradores lo ven). */
+/** El dominio pertenece a la empresa del usuario (RLS: solo administradores lo ven). */
 async function ownDomain(ctx: Ctx, id: string): Promise<{ id: string; providerDomainId: string | null }> {
   const row = await withRls(ctx.auth, (tx) =>
     tx
@@ -185,7 +185,7 @@ export async function removeDomain(ctx: Ctx, id: string, port: DomainPort | null
 /**
  * Proceso programado: comprueba los dominios pendientes (cada ejecución,
  * durante 72 h desde el alta) y los verificados (una vez al día; si alguien
- * borra los registros DNS, el taller vuelve al remitente compartido).
+ * borra los registros DNS, la empresa vuelve al remitente compartido).
  */
 export async function checkPendingDomains(port: DomainPort | null, limit = 50): Promise<{ checked: number; verified: number; failed: number }> {
   const stats = { checked: 0, verified: 0, failed: 0 };

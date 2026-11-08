@@ -9,7 +9,7 @@ import "server-only";
  *
  * Versión de los textos: cambiarla obliga a volver a aceptarlos.
  */
-export const LEGAL_VERSION = "2026-11-08";
+export const LEGAL_VERSION = "2026-11-15";
 
 export interface LegalOwner {
   name: string | null; // persona física (autónomo) o sociedad
@@ -41,7 +41,7 @@ export const SUBPROCESSORS = [
   { name: "Supabase", purpose: "Base de datos, acceso de usuarios y archivos (logos, presupuestos)", location: "Región de la UE elegida al crear el proyecto" },
   { name: "Vercel", purpose: "Alojamiento de la aplicación", location: "Funciones en la UE; empresa en EE. UU. (cláusulas contractuales tipo / Marco de Privacidad de Datos)" },
   { name: "Resend (o Amazon SES)", purpose: "Envío de los correos", location: "Región de la UE si el proveedor la ofrece; empresa en EE. UU. (cláusulas contractuales tipo)" },
-  { name: "Stripe", purpose: "Cobro de la suscripción del taller (no trata datos de los clientes del taller)", location: "Irlanda / EE. UU. (cláusulas contractuales tipo)" },
-  { name: "Google", purpose: "Solo si el taller conecta Google Calendar: citas en su agenda", location: "EE. UU. (Marco de Privacidad de Datos)" },
+  { name: "Stripe", purpose: "Cobro de la suscripción de la empresa (no trata datos de los clientes de la empresa)", location: "Irlanda / EE. UU. (cláusulas contractuales tipo)" },
+  { name: "Google", purpose: "Solo si la empresa conecta Google Calendar: citas en su agenda", location: "EE. UU. (Marco de Privacidad de Datos)" },
   { name: "Cloudflare (Turnstile)", purpose: "Comprobación anti-bots en la página pública de citas, si está activada", location: "EE. UU. (cláusulas contractuales tipo)" },
 ] as const;

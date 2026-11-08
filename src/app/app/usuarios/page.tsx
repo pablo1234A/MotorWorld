@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Usuarios · RevisaYa" };
 export default async function MembersPage() {
   const ctx = await requireOrgPage("/app/usuarios");
   if (!isAdmin(ctx)) {
-    return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden gestionar usuarios.</Alert>;
+    return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden gestionar usuarios.</Alert>;
   }
 
   const [{ members, invitations }, branches] = await Promise.all([listMembers(ctx), listBranches(ctx)]);

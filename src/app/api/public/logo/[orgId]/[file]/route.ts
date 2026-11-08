@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { readLogo } from "@/server/modules/organizations/profile";
 
 /**
- * Logo público del taller (correos, página de citas). Solo sirve el logo
+ * Logo público de la empresa (correos, página de citas). Solo sirve el logo
  * ACTUAL de una organización activa; nada más del bucket privado.
  */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -19,7 +19,7 @@ export default function SignInPage({ searchParams }: { searchParams: SearchParam
   return (
     <>
       <h1 className="mb-1 text-2xl font-semibold tracking-tight">Inicia sesión</h1>
-      <p className="mb-6 text-sm text-[var(--muted)]">Accede al panel de tu taller.</p>
+      <p className="mb-6 text-sm text-[var(--muted)]">Accede al panel de tu empresa.</p>
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
         <SignInContent searchParams={searchParams} />
       </Suspense>

@@ -1,6 +1,6 @@
 /**
  * Columnas de la plantilla de importación (PDF §3) y alias aceptados en las
- * cabeceras de archivos propios del taller.
+ * cabeceras de archivos propios de la empresa.
  */
 
 export const IMPORT_COLUMNS = [

@@ -4,7 +4,7 @@
  */
 export const BRAND = {
   name: "RevisaYa",
-  tagline: "Avisos automáticos de revisión para talleres mecánicos",
+  tagline: "Software de mantenimiento para empresas de protección contra incendios",
   description:
-    "RevisaYa avisa a tus clientes cuando les toca la revisión y les deja pedir cita con un botón. Clientes, coches e historial en un solo sitio.",
+    "RevisaYa organiza el mantenimiento de extintores, BIE, detección y demás equipos de protección contra incendios: clientes, instalaciones, equipos con QR, órdenes de trabajo, incidencias y avisos de vencimiento.",
 } as const;

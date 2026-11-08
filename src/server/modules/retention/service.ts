@@ -15,7 +15,7 @@ import { removeObject } from "@/server/storage";
 
 /**
  * Conservación tras la baja (P9): aviso por correo 7 días antes y borrado de
- * los datos del taller al vencer los 60 días (private.purge_organization_data).
+ * los datos de la empresa al vencer los 60 días (private.purge_organization_data).
  * Si vuelve a contratar antes, la fecha se anula al instante (webhook de Stripe).
  */
 
@@ -41,7 +41,7 @@ export async function sendRetentionWarnings(deps: Deps): Promise<{ sent: number;
   for (const o of due) {
     const msg = renderPlatformEmail({
       title: `Los datos de ${o.name} se borrarán el ${formatDate(o.until)}`,
-      intro: `Tu suscripción a RevisaYa terminó y, como indican los términos, los datos del taller se conservan 60 días. El ${formatDate(o.until)} se borrarán definitivamente: clientes, vehículos, historial, citas y presupuestos.`,
+      intro: `Tu suscripción a RevisaYa terminó y, como indican los términos, los datos de la empresa se conservan 60 días. El ${formatDate(o.until)} se borrarán definitivamente: clientes, vehículos, historial, citas y presupuestos.`,
       notes: [
         "Si quieres conservarlos, descárgalos antes en Configuración → Datos y privacidad (un Excel con todo).",
         "Si vuelves a contratar un plan antes de esa fecha, no se borra nada y todo sigue como estaba.",

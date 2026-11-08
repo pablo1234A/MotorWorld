@@ -45,18 +45,18 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         </p>
         <h2>2. Objeto</h2>
         <p>
-          {BRAND.name} es un programa web para talleres mecánicos: gestión de clientes, vehículos e historial de revisiones, avisos automáticos por correo,
+          {BRAND.name} es un programa web para empresas mantenedoras de protección contra incendios: gestión de clientes, instalaciones, equipos, órdenes de trabajo, incidencias e historial de actuaciones, avisos automáticos por correo,
           citas y presupuestos. Se ofrece a empresas y profesionales mediante suscripción.
         </p>
         <h2>3. Condiciones de uso del sitio</h2>
         <p>
-          Quien navega por el sitio se compromete a usarlo conforme a la ley y a estas condiciones. El uso del servicio por los talleres se rige por los{" "}
+          Quien navega por el sitio se compromete a usarlo conforme a la ley y a estas condiciones. El uso del servicio por las empresas se rige por los{" "}
           <Link href="/legal/terminos">términos y condiciones</Link>.
         </p>
         <h2>4. Propiedad intelectual</h2>
         <p>
-          El software, el diseño y los textos de {BRAND.name} pertenecen a su titular o se usan con licencia. Los datos que el taller introduce son del
-          taller. Las marcas de terceros (Google, Stripe…) pertenecen a sus titulares.
+          El software, el diseño y los textos de {BRAND.name} pertenecen a su titular o se usan con licencia. Los datos que la empresa introduce son de la
+          empresa. Las marcas de terceros (Google, Stripe…) pertenecen a sus titulares.
         </p>
         <h2>5. Responsabilidad</h2>
         <p>
@@ -74,13 +74,13 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         </p>
         <ul>
           <li>
-            <strong>Datos de los talleres y sus usuarios</strong> (quien se registra y usa el panel): {BRAND.name} es el <strong>responsable</strong> del
+            <strong>Datos de las empresas y sus usuarios</strong> (quien se registra y usa el panel): {BRAND.name} es el <strong>responsable</strong> del
             tratamiento.
           </li>
           <li>
-            <strong>Datos de los clientes de cada taller</strong> (nombre, contacto, vehículos, historial, citas): el <strong>responsable es el taller</strong>.{" "}
+            <strong>Datos de los clientes de cada empresa</strong> (nombre, contacto, instalaciones, equipos, historial, visitas, fotos y documentos): el <strong>responsable es la empresa</strong>.{" "}
             {BRAND.name} los trata solo por su encargo, según el <Link href="/legal/encargo-tratamiento">contrato de encargo del tratamiento</Link>. Si eres
-            cliente de un taller y quieres ejercer tus derechos, dirígete al taller; si nos escribes, le trasladaremos tu petición.
+            cliente de una de esas empresas y quieres ejercer tus derechos, dirígete a ella; si nos escribes, le trasladaremos tu petición.
           </li>
         </ul>
         <h2>1. Responsable</h2>
@@ -101,8 +101,8 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
               <td>Ejecución del contrato (art. 6.1.b)</td>
             </tr>
             <tr>
-              <td>Datos del taller: nombre comercial, razón social, NIF, dirección, logo, contacto</td>
-              <td>Prestar el servicio y mostrar la marca del taller en sus correos</td>
+              <td>Datos de la empresa: nombre comercial, razón social, NIF, dirección, logo, contacto</td>
+              <td>Prestar el servicio y mostrar la marca de la empresa en sus correos</td>
               <td>Ejecución del contrato (art. 6.1.b)</td>
             </tr>
             <tr>
@@ -116,7 +116,7 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
               <td>Interés legítimo (art. 6.1.f)</td>
             </tr>
             <tr>
-              <td>Correos de servicio al taller (bienvenida, avisos de facturación, resúmenes)</td>
+              <td>Correos de servicio a la empresa (bienvenida, avisos de facturación, resúmenes)</td>
               <td>Informar sobre el servicio contratado</td>
               <td>Ejecución del contrato (art. 6.1.b)</td>
             </tr>
@@ -126,8 +126,8 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         <h2>3. Cuánto tiempo</h2>
         <ul>
           <li>Mientras la cuenta esté activa.</li>
-          <li>Si el taller cancela: 60 días en solo lectura, por si vuelve o quiere exportar sus datos; después se borran.</li>
-          <li>Clientes y vehículos borrados: 30 días en la papelera; después se borran definitivamente.</li>
+          <li>Si la empresa cancela: 60 días en solo lectura, por si vuelve o quiere exportar sus datos; después se borran.</li>
+          <li>Clientes, instalaciones y equipos borrados: 30 días en la papelera; después se borran definitivamente con su historial, fotos y documentos.</li>
           <li>Registro de correos enviados y de acciones: 24 meses. Registro de peticiones a la API: 30 días.</li>
           <li>Facturas: el plazo que exija la ley fiscal y mercantil.</li>
         </ul>
@@ -162,7 +162,7 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         </p>
         <h2>6. Seguridad</h2>
         <p>
-          Conexiones cifradas, contraseñas guardadas con un algoritmo de un solo sentido, datos separados por taller en la base de datos, accesos limitados
+          Conexiones cifradas, contraseñas guardadas con un algoritmo de un solo sentido, datos separados por empresa en la base de datos, accesos limitados
           por permisos, copias de seguridad y registro de las acciones importantes.
         </p>
       </>
@@ -171,7 +171,7 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
       <>
         <h2>1. Partes y objeto</h2>
         <p>
-          Estos términos regulan el uso de {BRAND.name}, prestado por {titular}, por parte del taller que se registra (el «Cliente»). El servicio se dirige a
+          Estos términos regulan el uso de {BRAND.name}, prestado por {titular}, por parte de la empresa que se registra (el «Cliente»). El servicio se dirige a
           empresas y profesionales; no a consumidores.
         </p>
         <h2>2. Cuenta</h2>
@@ -182,10 +182,10 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         <h2>3. Planes, prueba y precios</h2>
         <ul>
           <li>Planes Pro, Max, Business y Excelencia, con los precios y límites que se publican en la web. Precios sin IVA.</li>
-          <li>Prueba gratuita de 7 días, una por taller. Se pide la tarjeta al empezar y no se cobra hasta que termina la prueba.</li>
+          <li>Prueba gratuita de 7 días, una por empresa. Se pide la tarjeta al empezar y no se cobra hasta que termina la prueba.</li>
           <li>Pago mensual o anual (con dos meses gratis), por adelantado, a través de Stripe. Las facturas están en el panel.</li>
           <li>
-            Los cambios de plan se prorratean. Para bajar de plan, los datos del taller tienen que caber en los límites del nuevo plan. Un cambio de precios
+            Los cambios de plan se prorratean. Para bajar de plan, los datos de la empresa tienen que caber en los límites del nuevo plan. Un cambio de precios
             se avisa con al menos 30 días de antelación y se aplica desde la siguiente renovación.
           </li>
         </ul>
@@ -203,11 +203,17 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         <ul>
           <li>El Cliente solo carga datos de sus propios clientes, obtenidos legalmente, y es responsable de su exactitud.</li>
           <li>
-            Los avisos son comunicaciones de servicio sobre el mantenimiento del vehículo. No se pueden usar para enviar publicidad ni para escribir a
-            personas que no sean clientes del taller.
+            Los avisos son comunicaciones de servicio sobre el mantenimiento de las instalaciones del cliente. No se pueden usar para enviar publicidad ni para escribir a
+            personas que no sean clientes de la empresa.
           </li>
-          <li>Se prohíbe intentar acceder a datos de otros talleres, saturar el servicio o eludir los límites del plan.</li>
-          <li>{BRAND.name} puede suspender una cuenta que incumpla estas normas o ponga en riesgo la entregabilidad de los correos de los demás talleres.</li>
+          <li>Se prohíbe intentar acceder a datos de otras empresas, saturar el servicio o eludir los límites del plan.</li>
+          <li>{BRAND.name} puede suspender una cuenta que incumpla estas normas o ponga en riesgo la entregabilidad de los correos de las demás empresas.</li>
+          <li>
+            {BRAND.name} es una herramienta de gestión: ayuda a planificar y registrar el mantenimiento tomando como referencia el Reglamento de instalaciones
+            de protección contra incendios (RD 513/2017), pero no certifica el cumplimiento normativo, no emite certificados oficiales ni actas de
+            inspección y no verifica la habilitación de la empresa ni la cualificación de sus técnicos. El Cliente es responsable de cumplir la normativa
+            aplicable, de las operaciones que realiza y registra, y de revisar las periodicidades y los documentos que genera.
+          </li>
         </ul>
         <h2>7. Disponibilidad y soporte</h2>
         <p>
@@ -221,7 +227,7 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         </p>
         <h2>9. Protección de datos</h2>
         <p>
-          Respecto a los datos de los clientes del taller, {BRAND.name} actúa como encargado del tratamiento conforme al{" "}
+          Respecto a los datos de los clientes de la empresa, {BRAND.name} actúa como encargado del tratamiento conforme al{" "}
           <Link href="/legal/encargo-tratamiento">contrato de encargo del tratamiento</Link>, que forma parte de estos términos.
         </p>
         <h2>10. Cambios y ley aplicable</h2>
@@ -253,7 +259,7 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
             </tr>
             <tr>
               <td>ry_org</td>
-              <td>Recordar qué taller está activo si perteneces a varios</td>
+              <td>Recordar qué empresa está activa si perteneces a varias</td>
               <td>1 año</td>
             </tr>
             <tr>
@@ -272,8 +278,8 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
     "encargo-tratamiento": (
       <>
         <p>
-          Contrato conforme al artículo 28 del Reglamento (UE) 2016/679 (RGPD) y a la Ley Orgánica 3/2018 (LOPDGDD), entre el taller que da de alta su
-          cuenta (el «Responsable») y {titular} (el «Encargado»). Se acepta al crear el taller en {BRAND.name} y queda registrado con su fecha y versión.
+          Contrato conforme al artículo 28 del Reglamento (UE) 2016/679 (RGPD) y a la Ley Orgánica 3/2018 (LOPDGDD), entre la empresa que da de alta su
+          cuenta (el «Responsable») y {titular} (el «Encargado»). Se acepta al crear la empresa en {BRAND.name} y queda registrado con su fecha y versión.
         </p>
         <h2>1. Objeto y duración</h2>
         <p>
@@ -282,18 +288,18 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
         </p>
         <h2>2. Datos y personas afectadas</h2>
         <ul>
-          <li>Personas: clientes del taller, personas que piden cita y usuarios del taller.</li>
-          <li>Datos: identificación y contacto (nombre, correo, teléfono), vehículos (matrícula, marca, modelo, bastidor, kilómetros), historial de revisiones, citas y presupuestos, y registros de envío de correos.</li>
+          <li>Personas: clientes de la empresa y sus personas de contacto, personas que piden una visita, técnicos y usuarios de la empresa.</li>
+          <li>Datos: identificación y contacto (nombre, razón social, NIF/CIF, correo, teléfono, dirección), instalaciones y equipos, historial de actuaciones, órdenes de trabajo, incidencias, fotos y documentos, visitas y presupuestos, registros de envío de correos y, en las cuentas que venían de la etapa de talleres, vehículos e historial de revisiones.</li>
           <li>No se tratan categorías especiales de datos. El Responsable no debe introducirlas en las notas.</li>
         </ul>
         <h2>3. Tratamientos</h2>
-        <p>Alojamiento, consulta, cálculo de las próximas revisiones, envío de avisos y correos de citas y presupuestos en nombre del taller, informes, copias de seguridad y borrado.</p>
+        <p>Alojamiento, consulta, cálculo de los próximos vencimientos, envío de avisos y de correos de visitas, órdenes de trabajo, incidencias, informes y presupuestos en nombre de la empresa, informes, copias de seguridad y borrado.</p>
         <h2>4. Obligaciones del Encargado</h2>
         <ul>
           <li>Tratar los datos solo según las instrucciones documentadas del Responsable (la configuración que este hace en el panel).</li>
           <li>Garantizar la confidencialidad del personal autorizado.</li>
           <li>
-            Aplicar medidas de seguridad adecuadas (art. 32): cifrado en tránsito, separación de los datos de cada taller en la base de datos, control de
+            Aplicar medidas de seguridad adecuadas (art. 32): cifrado en tránsito, separación de los datos de cada empresa en la base de datos, control de
             accesos por permisos, registro de acciones, copias de seguridad y secretos cifrados.
           </li>
           <li>Ayudar al Responsable a atender los derechos de los interesados (exportación, rectificación, supresión, baja de avisos).</li>

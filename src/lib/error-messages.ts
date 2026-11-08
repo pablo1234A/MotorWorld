@@ -38,17 +38,17 @@ const CONFLICT_REASON: Record<string, string> = {
   organizations_slug_key: "Esa dirección pública ya está en uso. Elige otra.",
   invitations_pending_unique:
     "Ya hay una invitación pendiente para ese correo.",
-  organization_members_unique: "Esa persona ya forma parte del taller.",
+  organization_members_unique: "Esa persona ya forma parte de la empresa.",
   vehicles_plate_unique:
-    "Ya existe un vehículo con esa matrícula en este taller.",
+    "Ya existe un vehículo con esa matrícula en esta empresa.",
   equipment_code_unique: "Ya hay otro equipo con ese código en tu empresa.",
   work_order_items_unique: "Ese equipo ya está en la orden con esa operación.",
   technicians_member_unique: "Ese usuario ya está vinculado a otro técnico.",
   sending_domains_unique: "Ese dominio ya está añadido.",
   subscription_exists:
-    "Tu taller ya tiene una suscripción. Cambia de plan desde esta misma página.",
+    "Tu empresa ya tiene una suscripción. Cambia de plan desde esta misma página.",
   appointments_open_per_reminder:
-    "Ya tienes una solicitud de cita pendiente para este aviso. El taller te contestará pronto.",
+    "Ya tienes una solicitud de cita pendiente para este aviso. La empresa te contestará pronto.",
   email_suppressions_pkey: "Esa dirección ya está bloqueada.",
 };
 
@@ -61,7 +61,7 @@ const VALIDATION_REASON: Record<string, string> = {
   km_lower_than_current:
     "Los kilómetros son menores que los actuales. Si se ha cambiado el cuentakilómetros, márcalo para confirmarlo.",
   read_on_in_future: "La fecha de la lectura no puede ser futura.",
-  service_date_in_future: "La fecha de la revisión no puede ser futura.",
+  service_date_in_future: "La fecha de la actuación no puede ser futura.",
   vehicles_next_after_last:
     "La próxima revisión debe ser posterior a la última.",
   maintenance_records_next_after:
@@ -87,7 +87,7 @@ const VALIDATION_REASON: Record<string, string> = {
   bot_check:
     "No hemos podido comprobar que no eres un robot. Vuelve a intentarlo.",
   appointments_open_per_reminder:
-    "Ya tienes una solicitud de cita pendiente para este aviso. El taller te contestará pronto.",
+    "Ya tienes una solicitud de cita pendiente para este aviso. La empresa te contestará pronto.",
   domain_rejected:
     "El proveedor de correo no acepta ese dominio. Comprueba que esté bien escrito y que sea tuyo.",
   too_many_domains:
@@ -160,7 +160,7 @@ const IMPORT_REASON: Record<string, string> = {
   has_errors: "Hay filas con errores: corrígelas (en el archivo) o marca «Importar solo las filas correctas».",
   expired: "La importación ha caducado (7 días). Vuelve a subir el archivo.",
   repeated_file:
-    "Este archivo ya se importó antes en este taller. Marca la casilla si quieres importarlo de nuevo.",
+    "Este archivo ya se importó antes en esta empresa. Marca la casilla si quieres importarlo de nuevo.",
   not_editable: "La importación ya no se puede modificar.",
   nothing_to_import: "No hay ninguna fila nueva que importar.",
 };

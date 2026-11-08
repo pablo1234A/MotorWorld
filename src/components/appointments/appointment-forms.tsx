@@ -244,7 +244,7 @@ export function BookingSettingsForm({
           <input type="checkbox" name="bookingEnabled" defaultChecked={values.bookingEnabled} disabled={readOnly} className="mt-1 size-4" />
           <span>
             <span className="font-medium">Aceptar solicitudes de cita en línea</span>
-            <span className="block text-sm text-[var(--muted)]">El botón «Pedir cita» de los avisos lleva a esta página. Si la desactivas, abre un correo al taller.</span>
+            <span className="block text-sm text-[var(--muted)]">El botón «Pedir cita» de los avisos lleva a esta página. Si la desactivas, abre un correo a la empresa.</span>
           </span>
         </label>
         <fieldset className="flex flex-col gap-2">
@@ -252,7 +252,7 @@ export function BookingSettingsForm({
           <label className="flex items-start gap-3 text-sm">
             <input type="radio" name="bookingMode" value="free_request" checked={mode === "free_request"} onChange={() => setMode("free_request")} disabled={readOnly} className="mt-1" />
             <span>
-              <span className="font-medium">El cliente propone un día</span> y el taller le confirma la hora.
+              <span className="font-medium">El cliente propone un día</span> y la empresa le confirma la hora.
             </span>
           </label>
           <label className="flex items-start gap-3 text-sm">

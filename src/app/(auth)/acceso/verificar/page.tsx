@@ -37,7 +37,7 @@ async function Content({ searchParams }: { searchParams: SearchParams }) {
           Entrar con otra cuenta
         </button>
       </form>
-      <p className="text-xs text-[var(--muted)]">¿Has perdido el móvil? Pide a otro administrador del taller o al soporte de RevisaYa que te ayude a recuperar el acceso.</p>
+      <p className="text-xs text-[var(--muted)]">¿Has perdido el móvil? Pide a otro administrador de la empresa o al soporte de RevisaYa que te ayude a recuperar el acceso.</p>
     </div>
   );
 }

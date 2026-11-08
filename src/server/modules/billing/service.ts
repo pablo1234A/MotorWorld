@@ -14,7 +14,7 @@ import { logger } from "@/server/logger";
 import type { ServiceCtx } from "@/server/modules/branches/service";
 
 /**
- * Suscripción del taller con Stripe (modo TEST). Lo que ve y hace el
+ * Suscripción de la empresa con Stripe (modo TEST). Lo que ve y hace el
  * administrador: contratar con 7 días de prueba (tarjeta al empezar, sin
  * cobro hasta el final, una prueba por taller, P18), cambiar de plan (con
  * prorrateo, comprobando que cabe en el plan nuevo), portal de cliente
@@ -74,7 +74,7 @@ export function downgradeBlockers(plan: PlanCode, usage: BillingOverview["usage"
   const p = PLANS[plan];
   const out: string[] = [];
   if (p.maxUsers !== null && usage.users > p.maxUsers) out.push(`tienes ${usage.users} usuarios (contando invitaciones pendientes) y el plan ${p.name} admite ${p.maxUsers}`);
-  if (p.maxBranches !== null && usage.branches > p.maxBranches) out.push(`tienes ${usage.branches} talleres y el plan ${p.name} admite ${p.maxBranches}`);
+  if (p.maxBranches !== null && usage.branches > p.maxBranches) out.push(`tienes ${usage.branches} delegaciones y el plan ${p.name} admite ${p.maxBranches}`);
   if (p.maxCustomers !== null && usage.customers > p.maxCustomers) out.push(`tienes ${usage.customers} clientes y el plan ${p.name} admite ${p.maxCustomers}`);
   if (p.maxActiveVehicles !== null && usage.activeVehicles > p.maxActiveVehicles)
     out.push(`tienes ${usage.activeVehicles} vehículos activos y el plan ${p.name} admite ${p.maxActiveVehicles}`);

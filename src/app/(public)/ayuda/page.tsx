@@ -3,15 +3,15 @@ import Link from "next/link";
 
 import { BRAND } from "@/config/brand";
 
-export const metadata: Metadata = { title: `Guía de inicio · ${BRAND.name}`, description: `Cómo poner en marcha ${BRAND.name} en tu taller, paso a paso.` };
+export const metadata: Metadata = { title: `Guía de inicio · ${BRAND.name}`, description: `Cómo poner en marcha ${BRAND.name} en tu empresa de protección contra incendios, paso a paso.` };
 
 const STEPS: Array<{ title: string; where: string; body: string[] }> = [
   {
-    title: "Crea tu cuenta y tu taller",
-    where: "Registro → Da de alta tu taller",
+    title: "Crea tu cuenta y tu empresa",
+    where: "Registro → Da de alta tu empresa",
     body: [
       "Regístrate con tu correo y confirma el enlace que te llega.",
-      "Escribe el nombre del taller tal y como quieres que lo vean tus clientes. La dirección pública (por ejemplo, taller-sur) se usa en el enlace para pedir cita.",
+      "Escribe el nombre de la empresa tal y como quieres que lo vean tus clientes. La dirección pública (por ejemplo, extintores-norte) se usa en el enlace para pedir una visita.",
     ],
   },
   {
@@ -23,43 +23,53 @@ const STEPS: Array<{ title: string; where: string; body: string[] }> = [
     ],
   },
   {
-    title: "Pon los datos y el logo del taller",
-    where: "Configuración → Datos del taller",
-    body: ["Logo, color, teléfono y dirección aparecen en los correos y en la página para pedir cita.", "El NIF y la razón social salen en los presupuestos."],
+    title: "Pon los datos y el logo de la empresa",
+    where: "Configuración → Datos de la empresa",
+    body: ["Logo, color, teléfono y dirección aparecen en los correos, los partes de trabajo y la página para pedir visita.", "El NIF y la razón social salen en los presupuestos."],
   },
   {
-    title: "Elige desde qué dirección salen los correos",
-    where: "Configuración → Correo",
+    title: "Revisa las operaciones de mantenimiento",
+    where: "Configuración → Mantenimiento",
     body: [
-      "Sin hacer nada, los avisos salen con el nombre de tu taller desde una dirección de RevisaYa, y las respuestas te llegan a tu correo.",
-      "Si tienes dominio propio (tutaller.es), añade los registros DNS que te enseñamos y los correos saldrán desde tu dirección. Hay una guía para cada registrador en el propio panel.",
+      "Vienen las operaciones del RIPCI (RD 513/2017, anexo II) con su periodicidad de referencia: las de la tabla II (empresa mantenedora) activadas y las de la tabla I (que puede hacer el titular) desactivadas.",
+      "Activa las que hagas y, si quieres, acorta alguna periodicidad. No se pueden alargar. RevisaYa ayuda a planificar; no certifica el cumplimiento normativo.",
     ],
   },
   {
-    title: "Sube tu Excel de clientes y coches",
+    title: "Da de alta a tus técnicos",
+    where: "Configuración → Técnicos",
+    body: [
+      "Añade a las personas que hacen las revisiones. Si les invitas como usuarios con el rol «Técnico / operario» y les vinculas, verán en el móvil solo sus órdenes.",
+    ],
+  },
+  {
+    title: "Importa clientes, instalaciones y equipos",
     where: "Importar",
     body: [
-      "Descarga la plantilla, copia tus datos (nombre, correo, teléfono, matrícula, marca, modelo, última revisión y kilómetros) y súbela. Hasta 2.000 filas por archivo.",
-      "Antes de guardar verás las filas con problemas (una matrícula mal escrita, una fecha que no existe…) y podrás corregirlas. No se guarda nada a medias.",
+      "Hay una plantilla para cada cosa. Sube primero los clientes, luego las instalaciones (cada una con su cliente) y por último los equipos (cada uno con su instalación y su categoría).",
+      "Antes de guardar verás qué se crea, qué se omite porque ya existe y qué filas tienen errores. Todo se crea a la vez o nada.",
     ],
   },
   {
-    title: "Activa los avisos",
+    title: "Imprime las etiquetas QR",
+    where: "Instalaciones → ficha → Etiquetas QR",
+    body: ["Pega cada etiqueta en su equipo. Al escanearla, el técnico abre la ficha del equipo tras iniciar sesión; el QR no contiene datos del cliente."],
+  },
+  {
+    title: "Crea la primera orden de trabajo",
+    where: "Instalaciones → ficha → Nueva orden de trabajo",
+    body: [
+      "La orden propone lo que vence en los próximos días. Asígnala a un técnico, ponle fecha y avisa al cliente con un clic.",
+      "En la instalación, el técnico pulsa «Empezar el trabajo», registra el resultado de cada equipo (con materiales, fotos e incidencias) y la finaliza. El historial del equipo y sus próximos vencimientos se actualizan solos.",
+    ],
+  },
+  {
+    title: "Activa los avisos de vencimiento",
     where: "Configuración → Avisos",
     body: [
-      "Elige cuántos días antes avisar (por ejemplo, 30 y 7), el horario de envío y los días sin envíos (festivos, fines de semana).",
-      "Revisa el texto del correo en Configuración → Plantillas y mándate un correo de prueba.",
+      "Elige cuántos días antes avisar (por ejemplo, 30 y 7), el horario de envío y los días sin envíos.",
+      "Revisa el texto en Configuración → Plantillas de correo y mándate un correo de prueba.",
     ],
-  },
-  {
-    title: "Abre la página para pedir cita",
-    where: "Configuración → Citas",
-    body: ["Pon tu horario y cuántos coches puedes atender a la vez. El botón de cada aviso lleva a esa página.", "Las solicitudes te llegan al panel (Citas) y por correo; las confirmas o las rechazas con un clic."],
-  },
-  {
-    title: "Apunta cada revisión",
-    where: "Vehículos → ficha del coche → Añadir revisión",
-    body: ["Fecha, kilómetros, trabajos y piezas. Con eso se calcula la próxima revisión y se programan los avisos.", "En el inicio verás cuántos clientes han vuelto tras un aviso."],
   },
 ];
 
@@ -67,7 +77,7 @@ export default function HelpPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-semibold tracking-tight">Guía de inicio</h1>
-      <p className="mt-2 text-[var(--muted)]">Todo lo necesario para tener los avisos funcionando hoy, en 8 pasos.</p>
+      <p className="mt-2 text-[var(--muted)]">De la cuenta nueva a la primera orden de trabajo terminada, en 9 pasos.</p>
       <ol className="mt-8 flex flex-col gap-4">
         {STEPS.map((s, i) => (
           <li key={s.title} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">

@@ -28,7 +28,7 @@ const TONE: Record<string, string> = {
 export default async function AppointmentsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/citas");
   if (!can(ctx, "appointments.manage")) {
-    return <Alert tone="error" title="Sin permiso">No tienes permiso para gestionar citas. Pídeselo a un administrador del taller.</Alert>;
+    return <Alert tone="error" title="Sin permiso">No tienes permiso para gestionar citas. Pídeselo a un administrador de la empresa.</Alert>;
   }
   const sp = await searchParams;
   const estado = param(sp.estado, 20);

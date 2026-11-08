@@ -15,7 +15,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function ApiKeysPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/configuracion/api");
-  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden gestionar la API.</Alert>;
+  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden gestionar la API.</Alert>;
   const header = (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">API</h1>
@@ -65,7 +65,7 @@ export default async function ApiKeysPage({ searchParams }: { searchParams: Sear
       <Card className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold">Claves activas</h2>
         <p className="text-sm text-[var(--muted)]">
-          Cada clave actúa con tus permisos de administrador. Si dejas de ser administrador del taller, tus claves dejan de funcionar. Guárdalas como una
+          Cada clave actúa con tus permisos de administrador. Si dejas de ser administrador de la empresa, tus claves dejan de funcionar. Guárdalas como una
           contraseña: nunca en el código de una web ni en un correo.
         </p>
         {active.length === 0 ? (
@@ -79,7 +79,7 @@ export default async function ApiKeysPage({ searchParams }: { searchParams: Sear
                   <p className="font-mono text-xs text-[var(--muted)]">{k.prefix}_••••</p>
                   <p className="break-words text-xs text-[var(--muted)]">
                     {k.scopes.join(" · ")}
-                    {k.branchIds ? ` · solo ${k.branchIds.map((b) => branchName.get(b) ?? "otro taller").join(", ")}` : ""}
+                    {k.branchIds ? ` · solo ${k.branchIds.map((b) => branchName.get(b) ?? "otra delegación").join(", ")}` : ""}
                   </p>
                   <p className="text-xs text-[var(--muted)]">
                     Creada el {formatDateTime(k.createdAt)}

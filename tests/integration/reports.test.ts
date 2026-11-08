@@ -38,7 +38,10 @@ async function vehicle(o: TestOrg, name: string, next = 20) {
 async function sentReminder(o: TestOrg, v: { customerId: string; vehicleId: string }, daysAgo: number) {
   const [{ id }] = await query<{ id: string }>(
     `insert into reminders (organization_id, branch_id, customer_id, vehicle_id, type, due_date, offset_days, scheduled_for, status, sent_at, provider, provider_message_id)
-     values ($1, $2, $3, $4, 'service_date', current_date + 10, 30, now() - make_interval(days => $5::int), 'sent', now() - make_interval(days => $5::int), 'resend', 'msg_' || gen_random_uuid()) returning id`,
+     values ($1, $2, $3, $4, 'service_date', current_date + 10, 30,
+             (((now() at time zone 'Europe/Madrid')::date - $5::int)::timestamp + time '12:00') at time zone 'Europe/Madrid', 'sent',
+             -- Mediodía en Madrid de hace N días: el test no depende de la hora ni del cambio de horario.
+             (((now() at time zone 'Europe/Madrid')::date - $5::int)::timestamp + time '12:00') at time zone 'Europe/Madrid', 'resend', 'msg_' || gen_random_uuid()) returning id`,
     [o.orgId, o.branchId, v.customerId, v.vehicleId, daysAgo],
   );
   return id;

@@ -7,9 +7,9 @@ import type { Tx } from "@/server/db/client";
 import type { SenderConfig } from "./provider";
 
 /**
- * Remitente y datos de marca de un taller (mismas reglas que el dispatcher):
+ * Remitente y datos de marca de una empresa (mismas reglas que el dispatcher):
  * dominio propio solo si está VERIFICADO; si no, `<slug>@<dominio compartido>`
- * con el nombre del taller (P1). Nunca se usa un dominio sin verificar.
+ * con el nombre de la empresa (P1). Nunca se usa un dominio sin verificar.
  */
 export interface WorkshopSender {
   organizationId: string;
@@ -65,7 +65,7 @@ export async function resolveWorkshopSender(tx: Tx, organizationId: string, send
 /**
  * Remitente de los correos de la plataforma al propio taller (resúmenes,
  * avisos de consumo). La parte local lleva "_", que no puede aparecer en el
- * slug de un taller: no puede coincidir con el remitente de ninguno.
+ * slug de una empresa: no puede coincidir con el remitente de ninguno.
  */
 export function platformFrom(sender: SenderConfig): { from: string; address: string } {
   const address = `no_reply@${sender.sharedDomain}`;

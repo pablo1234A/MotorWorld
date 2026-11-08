@@ -3,7 +3,7 @@ import "server-only";
 import { can, isAdmin, type OrgContext } from "./context";
 
 /**
- * Qué puede hacer el usuario en el taller activo, para decidir qué botones
+ * Qué puede hacer el usuario en la empresa activa, para decidir qué botones
  * mostrar. Es solo presentación: el servidor y la BD vuelven a comprobarlo.
  * Con la suscripción inactiva todo queda en solo lectura.
  */

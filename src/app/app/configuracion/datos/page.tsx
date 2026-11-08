@@ -7,7 +7,7 @@ import { isAdmin } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
 import { listDataRequests } from "@/server/modules/privacy/service";
 
-export const metadata: Metadata = { title: "Datos del taller · RevisaYa" };
+export const metadata: Metadata = { title: "Datos de la empresa · RevisaYa" };
 
 const TYPE: Record<string, string> = {
   access: "Acceso",
@@ -20,12 +20,12 @@ const TYPE: Record<string, string> = {
 
 export default async function DataPage() {
   const ctx = await requireOrgPage("/app/configuracion/datos");
-  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden exportar los datos.</Alert>;
+  if (!isAdmin(ctx)) return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden exportar los datos.</Alert>;
   const requests = await listDataRequests(ctx);
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Datos del taller</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Datos de la empresa</h1>
         <p className="text-sm text-[var(--muted)]">Tus datos son tuyos: descárgalos cuando quieras, también si cancelas la suscripción.</p>
       </div>
       <Card className="flex flex-col gap-3">

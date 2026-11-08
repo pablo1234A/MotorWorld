@@ -63,7 +63,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
           ← Citas
         </Link>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Nueva cita</h1>
-        <p className="text-sm text-[var(--muted)]">Para citas que te piden por teléfono o en el taller. Nacen confirmadas.</p>
+        <p className="text-sm text-[var(--muted)]">Para citas que te piden por teléfono o en persona. Nacen confirmadas.</p>
       </div>
       <Card className="flex flex-col gap-4">
         {customer ? (

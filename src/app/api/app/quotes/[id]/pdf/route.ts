@@ -4,7 +4,7 @@ import { can, getOrgContext } from "@/server/auth/context";
 import { logger } from "@/server/logger";
 import { quotePdf } from "@/server/modules/quotes/issue";
 
-/** PDF de un presupuesto (con sesión; RLS limita a los presupuestos del taller). */
+/** PDF de un presupuesto (con sesión; RLS limita a los presupuestos de la empresa). */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getOrgContext();
   if (!ctx) return NextResponse.json({ error: { code: "unauthenticated" } }, { status: 401 });

@@ -23,7 +23,7 @@ import { logoUrl } from "@/server/modules/organizations/profile";
 
 /**
  * Correos de una cita al cliente (solicitud recibida, confirmada, cambiada,
- * rechazada, cancelada) y aviso al taller de una solicitud nueva.
+ * rechazada, cancelada) y aviso a la empresa de una solicitud nueva.
  *  - Los correos al cliente cuentan en el consumo mensual (P5).
  *  - Se respetan rebotes, quejas y bloqueos manuales; una baja de los AVISOS
  *    no impide los correos de una cita que la propia persona ha pedido.
@@ -270,7 +270,7 @@ export async function sendAppointmentEmail(
   return result.kind === "accepted" ? "sent" : "failed";
 }
 
-/** Aviso al taller (administradores y quien gestiona citas en esa sucursal) de una solicitud nueva. */
+/** Aviso a la empresa (administradores y quien gestiona citas en esa sucursal) de una solicitud nueva. */
 export async function notifyStaffNewRequest(
   appointmentId: string,
   deps: Deps,

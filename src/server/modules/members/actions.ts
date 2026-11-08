@@ -104,7 +104,7 @@ export async function removeMemberAction(_prev: ActionState, formData: FormData)
     const { id } = parseForm(idSchema, formData);
     await members.removeMember(ctx, id);
     refresh();
-    return { status: "success", message: "Usuario eliminado del taller." };
+    return { status: "success", message: "Usuario eliminado de la empresa." };
   });
 }
 

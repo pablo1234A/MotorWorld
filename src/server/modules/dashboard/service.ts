@@ -17,7 +17,7 @@ export interface DashboardSummary {
   customersWithoutEmail: number;
 }
 
-/** Contadores reales del taller (RLS: solo lo que el usuario puede ver). */
+/** Contadores reales de la empresa (RLS: solo lo que el usuario puede ver). */
 export async function getDashboardSummary(ctx: OrgContext, today = todayIn()): Promise<DashboardSummary> {
   const orgId = ctx.membership.organizationId;
   const in30 = addDays(today, 30);

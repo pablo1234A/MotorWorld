@@ -58,7 +58,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
           <span>{BRAND.name}</span>
         </Link>
         {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- logo servido por la ruta pública del taller
+          // eslint-disable-next-line @next/next/no-img-element -- logo servido por la ruta pública de la empresa
           <img src={logo} alt={ctx.membership.organizationName} className="hidden h-7 max-w-28 rounded bg-white object-contain px-1 sm:block" />
         ) : null}
         {ctx.memberships.length > 1 ? (

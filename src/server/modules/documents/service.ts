@@ -11,7 +11,7 @@ import type { ServiceCtx } from "../branches/service";
 /**
  * Documentos y fotografías de instalaciones, equipos, órdenes, actuaciones e
  * incidencias. Storage PRIVADO (bucket «documents», ruta que empieza por el id
- * del taller); se descargan con una URL firmada de 60 s tras comprobar con la
+ * de la empresa); se descargan con una URL firmada de 60 s tras comprobar con la
  * RLS que el usuario puede ver el documento. El tipo se comprueba por su
  * contenido (firma del archivo), no por la extensión.
  */

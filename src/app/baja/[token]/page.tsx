@@ -5,7 +5,7 @@ import { SubmitButton } from "@/components/ui/button";
 import { Alert, Skeleton } from "@/components/ui/feedback";
 import { resolveUnsubscribe, unsubscribe } from "@/server/modules/unsubscribe/service";
 
-export const metadata: Metadata = { title: "Avisos de revisión", robots: { index: false } };
+export const metadata: Metadata = { title: "Avisos de mantenimiento", robots: { index: false } };
 
 type Params = Promise<{ token: string }>;
 
@@ -38,14 +38,14 @@ async function Content({ params, searchParams }: { params: Params; searchParams:
   if (target.alreadyOptedOut || sp.hecho) {
     return (
       <Alert tone="success" title="Hecho">
-        No volverás a recibir avisos de revisión de {target.workshopName}. Si cambias de idea, díselo al taller.
+        No volverás a recibir avisos de mantenimiento de {target.workshopName}. Si cambias de idea, díselo a la empresa.
       </Alert>
     );
   }
   return (
     <form action={confirmUnsubscribe} className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">Avisos de {target.workshopName}</h1>
-      <p className="text-sm leading-6 text-[var(--muted)]">¿Quieres dejar de recibir los avisos de revisión de tu vehículo por correo?</p>
+      <p className="text-sm leading-6 text-[var(--muted)]">¿Quieres dejar de recibir los avisos de mantenimiento por correo?</p>
       <input type="hidden" name="token" value={token} />
       <SubmitButton pendingLabel="Guardando…">No quiero recibir más avisos</SubmitButton>
     </form>

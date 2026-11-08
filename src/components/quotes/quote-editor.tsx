@@ -196,7 +196,7 @@ export function IssueQuoteForm({ id, hasEmail, taxDataMissing }: { id: string; h
       <FormMessage state={state} />
       <input type="hidden" name="id" value={id} />
       {taxDataMissing ? (
-        <p className="text-sm text-[var(--warning)]">Faltan los datos fiscales del taller (razón social y NIF). Puedes añadirlos en Configuración → Datos del taller antes de emitirlo.</p>
+        <p className="text-sm text-[var(--warning)]">Faltan los datos fiscales de la empresa (razón social y NIF). Puedes añadirlos en Configuración → Datos de la empresa antes de emitirlo.</p>
       ) : null}
       <p className="text-sm text-[var(--muted)]">Al emitirlo se numera definitivamente, se guarda el PDF y ya no se puede modificar.</p>
       <div className="flex flex-wrap gap-3">

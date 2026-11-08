@@ -48,7 +48,7 @@ export async function createCustomerAction(
         return {
           status: "error",
           code: "possible_duplicate",
-          message: "Ya hay un cliente con ese correo o teléfono en este taller. Revisa que no esté repetido.",
+          message: "Ya hay un cliente con ese correo o teléfono en esta empresa. Revisa que no esté repetido.",
           values: Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")) as Record<string, string>,
           fieldErrors: undefined,
         };

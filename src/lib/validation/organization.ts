@@ -4,7 +4,7 @@ import { normalizePhone } from "@/lib/phone";
 import { checkTaxId, normalizeTaxId } from "@/lib/tax-id";
 
 /**
- * Datos del taller (marca y datos fiscales para presupuestos). Mismas reglas
+ * Datos de la empresa (marca y datos fiscales para presupuestos). Mismas reglas
  * que los CHECK de `organizations`.
  */
 

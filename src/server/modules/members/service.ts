@@ -11,7 +11,7 @@ import { enforceRateLimits, RATE_LIMITS } from "@/server/security/rate-limit";
 import { generateToken, hashToken, isWellFormedToken } from "@/server/security/tokens";
 
 /**
- * Gestión de usuarios del taller. Toda operación de administración comprueba
+ * Gestión de usuarios de la empresa. Toda operación de administración comprueba
  * el rol aquí y, además, RLS + triggers en la base de datos (propietario
  * protegido, límite de usuarios del plan, sucursales de la misma organización).
  */

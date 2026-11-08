@@ -35,7 +35,7 @@ ${
 ${(input.notes ?? []).map((n) => `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3a3f4a">${escapeHtml(n)}</p>`).join("")}
 ${input.link ? `<p style="margin:20px 0 0"><a href="${escapeHtml(input.link.href)}" style="display:inline-block;background:#c8102e;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:8px;font-weight:600">${escapeHtml(input.link.label)}</a></p>` : ""}
 </td></tr>
-<tr><td style="padding:14px 28px;background:#f4f5f7;font-size:12px;color:#5b616e">Recibes este correo porque administras un taller en RevisaYa. Puedes cambiar la frecuencia del resumen en Configuración → Correo.</td></tr>
+<tr><td style="padding:14px 28px;background:#f4f5f7;font-size:12px;color:#5b616e">Recibes este correo porque administras una empresa en RevisaYa. Puedes cambiar la frecuencia del resumen en Configuración → Correo.</td></tr>
 </table></body></html>`;
   const text = [
     input.title,

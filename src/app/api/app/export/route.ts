@@ -6,7 +6,7 @@ import { logger } from "@/server/logger";
 import { XLSX_MIME } from "@/server/modules/imports/files";
 import { exportWorkshop } from "@/server/modules/privacy/service";
 
-/** Todos los datos del taller en Excel. Solo administradores; también en solo lectura. */
+/** Todos los datos de la empresa en Excel. Solo administradores; también en solo lectura. */
 export async function GET() {
   const ctx = await getOrgContext();
   if (!ctx) return NextResponse.json({ error: { code: "unauthenticated" } }, { status: 401 });

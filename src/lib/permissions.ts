@@ -41,7 +41,7 @@ export const PERMISSION_LABELS: Record<OperatorPermission, string> = {
   "incidents.write": "Registrar y gestionar incidencias",
 };
 
-/** Permisos por defecto de un operario nuevo (gestión diaria del taller). */
+/** Permisos por defecto de un operario nuevo (gestión diaria de la empresa). */
 export const DEFAULT_OPERATOR_PERMISSIONS: readonly OperatorPermission[] = [
   "customers.write",
   "vehicles.write",

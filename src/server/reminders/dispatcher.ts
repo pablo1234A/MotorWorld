@@ -30,7 +30,7 @@ import { logoUrl } from "@/server/modules/organizations/profile";
  *    justo por taller): varios procesos en paralelo no envían dos veces.
  *  - Antes de enviar revalida TODO con los datos actuales.
  *  - "Enviado" solo cuando el proveedor acepta el mensaje.
- *  - Un error en un recordatorio o un taller nunca detiene a los demás.
+ *  - Un error en un recordatorio o una empresa nunca detiene a los demás.
  *  - Reintentos con backoff exponencial y jitter; corte si el proveedor cae.
  *  - Recuperación: si un proceso caído ya lo había enviado (email_logs), se
  *    marca como enviado sin reenviar; con el proveedor, la misma clave de
@@ -284,7 +284,7 @@ async function processOne(
   if (!c.in_window) {
     await withSystem((tx) =>
       sql`update reminders set status = 'scheduled', attempts = greatest(attempts - 1, 0), locked_until = null, locked_by = null,
-                 -- Fecha ideal "pasada": busca el primer hueco permitido desde hoy (hora local del taller).
+                 -- Fecha ideal "pasada": busca el primer hueco permitido desde hoy (hora local de la empresa).
                  scheduled_for = private.next_send_slot(branch_id, date '2000-01-01', due_date, now() + interval '1 minute'),
                  next_attempt_at = null
            where id = ${id} and status = 'processing'`.execute(tx),
@@ -336,9 +336,9 @@ async function processOne(
     `/api/public/unsubscribe/${token}`,
     opts.sender.appUrl,
   ).toString();
-  // Botón "Pedir cita": la página de citas del taller con el enlace firmado del
+  // Botón "Pedir cita": la página de citas de la empresa con el enlace firmado del
   // aviso (cliente y vehículo ya identificados). Con las citas en línea
-  // desactivadas, un correo al taller.
+  // desactivadas, un correo a la empresa.
   const cta = c.booking_enabled
     ? `${bookingPageUrl(opts.sender.appUrl, c.org_slug)}?t=${encodeURIComponent(bookingToken(c.id, opts.sender.linkSecret))}`
     : c.reply_to

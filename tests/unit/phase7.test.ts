@@ -103,6 +103,7 @@ describe("importes de presupuestos (decimal.js, mismas reglas que la BD)", () =>
       quantity: "4.5",
       unitPrice: "12.35",
       taxRate: 21,
+      lineKind: "service", // por defecto (PCI)
     });
     expect(quoteSchema.safeParse({ ...base, items: "[]" }).success).toBe(false);
     expect(

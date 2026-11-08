@@ -109,7 +109,7 @@ export const templateKindSchema = z.object({
 
 // ------------------------------------------------------------ dominio propio
 
-/** Dominio que el taller controla (p. ej. tallersur.es o correo.tallersur.es). */
+/** Dominio que la empresa controla (p. ej. tallersur.es o correo.tallersur.es). */
 export const domainSchema = z.object({
   domain: z
     .string()
@@ -179,7 +179,7 @@ export const SUPPRESSION_REASON_LABELS: Record<string, string> = {
   hard_bounce: "Rebote definitivo (la dirección no existe)",
   complaint: "Lo marcó como spam",
   unsubscribe: "Se dio de baja",
-  manual: "Bloqueada por el taller",
+  manual: "Bloqueada por la empresa",
 };
 
 export const manualSuppressionSchema = z.object({

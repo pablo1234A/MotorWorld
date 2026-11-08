@@ -19,7 +19,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 export default async function QuotesPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/presupuestos");
   if (!can(ctx, "quotes.manage")) {
-    return <Alert tone="error" title="Sin permiso">No tienes permiso para gestionar presupuestos. Pídeselo a un administrador del taller.</Alert>;
+    return <Alert tone="error" title="Sin permiso">No tienes permiso para gestionar presupuestos. Pídeselo a un administrador de la empresa.</Alert>;
   }
   const sp = await searchParams;
   const estado = param(sp.estado, 20);

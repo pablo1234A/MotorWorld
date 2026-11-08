@@ -77,7 +77,7 @@ export const slugSchema = z
   .regex(/^[a-z0-9]([a-z0-9-]{1,48}[a-z0-9])$/, "Solo minúsculas, números y guiones (3 a 50 caracteres)");
 
 export const createOrganizationSchema = z.object({
-  tradeName: z.string().trim().min(2, "Indica el nombre del taller").max(120, "Máximo 120 caracteres"),
+  tradeName: z.string().trim().min(2, "Indica el nombre de la empresa").max(120, "Máximo 120 caracteres"),
   slug: z.union([z.literal(""), slugSchema]).optional(),
   timezone: z.enum(SUPPORTED_TIMEZONES, { error: "Zona horaria no válida" }).default("Europe/Madrid"),
   acceptDpa: z.unknown().refine((v) => v === "on", "Tienes que aceptar el contrato de encargo del tratamiento"),
@@ -108,7 +108,7 @@ function refineAccess<T extends { role: string; permissions: string[]; branchSco
   ctx: z.RefinementCtx,
 ) {
   if (d.branchScope === "selected" && d.branchIds.length === 0) {
-    ctx.addIssue({ code: "custom", path: ["branchIds"], message: "Elige al menos un taller" });
+    ctx.addIssue({ code: "custom", path: ["branchIds"], message: "Elige al menos una delegación" });
   }
 }
 

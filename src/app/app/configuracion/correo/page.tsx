@@ -22,16 +22,16 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 export default async function EmailSettingsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/configuracion/correo");
   if (!isAdmin(ctx)) {
-    return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden configurar el correo.</Alert>;
+    return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden configurar el correo.</Alert>;
   }
   const sp = await searchParams;
   const branches = await listAccessibleBranches(ctx);
   const branch = branches.find((b) => b.id === param(sp.taller, 40)) ?? branches[0];
-  if (!branch) return <Alert tone="error">No hay ningún taller activo.</Alert>;
+  if (!branch) return <Alert tone="error">No hay ninguna delegación activa.</Alert>;
 
   const [settings, domains, suppressions, reputation] = await Promise.all([getSenderSettings(ctx, branch.id), listDomains(ctx), listSuppressions(ctx), orgEmailReputation(ctx)]);
   const pct = (n: number) => `${(n * 100).toLocaleString("es-ES", { maximumFractionDigits: 2 })} %`;
-  if (!settings) return <Alert tone="error">No se ha encontrado la configuración de este taller.</Alert>;
+  if (!settings) return <Alert tone="error">No se ha encontrado la configuración de esta delegación.</Alert>;
   const readOnly = !ctx.subscription.active;
   const sender = getSenderConfig();
   const sharedDomain = sender?.sharedDomain ?? process.env.EMAIL_SHARED_DOMAIN ?? "avisos.revisaya.es";
@@ -42,7 +42,7 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Correo</h1>
-          <p className="text-sm text-[var(--muted)]">Desde qué dirección salen los avisos, resumen para el taller y direcciones bloqueadas.</p>
+          <p className="text-sm text-[var(--muted)]">Desde qué dirección salen los avisos, resumen para la empresa y direcciones bloqueadas.</p>
         </div>
         <Link href="/app/configuracion/plantillas" className={buttonClass("secondary")}>
           Editar plantillas
@@ -57,7 +57,7 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
         <h2 id="reputacion" className="text-lg font-semibold">Calidad de los envíos (últimos 30 días)</h2>
         {reputation.level !== "ok" ? (
           <Alert tone={reputation.level === "critical" ? "error" : "warning"} title={reputation.level === "critical" ? "Demasiados rebotes o quejas" : "Revisa tu lista de clientes"}>
-            Gmail y Outlook mandan a spam a los remitentes con muchos rebotes o quejas. Revisa los correos de tus clientes y escribe solo a clientes del taller.
+            Gmail y Outlook mandan a spam a los remitentes con muchos rebotes o quejas. Revisa los correos de tus clientes y escribe solo a clientes de la empresa.
           </Alert>
         ) : null}
         <dl className="grid gap-3 sm:grid-cols-3">

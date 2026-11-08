@@ -9,7 +9,7 @@ import type { ServiceCtx } from "@/server/modules/branches/service";
 
 /**
  * Remitente por sucursal (compartido o dominio propio verificado), resumen
- * al taller y lista de direcciones bloqueadas. RLS: solo administradores.
+ * a la empresa y lista de direcciones bloqueadas. RLS: solo administradores.
  */
 
 type Ctx = ServiceCtx & Pick<OrgContext, "subscription">;
@@ -87,7 +87,7 @@ export async function listSuppressions(ctx: Ctx, limit = 200): Promise<Suppressi
   );
 }
 
-/** Bloqueo manual (el taller no quiere escribir a esa dirección). */
+/** Bloqueo manual (la empresa no quiere escribir a esa dirección). */
 export async function addSuppression(ctx: Ctx, email: string): Promise<void> {
   assertWritable(ctx);
   await withRls(ctx.auth, (tx) =>
@@ -97,7 +97,7 @@ export async function addSuppression(ctx: Ctx, email: string): Promise<void> {
 
 /**
  * Solo se pueden quitar los bloqueos manuales. Rebotes, quejas y bajas no:
- * la persona tiene que volver a darse de alta con el taller (y el taller
+ * la persona tiene que volver a darse de alta con la empresa (y la empresa
  * cambiar el correo si era erróneo). RLS lo impone.
  */
 export async function removeSuppression(ctx: Ctx, email: string): Promise<void> {

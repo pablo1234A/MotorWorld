@@ -11,8 +11,8 @@ import { displayName } from "@/server/email/sender";
 import { logger } from "@/server/logger";
 
 /**
- * Correo de invitación a un taller. Es un correo de la plataforma (no cuenta
- * en el consumo del taller). Si el envío no está configurado o falla, la
+ * Correo de invitación a una empresa. Es un correo de la plataforma (no cuenta
+ * en el consumo de la empresa). Si el envío no está configurado o falla, la
  * invitación sigue siendo válida y el administrador puede copiar el enlace.
  */
 export async function sendInvitationEmail(

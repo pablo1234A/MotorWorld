@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Invitación · RevisaYa", robots: { 
 type Params = Promise<{ token: string }>;
 
 const STATE_MESSAGES = {
-  expired: "Esta invitación ha caducado. Pide al administrador del taller que te envíe un enlace nuevo.",
+  expired: "Esta invitación ha caducado. Pide al administrador de la empresa que te envíe un enlace nuevo.",
   revoked: "Esta invitación ha sido anulada.",
   accepted: "Esta invitación ya se ha utilizado.",
 } as const;

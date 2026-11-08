@@ -19,9 +19,9 @@ import { notifyStaffNewRequest, sendAppointmentEmail } from "./notify";
 /**
  * Página pública para pedir cita (/t/<slug>/cita). Sin sesión: todo se lee y
  * escribe con la conexión del sistema, y solo se expone lo imprescindible
- * (marca del taller y, con el enlace firmado del aviso, el nombre del cliente
+ * (marca de la empresa y, con el enlace firmado del aviso, el nombre del cliente
  * y la matrícula para prellenar el formulario). Una SOLICITUD no es una cita
- * confirmada: la confirma el taller.
+ * confirmada: la confirma la empresa.
  */
 
 export const BOOKING_MAX_DAYS_AHEAD = 90;

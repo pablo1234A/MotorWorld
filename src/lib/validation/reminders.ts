@@ -168,7 +168,7 @@ export const SKIP_REASON_LABELS: Record<string, string> = {
   canceled_by_user: "Cancelado por la empresa",
 };
 
-/** Filtros del panel: grupos de estados comprensibles para el taller. */
+/** Filtros del panel: grupos de estados comprensibles para la empresa. */
 export const REMINDER_FILTERS = {
   pendientes: ["scheduled", "processing", "retrying"],
   enviados: ["sent", "delivered"],

@@ -156,7 +156,7 @@ export const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
 export const APPOINTMENT_SOURCE_LABELS: Record<string, string> = {
   reminder_link: "Desde un aviso",
   booking_page: "Página de citas",
-  manual: "Creada en el taller",
+  manual: "Creada en la empresa",
   api: "API",
 };
 

@@ -73,7 +73,7 @@ export function ProfileForm({ values, readOnly }: { values: ProfileValues; readO
       </Card>
       {readOnly ? null : (
         <div>
-          <SubmitButton>Guardar datos del taller</SubmitButton>
+          <SubmitButton>Guardar datos de la empresa</SubmitButton>
         </div>
       )}
     </form>
@@ -92,7 +92,7 @@ export function LogoForm({ logoSrc, readOnly }: { logoSrc: string | null; readOn
         <div className="flex h-24 w-48 items-center justify-center rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-2)]">
           {logoSrc ? (
             // eslint-disable-next-line @next/next/no-img-element -- imagen servida por la ruta pública del logo
-            <img src={logoSrc} alt="Logo del taller" className="max-h-20 max-w-44 object-contain" />
+            <img src={logoSrc} alt="Logo de la empresa" className="max-h-20 max-w-44 object-contain" />
           ) : (
             <span className="text-sm text-[var(--muted)]">Sin logo</span>
           )}

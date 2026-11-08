@@ -18,7 +18,7 @@ import type { ServiceCtx } from "@/server/modules/branches/service";
 
 /**
  * Google Calendar (plan Max o superior, PDF §6): las citas aparecen en la
- * agenda del taller. Una conexión por taller (organización); los tokens se
+ * agenda de la empresa. Una conexión por taller (organización); los tokens se
  * guardan cifrados. Las solicitudes aparecen como "pendiente de confirmar" y
  * las citas confirmadas con su día y hora; al rechazar o cancelar se quitan.
  * Si Google falla, la cita no se ve afectada: queda pendiente y se reintenta.
@@ -340,7 +340,7 @@ export async function syncPendingCalendar(limit = 100): Promise<Record<SyncOutco
   return stats;
 }
 
-/** Tras responder al usuario, refleja la cita en Google (si el taller lo tiene conectado). */
+/** Tras responder al usuario, refleja la cita en Google (si la empresa lo tiene conectado). */
 export function syncAppointmentLater(appointmentId: string): void {
   try {
     after(async () => {
@@ -394,7 +394,7 @@ export async function syncWorkOrder(workOrderId: string, appUrl = process.env.AP
       await withSystem((tx) => tx.updateTable("work_order_calendar_links").set({ sync_status: "deleted", last_synced_at: new Date(), last_error: null }).where("work_order_id", "=", workOrderId).execute());
       return ctx.link_event ? "removed" : "skipped";
     }
-    // Hora local del taller → instante (la BD hace la conversión con su zona horaria).
+    // Hora local de la delegación → instante (la BD hace la conversión con su zona horaria).
     const startUtc = await withSystem(async (tx) => {
       const { rows } = await sql<{ s: Date }>`select ((${ctx.scheduled_for}::date + ${ctx.scheduled_time ?? "08:00"}::time) at time zone ${ctx.tz}) as s`.execute(tx);
       return rows[0].s;

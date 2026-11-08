@@ -305,7 +305,7 @@ export interface ReminderSummary {
   timezone: string;
 }
 
-/** Resumen para la cabecera del panel (mes natural en la zona del taller). */
+/** Resumen para la cabecera del panel (mes natural en la zona de la empresa). */
 export async function reminderSummary(ctx: Ctx): Promise<ReminderSummary> {
   const orgId = ctx.membership.organizationId;
   return withRls(ctx.auth, async (tx) => {
