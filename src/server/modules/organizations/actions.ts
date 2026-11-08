@@ -11,9 +11,12 @@ import { type ActionState, parseForm, runAction } from "@/server/actions/result"
 import { ACTIVE_ORG_COOKIE, activeOrgCookieOptions } from "@/server/auth/context";
 import { assertAdmin, requireOrg, requireUser } from "@/server/auth/guards";
 import { DomainError } from "@/server/db/errors";
+import { clientIp, truncateIp } from "@/server/http/request";
+import { recordAcceptance } from "@/server/modules/legal/service";
 
 import * as profile from "./profile";
 import { createOrganization, isActiveMember } from "./service";
+import { sendWelcomeEmail } from "./welcome";
 
 export async function createOrganizationAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(
@@ -26,6 +29,8 @@ export async function createOrganizationAction(_prev: ActionState, formData: For
         slug: input.slug || undefined,
         timezone: input.timezone,
       });
+      await recordAcceptance(user.id, orgId, ["dpa"], truncateIp(await clientIp()));
+      if (user.email) await sendWelcomeEmail(orgId, user.email);
       (await cookies()).set(ACTIVE_ORG_COOKIE, orgId, activeOrgCookieOptions);
       redirect("/app");
     },

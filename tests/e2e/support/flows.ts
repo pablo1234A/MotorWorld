@@ -14,6 +14,7 @@ export async function signUpAndVerify(page: Page, email: string, opts: { next?: 
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
   await page.getByLabel("Repite la contraseña").fill(PASSWORD);
+  await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu correo" })).toBeVisible();
 
@@ -31,6 +32,7 @@ export async function signIn(page: Page, email: string, password = PASSWORD, nex
 export async function createWorkshop(page: Page, name: string) {
   await expect(page.getByRole("heading", { name: "Da de alta tu taller" })).toBeVisible();
   await page.getByLabel("Nombre del taller").fill(name);
+  await page.getByRole("checkbox", { name: /contrato de encargo del tratamiento/ }).check();
   await page.getByRole("button", { name: "Crear taller" }).click();
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole("heading", { name })).toBeVisible();

@@ -15,8 +15,10 @@ import { type ActionState, parseForm, runAction } from "@/server/actions/result"
 import { requireUser } from "@/server/auth/guards";
 import { withRls } from "@/server/db/client";
 import { DomainError } from "@/server/db/errors";
-import { clientIp, safeNextPath } from "@/server/http/request";
+import { LEGAL_VERSION } from "@/config/legal";
+import { clientIp, safeNextPath, truncateIp } from "@/server/http/request";
 import { logger } from "@/server/logger";
+import { recordAcceptance } from "@/server/modules/legal/service";
 import { enforceRateLimits, RATE_LIMITS } from "@/server/security/rate-limit";
 import { fingerprint } from "@/server/security/tokens";
 import { createSupabaseServerClient } from "@/server/supabase/server";
@@ -51,12 +53,12 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
       await enforceRateLimits([[`signup:ip:${ip}`, RATE_LIMITS.signUpPerIp]]);
 
       const supabase = await createSupabaseServerClient();
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: input.email,
         password: input.password,
         options: {
           emailRedirectTo: confirmUrl(safeNextPath(input.next, "/onboarding")),
-          data: { first_name: input.firstName, last_name: input.lastName },
+          data: { first_name: input.firstName, last_name: input.lastName, terms_version: LEGAL_VERSION },
         },
       });
       if (error) {
@@ -68,6 +70,8 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
         logger.warn("auth_sign_up_error", { code: error.code, status: error.status });
         if (error.code !== "user_already_exists") throw new DomainError("internal_error");
       }
+      // Constancia de la aceptación (términos y privacidad), con versión, fecha e IP truncada.
+      if (data?.user?.id) await recordAcceptance(data.user.id, null, ["terms", "privacy"], truncateIp(ip));
       redirect("/verifica-tu-correo");
     },
     formData,

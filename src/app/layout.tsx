@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 
+import { BRAND } from "@/config/brand";
+
 export const metadata: Metadata = {
-  title: "RevisaYa",
-  description: "Avisos automáticos de revisión para talleres mecánicos.",
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  title: BRAND.name,
+  description: BRAND.description,
+  applicationName: BRAND.name,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

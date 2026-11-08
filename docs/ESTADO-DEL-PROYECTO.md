@@ -16,9 +16,53 @@
 | 7 — Citas y presupuestos | ✅ Completada | 2026-11-06 |
 | 8 — Suscripciones y límites (Stripe TEST) | ✅ Completada (pendiente de revisión y de la prueba con una cuenta TEST real) | 2026-11-07 |
 | 9 — Google Calendar, informes y API | ✅ Completada (Google y la API, sin probar con cuentas reales) | 2026-11-08 |
-| 10 — Frontend completo | ⏭ Siguiente | — |
-| 11 — Seguridad y testing global | ⏸ No iniciada | — |
+| 10 — Frontend completo | ✅ Completada (textos legales pendientes de revisión jurídica) | 2026-11-08 |
+| 11 — Seguridad y testing global | ⏭ Siguiente | — |
 | 12 — Preparación para producción | ⏸ No iniciada | — |
+
+---
+
+## Fase 10 — Frontend completo: web pública, textos legales y panel
+
+### Qué se ha construido
+- **Web pública** (`src/app/(public)/`):
+  - portada con «cómo funciona», funciones por plan, precios exactos del PDF (sin IVA, mensual y anual), preguntas frecuentes y llamadas a la prueba de 7 días;
+  - **guía de inicio** (`/ayuda`, PDF §11) en 8 pasos;
+  - cabecera y pie comunes; `robots.txt`, `sitemap.xml` y metadatos.
+- **Textos legales** (`/legal/aviso-legal`, `privacidad`, `terminos`, `cookies`, `encargo-tratamiento`):
+  - redactados a partir de cómo funciona de verdad el servicio: roles responsable/encargado, plazos de conservación, subencargados, impago, cancelación y cookies técnicas;
+  - todos llevan el aviso **«Borrador pendiente de revisión jurídica»**;
+  - los datos del titular salen de `LEGAL_OWNER_*` y, si faltan, se ven como «pendiente» (ADR-070).
+- **Consentimiento** (ADR-025 y ADR-071):
+  - casilla obligatoria de términos y privacidad en el registro;
+  - casilla del contrato de encargo del tratamiento al crear el taller;
+  - las dos quedan registradas en `legal_acceptances` con versión, fecha e IP truncada.
+- **Correo de bienvenida** al crear el taller (PDF §11), con los primeros pasos y el enlace a la guía.
+- **Panel**:
+  - navegación con la sección activa marcada;
+  - menú desplegable en el móvil, que se cierra al navegar;
+  - nombre de la marca en un único sitio (`src/config/brand.ts`, P20).
+- Páginas propias de **404** y de **error**, con reintento y referencia para soporte y sin detalles internos, más el error global.
+- Aviso de privacidad en la página pública de citas: el taller es el responsable y RevisaYa el encargado.
+
+### Pruebas ejecutadas (2026-11-08, desde base de datos nueva, todas en verde)
+| Prueba | Resultado |
+|---|---|
+| pgTAP | 310/310 |
+| Vitest (con stripe-mock) | 302/302 (el registro sin aceptar los términos se rechaza) |
+| Playwright E2E | 32/32. Nuevo `public.spec.ts`: precios exactos, FAQ, los 5 textos legales con su aviso y los datos pendientes, 404, aceptación registrada en la BD, correo de bienvenida en Mailpit, portada y panel a 375 px sin desplazamiento horizontal y menú móvil. |
+| typecheck, lint, build | OK (sin errores en el registro de la compilación) |
+
+### Errores encontrados y corregidos durante la fase
+- **La compilación pregeneraba los GET de la API** (desde la Fase 9): el gestor de errores capturaba la señal interna de Next y se habría servido una respuesta fija. Ahora las rutas llaman a `connection()` y relanzan esas señales (ADR-073). Se vio en el registro de la compilación.
+- Con `z.literal` la casilla de aceptación cortaba las demás validaciones, y con `optional().refine` no se comprobaba si venía vacía. Se cambió a `z.unknown().refine`; lo detectaron el E2E y la prueba unitaria.
+
+### Pendiente (documentado)
+- **Revisión jurídica de los textos** y datos reales del titular (`LEGAL_OWNER_*`) antes del primer cobro (PDF §10).
+- Capturas de pantalla y vídeo de 3 minutos para la guía (PDF §11): necesitan el producto desplegado con datos reales.
+
+### Siguiente fase
+**Fase 11 — Seguridad y testing global**: 2FA para administradores, CSP con nonce, auditoría de seguridad (IDOR, límites, cabeceras) y alertas de reputación del correo.
 
 ---
 

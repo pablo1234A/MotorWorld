@@ -38,6 +38,17 @@ export function CreateOrganizationForm() {
         <option value="Europe/Madrid">Península y Baleares</option>
         <option value="Atlantic/Canary">Canarias</option>
       </SelectField>
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="acceptDpa" required className="mt-1" aria-invalid={errors?.acceptDpa ? true : undefined} />
+        <span>
+          Acepto el{" "}
+          <a href="/legal/encargo-tratamiento" target="_blank" className="font-medium text-[var(--accent)] underline">
+            contrato de encargo del tratamiento
+          </a>
+          : mi taller es responsable de los datos de sus clientes y RevisaYa los trata por su encargo.
+        </span>
+      </label>
+      {errors?.acceptDpa ? <p className="-mt-2 text-sm text-[var(--danger)]">{errors.acceptDpa[0]}</p> : null}
       <SubmitButton pendingLabel="Creando taller…">Crear taller</SubmitButton>
     </form>
   );

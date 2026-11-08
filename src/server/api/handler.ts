@@ -3,7 +3,8 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 
 import { sql } from "kysely";
-import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
+import { connection, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { errorMessage } from "@/lib/error-messages";
@@ -163,6 +164,13 @@ type Handler = (c: ApiContext) => Promise<ApiResult>;
 
 export function apiRoute(opts: Options, handler: Handler) {
   return async (request: Request, segment?: { params: Promise<Record<string, string>> }): Promise<Response> => {
+    // Siempre dinámica: nunca se pregenera ni se cachea una respuesta de la API.
+    // (Fuera de una petición de Next, p. ej. en las pruebas, connection() lanza un error normal que se ignora.)
+    try {
+      await connection();
+    } catch (err) {
+      unstable_rethrow(err);
+    }
     const rid = requestId();
     const started = Date.now();
     let principal: ApiPrincipal | null = null;
@@ -190,6 +198,7 @@ export function apiRoute(opts: Options, handler: Handler) {
       status = result.status ?? 200;
       return json(status, result.body, rid, result.headers);
     } catch (err) {
+      unstable_rethrow(err);
       const e = toApiError(err);
       status = e.status;
       if (e.status >= 500) logger.error("api_request_failed", { route: opts.route, requestId: rid, error: err });

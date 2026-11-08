@@ -1,14 +1,17 @@
 import Link from "next/link";
 
+import { BRAND } from "@/config/brand";
 import type { OrgContext } from "@/server/auth/context";
 import { logoUrl } from "@/server/modules/organizations/profile";
 import { signOutAction } from "@/server/modules/auth/actions";
 import { switchOrganizationAction } from "@/server/modules/organizations/actions";
 
+import { AppNav } from "./app-nav";
+
 /**
- * Cabecera del panel. Solo enlaza a pantallas que ya existen; el resto de
- * módulos (citas, presupuestos…) se añaden en su fase. El
- * diseño definitivo con barra lateral llega en la Fase 10.
+ * Cabecera del panel: marca, taller activo, navegación (según permisos) y
+ * cierre de sesión. Ocultar un enlace nunca sustituye a la comprobación en el
+ * servidor de cada página.
  */
 export function AppHeader({ ctx }: { ctx: OrgContext }) {
   const admin = ctx.membership.role === "admin";
@@ -21,7 +24,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
             // eslint-disable-next-line @next/next/no-img-element -- logo servido por la ruta pública del taller
             <img src={logo} alt={ctx.membership.organizationName} className="h-8 max-w-32 object-contain" />
           ) : null}
-          <span>RevisaYa</span>
+          <span>{BRAND.name}</span>
         </Link>
 
         {ctx.memberships.length > 1 ? (
@@ -49,36 +52,21 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
           <span className="text-sm text-[var(--muted)]">{ctx.membership.organizationName}</span>
         )}
 
-        <nav aria-label="Principal" className="flex flex-1 flex-wrap items-center gap-1 text-sm">
-          {[
+        <AppNav
+          items={[
             ["/app", "Inicio"],
             ["/app/clientes", "Clientes"],
             ["/app/vehiculos", "Vehículos"],
             ["/app/historial", "Historial"],
-            ...(admin || ctx.membership.permissions.includes("appointments.manage") ? [["/app/citas", "Citas"]] : []),
-            ...(admin || ctx.membership.permissions.includes("quotes.manage") ? [["/app/presupuestos", "Presupuestos"]] : []),
-            ...(admin || ctx.membership.permissions.includes("reminders.read") ? [["/app/recordatorios", "Recordatorios"]] : []),
-            ...(admin || ctx.membership.permissions.includes("reports.read") ? [["/app/informes", "Informes"]] : []),
-            ...(admin || ctx.membership.permissions.includes("imports.run") ? [["/app/importar", "Importar"]] : []),
-          ].map(([href, label]) => (
-            <Link key={href} className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href={href}>
-              {label}
-            </Link>
-          ))}
-          {admin ? (
-            <>
-              <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/configuracion">
-                Configuración
-              </Link>
-              <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/usuarios">
-                Usuarios
-              </Link>
-            </>
-          ) : null}
-          <Link className="rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)]" href="/app/cuenta">
-            Mi cuenta
-          </Link>
-        </nav>
+            ...(admin || ctx.membership.permissions.includes("appointments.manage") ? ([["/app/citas", "Citas"]] as const) : []),
+            ...(admin || ctx.membership.permissions.includes("quotes.manage") ? ([["/app/presupuestos", "Presupuestos"]] as const) : []),
+            ...(admin || ctx.membership.permissions.includes("reminders.read") ? ([["/app/recordatorios", "Recordatorios"]] as const) : []),
+            ...(admin || ctx.membership.permissions.includes("reports.read") ? ([["/app/informes", "Informes"]] as const) : []),
+            ...(admin || ctx.membership.permissions.includes("imports.run") ? ([["/app/importar", "Importar"]] as const) : []),
+            ...(admin ? ([["/app/configuracion", "Configuración"], ["/app/usuarios", "Usuarios"]] as const) : []),
+            ["/app/cuenta", "Mi cuenta"],
+          ]}
+        />
 
         <form action={signOutAction}>
           <button type="submit" className="rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-[var(--surface-2)]">

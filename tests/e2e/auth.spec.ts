@@ -30,6 +30,7 @@ test.describe("Autenticación", () => {
     await page.getByLabel("Correo electrónico").fill(email);
     await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
     await page.getByLabel("Repite la contraseña").fill(PASSWORD);
+    await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
     await page.getByRole("button", { name: "Crear cuenta" }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu correo" })).toBeVisible();
 
@@ -47,6 +48,7 @@ test.describe("Autenticación", () => {
     await page.getByRole("button", { name: "Crear cuenta" }).click();
     await expect(page.getByText("Mínimo 10 caracteres", { exact: true })).toBeVisible();
     await expect(page.getByText("Las contraseñas no coinciden")).toBeVisible();
+    await expect(page.getByText("Tienes que aceptar los términos y la política de privacidad")).toBeVisible();
     // Los valores no sensibles se conservan; la contraseña nunca se devuelve.
     await expect(page.getByLabel("Nombre", { exact: true })).toHaveValue("Ana");
     await expect(page.getByLabel("Contraseña", { exact: true })).toHaveValue("");
@@ -100,6 +102,7 @@ test.describe("Autenticación", () => {
     await page.getByLabel("Correo electrónico").fill(uniqueEmail("bot"));
     await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
     await page.getByLabel("Repite la contraseña").fill(PASSWORD);
+    await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
     await page.getByRole("button", { name: "Crear cuenta" }).click();
     await expect(page.getByText("Demasiados intentos. Espera unos minutos")).toBeVisible();
     await db("delete from private.rate_limit_buckets where key like 'signup:%'");

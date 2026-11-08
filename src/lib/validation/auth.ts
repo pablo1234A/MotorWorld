@@ -34,6 +34,8 @@ export const signUpSchema = z
     password: passwordSchema,
     passwordConfirm: z.string(),
     next: z.string().optional(),
+    // refine (no literal): así no corta las demás validaciones y se ven todos los errores a la vez.
+    acceptTerms: z.unknown().refine((v) => v === "on", "Tienes que aceptar los términos y la política de privacidad"),
   })
   .refine((d) => d.password === d.passwordConfirm, {
     path: ["passwordConfirm"],
@@ -78,6 +80,7 @@ export const createOrganizationSchema = z.object({
   tradeName: z.string().trim().min(2, "Indica el nombre del taller").max(120, "Máximo 120 caracteres"),
   slug: z.union([z.literal(""), slugSchema]).optional(),
   timezone: z.enum(SUPPORTED_TIMEZONES, { error: "Zona horaria no válida" }).default("Europe/Madrid"),
+  acceptDpa: z.unknown().refine((v) => v === "on", "Tienes que aceptar el contrato de encargo del tratamiento"),
 });
 
 // ------------------------------------------------------------------ miembros

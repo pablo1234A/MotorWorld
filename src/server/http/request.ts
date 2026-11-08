@@ -24,3 +24,13 @@ export function safeNextPath(value: unknown, fallback = "/app"): string {
   if (/[\r\n]/.test(value) || value.length > 300) return fallback;
   return value;
 }
+
+/** IP truncada para registros (IPv4 /24, IPv6 /48): suficiente para seguridad, sin identificar a la persona. */
+export function truncateIp(ip: string): string | null {
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return `${ip.split(".").slice(0, 3).join(".")}.0`;
+  if (ip.includes(":")) {
+    const parts = ip.split("::")[0].split(":").filter(Boolean).slice(0, 3);
+    return parts.length ? `${parts.join(":")}::` : null;
+  }
+  return null;
+}

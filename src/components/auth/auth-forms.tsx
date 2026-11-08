@@ -47,6 +47,21 @@ export function SignUpForm({ next }: { next?: string }) {
       <Field label="Correo electrónico" name="email" type="email" autoComplete="email" required defaultValue={value(state, "email")} errors={fieldErrors(state, "email")} />
       <Field label="Contraseña" name="password" type="password" autoComplete="new-password" required hint={PASSWORD_HINT} errors={fieldErrors(state, "password")} />
       <Field label="Repite la contraseña" name="passwordConfirm" type="password" autoComplete="new-password" required errors={fieldErrors(state, "passwordConfirm")} />
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="acceptTerms" required className="mt-1" aria-invalid={fieldErrors(state, "acceptTerms") ? true : undefined} />
+        <span>
+          Acepto los{" "}
+          <a href="/legal/terminos" target="_blank" className="font-medium text-[var(--accent)] underline">
+            términos del servicio
+          </a>{" "}
+          y he leído la{" "}
+          <a href="/legal/privacidad" target="_blank" className="font-medium text-[var(--accent)] underline">
+            política de privacidad
+          </a>
+          .
+        </span>
+      </label>
+      {fieldErrors(state, "acceptTerms") ? <p className="-mt-2 text-sm text-[var(--danger)]">{fieldErrors(state, "acceptTerms")![0]}</p> : null}
       <SubmitButton pendingLabel="Creando cuenta…">Crear cuenta</SubmitButton>
       <p className="text-center text-sm text-[var(--muted)]">
         ¿Ya tienes cuenta?{" "}

@@ -54,6 +54,12 @@ export const serverEnvSchema = z
     GOOGLE_OAUTH_BASE: z.url().optional(),
     GOOGLE_API_BASE: z.url().optional(),
     TURNSTILE_SECRET_KEY: optionalString,
+    /** Datos del titular para los textos legales (src/config/legal.ts). */
+    LEGAL_OWNER_NAME: optionalString,
+    LEGAL_OWNER_TAX_ID: optionalString,
+    LEGAL_OWNER_ADDRESS: optionalString,
+    LEGAL_OWNER_EMAIL: z.email().optional(),
+    LEGAL_OWNER_REGISTRY: optionalString,
     SENTRY_DSN: z.url().optional(),
   })
   .superRefine((env, ctx) => {

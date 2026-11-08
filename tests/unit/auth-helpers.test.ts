@@ -30,9 +30,11 @@ describe("política de contraseñas (igual que Supabase Auth)", () => {
     expect(passwordSchema.safeParse("Taller2026Seguro").success).toBe(true);
   });
   it("el registro exige que coincidan y normaliza el email", () => {
-    const r = signUpSchema.safeParse({ firstName: "A", lastName: "B", email: "  Laura@Correo.COM ", password: "Taller2026Seguro", passwordConfirm: "Taller2026Seguro" });
+    const r = signUpSchema.safeParse({ firstName: "A", lastName: "B", email: "  Laura@Correo.COM ", password: "Taller2026Seguro", passwordConfirm: "Taller2026Seguro", acceptTerms: "on" });
     expect(r.success && r.data.email).toBe("laura@correo.com");
-    expect(signUpSchema.safeParse({ firstName: "A", lastName: "B", email: "a@b.es", password: "Taller2026Seguro", passwordConfirm: "x" }).success).toBe(false);
+    expect(signUpSchema.safeParse({ firstName: "A", lastName: "B", email: "a@b.es", password: "Taller2026Seguro", passwordConfirm: "x", acceptTerms: "on" }).success).toBe(false);
+    // Sin aceptar los términos y la privacidad no hay registro (ADR-025).
+    expect(signUpSchema.safeParse({ firstName: "A", lastName: "B", email: "a@b.es", password: "Taller2026Seguro", passwordConfirm: "Taller2026Seguro" }).success).toBe(false);
   });
 });
 

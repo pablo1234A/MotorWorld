@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { BookingForm, type SlotDay } from "@/components/booking/booking-form";
 import { Alert, Skeleton } from "@/components/ui/feedback";
+import { BRAND } from "@/config/brand";
 import { addDays } from "@/lib/dates";
 import { formatPhone } from "@/lib/phone";
 import { BOOKING_MAX_DAYS_AHEAD, resolveBookingPage } from "@/server/modules/appointments/public";
@@ -22,6 +24,12 @@ export default function BookingPage({ params, searchParams }: { params: Params; 
         <Suspense fallback={<Skeleton className="h-96 w-full" />}>
           <Content params={params} searchParams={searchParams} />
         </Suspense>
+        <p className="mt-4 text-center text-xs text-[var(--muted)]">
+          El taller es el responsable de tus datos y los usa solo para gestionar tu cita. {BRAND.name} presta este servicio por encargo del taller ·{" "}
+          <Link href="/legal/privacidad" className="underline">
+            Privacidad
+          </Link>
+        </p>
       </main>
     </div>
   );
