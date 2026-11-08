@@ -37,3 +37,10 @@ export async function removeObject(bucket: Bucket, path: string): Promise<void> 
   const { error } = await storage().from(bucket).remove([path]);
   if (error) throw new Error(`storage_remove_failed: ${error.message}`);
 }
+
+/** URL firmada de corta duración (por defecto 60 s) para descargar un archivo privado. */
+export async function signedUrl(bucket: Bucket, path: string, expiresInSeconds = 60, downloadName?: string): Promise<string> {
+  const { data, error } = await storage().from(bucket).createSignedUrl(path, expiresInSeconds, downloadName ? { download: downloadName } : undefined);
+  if (error || !data) throw new Error(`storage_sign_failed: ${error?.message ?? "sin url"}`);
+  return data.signedUrl;
+}

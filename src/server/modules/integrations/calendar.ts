@@ -322,6 +322,21 @@ export async function syncPendingCalendar(limit = 100): Promise<Record<SyncOutco
     return rows.map((r) => r.id);
   });
   for (const id of ids) stats[await syncAppointment(id)]++;
+  // Órdenes de trabajo con fecha aún no pasadas a la agenda, o canceladas con evento.
+  const orders = await withSystem(async (tx) => {
+    const { rows } = await sql<{ id: string }>`
+      select w.id from work_orders w
+        join integrations i on i.organization_id = w.organization_id and i.type = 'google_calendar' and i.status = 'connected'
+        left join work_order_calendar_links l on l.work_order_id = w.id
+       where (l.work_order_id is null and w.scheduled_for >= current_date and w.status not in ('completed', 'canceled'))
+          or l.sync_status = 'pending'
+          or (l.sync_status = 'synced' and w.status = 'canceled')
+       order by w.updated_at
+       limit ${limit}
+    `.execute(tx);
+    return rows.map((r) => r.id);
+  });
+  for (const id of orders) stats[await syncWorkOrder(id)]++;
   return stats;
 }
 
@@ -334,5 +349,92 @@ export function syncAppointmentLater(appointmentId: string): void {
   } catch {
     // Fuera de una petición (procesos, pruebas): en segundo plano; el proceso programado reintenta.
     void syncAppointment(appointmentId);
+  }
+}
+
+// ------------------------------------------------------------ órdenes de trabajo
+
+/**
+ * Orden de trabajo con fecha → evento en la agenda (con hora si la tiene, de
+ * día completo si no). Cancelada → se quita. Mismas garantías que las citas:
+ * id determinista (no duplica) y nunca falla la orden si Google falla.
+ */
+export async function syncWorkOrder(workOrderId: string, appUrl = process.env.APP_URL ?? "http://localhost:3000"): Promise<SyncOutcome> {
+  try {
+    const ctx = await withSystem(async (tx) => {
+      const { rows } = await sql<{
+        org_id: string; number: string; status: string; service_type: string; scheduled_for: string | null; scheduled_time: string | null;
+        installation: string; address: string | null; customer: string; technician: string | null; items: number; tz: string;
+        integration_id: string | null; calendar_id: string | null; has_feature: boolean; link_event: string | null;
+      }>`
+        select w.organization_id as org_id, w.number, w.status, w.service_type, w.scheduled_for::text, to_char(w.scheduled_time, 'HH24:MI') as scheduled_time,
+               i.name as installation, nullif(concat_ws(', ', i.address_line1, i.city), '') as address,
+               trim(c.first_name || ' ' || c.last_name) as customer, t.full_name as technician,
+               (select count(*)::int from work_order_items it where it.work_order_id = w.id) as items,
+               coalesce(b.timezone, o.timezone) as tz,
+               g.id as integration_id, g.calendar_id, app.has_feature(w.organization_id, 'google_calendar') as has_feature,
+               l.google_event_id as link_event
+          from work_orders w
+          join installations i on i.id = w.installation_id
+          join customers c on c.id = w.customer_id
+          join branches b on b.id = w.branch_id
+          join organizations o on o.id = w.organization_id
+          left join technicians t on t.id = w.technician_id
+          left join integrations g on g.organization_id = w.organization_id and g.type = 'google_calendar' and g.status = 'connected'
+          left join work_order_calendar_links l on l.work_order_id = w.id
+         where w.id = ${workOrderId}
+      `.execute(tx);
+      return rows[0];
+    });
+    if (!ctx?.integration_id || !ctx.calendar_id || !ctx.has_feature) return "skipped";
+    const eventId = google.eventIdFor(workOrderId);
+    const token = await accessToken(ctx.integration_id);
+    if (ctx.status === "canceled" || !ctx.scheduled_for) {
+      if (ctx.link_event) await google.deleteEvent(token, ctx.calendar_id, ctx.link_event);
+      await withSystem((tx) => tx.updateTable("work_order_calendar_links").set({ sync_status: "deleted", last_synced_at: new Date(), last_error: null }).where("work_order_id", "=", workOrderId).execute());
+      return ctx.link_event ? "removed" : "skipped";
+    }
+    // Hora local del taller → instante (la BD hace la conversión con su zona horaria).
+    const startUtc = await withSystem(async (tx) => {
+      const { rows } = await sql<{ s: Date }>`select ((${ctx.scheduled_for}::date + ${ctx.scheduled_time ?? "08:00"}::time) at time zone ${ctx.tz}) as s`.execute(tx);
+      return rows[0].s;
+    });
+    const res = await google.upsertEvent(token, ctx.calendar_id, eventId, {
+      summary: `${ctx.number} · ${ctx.installation}${ctx.status === "completed" ? " (completada)" : ""}`,
+      description: [
+        `Orden de trabajo ${ctx.number} — ${ctx.customer}`,
+        ctx.technician ? `Técnico: ${ctx.technician}` : "Sin técnico asignado",
+        `${ctx.items} equipo(s) incluidos`,
+        new URL(`/app/ordenes-trabajo/${workOrderId}`, appUrl).toString(),
+      ].join("\n"),
+      location: ctx.address,
+      start: startUtc,
+      end: new Date(startUtc.getTime() + 2 * 3600_000),
+      timeZone: ctx.tz,
+      allDayDate: ctx.scheduled_time ? null : ctx.scheduled_for,
+      tentative: false,
+    });
+    await withSystem((tx) =>
+      tx
+        .insertInto("work_order_calendar_links")
+        .values({ work_order_id: workOrderId, organization_id: ctx.org_id, integration_id: ctx.integration_id!, google_calendar_id: ctx.calendar_id!, google_event_id: res.id, sync_status: "synced", last_synced_at: new Date() })
+        .onConflict((oc) => oc.column("work_order_id").doUpdateSet({ integration_id: ctx.integration_id!, google_calendar_id: ctx.calendar_id!, google_event_id: res.id, sync_status: "synced", last_synced_at: new Date(), last_error: null }))
+        .execute(),
+    );
+    return "synced";
+  } catch (err) {
+    const reconnect = err instanceof google.GoogleError && (err.code === "invalid_grant" || err.status === 401);
+    logger.warn("calendar_work_order_sync_failed", { workOrderId, error: err });
+    return reconnect ? "reconnect" : "failed";
+  }
+}
+
+export function syncWorkOrderLater(workOrderId: string): void {
+  try {
+    after(async () => {
+      await syncWorkOrder(workOrderId);
+    });
+  } catch {
+    void syncWorkOrder(workOrderId);
   }
 }

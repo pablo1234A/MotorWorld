@@ -49,3 +49,41 @@ export async function getDashboardSummary(ctx: OrgContext, today = todayIn()): P
     };
   });
 }
+
+export interface PciDashboard {
+  customers: number;
+  installations: number;
+  equipment: number;
+  extinguishers: number;
+  workOrdersOpen: number;
+  actionsScheduled: number;
+  records30d: number;
+  equipmentDue30d: number;
+  equipmentOverdue: number;
+  incidentsOpen: number;
+  recent: Array<{ kind: "record" | "work_order" | "incident"; at: string; refId: string; label: string; installation: string }>;
+}
+
+/** Inicio PCI: la función SQL corre con la RLS del usuario (sus sucursales; un técnico, sus órdenes). */
+export async function getPciDashboard(ctx: { auth: OrgContext["auth"]; membership: { organizationId: string } }): Promise<PciDashboard> {
+  const raw = await withRls(ctx.auth, async (tx) => {
+    const { rows } = await sql<{ d: Record<string, unknown> }>`select app.pci_dashboard(${ctx.membership.organizationId}::uuid) as d`.execute(tx);
+    return rows[0].d;
+  });
+  const n = (k: string) => Number(raw[k] ?? 0);
+  return {
+    customers: n("customers"),
+    installations: n("installations"),
+    equipment: n("equipment"),
+    extinguishers: n("extinguishers"),
+    workOrdersOpen: n("work_orders_open"),
+    actionsScheduled: n("actions_scheduled"),
+    records30d: n("records_30d"),
+    equipmentDue30d: n("equipment_due_30d"),
+    equipmentOverdue: n("equipment_overdue"),
+    incidentsOpen: n("incidents_open"),
+    recent: ((raw.recent as Array<Record<string, string>>) ?? []).map((r) => ({
+      kind: r.kind as "record" | "work_order" | "incident", at: r.at, refId: r.ref_id, label: r.label, installation: r.installation,
+    })),
+  };
+}

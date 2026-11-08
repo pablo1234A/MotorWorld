@@ -4,6 +4,7 @@ import { sql } from "kysely";
 
 import { addDays, isValidIsoDate, todayIn } from "@/lib/dates";
 import { PAGE_SIZE, type Page } from "@/lib/pagination";
+import { INCIDENT_STATUS_LABELS, RESULT_LABELS, SEVERITY_LABELS } from "@/lib/pci/labels";
 import { planHasFeature } from "@/lib/plans";
 import type { SubscriptionState } from "@/server/auth/context";
 import { type AuthContext, withRls } from "@/server/db/client";
@@ -286,3 +287,91 @@ export const EMAIL_STATUS_LABELS: Record<string, string> = {
   complained: "Marcado como spam",
   failed: "Fallido",
 };
+
+// =============================================================== informes PCI
+
+export interface PciSummary {
+  equipmentTotal: number;
+  byCategory: Array<{ code: string; name: string; count: number }>;
+  records: number;
+  recordsNonCompliant: number;
+  byAction: Array<{ name: string; count: number }>;
+  overdue: number;
+  due30d: number;
+  incidentsOpened: number;
+  incidentsOpen: number;
+  workOrdersCompleted: number;
+  technicians: Array<{ name: string; records: number; workOrders: number }>;
+}
+
+export async function getPciSummary(ctx: Ctx, r: ReportRange): Promise<PciSummary> {
+  const raw = await withRls(ctx.auth, async (tx) => {
+    const { rows } = await sql<{ s: Record<string, unknown> }>`select app.pci_report_summary(${ctx.membership.organizationId}::uuid, ${r.from}::date, ${r.to}::date, ${r.branchId}::uuid) as s`.execute(tx);
+    return rows[0].s;
+  });
+  const n = (k: string) => Number(raw[k] ?? 0);
+  return {
+    equipmentTotal: n("equipment_total"),
+    byCategory: ((raw.by_category as PciSummary["byCategory"]) ?? []).map((c) => ({ ...c, count: Number(c.count) })),
+    records: n("records"),
+    recordsNonCompliant: n("records_non_compliant"),
+    byAction: ((raw.by_action as PciSummary["byAction"]) ?? []).map((c) => ({ ...c, count: Number(c.count) })),
+    overdue: n("overdue"),
+    due30d: n("due_30d"),
+    incidentsOpened: n("incidents_opened"),
+    incidentsOpen: n("incidents_open"),
+    workOrdersCompleted: n("work_orders_completed"),
+    technicians: ((raw.technicians as Array<{ name: string; records: number; work_orders: number }>) ?? []).map((t) => ({ name: t.name, records: Number(t.records), workOrders: Number(t.work_orders) })),
+  };
+}
+
+export const PCI_REPORT_KINDS = ["vencimientos", "mantenimientos", "instalaciones", "incidencias"] as const;
+export type PciReportKind = (typeof PCI_REPORT_KINDS)[number];
+
+type Row = Record<string, unknown> & { total: string };
+/** Columnas de recuento (PostgreSQL devuelve bigint como texto). */
+const COUNT_KEYS = new Set(["equipment", "extinguishers", "overdue", "due", "open_incidents"]);
+const dt = (d: unknown) => (d instanceof Date ? d.toISOString().slice(0, 10) : ((d as string | null) ?? null));
+
+/** Listado de un informe PCI (paginado; con pageSize 5000 para el CSV). */
+export async function pciReportRows(ctx: Ctx, kind: PciReportKind, r: ReportRange, until: string, p: Paging): Promise<Page<Record<string, unknown>>> {
+  const size = p.pageSize ?? PAGE_SIZE;
+  const off = (p.page - 1) * size;
+  const org = ctx.membership.organizationId;
+  const rows = await withRls(ctx.auth, async (tx) => {
+    const q =
+      kind === "vencimientos"
+        ? sql<Row>`select * from app.pci_report_due(${org}::uuid, ${until}::date, ${r.branchId}::uuid, ${size}, ${off})`
+        : kind === "mantenimientos"
+          ? sql<Row>`select * from app.pci_report_records(${org}::uuid, ${r.from}::date, ${r.to}::date, ${r.branchId}::uuid, ${size}, ${off})`
+          : kind === "instalaciones"
+            ? sql<Row>`select * from app.pci_report_installations(${org}::uuid, ${until}::date, ${r.branchId}::uuid, ${size}, ${off})`
+            : sql<Row>`select * from app.pci_report_incidents(${org}::uuid, ${r.from}::date, ${r.to}::date, ${r.branchId}::uuid, ${size}, ${off})`;
+    return (await q.execute(tx)).rows;
+  });
+  return {
+    rows: rows.map(({ total: _t, ...rest }) => Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v instanceof Date ? dt(v) : COUNT_KEYS.has(k) ? Number(v) : v]))),
+    total: rows.length ? Number(rows[0].total) : 0,
+    page: p.page,
+    pageSize: size,
+  };
+}
+
+const PCI_CSV_HEADERS: Record<PciReportKind, Array<[string, string]>> = {
+  vencimientos: [["code", "Equipo"], ["category", "Categoría"], ["location", "Ubicación"], ["installation", "Instalación"], ["customer", "Cliente"], ["action", "Operación"], ["next_due_on", "Fecha prevista"], ["overdue", "Vencida"]],
+  mantenimientos: [["performed_on", "Fecha"], ["code", "Equipo"], ["category", "Categoría"], ["installation", "Instalación"], ["customer", "Cliente"], ["action", "Operación"], ["result", "Resultado"], ["technician", "Técnico"], ["work_order", "Orden"]],
+  instalaciones: [["installation", "Instalación"], ["customer", "Cliente"], ["city", "Municipio"], ["equipment", "Equipos"], ["extinguishers", "Extintores"], ["overdue", "Vencidos"], ["due", "Próximos"], ["next_due_on", "Próxima actuación"], ["open_incidents", "Incidencias abiertas"]],
+  incidencias: [["detected_on", "Fecha"], ["severity", "Gravedad"], ["status", "Estado"], ["title", "Incidencia"], ["installation", "Instalación"], ["equipment", "Equipo"], ["resolved_on", "Resuelta"]],
+};
+
+export async function pciExportRows(ctx: Ctx, kind: PciReportKind, r: ReportRange, until: string): Promise<unknown[][]> {
+  const page = await pciReportRows(ctx, kind, r, until, { page: 1, pageSize: 5000 });
+  const headers = PCI_CSV_HEADERS[kind];
+  const label = (k: string, v: unknown) =>
+    typeof v === "boolean" ? (v ? "sí" : "no")
+    : k === "result" ? (RESULT_LABELS[v as keyof typeof RESULT_LABELS] ?? v)
+    : k === "severity" ? (SEVERITY_LABELS[v as keyof typeof SEVERITY_LABELS] ?? v)
+    : k === "status" ? (INCIDENT_STATUS_LABELS[v as keyof typeof INCIDENT_STATUS_LABELS] ?? v)
+    : v;
+  return [headers.map(([, h]) => h), ...page.rows.map((row) => headers.map(([k]) => label(k, row[k])))];
+}

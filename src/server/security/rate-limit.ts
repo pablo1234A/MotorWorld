@@ -32,6 +32,8 @@ export const RATE_LIMITS = {
   domainCreatesPerOrg: { capacity: 5, windowSeconds: 86_400 },
   bookingPerIp: { capacity: 5, windowSeconds: 3600 },
   bookingPerOrg: { capacity: 60, windowSeconds: 3600 },
+  /** Documentos y fotos: 200 subidas por hora y taller. */
+  documentUploadsPerOrg: { capacity: 200, windowSeconds: 3600 },
   /** Códigos de la verificación en dos pasos: 10 intentos cada 15 min por usuario. */
   mfaVerifyPerUser: { capacity: 10, windowSeconds: 900 },
   /** API pública: 60 peticiones/min sostenidas, ráfaga de 120, por clave… */

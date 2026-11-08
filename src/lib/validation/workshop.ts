@@ -3,13 +3,14 @@ import { z } from "zod";
 import { isValidIsoDate } from "@/lib/dates";
 import { normalizePhone } from "@/lib/phone";
 import { checkPlate } from "@/lib/plate";
+import { checkTaxId, normalizeTaxId } from "@/lib/tax-id";
 
 /**
  * Esquemas de clientes, vehículos e historial (compartidos cliente/servidor).
  * La base de datos vuelve a imponer las mismas reglas (CHECK, FK, triggers).
  */
 
-const optionalText = (max: number) =>
+export const optionalText = (max: number) =>
   z
     .string()
     .trim()
@@ -23,7 +24,7 @@ export const isoDateSchema = z
   .refine(isValidIsoDate, "Fecha no válida")
   .refine((v) => v >= "1950-01-01", "Fecha no válida");
 
-const optionalDate = z
+export const optionalDate = z
   .union([z.literal(""), isoDateSchema])
   .optional()
   .transform((v) => (v ? v : null));
@@ -39,7 +40,7 @@ const optionalKm = z
   .optional()
   .transform((v) => (v === "" || v === undefined ? null : v));
 
-const checkbox = z
+export const checkbox = z
   .union([z.literal("on"), z.literal("true"), z.literal("")])
   .optional()
   .transform((v) => v === "on" || v === "true");
@@ -85,14 +86,45 @@ const customerFields = {
   remindersOptOut: checkbox,
 };
 
+// Datos de empresa (PCI): un cliente con muchas instalaciones.
+const customerCompanyFields = {
+  customerKind: z.enum(["company", "individual"]).default("individual"),
+  legalName: optionalText(200),
+  taxId: z
+    .string()
+    .optional()
+    .transform((v, ctx) => {
+      const n = normalizeTaxId(v ?? "");
+      if (!n) return null;
+      if (checkTaxId(n) === "invalid") {
+        ctx.addIssue({ code: "custom", message: "NIF/CIF no válido" });
+        return z.NEVER;
+      }
+      return n;
+    }),
+  addressLine1: optionalText(200),
+  postalCode: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : null))
+    .refine((v) => v === null || /^[0-9]{5}$/.test(v), "Código postal de 5 cifras"),
+  city: optionalText(100),
+  province: optionalText(100),
+  contactName: optionalText(160),
+  contactRole: optionalText(100),
+};
+
 export const createCustomerSchema = z.object({
   ...customerFields,
+  ...customerCompanyFields,
   branchId: z.uuid("Elige un taller"),
   confirmDuplicate: checkbox,
 });
 
 export const updateCustomerSchema = z.object({
   ...customerFields,
+  ...customerCompanyFields,
   id: z.uuid(),
   // El origen de un cliente importado o de la página de citas no se cambia a mano.
   source: z.enum(CUSTOMER_SOURCES).default("manual"),
@@ -201,8 +233,11 @@ export const maintenanceSchema = z
     }
   });
 
-export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
-export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
+type CompanyKeys = "customerKind" | "legalName" | "taxId" | "addressLine1" | "postalCode" | "city" | "province" | "contactName" | "contactRole";
+type Company<T> = Omit<T, CompanyKeys> & Partial<Pick<T & Record<CompanyKeys, unknown>, CompanyKeys>>;
+/** Los datos de empresa son opcionales en los servicios (compatibilidad con los usos anteriores). */
+export type CreateCustomerInput = Company<z.infer<typeof createCustomerSchema>>;
+export type UpdateCustomerInput = Company<z.infer<typeof updateCustomerSchema>>;
 export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
 export type UpdateVehicleInput = z.infer<typeof updateVehicleSchema>;
 export type MaintenanceInput = z.infer<typeof maintenanceSchema>;

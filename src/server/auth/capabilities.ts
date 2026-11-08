@@ -17,5 +17,15 @@ export function capabilities(ctx: OrgContext) {
     vehiclesDelete: active && can(ctx, "vehicles.delete"),
     maintenanceWrite: active && can(ctx, "maintenance.write"),
     maintenanceDelete: active && isAdmin(ctx),
+    // PCI
+    installationsWrite: active && can(ctx, "customers.write"),
+    installationsDelete: active && can(ctx, "customers.delete"),
+    equipmentWrite: active && can(ctx, "vehicles.write"),
+    equipmentDelete: active && can(ctx, "vehicles.delete"),
+    recordsWrite: active && can(ctx, "maintenance.write"),
+    workOrdersManage: active && can(ctx, "work_orders.manage"),
+    workOrdersExecute: active && (can(ctx, "work_orders.execute") || can(ctx, "work_orders.manage")),
+    incidentsWrite: active && can(ctx, "incidents.write"),
+    seeAllWorkOrders: can(ctx, "work_orders.manage"),
   };
 }

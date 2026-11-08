@@ -969,6 +969,17 @@ export interface Vehicles {
   vin: string | null;
 }
 
+export interface WorkOrderCalendarLinks {
+  google_calendar_id: string;
+  google_event_id: string;
+  integration_id: string;
+  last_error: string | null;
+  last_synced_at: Timestamp | null;
+  organization_id: string;
+  sync_status: Generated<string>;
+  work_order_id: string;
+}
+
 export interface WorkOrderEvents {
   actor_id: string | null;
   branch_id: string;
@@ -1010,13 +1021,13 @@ export interface WorkOrders {
   id: Generated<string>;
   installation_id: string;
   notes: string | null;
-  number: string;
+  number: Generated<string>;
   organization_id: string;
   report_pdf_path: string | null;
   scheduled_for: string | null;
   scheduled_time: string | null;
-  sequence: number;
-  series_year: number;
+  sequence: Generated<number>;
+  series_year: Generated<number>;
   service_type: string;
   started_at: Timestamp | null;
   status: Generated<string>;
@@ -1089,6 +1100,7 @@ export interface DB {
   technicians: Technicians;
   usage_counters: UsageCounters;
   vehicles: Vehicles;
+  work_order_calendar_links: WorkOrderCalendarLinks;
   work_order_events: WorkOrderEvents;
   work_order_items: WorkOrderItems;
   work_orders: WorkOrders;

@@ -90,6 +90,15 @@ export async function listCustomers(ctx: ServiceCtx, f: CustomerListFilters): Pr
         "c.phone",
         "c.source",
         "c.reminders_opt_out as remindersOptOut",
+        "c.customer_kind as customerKind",
+        "c.legal_name as legalName",
+        "c.tax_id as taxId",
+        "c.address_line1 as addressLine1",
+        "c.postal_code as postalCode",
+        "c.city",
+        "c.province",
+        "c.contact_name as contactName",
+        "c.contact_role as contactRole",
         "c.created_at as createdAt",
         sql<string>`count(*) over ()`.as("total"),
         sql<number>`(select count(*)::int from vehicles v where v.customer_id = c.id and v.deleted_at is null)`.as("vehicleCount"),
@@ -266,6 +275,15 @@ export async function createCustomer(ctx: ServiceCtx, input: CreateCustomerInput
         source: input.source,
         notes: input.notes,
         reminders_opt_out: input.remindersOptOut,
+        customer_kind: input.customerKind ?? "individual",
+        legal_name: input.legalName ?? null,
+        tax_id: input.taxId ?? null,
+        address_line1: input.addressLine1 ?? null,
+        postal_code: input.postalCode ?? null,
+        city: input.city ?? null,
+        province: input.province ?? null,
+        contact_name: input.contactName ?? null,
+        contact_role: input.contactRole ?? null,
         created_by: ctx.auth.userId,
       })
       .returning("id")
@@ -297,6 +315,13 @@ export async function updateCustomer(ctx: ServiceCtx, input: UpdateCustomerInput
         notes: input.notes,
         reminders_opt_out: input.remindersOptOut,
         opted_out_at: input.remindersOptOut && !current.reminders_opt_out ? new Date() : input.remindersOptOut ? undefined : null,
+        // Datos de empresa: solo los que llegan (un llamador antiguo no los borra).
+        ...Object.fromEntries(
+          Object.entries({
+            customer_kind: input.customerKind, legal_name: input.legalName, tax_id: input.taxId, address_line1: input.addressLine1,
+            postal_code: input.postalCode, city: input.city, province: input.province, contact_name: input.contactName, contact_role: input.contactRole,
+          }).filter(([, v]) => v !== undefined),
+        ),
       })
       .where("id", "=", input.id)
       .where("organization_id", "=", ctx.membership.organizationId)
