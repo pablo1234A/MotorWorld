@@ -76,3 +76,21 @@ Las citas creadas o cambiadas por la API también se pasan a Google Calendar si 
 - SDKs.
 
 Si se piden, se proponen como versión posterior (v1 se mantiene compatible; un cambio incompatible sería `v2`).
+
+
+## PCI (desde 2026-11-15)
+
+Alcances nuevos de las claves: `installations:read|write`, `equipment:read|write`, `work_orders:read|write`, `incidents:read|write`. Las actuaciones usan `maintenance:read|write`.
+
+| Método y ruta | Alcance | Qué hace |
+|---|---|---|
+| `GET/POST /v1/installations`, `GET/PATCH /v1/installations/{id}` | installations | Instalaciones de los clientes (filtros `customer_id`, `status`). |
+| `GET/POST /v1/equipment`, `GET/PATCH /v1/equipment/{id}` | equipment | Equipos PCI; los extintores llevan el objeto `extinguisher` (agente, carga, eficacia, timbrado…). Filtros `installation_id`, `category`, `status`, `due_before`. El alta cuenta en el límite del plan (422 `plan_limit_reached`). |
+| `GET /v1/action-types` | equipment:read | Operaciones aplicables (catálogo RIPCI y propias) con su periodicidad. |
+| `GET/POST /v1/actions` | maintenance | Actuaciones registradas; no se borran (se corrigen o anulan en el panel). |
+| `GET/POST /v1/work-orders`, `GET /v1/work-orders/{id}`, `POST /v1/work-orders/{id}/status` | work_orders | Órdenes con sus equipos; `completed` exige resultado en todos. |
+| `GET/POST /v1/incidents`, `GET/PATCH /v1/incidents/{id}` | incidents | Incidencias; resolver o descartar exige `resolution`. |
+
+Los errores de validación devuelven los nombres de campo de la API (`address_line1`, `charge_unit`…). `/v1/customers` incluye los datos de empresa (`customer_kind`, `legal_name`, `tax_id`, dirección y contacto).
+
+**Compatibilidad**: `/v1/vehicles*` y `/v1/maintenance` siguen funcionando igual, responden con `Deprecation: @1794700800` y `Link: <…>; rel="successor-version"` (`/api/v1/equipment` y `/api/v1/actions`) y figuran como `deprecated` en OpenAPI. No tienen fecha de retirada (`Sunset`) hasta que se decida y se avise a quien los use.

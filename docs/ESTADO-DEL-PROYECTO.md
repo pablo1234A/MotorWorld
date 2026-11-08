@@ -2,10 +2,52 @@
 
 > Se actualiza al cerrar cada fase. Solo figura como "pasa" lo que se ha ejecutado de verdad.
 
+## Transformación a protección contra incendios (PCI) — 2026-11-15
+
+RevisaYa pasa de talleres mecánicos a **empresas mantenedoras de extintores y sistemas PCI**. Se ha transformado el software real (no un proyecto nuevo ni una demo). Diseño: [PCI-DISENO.md](PCI-DISENO.md) · normativa: [NORMATIVA-PCI.md](NORMATIVA-PCI.md) · decisiones: ADR-079…089.
+
+### Qué funciona (verificado de punta a punta)
+
+Registrar un cliente (empresa o particular, con CIF/NIF) → crear su instalación → dar de alta un extintor (agente, carga, eficacia, timbrado, retimbrados) u otro equipo PCI → programa de mantenimiento según el RIPCI → dar de alta un técnico → orden de trabajo con lo que vence → el técnico, en el móvil, ve solo sus órdenes, la empieza, registra el resultado de cada equipo con materiales, fotos e incidencia y la finaliza → historial inalterable del equipo y próximos vencimientos recalculados → parte en PDF al cliente → avisos de vencimiento por correo sin duplicados → informes, calendario, importación de Excel, API v1. Facturación (Stripe en modo TEST), autenticación, 2FA, usuarios y permisos siguen igual.
+
+### Pruebas ejecutadas (base de datos nueva, `pnpm db:reset`)
+
+| Prueba | Antes (línea base) | Ahora |
+|---|---|---|
+| pgTAP | 310/310 | **354/354** (19 archivos) |
+| Vitest (unit + integración) | 317/317 | **358/358** (39 archivos) |
+| Playwright E2E | 35/35 | **39/39** |
+| typecheck · lint · build | OK | **OK** |
+| `pnpm audit` | 0 | **0 vulnerabilidades** |
+
+Las 20 pruebas obligatorias del encargo, dónde se cubren: alta de cliente, instalación y extintor, tipos y asociación (E2E `pci.spec`, integración `pci.test`); registrar actuación, orden, asignar técnico y finalizar (E2E `pci.spec` + técnico en el móvil); incidencia (E2E, integración); programar (orden con fecha, calendario); detectar vencimientos y enviar avisos sin duplicados (`pci-reminders.test`, E2E `reminders.spec`); informes y exportación (`reports`, E2E `phase9.spec`, `privacy.test`); importación de Excel (`pci-imports.test`, E2E `import.spec`); aislamiento entre empresas (pgTAP 160/170, integración, API); permisos de técnico (pgTAP 170, integración, E2E); límites del plan (pgTAP 160, `billing`); autenticación y facturación anteriores (E2E `auth`, `billing`, `security`, `members`).
+
+### Errores encontrados y corregidos durante la transformación
+
+- Un técnico «solo ejecutor» no podía registrar resultados de su propia orden (migración 900).
+- Las fotos no se podían subir: el bucket privado solo admitía PDF (migración 1000).
+- Un extintor sin capacidad no se podía crear desde el formulario.
+- Una orden con un solo equipo marcado, o con selectores «No incluir», no pasaba la validación.
+- Editar un cliente desde la API borraba sus datos de empresa no enviados.
+- La periodicidad del RIPCI se podía alargar (ahora solo acortar).
+- El dispatcher no enviaba avisos de instalación (unía siempre con vehículos).
+- Las cuentas con vehículos no podían añadir vehículos a clientes nuevos; el menú se pintaba dos veces.
+- Pruebas frágiles: un informe con el cambio de hora y matrículas aleatorias repetidas en el dispatcher.
+
+### Pendiente o a decidir por el propietario
+
+- **Límites de equipos por plan** (Pro 300, Max 2.000, resto ilimitado): son los de vehículos; decisión comercial pendiente (ADR-080). Precios e identificadores de Stripe **sin cambios**.
+- **Textos legales**: actualizados al servicio PCI (versión `2026-11-15`) y con la cláusula de no certificación; siguen siendo un borrador para **revisión jurídica**. Las cuentas existentes no han vuelto a aceptarlos (no hay bloqueo de reaceptación).
+- **Retirada de la API de vehículos**: anunciada con `Deprecation`; falta fijar la fecha (`Sunset`).
+- **Normativa autonómica** y normas UNE concretas de cada empresa: el catálogo es el estatal del RIPCI; cada empresa ajusta qué programa.
+- Con renderizado en streaming, las fichas inexistentes muestran la página 404 con estado HTTP 200 (la RLS no devuelve nada; no hay fuga de datos).
+- Lo que sigue exigiendo cuentas reales (Resend, Stripe en vivo, Google) no ha cambiado: ver las fases 6–12.
+
 ## Resumen
 
 | Fase | Estado | Fecha |
 |---|---|---|
+| PCI 0–10 — Transformación a protección contra incendios | ✅ Completada (ver arriba) | 2026-11-15 |
 | 0 — Auditoría y planificación | ✅ Completada y **aprobada** (ADR-001…015, P1–P20) | 2026-11-04 |
 | 1 — Infraestructura y base de datos | ✅ Completada | 2026-11-04 |
 | 2 — Backend y autenticación | ✅ Completada | 2026-11-05 |

@@ -299,3 +299,23 @@ Ajustes respecto al diseño de la Fase 0:
 - Los privilegios se conceden **por columna**: un usuario no puede escribir `organization_id`, `status` de la organización, `provider_message_id`, `key_hash`, etc., aunque la política RLS lo permitiera.
 - Los recordatorios solo admiten una acción de usuario: cancelar uno programado (`scheduled`/`retrying` → `canceled`).
 - Formatos de error: ver ADR-017.
+
+
+## PCI (migraciones `20261115000100` a `20261115001000`)
+
+Todas son **aditivas**: no se borra ni se modifica ningún dato existente ni ninguna migración aplicada.
+
+| Migración | Contenido |
+|---|---|
+| 100 `pci_core` | Tablas PCI con FKs compuestas `(organization_id, branch_id, id)`, RLS forzada en todas, permisos de columna, auditoría, triggers de integridad (equipo en la instalación de la orden, operación aplicable a la categoría, transiciones de la orden, orden cerrada inmutable, actuaciones solo corregibles con motivo o anulables), límite `max_equipment` con bloqueo consultivo, código automático `PREFIJO-000001`, token QR inmutable, permisos nuevos y alcances de API. Datos de empresa en `customers`. |
+| 200 `pci_catalog` | Categorías, tipos y operaciones del RIPCI con su referencia normativa ([NORMATIVA-PCI.md](NORMATIVA-PCI.md)). |
+| 300 `pci_lifecycle` | Papelera y purga: árboles de borrado de instalaciones y equipos, cola `private.storage_deletions`, supresión de clientes (RGPD) y purga de organizaciones con los datos PCI. |
+| 400 `pci_reminders_comms` | Avisos por instalación (`installation_due`, sin duplicados por índice único), tipos de correo y plantillas PCI, visitas con instalación, servicio y dirección; presupuestos con instalación y tipo de línea. |
+| 500 `pci_reports` | Funciones `SECURITY INVOKER` de inicio e informes (`app.pci_dashboard`, `app.pci_report_*`). |
+| 600 `pci_fixes` | Valores por defecto de numeración de órdenes y enlace orden ↔ evento de Google Calendar. |
+| 700 `pci_emails` | Tipo de correo `action_upcoming` e incidencia en `email_logs`. |
+| 800 `pci_imports` | `import_batches.kind` (los lotes anteriores quedan como `vehicles`), acciones de fila PCI y trazabilidad `import_batch_id` en instalaciones y equipos. |
+| 900 `pci_technician_records` | El técnico ejecutor registra actuaciones en sus órdenes en curso (ADR-084). |
+| 1000 `pci_storage_photos` | El bucket privado `documents` admite JPG, PNG y WebP además de PDF y ZIP. |
+
+Vencimientos: `app.recompute_equipment_schedule(equipo)` calcula `equipment_action_schedules` (último hecho, próximo vencimiento, retimbrados) a partir de las actuaciones no anuladas, la configuración de la empresa y las fechas del equipo; `equipment.next_action_on` es el mínimo. Se ejecuta por trigger al registrar, corregir o anular actuaciones y al cambiar el equipo o la configuración.

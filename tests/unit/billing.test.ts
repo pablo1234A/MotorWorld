@@ -44,6 +44,9 @@ describe("pagos siempre en modo TEST", () => {
 
 describe("cambiar a un plan más pequeño", () => {
   it("indica exactamente qué sobra", () => {
+    // PCI: los equipos en uso también tienen que caber en el plan nuevo.
+    expect(downgradeBlockers("pro", { users: 1, branches: 1, customers: 1, activeVehicles: 0, equipment: 300 })).toEqual([]);
+    expect(downgradeBlockers("pro", { users: 1, branches: 1, customers: 1, activeVehicles: 0, equipment: 301 })).toEqual(["tienes 301 equipos en uso y el plan Pro admite 300"]);
     expect(downgradeBlockers("pro", { users: 1, branches: 1, customers: 150, activeVehicles: 300 })).toEqual([]);
     const b = downgradeBlockers("pro", { users: 2, branches: 2, customers: 151, activeVehicles: 301 });
     expect(b).toHaveLength(4);

@@ -93,3 +93,8 @@ Descargable en CSV y XLSX con las columnas originales + `fila`, `errores`, `avis
 | Límites del plan | Comprobación previa visible en la vista previa (cuántos caben) y comprobación definitiva de la BD al confirmar. |
 | Concurrencia | Dos confirmaciones simultáneas del mismo lote: una importa y la otra recibe «ya confirmada». Si alguien registra una matrícula entre la validación y la confirmación, la confirmación falla entera por el índice único. |
 | Seguridad del archivo | Tipo por contenido (no extensión), máximo 5 MB (Server Actions a 5,2 MB), tamaño descomprimido del ZIP comprobado antes de abrirlo (≤ 60 MB), sin evaluar fórmulas, `.xls` rechazado con instrucciones, informe CSV protegido contra inyección de fórmulas, rate limiting de 30 subidas/hora por taller. |
+
+
+## PCI: clientes, instalaciones y equipos
+
+Tres plantillas (`/api/app/import/template?tipo=clientes|instalaciones|equipos`), en este orden. Cada fila se valida con las **mismas reglas del panel** y contra lo que ya existe: cliente por CIF/NIF, correo o nombre exacto; instalación por nombre (y cliente si hay nombres repetidos); categoría y agente en texto libre («Extintor», «BIE», «Polvo ABC», «CO2»…); fechas de Excel o DD/MM/AAAA; códigos de equipo únicos. Los duplicados se omiten; las filas con errores solo se omiten si se marca expresamente. La confirmación crea todo en **una transacción** con la RLS del usuario (el límite del plan lo aplica la BD) y marca lo creado con el lote (`import_batch_id`). Revisión descargable en CSV. La importación de vehículos sigue disponible, plegada.

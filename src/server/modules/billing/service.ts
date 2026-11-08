@@ -50,26 +50,28 @@ export interface BillingOverview {
   trialEligible: boolean;
   dataRetentionUntil: string | null;
   prices: Array<{ planCode: PlanCode; interval: Interval }>;
-  usage: { users: number; branches: number; customers: number; activeVehicles: number };
+  usage: { users: number; branches: number; customers: number; activeVehicles: number; equipment?: number };
   invoices: Array<{ id: string; status: string; amountDueCents: number; amountPaidCents: number; currency: string; periodStart: Date | null; createdAt: Date; hostedUrl: string | null; pdfUrl: string | null }>;
 }
 
 async function usageOf(orgId: string) {
   return withSystem(async (tx) => {
-    const { rows } = await sql<{ users: number; branches: number; customers: number; vehicles: number }>`
+    const { rows } = await sql<{ users: number; branches: number; customers: number; vehicles: number; equipment: number }>`
       select
         (select count(*)::int from organization_members where organization_id = ${orgId} and status = 'active')
           + (select count(*)::int from invitations where organization_id = ${orgId} and accepted_at is null and revoked_at is null and expires_at > now()) as users,
         (select count(*)::int from branches where organization_id = ${orgId} and status = 'active') as branches,
         (select count(*)::int from customers where organization_id = ${orgId} and deleted_at is null) as customers,
-        (select count(*)::int from vehicles where organization_id = ${orgId} and deleted_at is null and status = 'active') as vehicles
+        (select count(*)::int from vehicles where organization_id = ${orgId} and deleted_at is null and status = 'active') as vehicles,
+        -- Igual que el límite de la BD: equipos no borrados y no retirados.
+        (select count(*)::int from equipment where organization_id = ${orgId} and deleted_at is null and status <> 'retired') as equipment
     `.execute(tx);
     const r = rows[0];
-    return { users: r.users, branches: r.branches, customers: r.customers, activeVehicles: r.vehicles };
+    return { users: r.users, branches: r.branches, customers: r.customers, activeVehicles: r.vehicles, equipment: r.equipment };
   });
 }
 
-/** Lo que impide pasar a un plan (más usuarios, talleres, clientes o vehículos de los que admite). */
+/** Lo que impide pasar a un plan (más usuarios, delegaciones, clientes, vehículos o equipos de los que admite). */
 export function downgradeBlockers(plan: PlanCode, usage: BillingOverview["usage"]): string[] {
   const p = PLANS[plan];
   const out: string[] = [];
@@ -78,6 +80,8 @@ export function downgradeBlockers(plan: PlanCode, usage: BillingOverview["usage"
   if (p.maxCustomers !== null && usage.customers > p.maxCustomers) out.push(`tienes ${usage.customers} clientes y el plan ${p.name} admite ${p.maxCustomers}`);
   if (p.maxActiveVehicles !== null && usage.activeVehicles > p.maxActiveVehicles)
     out.push(`tienes ${usage.activeVehicles} vehículos activos y el plan ${p.name} admite ${p.maxActiveVehicles}`);
+  if (p.maxEquipment !== null && (usage.equipment ?? 0) > p.maxEquipment)
+    out.push(`tienes ${usage.equipment} equipos en uso y el plan ${p.name} admite ${p.maxEquipment}`);
   return out;
 }
 

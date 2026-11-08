@@ -143,3 +143,10 @@ Código: `src/server/integrations/google.ts` (OAuth y API REST v3, sin SDK), `sr
 ## 6. Credenciales que deberá configurar el responsable (no se incluyen en el código)
 
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (pooler), `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY` (test), `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (test), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INTEGRATIONS_ENCRYPTION_KEY` (32 bytes base64), `API_KEY_PEPPER`, `CRON_SECRET`, `EMAIL_LINK_SECRET`, `TURNSTILE_*` y `LEGAL_OWNER_*`. Todas están en `.env.example`; `pnpm check:env` comprueba la configuración (DESPLIEGUE §6.5).
+
+
+## PCI
+
+- **Google Calendar** (plan Max): además de las visitas, las **órdenes de trabajo** programadas se sincronizan como eventos (`work_order_calendar_links`), y se actualizan o borran al cambiar la fecha, el técnico o el estado.
+- **Calendario interno** (`/app/calendario`): órdenes, visitas confirmadas y vencimientos por instalación, en rejilla mensual (escritorio) o agenda (móvil).
+- **API v1**: recursos PCI ([API.md](API.md)).

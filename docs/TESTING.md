@@ -67,3 +67,15 @@ Resultados de la última ejecución: ver [ESTADO-DEL-PROYECTO](ESTADO-DEL-PROYEC
 
 `install → typecheck → lint → unit → supabase start → db reset (migraciones) → pgTAP → integración → build → e2e (en PR a main) → audit/gitleaks`.
 Las migraciones se prueban desde cero en cada ejecución: si no se aplican limpias, el pipeline falla.
+
+
+## PCI
+
+| Capa | Archivos | Qué cubre |
+|---|---|---|
+| pgTAP | `supabase/tests/database/160_pci.sql` | Aislamiento, integridad, vencimientos, inmutabilidad, órdenes, RLS de técnicos, límites y avisos. |
+| Unit | `tests/unit/pci-validation.test.ts` | Validación de equipos (extintor), órdenes, materiales, datos de empresa, archivos privados. |
+| Integración | `pci.test.ts`, `pci-reminders.test.ts`, `pci-notify.test.ts`, `pci-imports.test.ts`, `pci-quotes.test.ts`, `api-pci.test.ts` | Flujo completo por los servicios; avisos sin duplicados y cancelados al hacer la actuación; correos y PDF; importación; presupuestos; API y compatibilidad. |
+| E2E | `tests/e2e/pci.spec.ts` (+ las demás adaptadas) | Cliente → instalación → extintor → técnico → orden → resultado → finalizar → historial, incidencia, calendario e informes; etiqueta QR; técnico en el móvil con foto. |
+
+Las pruebas de vehículos se conservan: simulan una cuenta que ya tiene vehículos y recorren su interfaz. Los correos de las pruebas van a Mailpit local o a un proveedor falso dentro de `tests/`: no sale ningún correo real.

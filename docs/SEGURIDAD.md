@@ -130,3 +130,13 @@ Revisión del código y pruebas automáticas. **No sustituye a una prueba de int
 - La pausa automática de los envíos de un taller con reputación crítica **no** se hace sola: hoy se avisa al taller y a la plataforma. Decidirlo es cosa del responsable, porque afecta al servicio contratado.
 - Recuperar el acceso de alguien que pierde el móvil con 2FA: por ahora, manual (soporte de Supabase o un administrador de la plataforma). No hay códigos de recuperación propios.
 - El límite de peticiones está en PostgreSQL; con mucho tráfico conviene pasarlo a Redis (Upstash).
+
+
+## PCI
+
+- **Aislamiento**: todas las tablas PCI tienen RLS forzada y FKs compuestas con la organización y la delegación; un id de otra empresa da «no encontrado» (probado en pgTAP, integración, API y E2E).
+- **Técnicos**: con `work_orders.execute` solo ven sus órdenes (`app.my_technician_ids()`), no reasignan, reprograman ni cancelan, y solo registran actuaciones dentro de sus órdenes en curso.
+- **Trazabilidad**: las actuaciones no se borran; las correcciones exigen motivo y quedan en la auditoría con el valor anterior; las anulaciones, motivo y administrador.
+- **QR**: token aleatorio de 64 hex, inmutable; la página `/app/equipos/qr/[token]` exige sesión y RLS; el QR no contiene datos del cliente. `Permissions-Policy: camera=(self)` para el lector de QR del navegador (ADR-085).
+- **Archivos**: bucket privado, tipo comprobado por firma (no por nombre), 10 MB, límite de subidas por empresa, descarga con URL firmada de 60 s (`/api/app/documents/[id]`, con `Referrer-Policy: no-referrer`).
+- **Correos PCI**: siempre a mano, con límite por empresa (`pciEmailsPerOrg`) y sin enviar a direcciones bloqueadas.

@@ -1,8 +1,11 @@
 # RevisaYa
 
-SaaS para talleres mecánicos: el taller registra sus clientes, vehículos e historial de revisiones, y RevisaYa envía cada día avisos por correo a los clientes a los que les toca la revisión, con un botón para pedir cita.
+SaaS para **empresas mantenedoras de protección contra incendios (PCI)**: clientes e instalaciones, extintores, BIE, detección y demás equipos con su programa de mantenimiento según el RIPCI, etiquetas QR, órdenes de trabajo para los técnicos en el móvil, historial de actuaciones inalterable, incidencias, fotos y documentos, partes en PDF, avisos de vencimiento por correo, informes, importación de Excel y API.
 
-> **Estado: Fases 0–12 completadas.** El producto está construido de punta a punta: talleres y usuarios con 2FA, clientes, vehículos e historial, importación de Excel, avisos automáticos por correo, citas, presupuestos, suscripciones con Stripe (**siempre en modo TEST**), Google Calendar, informes, API, web pública, textos legales (borrador para revisión jurídica) y preparación para producción. Para publicarlo: [docs/DESPLIEGUE.md §6](docs/DESPLIEGUE.md) y [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md). Estado detallado y lo que falta probar con cuentas reales: [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
+> **RevisaYa no certifica el cumplimiento normativo** ni emite certificados oficiales: ayuda a planificar y registrar el mantenimiento ([docs/NORMATIVA-PCI.md](docs/NORMATIVA-PCI.md)).
+
+> **Estado: transformación PCI completada (2026-11-15)** sobre las Fases 0–12 anteriores ([docs/PCI-DISENO.md](docs/PCI-DISENO.md), [estado](docs/ESTADO-DEL-PROYECTO.md)). Los datos de vehículos de la etapa de talleres se conservan.
+> Fases 0–12 (etapa anterior): El producto está construido de punta a punta: talleres y usuarios con 2FA, clientes, vehículos e historial, importación de Excel, avisos automáticos por correo, citas, presupuestos, suscripciones con Stripe (**siempre en modo TEST**), Google Calendar, informes, API, web pública, textos legales (borrador para revisión jurídica) y preparación para producción. Para publicarlo: [docs/DESPLIEGUE.md §6](docs/DESPLIEGUE.md) y [docs/LANZAMIENTO.md](docs/LANZAMIENTO.md). Estado detallado y lo que falta probar con cuentas reales: [docs/ESTADO-DEL-PROYECTO.md](docs/ESTADO-DEL-PROYECTO.md).
 > "RevisaYa" es un nombre provisional: falta comprobar la marca y el dominio.
 
 ## Puesta en marcha local

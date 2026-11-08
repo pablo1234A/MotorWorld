@@ -13,7 +13,7 @@ const eur = (cents: number) => (cents / 100).toLocaleString("es-ES", { style: "c
 const limit = (n: number | null, unit: string) => (n === null ? `${unit} ilimitados` : `${n.toLocaleString("es-ES")} ${unit}`);
 
 const FEATURE_LABELS: Partial<Record<string, string>> = {
-  km_reminders: "Avisos por kilometraje",
+  km_reminders: "Avisos por kilometraje (vehículos, etapa anterior)",
   google_calendar: "Google Calendar",
   reports: "Informes",
   multi_branch: "Varias delegaciones",
@@ -74,7 +74,7 @@ export function PlanPicker({
               </div>
               <ul className="flex flex-col gap-1 text-sm text-[var(--muted)]">
                 <li>{limit(p.maxCustomers, "clientes")}</li>
-                <li>{limit(p.maxActiveVehicles, "vehículos activos")}</li>
+                <li>{limit(p.maxEquipment, "equipos en uso")}</li>
                 <li>{p.monthlyEmails.toLocaleString("es-ES")} correos al mes</li>
                 <li>{limit(p.maxUsers, p.maxUsers === 1 ? "usuario" : "usuarios")}</li>
                 {p.maxBranches !== null && p.maxBranches > 1 ? <li>Hasta {p.maxBranches} delegaciones</li> : p.maxBranches === null ? <li>Delegaciones ilimitadas</li> : null}

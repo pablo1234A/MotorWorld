@@ -29,3 +29,8 @@ Código: `supabase/migrations/20261110000100_reports.sql` (funciones `app.report
   - solo entran las sucursales donde el usuario tiene «Ver informes» (`reports.read`); los administradores, todas.
 - Cambiar el id del taller o de la sucursal en la petición devuelve «sin permiso» (probado).
 - El CSV usa punto y coma, BOM UTF-8 (Excel en español) y neutraliza las fórmulas (`=`, `+`, `-`, `@`). Máximo 5000 filas.
+
+
+## PCI (plan Max o superior)
+
+Resumen del periodo (equipos por tipo, actuaciones y no conformes, por operación y por técnico, órdenes finalizadas, incidencias) y listados con CSV: **vencimientos** (vencidos y próximos 30 días), **actuaciones**, **estado por instalación** e **incidencias**. Todo con la RLS del usuario (`app.pci_report_*`, `SECURITY INVOKER`). Los informes de vehículos se conservan para las cuentas que tienen vehículos. El inicio muestra a todos los planes contadores PCI y la actividad reciente.

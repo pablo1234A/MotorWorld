@@ -106,3 +106,12 @@ Por sucursal, `digest_frequency` = `daily` (cada día) o `weekly` (lunes), a par
 
 - Métricas de reputación por organización (alerta si quejas > 0,1 % o rebotes > 4 %): Fase 11.
 - Eventos de entrega con Amazon SES (SNS): solo si se usa SES en producción.
+
+
+## PCI: avisos de vencimiento y correos (desde 2026-11-15)
+
+- **Planificador** (`private.plan_reminders`, paso 4): un aviso por **instalación** con el próximo vencimiento futuro de sus equipos en servicio, para cada antelación configurada, a su cliente. Si la fecha cambia (se registra la actuación) o la instalación deja de estar activa, el aviso pendiente se cancela (`superseded` / `installation_inactive`). Lo ya vencido no genera avisos: se ve en el inicio y en los informes.
+- **Dispatcher**: revalida con los datos actuales antes de enviar; plantilla `reminder_maintenance` con `{nombre}`, `{instalacion}`, `{direccion}`, `{equipos}` («6 extintores y 2 BIE»), `{fecha_revision}` y `{taller}` (nombre de la empresa); botón «Pedir visita» con el enlace firmado del aviso; enlace de baja. Sin duplicados (índice único + idempotencia con el proveedor).
+- **Correos a mano** (`pci-notify`): próxima actuación (orden con fecha), servicio realizado con el parte en PDF, incidencia detectada y estado de la instalación en PDF. Respetan rebotes, quejas y bloqueos, cuentan en el consumo del plan y quedan en `email_logs` con la orden, la instalación o la incidencia.
+- **Resumen diario o semanal** a la empresa: avisos enviados y con problemas, equipos con actuaciones vencidas y órdenes abiertas.
+- **Retención** (`/api/internal/jobs/retention`): además de avisar y purgar, borra del almacenamiento los archivos encolados en `private.storage_deletions`.

@@ -176,3 +176,16 @@ Organización (cuenta de facturación, = tenant)
 | > 10.000 | Worker Node dedicado (mismo código de `server/jobs`) en contenedor, particionado mensual de `email_logs`/`audit_logs`/`reminders`, vistas materializadas para informes, SES como proveedor por coste. |
 
 Medidas desde el día uno: paginación en servidor (keyset en tablas grandes), índices que empiezan por `organization_id`, consultas con joins en vez de N+1, procesamiento por lotes, límites de tamaño en todas las entradas.
+
+
+## Protección contra incendios (PCI) — desde 2026-11-15
+
+RevisaYa pasa a ser un software para **empresas mantenedoras de PCI**. Se ha transformado el producto existente (no hay un proyecto nuevo): autenticación, organizaciones y delegaciones, permisos, facturación, correo, avisos, importación, informes, API y web se conservan y se amplían. Diseño y auditoría: [PCI-DISENO.md](PCI-DISENO.md); normativa: [NORMATIVA-PCI.md](NORMATIVA-PCI.md); decisiones: ADR-079 a ADR-089.
+
+| Capa | PCI |
+|---|---|
+| Datos | `installations`, `equipment` (+ `equipment_extinguishers`), catálogo (`equipment_categories`, `equipment_types`, `maintenance_action_types`, `org_action_type_settings`), `equipment_maintenance_records` (+ materiales), `equipment_action_schedules` (vencimientos, los calcula la BD), `work_orders` (+ `work_order_items`, `work_order_events`), `equipment_incidents`, `technicians`, `pci_documents`. |
+| Servicios (`src/server/modules/`) | `installations`, `equipment`, `maintenance/records`, `work-orders`, `incidents`, `technicians`, `documents`, `pci-notify` (correos a mano), `calendar` (agenda), `imports/pci`, `reports` (informes PCI) y `src/server/pci/pdf.tsx` (parte de trabajo y estado de la instalación). Cada servicio trabaja con la RLS del usuario (`withRls`). |
+| Pantallas (`src/app/app/`) | Inicio con contadores PCI, `clientes`, `instalaciones` (ficha, etiquetas QR), `equipos` (ficha, programa, historial, QR `/app/equipos/qr/[token]`), `ordenes-trabajo` (pensada para el móvil del técnico), `mantenimientos`, `incidencias`, `calendario`, `informes`, `importar`, `configuracion/tecnicos` y `configuracion/mantenimiento`. Navegación lateral en escritorio y menú desplegable en el móvil. |
+| API | `/api/v1/installations`, `/equipment`, `/action-types`, `/actions`, `/work-orders`, `/incidents` ([API.md](API.md)). |
+| Heredado | Vehículos, historial de revisiones y kilometraje: se conservan (tablas, API obsoleta, exportación) y su interfaz solo aparece en las cuentas que ya tienen vehículos. |
