@@ -165,7 +165,7 @@ export function renderWorkshopEmail(input: WorkshopEmailInput): RenderedEmail {
     .map((p) => p.trim())
     .filter(Boolean);
   const note = input.note?.trim() || null;
-  const color = input.workshop.brandColor && SAFE_COLOR.test(input.workshop.brandColor) ? input.workshop.brandColor : "#1f4fd8";
+  const color = input.workshop.brandColor && SAFE_COLOR.test(input.workshop.brandColor) ? input.workshop.brandColor : "#c8102e";
   const name = escapeHtml(input.workshop.name);
   const showButton = input.template.buttonEnabled && Boolean(input.ctaHref);
   const contact = [input.workshop.address, input.workshop.phone, input.workshop.email].filter(Boolean) as string[];

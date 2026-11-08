@@ -43,7 +43,7 @@ const s = StyleSheet.create({
 });
 
 function QuoteDocument({ q, snap, logo }: { q: QuoteDetail; snap: QuoteSnapshot; logo: { data: Buffer; format: "png" | "jpg" } | null }) {
-  const color = snap.workshop.brandColor && SAFE_COLOR.test(snap.workshop.brandColor) ? snap.workshop.brandColor : "#1f4fd8";
+  const color = snap.workshop.brandColor && SAFE_COLOR.test(snap.workshop.brandColor) ? snap.workshop.brandColor : "#c8102e";
   const totals = quoteTotals(q.items.map((i) => ({ quantity: i.quantity, unitPrice: i.unitPrice, taxRate: Number(i.taxRate) })));
   const w = snap.workshop;
   return (

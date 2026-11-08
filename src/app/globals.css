@@ -6,46 +6,53 @@
  * de color para que las pantallas funcionales no tengan que rehacerse.
  */
 :root {
-  --background: #f6f7f9;
+  /* Identidad PCI: carbón, blanco y grises, con el rojo como ACENTO (no saturar). */
+  --background: #f5f5f4;
   --surface: #ffffff;
-  --surface-2: #eef0f3;
-  --border: #dde1e7;
-  --foreground: #14161a;
-  --muted: #5b616e;
-  --accent: #1f4fd8;
-  --accent-hover: #1a43b8;
-  --accent-soft: #eaf0ff;
-  --accent-ring: rgb(31 79 216 / 0.25);
-  --danger: #c62828;
-  --danger-soft: #fdecec;
-  --danger-strong: #8e1b1b;
-  --success: #1b7f4b;
+  --surface-2: #efeeec;
+  --border: #e0ddd9;
+  --foreground: #1c1b1a;
+  --muted: #5e5a55;
+  --carbon: #23201e;
+  --accent: #c8102e;
+  --accent-hover: #a50d26;
+  --accent-soft: #fdecee;
+  --accent-ring: rgb(200 16 46 / 0.25);
+  --danger: #b42318;
+  --danger-soft: #fef1ef;
+  --danger-strong: #8a1c12;
+  --success: #17804a;
   --success-soft: #e8f6ee;
-  --success-strong: #135c36;
-  --warning: #b86e00;
+  --success-strong: #11603a;
+  --warning: #b45309;
   --warning-soft: #fff4e0;
+  --info: #2b5d9b;
+  --info-soft: #eaf1fb;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0e1013;
-    --surface: #161a1f;
-    --surface-2: #1e232a;
-    --border: #2b313a;
-    --foreground: #eceef1;
-    --muted: #9aa0ab;
-    --accent: #5b8cff;
-    --accent-hover: #7aa2ff;
-    --accent-soft: #18233d;
-    --accent-ring: rgb(91 140 255 / 0.3);
-    --danger: #f06464;
-    --danger-soft: #2a1414;
-    --danger-strong: #ffb3b3;
-    --success: #43c383;
-    --success-soft: #11251a;
-    --success-strong: #9be5bf;
+    --background: #131211;
+    --surface: #1c1a19;
+    --surface-2: #262321;
+    --border: #36322f;
+    --foreground: #f1efed;
+    --muted: #a8a29c;
+    --carbon: #0e0d0c;
+    --accent: #f0455e;
+    --accent-hover: #ff6a7f;
+    --accent-soft: #3a1a20;
+    --accent-ring: rgb(240 69 94 / 0.3);
+    --danger: #f97066;
+    --danger-soft: #2c1513;
+    --danger-strong: #fecdc8;
+    --success: #47c486;
+    --success-soft: #10241a;
+    --success-strong: #a2e4c1;
     --warning: #f0a83c;
     --warning-soft: #2a1f0e;
+    --info: #7fb0ec;
+    --info-soft: #14202f;
   }
 }
 

@@ -29,7 +29,7 @@ export interface ProfileValues {
 export function ProfileForm({ values, readOnly }: { values: ProfileValues; readOnly: boolean }) {
   const [state, action] = useActionState(updateOrganizationProfileAction, idle);
   const v = (name: keyof ProfileValues, fallback: string | null) => sentValue(state, name) ?? fallback ?? "";
-  const [color, setColor] = useState(values.brandPrimary ?? "#1f4fd8");
+  const [color, setColor] = useState(values.brandPrimary ?? "#c8102e");
   return (
     <form action={action} className="flex flex-col gap-6">
       <FormMessage state={state} />

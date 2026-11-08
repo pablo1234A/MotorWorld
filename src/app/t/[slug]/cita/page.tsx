@@ -45,7 +45,7 @@ async function Content({ params, searchParams }: { params: Params; searchParams:
   const token = first(sp.t);
   const page = await resolveBookingPage(decodeURIComponent(slug).slice(0, 60), { token, branchId: first(sp.taller) });
   if (!page) notFound();
-  const color = page.org.brandColor && SAFE_COLOR.test(page.org.brandColor) ? page.org.brandColor : "#1f4fd8";
+  const color = page.org.brandColor && SAFE_COLOR.test(page.org.brandColor) ? page.org.brandColor : "#c8102e";
   const contact = [page.org.phone ? formatPhone(page.org.phone) : null, page.org.email].filter(Boolean).join(" · ");
 
   const days: SlotDay[] = [];
