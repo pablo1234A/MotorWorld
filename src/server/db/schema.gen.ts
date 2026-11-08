@@ -463,6 +463,7 @@ export interface ImportBatches {
   file_name: string;
   file_sha256: Buffer;
   id: Generated<string>;
+  kind: Generated<string>;
   organization_id: string;
   row_count: Generated<number>;
   status: Generated<string>;
@@ -479,6 +480,7 @@ export interface ImportRows {
   branch_id: string;
   errors: Generated<Json>;
   matched_customer_id: string | null;
+  matched_installation_id: string | null;
   matched_vehicle_id: string | null;
   normalized: Json | null;
   organization_id: string;

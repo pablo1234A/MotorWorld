@@ -102,7 +102,7 @@ async function readXlsx(buf: Buffer): Promise<RawValue[][]> {
   }
   // Hoja "Clientes" de la plantilla, o la primera con datos (se ignora "Instrucciones").
   const sheet =
-    wb.worksheets.find((w) => w.name.toLowerCase() === "clientes") ??
+    wb.worksheets.find((w) => ["clientes", "datos"].includes(w.name.toLowerCase())) ??
     wb.worksheets.find((w) => w.actualRowCount > 0 && !/instrucc/i.test(w.name)) ??
     wb.worksheets[0];
   if (!sheet) throw new ImportParseError("no_header");
@@ -149,13 +149,17 @@ function readCsv(buf: Buffer): RawValue[][] {
   return result.data.map((r) => r.slice(0, 40).map((v) => (v === "" ? null : v)));
 }
 
-export async function parseImportFile(buf: Buffer): Promise<ParsedFile> {
+/** Lee un Excel o CSV como rejilla de celdas, con los mismos límites y comprobaciones. */
+export async function readGrid(buf: Buffer): Promise<{ kind: ParsedFile["kind"]; grid: RawValue[][] }> {
   if (buf.length === 0) throw new ImportParseError("file_empty");
   if (buf.length > MAX_IMPORT_BYTES) throw new ImportParseError("file_too_large");
   if (isOleXls(buf)) throw new ImportParseError("file_xls");
-
   const kind: ParsedFile["kind"] = isZip(buf) ? "xlsx" : "csv";
-  const grid = kind === "xlsx" ? await readXlsx(buf) : readCsv(buf);
+  return { kind, grid: kind === "xlsx" ? await readXlsx(buf) : readCsv(buf) };
+}
+
+export async function parseImportFile(buf: Buffer): Promise<ParsedFile> {
+  const { kind, grid } = await readGrid(buf);
 
   // Cabecera: la primera de las 10 primeras filas con al menos 2 columnas reconocidas.
   let headerIndex = -1;

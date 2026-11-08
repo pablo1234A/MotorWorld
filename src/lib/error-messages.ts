@@ -157,11 +157,12 @@ const INTEGRITY_REASON: Record<string, string> = {
 
 const IMPORT_REASON: Record<string, string> = {
   already_committed: "Esta importación ya se ha confirmado.",
-  has_errors: "Corrige o excluye las filas con errores antes de confirmar.",
+  has_errors: "Hay filas con errores: corrígelas (en el archivo) o marca «Importar solo las filas correctas».",
   expired: "La importación ha caducado (7 días). Vuelve a subir el archivo.",
   repeated_file:
     "Este archivo ya se importó antes en este taller. Marca la casilla si quieres importarlo de nuevo.",
   not_editable: "La importación ya no se puede modificar.",
+  nothing_to_import: "No hay ninguna fila nueva que importar.",
 };
 
 const IMPORT_FILE_REASON: Record<string, string> = {
@@ -180,6 +181,7 @@ const IMPORT_FILE_REASON: Record<string, string> = {
   too_many_rows:
     "El archivo tiene más de 2.000 filas. Divídelo en varios archivos.",
   no_rows: "El archivo no tiene filas de datos.",
+  missing_columns_pci: "Faltan columnas obligatorias de la plantilla. Descarga la plantilla de este tipo de datos y usa sus cabeceras.",
 };
 
 export function errorMessage(code: string, detail?: string): string {

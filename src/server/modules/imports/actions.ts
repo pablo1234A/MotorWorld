@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { IMPORT_COLUMNS, MAX_IMPORT_BYTES } from "@/lib/imports/columns";
+import { PCI_IMPORT_KINDS } from "@/lib/imports/pci";
 import { planHasFeature } from "@/lib/plans";
 import { type ActionState, parseForm, runAction } from "@/server/actions/result";
 import type { OrgContext } from "@/server/auth/context";
@@ -12,6 +13,7 @@ import { assertPermission, requireOrg } from "@/server/auth/guards";
 import { DomainError } from "@/server/db/errors";
 
 import { listAccessibleBranches } from "../branches/service";
+import * as pci from "./pci";
 import * as imports from "./service";
 
 /**
@@ -116,5 +118,79 @@ export async function cancelImportAction(_prev: ActionState, formData: FormData)
     const { batchId: id } = parseForm(batchId, formData);
     await imports.cancelImport(ctx, id);
     redirect("/app/importar?cancelada=1");
+  });
+}
+
+// ------------------------------------------------------------------- PCI
+
+const PCI_PERMISSION = {
+  customers: "customers.write",
+  installations: "customers.write",
+  equipment: "vehicles.write",
+} as const;
+
+/** Subir un archivo de clientes, instalaciones o equipos PCI (no crea nada todavía). */
+export async function uploadPciImportAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return runAction("import.pci_upload", async (): Promise<ActionState> => {
+    const ctx = await requireOrg();
+    assertCanImport(ctx);
+    const kind = z.enum(PCI_IMPORT_KINDS).parse(formData.get("kind"));
+    assertPermission(ctx, PCI_PERMISSION[kind]);
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return {
+        status: "error",
+        code: "validation_error",
+        message: "Elige un archivo Excel (.xlsx) o CSV.",
+        fieldErrors: { file: ["Elige un archivo"] },
+      };
+    }
+    if (file.size > MAX_IMPORT_BYTES)
+      throw new DomainError("import_file_invalid", "file_too_large");
+    const branches = await listAccessibleBranches(ctx);
+    const requested = formData.get("branchId");
+    const branch =
+      branches.find((b) => b.id === requested) ??
+      (branches.length === 1 ? branches[0] : undefined);
+    if (!branch)
+      return {
+        status: "error",
+        code: "validation_error",
+        message: "Elige la delegación a la que importar.",
+        fieldErrors: { branchId: ["Elige una delegación"] },
+      };
+    const id = await pci.uploadPciImport(ctx, {
+      kind,
+      branchId: branch.id,
+      fileName: file.name,
+      data: Buffer.from(await file.arrayBuffer()),
+    });
+    redirect(`/app/importar/${id}`);
+  });
+}
+
+export async function commitPciImportAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return runAction("import.pci_commit", async () => {
+    const ctx = await requireOrg();
+    assertCanImport(ctx);
+    const input = parseForm(
+      z.object({
+        batchId: z.uuid(),
+        skipErrors: z.literal("on").optional(),
+        allowRepeat: z.literal("on").optional(),
+      }),
+      formData,
+    );
+    const r = await pci.commitPciImport(ctx, input.batchId, {
+      skipErrors: Boolean(input.skipErrors),
+      allowRepeat: Boolean(input.allowRepeat),
+    });
+    redirect(`/app/importar/${input.batchId}?creados=${r.created}`);
   });
 }

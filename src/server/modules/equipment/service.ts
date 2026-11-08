@@ -285,36 +285,40 @@ async function resolveAgent(tx: Tx, input: CreateEquipmentInput | UpdateEquipmen
   throw new DomainError("validation_error", "extinguisher_agent_required");
 }
 
-export async function createEquipment(ctx: ServiceCtx, input: CreateEquipmentInput): Promise<string> {
+/** Alta dentro de una transacción ya abierta (panel, API e importaciones). */
+export async function insertEquipment(tx: Tx, ctx: ServiceCtx, input: CreateEquipmentInput, extra: { importBatchId?: string } = {}): Promise<string> {
   const orgId = ctx.membership.organizationId;
-  return withRls(ctx.auth, async (tx) => {
-    const inst = await tx.selectFrom("installations").select(["branch_id"]).where("id", "=", input.installationId)
-      .where("organization_id", "=", orgId).where("deleted_at", "is", null).executeTakeFirst();
-    if (!inst) throw new DomainError("not_found");
-    const agent = await resolveAgent(tx, input);
-    const row = await tx
-      .insertInto("equipment")
-      .values({
-        organization_id: orgId,
-        branch_id: inst.branch_id,
-        installation_id: input.installationId,
-        category_code: input.categoryCode,
-        type_id: input.typeId,
-        code: input.code,
-        manufacturer: input.manufacturer,
-        model: input.model,
-        serial_number: input.serialNumber,
-        location: input.location,
-        installed_on: input.installedOn,
-        manufactured_on: input.manufacturedOn,
-        notes: input.notes,
-        created_by: ctx.auth.userId,
-      })
-      .returning("id")
-      .executeTakeFirstOrThrow();
-    if (agent) await writeExtinguisher(tx, orgId, inst.branch_id, row.id, input, agent);
-    return row.id;
-  });
+  const inst = await tx.selectFrom("installations").select(["branch_id"]).where("id", "=", input.installationId)
+    .where("organization_id", "=", orgId).where("deleted_at", "is", null).executeTakeFirst();
+  if (!inst) throw new DomainError("not_found");
+  const agent = await resolveAgent(tx, input);
+  const row = await tx
+    .insertInto("equipment")
+    .values({
+      organization_id: orgId,
+      branch_id: inst.branch_id,
+      installation_id: input.installationId,
+      category_code: input.categoryCode,
+      type_id: input.typeId,
+      code: input.code,
+      manufacturer: input.manufacturer,
+      model: input.model,
+      serial_number: input.serialNumber,
+      location: input.location,
+      installed_on: input.installedOn,
+      manufactured_on: input.manufacturedOn,
+      notes: input.notes,
+      created_by: ctx.auth.userId,
+      ...(extra.importBatchId ? { import_batch_id: extra.importBatchId } : {}),
+    })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  if (agent) await writeExtinguisher(tx, orgId, inst.branch_id, row.id, input, agent);
+  return row.id;
+}
+
+export async function createEquipment(ctx: ServiceCtx, input: CreateEquipmentInput): Promise<string> {
+  return withRls(ctx.auth, (tx) => insertEquipment(tx, ctx, input));
 }
 
 export async function updateEquipment(ctx: ServiceCtx, input: UpdateEquipmentInput): Promise<void> {

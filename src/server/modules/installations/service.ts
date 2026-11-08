@@ -4,7 +4,7 @@ import { sql } from "kysely";
 
 import { escapeLike, type Page } from "@/lib/pagination";
 import type { CreateInstallationInput, UpdateInstallationInput } from "@/lib/validation/pci";
-import { withRls } from "@/server/db/client";
+import { type Tx, withRls } from "@/server/db/client";
 import { DomainError } from "@/server/db/errors";
 
 import type { ServiceCtx } from "../branches/service";
@@ -130,38 +130,42 @@ export async function getInstallation(ctx: ServiceCtx, id: string): Promise<Inst
   });
 }
 
+/** Alta dentro de una transacción ya abierta (panel, API e importaciones). */
+export async function insertInstallation(tx: Tx, ctx: ServiceCtx, input: CreateInstallationInput, extra: { importBatchId?: string } = {}): Promise<string> {
+  const customer = await tx
+    .selectFrom("customers")
+    .select(["branch_id"])
+    .where("id", "=", input.customerId)
+    .where("organization_id", "=", ctx.membership.organizationId)
+    .where("deleted_at", "is", null)
+    .executeTakeFirst();
+  if (!customer) throw new DomainError("not_found");
+  const row = await tx
+    .insertInto("installations")
+    .values({
+      organization_id: ctx.membership.organizationId,
+      branch_id: customer.branch_id,
+      customer_id: input.customerId,
+      name: input.name,
+      establishment_type: input.establishmentType,
+      address_line1: input.addressLine1,
+      postal_code: input.postalCode,
+      city: input.city,
+      province: input.province,
+      contact_name: input.contactName,
+      contact_phone: input.contactPhone,
+      contact_email: input.contactEmail,
+      notes: input.notes,
+      created_by: ctx.auth.userId,
+      ...(extra.importBatchId ? { import_batch_id: extra.importBatchId } : {}),
+    })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  return row.id;
+}
+
 export async function createInstallation(ctx: ServiceCtx, input: CreateInstallationInput): Promise<string> {
-  return withRls(ctx.auth, async (tx) => {
-    const customer = await tx
-      .selectFrom("customers")
-      .select(["branch_id"])
-      .where("id", "=", input.customerId)
-      .where("organization_id", "=", ctx.membership.organizationId)
-      .where("deleted_at", "is", null)
-      .executeTakeFirst();
-    if (!customer) throw new DomainError("not_found");
-    const row = await tx
-      .insertInto("installations")
-      .values({
-        organization_id: ctx.membership.organizationId,
-        branch_id: customer.branch_id,
-        customer_id: input.customerId,
-        name: input.name,
-        establishment_type: input.establishmentType,
-        address_line1: input.addressLine1,
-        postal_code: input.postalCode,
-        city: input.city,
-        province: input.province,
-        contact_name: input.contactName,
-        contact_phone: input.contactPhone,
-        contact_email: input.contactEmail,
-        notes: input.notes,
-        created_by: ctx.auth.userId,
-      })
-      .returning("id")
-      .executeTakeFirstOrThrow();
-    return row.id;
-  });
+  return withRls(ctx.auth, (tx) => insertInstallation(tx, ctx, input));
 }
 
 export async function updateInstallation(ctx: ServiceCtx, input: UpdateInstallationInput): Promise<void> {

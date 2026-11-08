@@ -40,6 +40,8 @@ export interface BatchSummary extends ValidationSummary {
 
 export interface BatchInfo {
   id: string;
+  /** vehicles (etapa anterior) o customers / installations / equipment (PCI). */
+  kind: string;
   branchId: string;
   branchName: string;
   fileName: string;
@@ -195,6 +197,7 @@ export async function getBatch(ctx: ServiceCtx, batchId: string): Promise<BatchI
         "b.branch_id as branchId",
         "br.name as branchName",
         "b.file_name as fileName",
+        "b.kind",
         "b.status",
         "b.row_count as rowCount",
         "b.error_count as errorCount",
@@ -221,6 +224,7 @@ export async function listBatches(ctx: ServiceCtx): Promise<BatchInfo[]> {
         "b.branch_id as branchId",
         "br.name as branchName",
         "b.file_name as fileName",
+        "b.kind",
         "b.status",
         "b.row_count as rowCount",
         "b.error_count as errorCount",
@@ -299,12 +303,13 @@ async function revalidate(
   return withRls(ctx.auth, async (tx) => {
     const batch = await tx
       .selectFrom("import_batches")
-      .select(["branch_id", "status", "summary"])
+      .select(["branch_id", "status", "summary", "kind"])
       .where("id", "=", batchId)
       .where("organization_id", "=", orgId)
       .forUpdate()
       .executeTakeFirst();
-    if (!batch) throw new DomainError("not_found");
+    // Las correcciones fila a fila son de la importación de vehículos; un lote PCI se corrige subiendo de nuevo el archivo.
+    if (!batch || batch.kind !== "vehicles") throw new DomainError("not_found");
     if (!(EDITABLE as readonly string[]).includes(batch.status)) throw new DomainError("import_invalid", "not_editable");
 
     const prev = batch.summary as unknown as BatchSummary;
@@ -424,6 +429,9 @@ export async function commitImport(
   allowRepeat: boolean,
 ): Promise<{ customers: number; attachedCustomers: number; vehicles: number; maintenanceRecords: number }> {
   return withRls(ctx.auth, async (tx) => {
+    // Los lotes PCI se confirman con commitPciImport (su propio contenido).
+    const b = await tx.selectFrom("import_batches").select("kind").where("id", "=", batchId).where("organization_id", "=", ctx.membership.organizationId).executeTakeFirst();
+    if (!b || b.kind !== "vehicles") throw new DomainError("not_found");
     const { rows } = await sql<{ result: { customers: number; attachedCustomers: number; vehicles: number; maintenanceRecords: number } }>`
       select app.commit_import(${batchId}, ${allowRepeat}) as result
     `.execute(tx);
