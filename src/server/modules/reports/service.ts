@@ -269,14 +269,17 @@ export async function exportRows(ctx: Ctx, kind: ReportKind, r: ReportRange, unt
 }
 
 export const EMAIL_KIND_LABELS: Record<string, string> = {
-  reminder: "Aviso de revisión",
-  booking_received: "Solicitud de cita recibida",
-  booking_request: "Aviso de solicitud al taller",
-  booking_confirmed: "Cita confirmada",
-  booking_rejected: "Cita rechazada",
-  booking_rescheduled: "Cita cambiada",
-  booking_canceled: "Cita cancelada",
+  reminder: "Aviso de mantenimiento",
+  booking_received: "Solicitud de visita recibida",
+  booking_request: "Aviso de solicitud a la empresa",
+  booking_confirmed: "Visita confirmada",
+  booking_rejected: "Visita rechazada",
+  booking_rescheduled: "Visita cambiada",
+  booking_canceled: "Visita cancelada",
   quote: "Presupuesto",
+  service_completed: "Servicio realizado",
+  incident_detected: "Incidencia detectada",
+  report_sent: "Envío de informe",
   test: "Correo de prueba",
 };
 export const EMAIL_STATUS_LABELS: Record<string, string> = {
@@ -357,7 +360,7 @@ export async function pciReportRows(ctx: Ctx, kind: PciReportKind, r: ReportRang
   };
 }
 
-const PCI_CSV_HEADERS: Record<PciReportKind, Array<[string, string]>> = {
+export const PCI_REPORT_COLUMNS: Record<PciReportKind, Array<[string, string]>> = {
   vencimientos: [["code", "Equipo"], ["category", "Categoría"], ["location", "Ubicación"], ["installation", "Instalación"], ["customer", "Cliente"], ["action", "Operación"], ["next_due_on", "Fecha prevista"], ["overdue", "Vencida"]],
   mantenimientos: [["performed_on", "Fecha"], ["code", "Equipo"], ["category", "Categoría"], ["installation", "Instalación"], ["customer", "Cliente"], ["action", "Operación"], ["result", "Resultado"], ["technician", "Técnico"], ["work_order", "Orden"]],
   instalaciones: [["installation", "Instalación"], ["customer", "Cliente"], ["city", "Municipio"], ["equipment", "Equipos"], ["extinguishers", "Extintores"], ["overdue", "Vencidos"], ["due", "Próximos"], ["next_due_on", "Próxima actuación"], ["open_incidents", "Incidencias abiertas"]],
@@ -366,12 +369,15 @@ const PCI_CSV_HEADERS: Record<PciReportKind, Array<[string, string]>> = {
 
 export async function pciExportRows(ctx: Ctx, kind: PciReportKind, r: ReportRange, until: string): Promise<unknown[][]> {
   const page = await pciReportRows(ctx, kind, r, until, { page: 1, pageSize: 5000 });
-  const headers = PCI_CSV_HEADERS[kind];
-  const label = (k: string, v: unknown) =>
-    typeof v === "boolean" ? (v ? "sí" : "no")
+  const headers = PCI_REPORT_COLUMNS[kind];
+  return [headers.map(([, h]) => h), ...page.rows.map((row) => headers.map(([k]) => pciCellLabel(k, row[k])))];
+}
+
+/** Valor legible de una celda de informe PCI (CSV y pantalla). */
+export function pciCellLabel(k: string, v: unknown): unknown {
+  return typeof v === "boolean" ? (v ? "sí" : "no")
     : k === "result" ? (RESULT_LABELS[v as keyof typeof RESULT_LABELS] ?? v)
     : k === "severity" ? (SEVERITY_LABELS[v as keyof typeof SEVERITY_LABELS] ?? v)
     : k === "status" ? (INCIDENT_STATUS_LABELS[v as keyof typeof INCIDENT_STATUS_LABELS] ?? v)
     : v;
-  return [headers.map(([, h]) => h), ...page.rows.map((row) => headers.map(([k]) => label(k, row[k])))];
 }

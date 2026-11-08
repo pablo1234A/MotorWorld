@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { ReadOnlyNotice } from "@/components/app/read-only-notice";
 import { buttonClass } from "@/components/ui/button-styles";
@@ -11,7 +12,7 @@ import { VEHICLE_STATUS_LABELS, VEHICLE_STATUSES } from "@/lib/validation/worksh
 import { capabilities } from "@/server/auth/capabilities";
 import { requireOrgPage } from "@/server/auth/guards";
 import { listAccessibleBranches } from "@/server/modules/branches/service";
-import { type DueFilter, listVehicles } from "@/server/modules/vehicles/service";
+import { type DueFilter, legacyVehicleCounts, listVehicles } from "@/server/modules/vehicles/service";
 
 export const metadata: Metadata = { title: "Vehículos · RevisaYa" };
 
@@ -35,6 +36,8 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Sea
   const due = dueKey ? DUE_OPTIONS[dueKey]?.value : undefined;
   const page = parsePage(param(sp.pagina));
   const today = todayIn();
+  // Módulo heredado: sin vehículos en la cuenta, la sección es la de equipos PCI.
+  if ((await legacyVehicleCounts(ctx)).vehicles === 0) redirect("/app/equipos");
 
   const [result, branches] = await Promise.all([
     listVehicles(ctx, { q, branchId: branchId && /^[0-9a-f-]{36}$/.test(branchId) ? branchId : undefined, status, due, page, pageSize: PAGE_SIZE }, today),
@@ -47,14 +50,12 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Sea
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vehículos</h1>
-          <p className="text-sm text-[var(--muted)]">Fichas de los vehículos y cuándo les toca la próxima revisión.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Vehículos (etapa anterior)</h1>
+          <p className="text-sm text-[var(--muted)]">Datos conservados de cuando RevisaYa gestionaba talleres. Se mantienen con su historial; no se convierten en equipos PCI.</p>
         </div>
-        {caps.vehiclesWrite ? (
-          <Link href="/app/vehiculos/nuevo" className={buttonClass("primary")}>
-            Nuevo vehículo
-          </Link>
-        ) : null}
+        <Link href="/app/equipos" className={buttonClass("primary")}>
+          Ir a Equipos PCI
+        </Link>
       </div>
       {caps.readOnly ? <ReadOnlyNotice /> : null}
 

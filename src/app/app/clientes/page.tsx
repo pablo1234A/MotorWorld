@@ -5,7 +5,7 @@ import { ReadOnlyNotice } from "@/components/app/read-only-notice";
 import { buttonClass } from "@/components/ui/button-styles";
 import { Alert } from "@/components/ui/feedback";
 import { Pagination } from "@/components/ui/pagination";
-import { NextServiceBadge } from "@/components/workshop/badges";
+import { DueBadge } from "@/components/pci/badges";
 import { todayIn } from "@/lib/dates";
 import { PAGE_SIZE, param, parsePage } from "@/lib/pagination";
 import { formatPhone } from "@/lib/phone";
@@ -41,10 +41,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-sm text-[var(--muted)]">Fichas de los clientes del taller y sus vehículos.</p>
+          <p className="text-sm text-[var(--muted)]">Empresas, comunidades y particulares a los que mantienes instalaciones de protección contra incendios.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {caps.customersDelete || caps.vehiclesDelete ? (
+          {caps.customersDelete || caps.equipmentDelete ? (
             <Link href="/app/papelera" className={buttonClass("secondary")}>
               Papelera
             </Link>
@@ -69,12 +69,12 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
           name="q"
           type="search"
           defaultValue={filters.q}
-          placeholder="Nombre, correo, teléfono o matrícula"
+          placeholder="Nombre, razón social, CIF, correo, teléfono o municipio"
           className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
         />
         {branches.length > 1 ? (
-          <select name="taller" defaultValue={filters.branchId ?? ""} aria-label="Taller" className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-sm">
-            <option value="">Todos los talleres</option>
+          <select name="taller" defaultValue={filters.branchId ?? ""} aria-label="Delegación" className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-sm">
+            <option value="">Todas las delegaciones</option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -116,9 +116,9 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
               <tr>
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-4 py-3 font-medium">Contacto</th>
-                <th className="px-4 py-3 font-medium">Vehículos</th>
-                <th className="px-4 py-3 font-medium">Próxima revisión</th>
-                {branches.length > 1 ? <th className="px-4 py-3 font-medium">Taller</th> : null}
+                <th className="px-4 py-3 font-medium">Instalaciones</th>
+                <th className="px-4 py-3 font-medium">Próxima actuación</th>
+                {branches.length > 1 ? <th className="px-4 py-3 font-medium">Delegación</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -134,9 +134,12 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
                     <div>{c.email ?? <span className="text-[var(--muted)]">Sin correo</span>}</div>
                     <div className="text-[var(--muted)]">{formatPhone(c.phone)}</div>
                   </td>
-                  <td className="px-4 py-3 tabular-nums">{c.vehicleCount}</td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {c.installationCount}
+                    {c.vehicleCount ? <span className="ml-2 text-xs text-[var(--muted)]">+{c.vehicleCount} vehículos</span> : null}
+                  </td>
                   <td className="px-4 py-3">
-                    <NextServiceBadge date={c.nextServiceDate} today={today} />
+                    <DueBadge date={c.nextActionOn} today={today} />
                   </td>
                   {branches.length > 1 ? <td className="px-4 py-3">{c.branchName}</td> : null}
                 </tr>

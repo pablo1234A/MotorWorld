@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { createWorkOrderSchema, formWithMaterials, itemResultSchema, updateWorkOrderSchema, workOrderStatusSchema } from "@/lib/validation/pci";
+import { createWorkOrderSchema, formWithMaterials, workOrderItemList, itemResultSchema, updateWorkOrderSchema, workOrderStatusSchema } from "@/lib/validation/pci";
 import { type ActionState, parseForm, runAction } from "@/server/actions/result";
 import { requireOrg } from "@/server/auth/guards";
 import { can } from "@/server/auth/context";
@@ -69,7 +69,7 @@ export async function setWorkOrderStatusAction(_prev: ActionState, formData: For
 export async function addWorkOrderItemsAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction("work_order.items_add", async () => {
     const ctx = await manager();
-    const { id, items } = parseForm(z.object({ id: z.uuid(), items: z.array(z.string().regex(/^[0-9a-f-]{36}:[0-9a-f-]{36}$/i)).min(1, "Elige al menos un equipo").max(500) }), formData);
+    const { id, items } = parseForm(z.object({ id: z.uuid(), items: workOrderItemList(1) }), formData);
     await orders.addWorkOrderItems(ctx, id, items.map((i) => ({ equipmentId: i.split(":")[0], actionTypeId: i.split(":")[1] })));
     refresh();
     return { status: "success", message: "Equipos añadidos a la orden." };

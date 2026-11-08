@@ -35,6 +35,8 @@ export interface Plan {
   /** null = ilimitado */
   maxCustomers: number | null;
   maxActiveVehicles: number | null;
+  /** Equipos PCI activos (no retirados). Mismos valores que los vehículos activos. */
+  maxEquipment: number | null;
   monthlyEmails: number;
   maxUsers: number | null;
   maxBranches: number | null;
@@ -60,6 +62,7 @@ export const PLANS: Readonly<Record<PlanCode, Plan>> = {
     priceYearCents: 39000,
     maxCustomers: 150,
     maxActiveVehicles: 300,
+    maxEquipment: 300,
     monthlyEmails: 500,
     maxUsers: 1,
     maxBranches: 1,
@@ -72,6 +75,7 @@ export const PLANS: Readonly<Record<PlanCode, Plan>> = {
     priceYearCents: 79000,
     maxCustomers: 800,
     maxActiveVehicles: 2000,
+    maxEquipment: 2000,
     monthlyEmails: 3000,
     maxUsers: 3,
     maxBranches: 1,
@@ -84,6 +88,7 @@ export const PLANS: Readonly<Record<PlanCode, Plan>> = {
     priceYearCents: 149000,
     maxCustomers: null,
     maxActiveVehicles: null,
+    maxEquipment: null,
     monthlyEmails: 15000,
     maxUsers: null,
     maxBranches: 3,
@@ -96,6 +101,7 @@ export const PLANS: Readonly<Record<PlanCode, Plan>> = {
     priceYearCents: 249000,
     maxCustomers: null,
     maxActiveVehicles: null,
+    maxEquipment: null,
     monthlyEmails: 50000,
     maxUsers: null,
     maxBranches: null,

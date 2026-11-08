@@ -7,8 +7,9 @@ const LIMIT_RESOURCE: Record<string, string> = {
   customers: "clientes",
   active_vehicles: "vehículos activos",
   users: "usuarios",
-  branches: "talleres",
+  branches: "delegaciones",
   emails: "correos de este mes",
+  equipment: "equipos PCI",
 };
 
 const INVITATION_REASON: Record<string, string> = {
@@ -34,6 +35,9 @@ const CONFLICT_REASON: Record<string, string> = {
   invitations_pending_unique: "Ya hay una invitación pendiente para ese correo.",
   organization_members_unique: "Esa persona ya forma parte del taller.",
   vehicles_plate_unique: "Ya existe un vehículo con esa matrícula en este taller.",
+  equipment_code_unique: "Ya hay otro equipo con ese código en tu empresa.",
+  work_order_items_unique: "Ese equipo ya está en la orden con esa operación.",
+  technicians_member_unique: "Ese usuario ya está vinculado a otro técnico.",
   sending_domains_unique: "Ese dominio ya está añadido.",
   subscription_exists: "Tu taller ya tiene una suscripción. Cambia de plan desde esta misma página.",
   appointments_open_per_reminder: "Ya tienes una solicitud de cita pendiente para este aviso. El taller te contestará pronto.",
@@ -67,11 +71,41 @@ const VALIDATION_REASON: Record<string, string> = {
   domain_rejected: "El proveedor de correo no acepta ese dominio. Comprueba que esté bien escrito y que sea tuyo.",
   too_many_domains: "Puedes tener como máximo 3 dominios. Elimina uno que no uses.",
   sending_domain_not_verified: "El dominio todavía no está verificado. Comprueba los registros DNS y vuelve a intentarlo.",
+  // PCI
+  action_type_not_applicable: "Esa operación no corresponde a este tipo de equipo.",
+  amendment_reason_required: "Indica el motivo de la corrección.",
+  equipment_deleted: "El equipo ya no existe.",
+  equipment_not_in_installation: "El equipo no pertenece a la instalación de la orden.",
+  equipment_record_immutable: "Las actuaciones registradas no se pueden cambiar así: corrígelas indicando el motivo o anúlalas.",
+  equipment_record_voided: "Esa actuación está anulada y ya no se puede modificar.",
+  equipment_type_mismatch: "El tipo elegido no corresponde a la categoría del equipo.",
+  equipment_category_immutable: "La categoría de un equipo no se puede cambiar. Da de alta un equipo nuevo.",
+  extinguisher_agent_required: "Indica el agente extintor (o elige un tipo de extintor).",
+  installation_customer_mismatch: "La instalación no pertenece a ese cliente.",
+  installation_other_branch: "La instalación es de otra delegación.",
+  interval_longer_than_reference: "La periodicidad no puede ser mayor que la de referencia (RIPCI). Puedes acortarla o desactivar la operación.",
+  invalid_work_order_transition: "La orden no puede pasar a ese estado desde el actual.",
+  qr_token_immutable: "El código QR de un equipo no se puede cambiar.",
+  work_order_closed: "La orden está cerrada y ya no se puede modificar.",
+  work_order_has_items: "La orden tiene equipos: quítalos antes.",
+  work_order_item_immutable: "Ese equipo de la orden ya tiene resultado.",
+  work_order_item_done: "Ese equipo de la orden ya tiene resultado.",
+  work_order_items_pending: "Quedan equipos sin resultado. Registra el resultado de todos antes de finalizar la orden.",
+  work_order_not_in_progress: "Pulsa «Empezar el trabajo» antes de registrar resultados.",
+  work_order_number_immutable: "El número de la orden no se puede cambiar.",
+  member_not_found: "Ese usuario no pertenece a la empresa.",
+  document_missing: "Elige al menos un archivo.",
+  document_size: "Cada archivo puede ocupar como máximo 10 MB.",
+  document_too_many: "Sube como máximo 10 archivos a la vez.",
+  document_type: "Solo se admiten PDF, JPG, PNG o WebP.",
 };
 
 const INTEGRITY_REASON: Record<string, string> = {
   customer_has_vehicles: "El cliente tiene vehículos. Bórralos también o asígnalos a otro cliente antes.",
-  customer_deleted: "El cliente seleccionado ya no existe.",
+  customer_has_installations: "El cliente tiene instalaciones. Bórralas antes (van a la papelera).",
+  installation_has_equipment: "La instalación tiene equipos. Bórralos antes (van a la papelera).",
+  customer_deleted: "El cliente seleccionado ya no existe (o está en la papelera: restáuralo antes).",
+  installation_deleted: "La instalación está en la papelera: restáurala antes.",
   owner_other_branch: "El nuevo propietario debe ser un cliente del mismo taller.",
 };
 
@@ -105,7 +139,7 @@ export function errorMessage(code: string, detail?: string): string {
     case "plan_limit_reached":
       return `Has alcanzado el límite de ${(detail && LIMIT_RESOURCE[detail]) || "recursos"} de tu plan.`;
     case "subscription_inactive":
-      return "Tu taller no tiene un plan activo. Los datos están en modo de solo lectura.";
+      return "Tu empresa no tiene un plan activo. Los datos están en modo de solo lectura.";
     case "feature_unavailable":
       return "Esta funcionalidad no está incluida en tu plan.";
     case "invitation_invalid":

@@ -23,7 +23,7 @@ export default async function NewCustomerPage() {
       </div>
       {!caps.customersWrite ? (
         <Alert tone="error" title="No puedes crear clientes">
-          {caps.readOnly ? "Tu taller no tiene un plan activo." : "Tu usuario no tiene permiso para crear clientes."}
+          {caps.readOnly ? "Tu empresa no tiene un plan activo." : "Tu usuario no tiene permiso para crear clientes."}
         </Alert>
       ) : (
         <Card>

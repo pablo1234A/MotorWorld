@@ -233,3 +233,21 @@ export async function restoreVehicleAction(_prev: ActionState, formData: FormDat
     redirect("/app/papelera?restaurado=vehiculo");
   });
 }
+
+export async function restoreInstallationAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction("installation.restore", async () => {
+    const ctx = await requireOrg();
+    assertPermission(ctx, "customers.delete");
+    await trash.restoreInstallation(ctx, parseForm(idOnly, formData).id);
+    redirect("/app/papelera?restaurado=instalacion");
+  });
+}
+
+export async function restoreEquipmentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction("equipment.restore", async () => {
+    const ctx = await requireOrg();
+    assertPermission(ctx, "vehicles.delete");
+    await trash.restoreEquipment(ctx, parseForm(idOnly, formData).id);
+    redirect("/app/papelera?restaurado=equipo");
+  });
+}

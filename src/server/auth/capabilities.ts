@@ -27,5 +27,8 @@ export function capabilities(ctx: OrgContext) {
     workOrdersExecute: active && (can(ctx, "work_orders.execute") || can(ctx, "work_orders.manage")),
     incidentsWrite: active && can(ctx, "incidents.write"),
     seeAllWorkOrders: can(ctx, "work_orders.manage"),
+    // Documentos y fotos: mismas reglas que la RLS de pci_documents.
+    documentsUpload: active && (["customers.write", "vehicles.write", "maintenance.write", "work_orders.execute", "work_orders.manage", "incidents.write"] as const).some((p) => can(ctx, p)),
+    documentsDelete: active && (["customers.write", "vehicles.write", "maintenance.write"] as const).some((p) => can(ctx, p)),
   };
 }

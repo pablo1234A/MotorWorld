@@ -34,6 +34,7 @@ import { createInstallationAction, deleteInstallationAction, updateInstallationA
 import { amendRecordAction, createRecordAction, voidRecordAction } from "@/server/modules/maintenance/record-actions";
 import { saveTechnicianAction } from "@/server/modules/technicians/actions";
 import {
+  addWorkOrderItemsAction,
   addWorkOrderNoteAction,
   createWorkOrderAction,
   recordItemResultAction,
@@ -681,6 +682,7 @@ export function WorkOrderStatusButtons({ id, status, canManage, pendingItems }: 
           <form
             key={s}
             action={action}
+            className={s === "completed" ? "w-full" : undefined}
             onSubmit={(ev) => {
               if (s === "canceled" && !window.confirm("¿Cancelar la orden? No se podrá reabrir.")) ev.preventDefault();
               if (s === "completed" && pendingItems > 0) {
@@ -691,7 +693,7 @@ export function WorkOrderStatusButtons({ id, status, canManage, pendingItems }: 
           >
             <input type="hidden" name="id" value={id} />
             <input type="hidden" name="status" value={s} />
-            {s === "completed" ? <input type="hidden" name="completionNotes" value="" /> : null}
+            {s === "completed" ? <textarea name="completionNotes" rows={2} maxLength={5000} placeholder="Notas de cierre (opcional): trabajos realizados, recomendaciones…" aria-label="Notas de cierre" className={`${CONTROL} mb-2`} /> : null}
             <SubmitButton variant={s === "canceled" || s === "pending" ? "ghost" : "primary"} pendingLabel="…">
               {STATUS_BUTTON[s]}
             </SubmitButton>
@@ -725,6 +727,38 @@ export function ItemResultForm({ itemId, today, label }: { itemId: string; today
       <IncidentFields />
       <SubmitButton pendingLabel="Guardando…" className="self-start">
         Guardar resultado
+      </SubmitButton>
+    </form>
+  );
+}
+
+/** Añadir equipos a una orden abierta (gestores). */
+export function AddWorkOrderItemsForm({ id, equipment, actions }: { id: string; equipment: Array<{ id: string; code: string; categoryCode: string; location: string | null }>; actions: ActionOption[] }) {
+  const [state, action] = useActionState(addWorkOrderItemsAction, idle);
+  return (
+    <form action={action} className="flex flex-col gap-3">
+      <FormMessage state={state} />
+      <input type="hidden" name="id" value={id} />
+      <ul className="flex flex-col gap-2">
+        {equipment.map((eq) => (
+          <li key={eq.id} className="grid gap-2 text-sm sm:grid-cols-[10rem_1fr]">
+            <span className="font-medium">
+              {eq.code}
+              {eq.location ? <span className="block text-xs font-normal text-[var(--muted)]">{eq.location}</span> : null}
+            </span>
+            <select name="items" defaultValue="" className={CONTROL} aria-label={`Operación para ${eq.code}`}>
+              <option value="">No incluir</option>
+              {actions.filter((a) => a.categoryCode === null || a.categoryCode === eq.categoryCode).map((a) => (
+                <option key={a.id} value={`${eq.id}:${a.id}`}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </li>
+        ))}
+      </ul>
+      <SubmitButton variant="secondary" pendingLabel="Añadiendo…" className="self-start">
+        Añadir a la orden
       </SubmitButton>
     </form>
   );
@@ -953,7 +987,7 @@ export function ActionSettingForm({ action: a }: { action: { id: string; enabled
       {a.defaultIntervalMonths ? (
         <label className="flex flex-col gap-1 text-xs">
           Cada (meses)
-          <input name="intervalMonths" type="number" min={1} max={600} defaultValue={a.intervalMonths ?? a.defaultIntervalMonths} className="w-20 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm" />
+          <input name="intervalMonths" type="number" min={1} max={a.defaultIntervalMonths} defaultValue={a.intervalMonths ?? a.defaultIntervalMonths} className="w-20 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm" />
         </label>
       ) : null}
       <SubmitButton variant="secondary" pendingLabel="…" className="px-3 py-1.5">

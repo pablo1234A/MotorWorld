@@ -57,7 +57,7 @@ export async function findEquipmentAction(_prev: ActionState, formData: FormData
     // El QR lleva la URL completa de la ficha; se acepta también el token o el código.
     const term = raw.match(/\/app\/equipos\/qr\/([a-f0-9]{64})/)?.[1] ?? raw;
     const found = await equipment.findEquipment(ctx, term);
-    if (!found) return { status: "error", code: "not_found", message: "No hay ningún equipo con ese código en tu taller." };
+    if (!found) return { status: "error", code: "not_found", message: "No hay ningún equipo con ese código o QR en tu empresa." };
     redirect(`/app/equipos/${found.id}`);
   });
 }

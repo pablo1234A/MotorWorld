@@ -36,6 +36,9 @@ export interface CustomerListRow {
   remindersOptOut: boolean;
   vehicleCount: number;
   nextServiceDate: string | null;
+  installationCount: number;
+  /** Próxima actuación de sus equipos en servicio (PCI). */
+  nextActionOn: string | null;
   createdAt: Date;
 }
 
@@ -63,6 +66,7 @@ export async function listCustomers(ctx: ServiceCtx, f: CustomerListFilters): Pr
         eb.or([
           eb(sql`lower(c.first_name || ' ' || c.last_name)`, "like", like),
           eb(sql`c.email::text`, "like", like),
+          eb(sql`lower(coalesce(c.legal_name, '') || ' ' || coalesce(c.tax_id, '') || ' ' || coalesce(c.city, ''))`, "like", like),
           ...(phoneLike ? [eb("c.phone", "like", phoneLike)] : []),
           ...(plateLike
             ? [
@@ -104,6 +108,9 @@ export async function listCustomers(ctx: ServiceCtx, f: CustomerListFilters): Pr
         sql<number>`(select count(*)::int from vehicles v where v.customer_id = c.id and v.deleted_at is null)`.as("vehicleCount"),
         sql<string | null>`(select min(v.next_service_date)::text from vehicles v
                             where v.customer_id = c.id and v.deleted_at is null and v.status = 'active')`.as("nextServiceDate"),
+        sql<number>`(select count(*)::int from installations i where i.customer_id = c.id and i.deleted_at is null)`.as("installationCount"),
+        sql<string | null>`(select min(e.next_action_on)::text from equipment e join installations i on i.id = e.installation_id
+                            where i.customer_id = c.id and e.deleted_at is null and e.status = 'in_service')`.as("nextActionOn"),
       ])
       .$call((qb) =>
         f.sort === "name"
@@ -156,6 +163,15 @@ export interface CustomerDetail {
   remindersOptOut: boolean;
   createdAt: Date;
   updatedAt: Date;
+  customerKind: string;
+  legalName: string | null;
+  taxId: string | null;
+  addressLine1: string | null;
+  postalCode: string | null;
+  city: string | null;
+  province: string | null;
+  contactName: string | null;
+  contactRole: string | null;
   vehicles: CustomerVehicle[];
   history: CustomerHistoryEntry[];
 }
@@ -179,6 +195,15 @@ export async function getCustomer(ctx: ServiceCtx, id: string): Promise<Customer
         "c.reminders_opt_out as remindersOptOut",
         "c.created_at as createdAt",
         "c.updated_at as updatedAt",
+        "c.customer_kind as customerKind",
+        "c.legal_name as legalName",
+        "c.tax_id as taxId",
+        "c.address_line1 as addressLine1",
+        "c.postal_code as postalCode",
+        "c.city",
+        "c.province",
+        "c.contact_name as contactName",
+        "c.contact_role as contactRole",
       ])
       .where("c.id", "=", id)
       .where("c.organization_id", "=", orgId)

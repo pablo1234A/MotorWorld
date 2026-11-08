@@ -122,9 +122,25 @@ export const createCustomerSchema = z.object({
   confirmDuplicate: checkbox,
 });
 
+/**
+ * Al editar, los datos de empresa que no llegan se quedan como están (un
+ * formulario o una integración antigua no los borra): sin valor por defecto.
+ */
+const customerCompanyUpdateFields = {
+  customerKind: z.enum(["company", "individual"]).optional(),
+  legalName: customerCompanyFields.legalName.optional(),
+  taxId: customerCompanyFields.taxId.optional(),
+  addressLine1: customerCompanyFields.addressLine1.optional(),
+  postalCode: customerCompanyFields.postalCode.optional(),
+  city: customerCompanyFields.city.optional(),
+  province: customerCompanyFields.province.optional(),
+  contactName: customerCompanyFields.contactName.optional(),
+  contactRole: customerCompanyFields.contactRole.optional(),
+};
+
 export const updateCustomerSchema = z.object({
   ...customerFields,
-  ...customerCompanyFields,
+  ...customerCompanyUpdateFields,
   id: z.uuid(),
   // El origen de un cliente importado o de la página de citas no se cambia a mano.
   source: z.enum(CUSTOMER_SOURCES).default("manual"),

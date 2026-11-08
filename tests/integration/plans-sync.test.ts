@@ -16,6 +16,7 @@ describe("plans: base de datos ↔ espejo TypeScript", () => {
       price_year_cents: number;
       max_customers: number | null;
       max_active_vehicles: number | null;
+      max_equipment: number | null;
       monthly_emails: number;
       max_users: number | null;
       max_branches: number | null;
@@ -31,6 +32,7 @@ describe("plans: base de datos ↔ espejo TypeScript", () => {
         priceYearCents: row.price_year_cents,
         maxCustomers: row.max_customers,
         maxActiveVehicles: row.max_active_vehicles,
+        maxEquipment: row.max_equipment,
         monthlyEmails: row.monthly_emails,
         maxUsers: row.max_users,
         maxBranches: row.max_branches,
@@ -41,6 +43,7 @@ describe("plans: base de datos ↔ espejo TypeScript", () => {
         priceYearCents: plan.priceYearCents,
         maxCustomers: plan.maxCustomers,
         maxActiveVehicles: plan.maxActiveVehicles,
+        maxEquipment: plan.maxEquipment,
         monthlyEmails: plan.monthlyEmails,
         maxUsers: plan.maxUsers,
         maxBranches: plan.maxBranches,

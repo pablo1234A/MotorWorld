@@ -412,3 +412,17 @@ export async function deleteVehicle(ctx: ServiceCtx, id: string): Promise<{ cust
     return { customerId: v.customer_id };
   });
 }
+
+/**
+ * ¿Conserva la cuenta datos de vehículos de la etapa anterior? Sirve para
+ * mostrar (o no) el módulo heredado; los datos no se convierten en equipos.
+ */
+export async function legacyVehicleCounts(ctx: ServiceCtx): Promise<{ vehicles: number; records: number }> {
+  return withRls(ctx.auth, async (tx) => {
+    const { rows } = await sql<{ vehicles: string; records: string }>`
+      select (select count(*) from vehicles where organization_id = ${ctx.membership.organizationId} and deleted_at is null) as vehicles,
+             (select count(*) from maintenance_records where organization_id = ${ctx.membership.organizationId}) as records
+    `.execute(tx);
+    return { vehicles: Number(rows[0].vehicles), records: Number(rows[0].records) };
+  });
+}

@@ -132,3 +132,107 @@ export async function restoreVehicle(ctx: ServiceCtx, id: string): Promise<{ cus
     return { customerId: v.customer_id };
   });
 }
+
+// ------------------------------------------------------------------- PCI
+
+export interface TrashedInstallation {
+  id: string;
+  name: string;
+  customerId: string;
+  customerName: string;
+  customerDeleted: boolean;
+  deletedAt: Date;
+}
+
+export interface TrashedEquipment {
+  id: string;
+  code: string;
+  location: string | null;
+  installationId: string;
+  installationName: string;
+  installationDeleted: boolean;
+  deletedAt: Date;
+}
+
+/** Instalaciones y equipos borrados en los últimos 30 días. */
+export async function listPciTrash(ctx: ServiceCtx): Promise<{ installations: TrashedInstallation[]; equipment: TrashedEquipment[] }> {
+  const orgId = ctx.membership.organizationId;
+  return withRls(ctx.auth, async (tx) => {
+    const installations = await tx
+      .selectFrom("installations as i")
+      .innerJoin("customers as c", "c.id", "i.customer_id")
+      .select([
+        "i.id",
+        "i.name",
+        "c.id as customerId",
+        sql<string>`trim(c.first_name || ' ' || c.last_name)`.as("customerName"),
+        sql<boolean>`c.deleted_at is not null`.as("customerDeleted"),
+        "i.deleted_at as deletedAt",
+      ])
+      .where("i.organization_id", "=", orgId)
+      .where("i.deleted_at", "is not", null)
+      .where("i.deleted_at", ">", sql<Date>`now() - make_interval(days => ${RETENTION_DAYS})`)
+      .orderBy("i.deleted_at", "desc")
+      .limit(200)
+      .execute();
+    const equipment = await tx
+      .selectFrom("equipment as e")
+      .innerJoin("installations as i", "i.id", "e.installation_id")
+      .select([
+        "e.id",
+        "e.code",
+        "e.location",
+        "i.id as installationId",
+        "i.name as installationName",
+        sql<boolean>`i.deleted_at is not null`.as("installationDeleted"),
+        "e.deleted_at as deletedAt",
+      ])
+      .where("e.organization_id", "=", orgId)
+      .where("e.deleted_at", "is not", null)
+      .where("e.deleted_at", ">", sql<Date>`now() - make_interval(days => ${RETENTION_DAYS})`)
+      .orderBy("e.deleted_at", "desc")
+      .limit(500)
+      .execute();
+    return {
+      installations: installations.map((i) => ({ ...i, deletedAt: i.deletedAt as Date })),
+      equipment: equipment.map((e) => ({ ...e, deletedAt: e.deletedAt as Date })),
+    };
+  });
+}
+
+/** Restaura una instalación (su cliente tiene que estar activo). La BD comprueba el permiso. */
+export async function restoreInstallation(ctx: ServiceCtx, id: string): Promise<void> {
+  await withRls(ctx.auth, async (tx) => {
+    const i = await tx
+      .selectFrom("installations as i")
+      .innerJoin("customers as c", "c.id", "i.customer_id")
+      .select(["c.deleted_at as customerDeletedAt"])
+      .where("i.id", "=", id)
+      .where("i.organization_id", "=", ctx.membership.organizationId)
+      .where("i.deleted_at", "is not", null)
+      .executeTakeFirst();
+    if (!i) throw new DomainError("not_found");
+    if (i.customerDeletedAt) throw new DomainError("integrity_violation", "customer_deleted");
+    const r = await tx.updateTable("installations").set({ deleted_at: null }).where("id", "=", id).executeTakeFirst();
+    if (Number(r.numUpdatedRows) === 0) throw new DomainError("permission_denied");
+  });
+}
+
+/** Restaura un equipo (su instalación tiene que estar activa; vuelve a contar en el límite del plan). */
+export async function restoreEquipment(ctx: ServiceCtx, id: string): Promise<{ installationId: string }> {
+  return withRls(ctx.auth, async (tx) => {
+    const e = await tx
+      .selectFrom("equipment as e")
+      .innerJoin("installations as i", "i.id", "e.installation_id")
+      .select(["e.installation_id", "i.deleted_at as installationDeletedAt"])
+      .where("e.id", "=", id)
+      .where("e.organization_id", "=", ctx.membership.organizationId)
+      .where("e.deleted_at", "is not", null)
+      .executeTakeFirst();
+    if (!e) throw new DomainError("not_found");
+    if (e.installationDeletedAt) throw new DomainError("integrity_violation", "installation_deleted");
+    const r = await tx.updateTable("equipment").set({ deleted_at: null }).where("id", "=", id).executeTakeFirst();
+    if (Number(r.numUpdatedRows) === 0) throw new DomainError("permission_denied");
+    return { installationId: e.installation_id };
+  });
+}

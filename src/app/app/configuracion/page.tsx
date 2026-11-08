@@ -10,21 +10,23 @@ export const metadata: Metadata = { title: "Configuración · RevisaYa" };
 
 const SECTIONS = [
   { href: "/app/facturacion", title: "Facturación", text: "Tu plan, la prueba gratuita, la tarjeta y las facturas." },
-  { href: "/app/configuracion/taller", title: "Datos del taller", text: "Nombre, logo, color, datos fiscales y de contacto." },
-  { href: "/app/configuracion/avisos", title: "Avisos", text: "Activar los avisos, días de antelación, horario de envío, festivos y avisos por kilometraje." },
-  { href: "/app/configuracion/citas", title: "Citas", text: "Página para pedir cita, huecos libres y horario." },
+  { href: "/app/configuracion/taller", title: "Datos de la empresa", text: "Nombre, logo, color, datos fiscales y de contacto." },
+  { href: "/app/configuracion/tecnicos", title: "Técnicos", text: "Quién ejecuta las órdenes de trabajo y su usuario en el panel." },
+  { href: "/app/configuracion/mantenimiento", title: "Mantenimiento", text: "Operaciones del RIPCI que se programan en tus equipos y su periodicidad." },
+  { href: "/app/configuracion/avisos", title: "Avisos", text: "Activar los avisos de vencimiento, días de antelación, horario de envío y festivos." },
+  { href: "/app/configuracion/citas", title: "Solicitudes de visita", text: "Página pública para pedir una visita técnica, huecos libres y horario." },
   { href: "/app/configuracion/plantillas", title: "Plantillas de correo", text: "El texto que reciben tus clientes, con vista previa y correo de prueba." },
-  { href: "/app/configuracion/correo", title: "Correo", text: "Remitente o dominio propio, resumen para el taller y direcciones bloqueadas." },
-  { href: "/app/configuracion/integraciones", title: "Integraciones", text: "Google Calendar: las citas en la agenda del taller (plan Max)." },
+  { href: "/app/configuracion/correo", title: "Correo", text: "Remitente o dominio propio, resumen diario y direcciones bloqueadas." },
+  { href: "/app/configuracion/integraciones", title: "Integraciones", text: "Google Calendar: órdenes de trabajo y visitas en tu agenda (plan Max)." },
   { href: "/app/configuracion/api", title: "API", text: "Claves para conectar tu programa de gestión (plan Excelencia)." },
-  { href: "/app/configuracion/datos", title: "Datos y privacidad", text: "Descargar todos los datos del taller y registro de solicitudes de tus clientes." },
+  { href: "/app/configuracion/datos", title: "Datos y privacidad", text: "Descargar todos los datos de la empresa y registro de solicitudes de tus clientes." },
   { href: "/app/usuarios", title: "Usuarios", text: "Quién puede entrar en el panel y qué puede hacer." },
 ] as const;
 
 export default async function SettingsPage() {
   const ctx = await requireOrgPage("/app/configuracion");
   if (!isAdmin(ctx)) {
-    return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden cambiar la configuración.</Alert>;
+    return <Alert tone="error" title="Sin permiso">Solo los administradores de la empresa pueden cambiar la configuración.</Alert>;
   }
   const mfa = await hasVerifiedFactor(ctx.user.id);
   return (

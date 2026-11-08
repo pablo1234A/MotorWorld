@@ -63,10 +63,10 @@ export function IncidentStatusBadge({ status }: { status: string }) {
 export function StatCard({ label, value, href, tone }: { label: string; value: number; href?: string; tone?: "bad" | "warn" }) {
   const inner = (
     <>
-      <dt className="text-sm text-[var(--muted)]">{label}</dt>
-      <dd className={`mt-1 text-3xl font-semibold tabular-nums ${tone === "bad" && value ? "text-[var(--danger)]" : tone === "warn" && value ? "text-[var(--warning)]" : ""}`}>
+      <p className="text-sm text-[var(--muted)]">{label}</p>
+      <p className={`mt-1 text-3xl font-semibold tabular-nums ${tone === "bad" && value ? "text-[var(--danger)]" : tone === "warn" && value ? "text-[var(--warning)]" : ""}`}>
         {value.toLocaleString("es-ES")}
-      </dd>
+      </p>
     </>
   );
   const cls = `rounded-xl border bg-[var(--surface)] p-5 ${tone === "bad" && value ? "border-[var(--danger)]/40" : "border-[var(--border)]"}`;

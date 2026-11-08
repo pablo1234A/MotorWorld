@@ -101,6 +101,24 @@ const KNOWN_MESSAGES = new Set([
   "slug_reserved",
   "invalid_bounce_type",
   "invalid_report_range",
+  // PCI
+  "action_type_not_applicable",
+  "amendment_reason_required",
+  "customer_has_installations",
+  "equipment_deleted",
+  "equipment_not_in_installation",
+  "equipment_record_immutable",
+  "equipment_record_voided",
+  "equipment_type_mismatch",
+  "installation_customer_mismatch",
+  "installation_has_equipment",
+  "invalid_work_order_transition",
+  "qr_token_immutable",
+  "work_order_closed",
+  "work_order_has_items",
+  "work_order_item_immutable",
+  "work_order_items_pending",
+  "work_order_number_immutable",
 ]);
 
 export function mapDatabaseError(err: unknown): DomainError {

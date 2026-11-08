@@ -375,11 +375,34 @@ export async function deleteEquipment(ctx: ServiceCtx, id: string): Promise<{ in
 
 /** Configuración del taller sobre una operación del catálogo (solo administradores; RLS). */
 export async function setActionSetting(ctx: ServiceCtx, actionTypeId: string, enabled: boolean, intervalMonths: number | null): Promise<void> {
-  await withRls(ctx.auth, (tx) =>
-    tx
+  await withRls(ctx.auth, async (tx) => {
+    // La periodicidad de referencia (RIPCI) se puede acortar, nunca alargar.
+    const ref = await tx.selectFrom("maintenance_action_types").select(["interval_months", "organization_id"]).where("id", "=", actionTypeId).executeTakeFirst();
+    if (!ref) throw new DomainError("not_found");
+    if (intervalMonths !== null && ref.organization_id === null && (ref.interval_months === null || intervalMonths > ref.interval_months))
+      throw new DomainError("validation_error", "interval_longer_than_reference");
+    await tx
       .insertInto("org_action_type_settings")
       .values({ organization_id: ctx.membership.organizationId, action_type_id: actionTypeId, enabled, interval_months: intervalMonths })
       .onConflict((oc) => oc.columns(["organization_id", "action_type_id"]).doUpdateSet({ enabled, interval_months: intervalMonths, updated_at: new Date() }))
-      .execute(),
-  );
+      .execute();
+  });
+}
+
+/** Datos para la hoja de etiquetas QR de una instalación (equipos no retirados). */
+export async function equipmentLabels(ctx: ServiceCtx, installationId: string): Promise<Array<{ id: string; code: string; categoryCode: CategoryCode; typeName: string | null; location: string | null; qrToken: string }>> {
+  return withRls(ctx.auth, async (tx) => {
+    const rows = await tx
+      .selectFrom("equipment as e")
+      .leftJoin("equipment_types as t", "t.id", "e.type_id")
+      .select(["e.id", "e.code", "e.category_code", "t.name as type_name", "e.location", "e.qr_token"])
+      .where("e.organization_id", "=", ctx.membership.organizationId)
+      .where("e.installation_id", "=", installationId)
+      .where("e.deleted_at", "is", null)
+      .where("e.status", "<>", "retired")
+      .orderBy("e.code")
+      .limit(1000)
+      .execute();
+    return rows.map((r) => ({ id: r.id, code: r.code, categoryCode: r.category_code as CategoryCode, typeName: r.type_name, location: r.location, qrToken: r.qr_token }));
+  });
 }

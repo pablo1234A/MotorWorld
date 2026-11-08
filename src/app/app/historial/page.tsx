@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { buttonClass } from "@/components/ui/button-styles";
 import { Pagination } from "@/components/ui/pagination";
@@ -8,6 +9,7 @@ import { PAGE_SIZE, param, parsePage } from "@/lib/pagination";
 import { requireOrgPage } from "@/server/auth/guards";
 import { listAccessibleBranches } from "@/server/modules/branches/service";
 import { listHistory } from "@/server/modules/maintenance/service";
+import { legacyVehicleCounts } from "@/server/modules/vehicles/service";
 
 export const metadata: Metadata = { title: "Historial · RevisaYa" };
 
@@ -15,6 +17,8 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function HistoryPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await requireOrgPage("/app/historial");
+  // El historial de actuaciones PCI está en /app/mantenimientos; este es el de vehículos (heredado).
+  if ((await legacyVehicleCounts(ctx)).records === 0) redirect("/app/mantenimientos");
   const sp = await searchParams;
   const q = param(sp.q);
   const from = param(sp.desde, 10);
@@ -36,8 +40,11 @@ export default async function HistoryPage({ searchParams }: { searchParams: Sear
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Historial de mantenimiento</h1>
-        <p className="text-sm text-[var(--muted)]">Todas las revisiones registradas en el taller.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Historial de vehículos (etapa anterior)</h1>
+        <p className="text-sm text-[var(--muted)]">
+          Revisiones de vehículos registradas antes del cambio a protección contra incendios. Las actuaciones sobre equipos PCI están en{" "}
+          <Link href="/app/mantenimientos" className="text-[var(--accent)]">Mantenimientos</Link>.
+        </p>
       </div>
 
       <form method="get" className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-[1fr_auto_auto_auto_auto]">

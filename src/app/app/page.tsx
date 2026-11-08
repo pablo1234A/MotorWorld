@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { StatCard } from "@/components/pci/badges";
 import { Alert, Card } from "@/components/ui/feedback";
+import { formatDateTime } from "@/lib/dates";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { PLANS } from "@/lib/plans";
 import { requireOrgPage } from "@/server/auth/guards";
 import { can } from "@/server/auth/context";
 import { pendingRequestsCount } from "@/server/modules/appointments/service";
-import { getDashboardSummary } from "@/server/modules/dashboard/service";
+import { getDashboardSummary, getPciDashboard } from "@/server/modules/dashboard/service";
 import { dashboardActivity } from "@/server/modules/reports/service";
 
 export const metadata: Metadata = { title: "Inicio · RevisaYa" };
@@ -28,8 +30,9 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", { dateStyle: "long", timeZone: 
 export default async function DashboardPage() {
   const ctx = await requireOrgPage("/app");
   const canAppointments = can(ctx, "appointments.manage");
-  const [summary, pendingRequests, activity] = await Promise.all([
+  const [summary, pci, pendingRequests, activity] = await Promise.all([
     getDashboardSummary(ctx),
+    getPciDashboard(ctx),
     canAppointments ? pendingRequestsCount(ctx) : Promise.resolve(0),
     dashboardActivity(ctx),
   ]);
@@ -48,9 +51,9 @@ export default async function DashboardPage() {
       </div>
 
       {!ctx.subscription.active ? (
-        <Alert tone="warning" title={ctx.subscription.status ? `Suscripción: ${STATUS_LABELS[ctx.subscription.status] ?? ctx.subscription.status}` : "Tu taller aún no tiene un plan activo"}>
-          Mientras no haya un plan activo, los datos del taller están en modo de solo lectura: no se pueden añadir
-          clientes, vehículos ni usuarios, y no se envían avisos.{" "}
+        <Alert tone="warning" title={ctx.subscription.status ? `Suscripción: ${STATUS_LABELS[ctx.subscription.status] ?? ctx.subscription.status}` : "Tu empresa aún no tiene un plan activo"}>
+          Mientras no haya un plan activo, los datos de la empresa están en modo de solo lectura: no se pueden añadir
+          clientes, instalaciones, equipos ni usuarios, y no se envían avisos.{" "}
           {ctx.membership.role === "admin" ? (
             <Link href="/app/facturacion" className="font-medium text-[var(--accent)]">
               Elegir un plan (7 días gratis)
@@ -76,7 +79,7 @@ export default async function DashboardPage() {
 
       {ctx.subscription.status === "past_due" ? (
         <Alert tone="warning" title="Pago pendiente">
-          No hemos podido cobrar la última factura. Actualiza la tarjeta para que el taller no pase a solo lectura.{" "}
+          No hemos podido cobrar la última factura. Actualiza la tarjeta para que la cuenta no pase a solo lectura.{" "}
           {ctx.membership.role === "admin" ? (
             <Link href="/app/facturacion" className="font-medium text-[var(--accent)]">
               Ir a facturación
@@ -86,7 +89,7 @@ export default async function DashboardPage() {
       ) : null}
 
       {pendingRequests ? (
-        <Alert tone="info" title={`${pendingRequests} ${pendingRequests === 1 ? "cliente ha pedido cita" : "clientes han pedido cita"}`}>
+        <Alert tone="info" title={`${pendingRequests} ${pendingRequests === 1 ? "cliente ha pedido una visita" : "clientes han pedido una visita"}`}>
           <Link href="/app/citas?estado=solicitudes" className="font-medium text-[var(--accent)]">
             Revisar las solicitudes
           </Link>{" "}
@@ -94,40 +97,68 @@ export default async function DashboardPage() {
         </Alert>
       ) : null}
 
-      <section aria-labelledby="revisiones" className="flex flex-col gap-3">
-        <h2 id="revisiones" className="text-lg font-semibold">Revisiones</h2>
+      <section aria-labelledby="vencimientos" className="flex flex-col gap-3">
+        <h2 id="vencimientos" className="text-lg font-semibold">Vencimientos y trabajo</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <LinkStat href="/app/vehiculos?revision=vencidas" label="Vencidas" value={summary.overdue} tone={summary.overdue ? "danger" : undefined} />
-          <LinkStat href="/app/vehiculos?revision=30" label="En los próximos 30 días" value={summary.dueIn30} tone={summary.dueIn30 ? "warning" : undefined} />
-          <LinkStat href="/app/vehiculos?revision=sin-fecha" label="Vehículos sin próxima revisión" value={summary.withoutNextService} />
-          <LinkStat href="/app/clientes?correo=sin" label="Clientes sin correo (no reciben avisos)" value={summary.customersWithoutEmail} />
+          <StatCard href="/app/equipos?vencimiento=vencidas" label="Equipos con actuación vencida" value={pci.equipmentOverdue} tone="bad" />
+          <StatCard href="/app/equipos?vencimiento=30" label="Equipos que vencen en 30 días" value={pci.equipmentDue30d} tone="warn" />
+          <StatCard href="/app/ordenes-trabajo" label="Órdenes de trabajo abiertas" value={pci.workOrdersOpen} />
+          <StatCard href="/app/incidencias" label="Incidencias abiertas" value={pci.incidentsOpen} tone="bad" />
         </div>
       </section>
 
-      <section aria-labelledby="actividad" className="flex flex-col gap-3">
+      <section aria-labelledby="parque" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="actividad" className="text-lg font-semibold">Últimos 30 días</h2>
+          <h2 id="parque" className="text-lg font-semibold">Parque mantenido</h2>
           {reportsLink ? (
             <Link href="/app/informes" className="text-sm font-medium text-[var(--accent)]">
               Ver los informes
             </Link>
           ) : null}
         </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard href="/app/clientes" label="Clientes" value={pci.customers} />
+          <StatCard href="/app/instalaciones" label="Instalaciones" value={pci.installations} />
+          <StatCard href="/app/equipos" label="Equipos PCI" value={pci.equipment} />
+          <StatCard href="/app/equipos?categoria=extinguisher" label="Extintores" value={pci.extinguishers} />
+        </div>
         <dl className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Avisos enviados" value={activity.remindersSent30d} />
-          <Stat label="Citas pedidas" value={activity.appointments30d} />
-          <Stat label="Clientes que han vuelto tras un aviso" value={activity.returned30d} />
+          <Stat label="Actuaciones registradas (30 días)" value={pci.records30d} />
+          <Stat label="Actuaciones programadas" value={pci.actionsScheduled} />
+          <Stat label="Avisos enviados (30 días)" value={activity.remindersSent30d} />
         </dl>
-        <p className="text-xs text-[var(--muted)]">«Han vuelto»: vehículos con una revisión anotada en el historial en los 90 días siguientes a un aviso.</p>
       </section>
+
+      {pci.recent.length ? (
+        <section aria-labelledby="reciente" className="flex flex-col gap-3">
+          <h2 id="reciente" className="text-lg font-semibold">Actividad reciente</h2>
+          <ul className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm">
+            {pci.recent.map((r) => (
+              <li key={`${r.kind}-${r.refId}-${r.at}`} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                <Link href={r.kind === "record" ? `/app/equipos/${r.refId}` : r.kind === "work_order" ? `/app/ordenes-trabajo/${r.refId}` : `/app/incidencias/${r.refId}`} className="font-medium text-[var(--accent)]">
+                  {r.label}
+                </Link>
+                <span className="text-[var(--muted)]">
+                  {r.installation} · {formatDateTime(r.at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <h2 className="text-lg font-semibold">Tu cuenta</h2>
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Clientes" value={summary.customers} limit={plan ? limit(plan.maxCustomers) : undefined} />
-        <Stat label="Vehículos activos" value={summary.activeVehicles} limit={plan ? limit(plan.maxActiveVehicles) : undefined} />
+        <Stat label="Equipos PCI en uso" value={pci.equipment} limit={plan ? limit(plan.maxEquipment) : undefined} />
         <Stat label="Usuarios" value={summary.members} limit={plan ? limit(plan.maxUsers) : undefined} />
-        <Stat label="Talleres" value={summary.branches} limit={plan ? limit(plan.maxBranches) : undefined} />
+        <Stat label="Delegaciones" value={summary.branches} limit={plan ? limit(plan.maxBranches) : undefined} />
       </dl>
+      {summary.activeVehicles ? (
+        <p className="text-xs text-[var(--muted)]">
+          La cuenta conserva {summary.activeVehicles.toLocaleString("es-ES")} vehículos de la etapa anterior de RevisaYa. Se mantienen con su historial y se incluyen en la exportación de datos.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -139,15 +170,5 @@ function Stat({ label, value, limit }: { label: string; value: number; limit?: s
       <dd className="mt-1 text-3xl font-semibold tabular-nums">{value.toLocaleString("es-ES")}</dd>
       {limit ? <dd className="mt-1 text-xs text-[var(--muted)]">de {limit} en tu plan</dd> : null}
     </div>
-  );
-}
-
-function LinkStat({ href, label, value, tone }: { href: string; label: string; value: number; tone?: "danger" | "warning" }) {
-  const color = tone === "danger" ? "text-[var(--danger)]" : tone === "warning" ? "text-[var(--warning)]" : "";
-  return (
-    <Link href={href} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-colors hover:border-[var(--accent)]">
-      <p className="text-sm text-[var(--muted)]">{label}</p>
-      <p className={`mt-1 text-3xl font-semibold tabular-nums ${color}`}>{value.toLocaleString("es-ES")}</p>
-    </Link>
   );
 }

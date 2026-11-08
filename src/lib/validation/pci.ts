@@ -189,6 +189,17 @@ export function formWithMaterials(formData: FormData): Record<string, unknown> {
 }
 
 // ---------------------------------------------------------- órdenes de trabajo
+/**
+ * Lista «equipo:operación» de un formulario: un solo valor llega como texto,
+ * y los selectores «No incluir» envían cadenas vacías, que se descartan.
+ */
+export function workOrderItemList(min: number) {
+  return z.preprocess(
+    (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).filter((x) => x !== ""),
+    z.array(z.string().regex(/^[0-9a-f-]{36}:[0-9a-f-]{36}$/i, "Equipo no válido")).min(min, "Elige al menos un equipo").max(500),
+  );
+}
+
 export const createWorkOrderSchema = z.object({
   installationId: uuid,
   serviceType: z.enum(SERVICE_TYPES),
@@ -202,7 +213,7 @@ export const createWorkOrderSchema = z.object({
   // Equipos: «todos los que vencen» o una selección (equipo:operación).
   includeDue: checkbox,
   dueUntil: optionalDate,
-  items: z.array(z.string().regex(/^[0-9a-f-]{36}:[0-9a-f-]{36}$/i)).max(500).default([]),
+  items: workOrderItemList(0),
 });
 export type CreateWorkOrderInput = z.infer<typeof createWorkOrderSchema>;
 export const updateWorkOrderSchema = z.object({
