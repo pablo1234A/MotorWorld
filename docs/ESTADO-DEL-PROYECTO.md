@@ -50,7 +50,7 @@
 |---|---|
 | pgTAP (`pnpm db:test`) | 310/310 (nuevo: `150_reports.sql`) |
 | Vitest unit + integración (`pnpm test`, con stripe-mock) | 302/302 (nuevos: `calendar`, `reports`, `api`) |
-| Playwright E2E (`pnpm test:e2e`) | 28/28 (nuevo: `phase9.spec.ts`: crear una clave en el panel, usarla, revocarla; informes; plan Pro bloqueado) |
+| Playwright E2E (`pnpm test:e2e`) | 27/27 (nuevo: `phase9.spec.ts`: crear una clave en el panel, usarla, revocarla; informes; plan Pro bloqueado) |
 | typecheck, lint, build | OK |
 
 ### Errores encontrados y corregidos durante la fase
