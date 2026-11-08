@@ -139,7 +139,7 @@ export async function updateBookingSettingsAction(_prev: ActionState, formData: 
       assertAdmin(ctx);
       await settings.updateBookingSettings(ctx, parseForm(bookingSettingsSchema, formData));
       refresh();
-      return { status: "success", message: "Configuración de citas guardada." };
+      return { status: "success", message: "Configuración de visitas guardada." };
     },
     formData,
   );

@@ -65,7 +65,7 @@ export function ConfirmForm({
         {hasEmail ? "Avisar al cliente por correo (con la cita para su calendario)" : "El cliente no tiene correo: avísale por teléfono"}
       </label>
       <div>
-        <SubmitButton pendingLabel="Guardando…">{mode === "confirm" ? "Confirmar cita" : "Cambiar fecha"}</SubmitButton>
+        <SubmitButton pendingLabel="Guardando…">{mode === "confirm" ? "Confirmar visita" : "Cambiar fecha"}</SubmitButton>
       </div>
     </form>
   );
@@ -237,7 +237,7 @@ export function BookingSettingsForm({
   return (
     <Card>
       <form action={action} className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Página para pedir cita</h2>
+        <h2 className="text-lg font-semibold">Página para pedir visita</h2>
         <FormMessage state={state} />
         <input type="hidden" name="branchId" value={branchId} />
         <label className="flex items-start gap-3 text-[15px]">
@@ -305,7 +305,7 @@ export function AvailabilityRules({
   return (
     <Card className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Horario para citas</h2>
+        <h2 className="text-lg font-semibold">Horario de visitas</h2>
         <p className="text-sm text-[var(--muted)]">
           Solo se usa si el cliente elige un hueco. Puedes poner varias franjas el mismo día (mañana y tarde). Los festivos y días de cierre de
           Avisos tampoco se ofrecen.

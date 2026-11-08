@@ -34,6 +34,8 @@ describe("equipos: reglas del extintor", () => {
   it("capacidad y unidad van juntas", () => {
     expect(createEquipmentSchema.safeParse({ ...base, agent: "powder_abc", chargeValue: "6" }).success).toBe(false);
     expect(createEquipmentSchema.safeParse({ ...base, agent: "powder_abc", chargeValue: "6", chargeUnit: "kg" }).success).toBe(true);
+    // Regresión: el formulario envía la unidad por defecto aunque no se indique la capacidad.
+    expect(createEquipmentSchema.safeParse({ ...base, agent: "powder_abc", chargeValue: "", chargeUnit: "kg" }).success).toBe(true);
   });
   it("no admite más de 3 retimbrados previos ni instalación anterior a la fabricación", () => {
     expect(createEquipmentSchema.safeParse({ ...base, agent: "co2", retimbradosBefore: "4" }).success).toBe(false);

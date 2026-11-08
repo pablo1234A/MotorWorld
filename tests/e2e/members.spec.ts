@@ -34,12 +34,12 @@ test.describe("Usuarios e invitaciones", () => {
     await guest.getByRole("button", { name: "Aceptar invitación" }).click();
     await expect(guest).toHaveURL(/\/app$/);
     await expect(guest.getByRole("heading", { name: "Taller Equipo" })).toBeVisible();
-    await expect(guest.getByText("Operario", { exact: true })).toBeVisible();
+    await expect(guest.getByText("Técnico / operario", { exact: true })).toBeVisible();
 
     // El operario no tiene gestión de usuarios: ni enlace ni acceso directo.
     await expect(guest.getByRole("link", { name: "Usuarios" })).toHaveCount(0);
     await guest.goto("/app/usuarios");
-    await expect(guest.getByText("Solo los administradores del taller pueden gestionar usuarios.")).toBeVisible();
+    await expect(guest.getByText("Solo los administradores de la empresa pueden gestionar usuarios.")).toBeVisible();
 
     // La invitación no se puede reutilizar.
     await guest.goto(invitationUrl);

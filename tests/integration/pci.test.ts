@@ -101,7 +101,8 @@ describe("PCI: cliente → instalación → equipos → actuación → orden →
   });
 
   it("orden de trabajo con los equipos que vencen, técnico asignado, resultados por equipo y cierre", async () => {
-    const tecCtx = await operator(org, ["work_orders.execute", "maintenance.write", "incidents.write"]);
+    // Perfil «técnico» puro: ejecuta sus órdenes y registra incidencias, sin permiso general de actuaciones.
+    const tecCtx = await operator(org, ["work_orders.execute", "incidents.write"]);
     const tecId = await technicians.saveTechnician(ctx, { id: null, fullName: "Ana Técnica", phone: null, email: null, memberId: tecCtx.membership.memberId, qualificationNotes: null, active: true });
     const woId = await orders.createWorkOrder(ctx, {
       installationId, serviceType: "periodic_maintenance", scheduledFor: addDays(todayIn(), 2), scheduledTime: "09:30", technicianId: tecId,
@@ -120,10 +121,20 @@ describe("PCI: cliente → instalación → equipos → actuación → orden →
     await expect(orders.setWorkOrderStatus(tecCtx, woId, "completed", null)).rejects.toMatchObject({ code: "validation_error" });
     await orders.setWorkOrderStatus(tecCtx, woId, "in_progress", null);
     await expect(orders.setWorkOrderStatus(tecCtx, woId, "completed", null)).rejects.toMatchObject({ code: "validation_error" });
-    for (const item of wo.itemList) {
+    // Fuera de una orden suya no puede registrar actuaciones.
+    await expect(
+      records.createRecord(tecCtx, {
+        equipmentId: extId, actionTypeId: wo.itemList.find((i) => i.equipmentId === extId)!.actionTypeId, performedOn: todayIn(), result: "compliant", observations: null,
+        nextActionRecommendedOn: null, technicianId: null, workOrderId: null, materials: [], incidentTitle: null, incidentSeverity: "medium",
+      }),
+    ).rejects.toMatchObject({ code: "permission_denied" });
+    for (const [n, item] of wo.itemList.entries()) {
+      // Otro técnico no puede registrar resultados en la orden de este.
+      if (n === 0) await expect(orders.recordItemResult(otherTec, { itemId: item.id, result: "compliant", performedOn: todayIn(), observations: null, nextActionRecommendedOn: null, materials: [], incidentTitle: null, incidentSeverity: "medium" })).rejects.toBeTruthy();
       await orders.recordItemResult(tecCtx, {
         itemId: item.id, result: item.equipmentId === bieId ? "non_compliant" : "compliant", performedOn: todayIn(),
-        observations: item.equipmentId === bieId ? "Manguera agrietada" : null, nextActionRecommendedOn: null, materials: [],
+        observations: item.equipmentId === bieId ? "Manguera agrietada" : null, nextActionRecommendedOn: null,
+        materials: item.equipmentId === bieId ? [{ description: "Manguera 25 mm", reference: null, quantity: 20, unit: "m" }] : [],
         incidentTitle: item.equipmentId === bieId ? "Sustituir manguera de la BIE" : null, incidentSeverity: "high",
       });
     }
@@ -169,6 +180,13 @@ describe("PCI: cliente → instalación → equipos → actuación → orden →
     expect((await documents.listDocuments(ctx, "installation", installationId)).map((d) => d.id)).toEqual([id]);
     await expect(documents.uploadDocument(ctx, { owner: "equipment", ownerId: extId, title: "x", bytes: Buffer.from("<script>alert(1)</script>") })).rejects.toMatchObject({ detail: "document_type" });
     expect(await documents.documentUrl(ctx, id)).toMatch(/^http/);
+    // Fotos reales (PNG y JPEG) en el almacenamiento privado: el tipo sale del contenido, no del nombre.
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0xff, 0xd9]);
+    const photo = await documents.uploadDocument(ctx, { owner: "equipment", ownerId: extId, title: "foto.png", bytes: png });
+    await documents.uploadDocument(ctx, { owner: "equipment", ownerId: extId, title: "foto.jpg", bytes: jpg });
+    expect((await documents.listDocuments(ctx, "equipment", extId)).map((d) => d.mimeType).sort()).toEqual(["image/jpeg", "image/png"]);
+    expect(await documents.documentUrl(ctx, photo)).toMatch(/token=/);
     expect(await documents.documentUrl(await admin(other), id)).toBeNull();
     await expect(documents.uploadDocument(await admin(other), { owner: "installation", ownerId: installationId, title: "x", bytes: pdf })).rejects.toMatchObject({ code: "not_found" });
   });

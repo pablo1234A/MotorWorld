@@ -261,7 +261,7 @@ async function writeExtinguisher(tx: Tx, orgId: string, branchId: string, equipm
   const values = {
     agent,
     charge_value: input.chargeValue === null ? null : String(input.chargeValue),
-    charge_unit: input.chargeUnit,
+    charge_unit: input.chargeValue === null ? null : input.chargeUnit,
     efficacy: input.efficacy,
     mobility: input.mobility,
     stamped_on: input.stampedOn,

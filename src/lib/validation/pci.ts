@@ -111,7 +111,8 @@ const equipmentFields = {
 };
 function extinguisherRules(d: { categoryCode: string; agent: string | null; chargeValue: number | null; chargeUnit: string | null; installedOn: string | null; manufacturedOn: string | null }, ctx: z.RefinementCtx) {
   if (d.categoryCode === "extinguisher" && !d.agent) ctx.addIssue({ code: "custom", path: ["agent"], message: "Indica el agente extintor" });
-  if ((d.chargeValue === null) !== (d.chargeUnit === null)) ctx.addIssue({ code: "custom", path: ["chargeUnit"], message: "Indica la capacidad y su unidad" });
+  // La unidad tiene valor por defecto en el formulario: solo importa si hay capacidad.
+  if (d.chargeValue !== null && d.chargeUnit === null) ctx.addIssue({ code: "custom", path: ["chargeUnit"], message: "Indica la unidad de la capacidad" });
   if (d.installedOn && d.manufacturedOn && d.installedOn < d.manufacturedOn)
     ctx.addIssue({ code: "custom", path: ["installedOn"], message: "No puede ser anterior a la fabricación" });
 }

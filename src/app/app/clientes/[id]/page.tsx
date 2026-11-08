@@ -25,6 +25,7 @@ import { isAdmin } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
 import { getCustomer } from "@/server/modules/customers/service";
 import { listInstallations } from "@/server/modules/installations/service";
+import { legacyVehicleCounts } from "@/server/modules/vehicles/service";
 
 export const metadata: Metadata = { title: "Cliente · RevisaYa" };
 
@@ -43,13 +44,12 @@ export default async function CustomerPage({ params, searchParams }: Props) {
   const caps = capabilities(ctx);
   const today = todayIn();
   const name = `${customer.firstName} ${customer.lastName}`.trim();
-  const installations = await listInstallations(ctx, {
-    customerId: customer.id,
-    page: 1,
-    pageSize: 200,
-  });
+  const [installations, legacyCounts] = await Promise.all([
+    listInstallations(ctx, { customerId: customer.id, page: 1, pageSize: 200 }),
+    legacyVehicleCounts(ctx),
+  ]);
   // Vehículos: solo si la cuenta los conserva de la etapa anterior (no se convierten en equipos).
-  const legacy = customer.vehicles.length > 0 || customer.history.length > 0;
+  const legacy = customer.vehicles.length > 0 || customer.history.length > 0 || legacyCounts.vehicles > 0;
 
   return (
     <div className="flex flex-col gap-6">

@@ -21,11 +21,11 @@ test.describe("sistema de correos", () => {
     await grantPlan(owner, "pro");
     await page.reload();
 
-    await page.getByRole("link", { name: "Configuración", exact: true }).click();
-    await page.getByRole("link", { name: /^Plantillas de correo/ }).click();
+    await page.getByRole("link", { name: "Configuración", exact: true }).first().click();
+    await page.getByRole("main").getByRole("link", { name: /^Plantillas de correo/ }).click();
     await expect(page.getByText("El botón no aparece porque falta la dirección «Responder a»").first()).toBeVisible();
 
-    // Dirección de respuesta: el botón «Pedir cita» abre un correo al taller.
+    // Dirección de respuesta: el botón «Pedir visita» abre un correo a la empresa.
     await page.goto("/app/configuracion/avisos");
     await page.getByLabel("Responder a").fill("citas@taller-plantillas.test");
     await page.getByRole("button", { name: "Guardar configuración" }).click();
@@ -33,37 +33,38 @@ test.describe("sistema de correos", () => {
     await page.goto("/app/configuracion/plantillas");
     await expect(page.getByRole("heading", { name: "Plantillas de correo" })).toBeVisible();
 
-    const editor = card(page, "Aviso de revisión por fecha");
+    const T = "Recordatorio de mantenimiento (vencimientos)";
+    const editor = card(page, T);
     await expect(editor.getByText("Plantilla original")).toBeVisible();
-    // Vista previa con datos de ejemplo y la plantilla del PDF.
-    await expect(editor.getByText("Asunto: Revisión de tu Seat Ibiza en Taller Plantillas")).toBeVisible();
+    // Vista previa con datos de ejemplo.
+    await expect(editor.getByText("Asunto: Mantenimiento de protección contra incendios en Garaje comunitario Calle Encina 12")).toBeVisible();
 
-    await editor.getByLabel("Asunto").fill("{nombre}, tu {modelo} necesita revisión {precio}");
+    await editor.getByLabel("Asunto").fill("{nombre}, toca revisar {instalacion} {precio}");
     await editor.getByRole("button", { name: "Guardar plantilla" }).click();
     await expect(editor.getByText("Variable desconocida: {precio}")).toBeVisible();
 
-    await editor.getByLabel("Asunto").fill("{nombre}, tu {modelo} necesita revisión");
-    await expect(editor.getByText("Asunto: Laura, tu Seat Ibiza necesita revisión")).toBeVisible();
+    await editor.getByLabel("Asunto").fill("{nombre}, toca revisar {instalacion}");
+    await expect(editor.getByText("Asunto: Laura, toca revisar Garaje comunitario Calle Encina 12")).toBeVisible();
     await editor.getByLabel("Texto del botón").fill("Reservar ya");
     await expect(editor.frameLocator("iframe").getByRole("link", { name: "Reservar ya" })).toBeVisible();
     await editor.getByRole("button", { name: "Guardar plantilla" }).click();
     await expect(editor.getByText("Plantilla guardada.")).toBeVisible();
     await page.reload();
-    await expect(card(page, "Aviso de revisión por fecha").getByLabel("Asunto")).toHaveValue("{nombre}, tu {modelo} necesita revisión");
-    await expect(card(page, "Aviso de revisión por fecha").getByText("Personalizada")).toBeVisible();
+    await expect(card(page, T).getByLabel("Asunto")).toHaveValue("{nombre}, toca revisar {instalacion}");
+    await expect(card(page, T).getByText("Personalizada")).toBeVisible();
 
     // Prueba real: llega al correo del administrador a través del SMTP local.
-    await card(page, "Aviso de revisión por fecha").getByRole("button", { name: "Enviarme una prueba" }).click();
+    await card(page, T).getByRole("button", { name: "Enviarme una prueba" }).click();
     await expect(page.getByText(`Correo de prueba enviado a ${owner}`)).toBeVisible();
-    const mail = await waitForEmail(owner, "[Prueba] Laura, tu Seat Ibiza necesita revisión");
+    const mail = await waitForEmail(owner, "[Prueba] Laura, toca revisar Garaje comunitario Calle Encina 12");
     expect(mail.From.Name).toBe("Taller Plantillas");
     expect(mail.HTML).toContain("Reservar ya");
 
     page.once("dialog", (d) => d.accept());
-    await card(page, "Aviso de revisión por fecha").getByRole("button", { name: "Restaurar la plantilla original" }).click();
-    await expect(card(page, "Aviso de revisión por fecha").getByLabel("Asunto")).toHaveValue("Revisión de tu {modelo} en {taller}");
+    await card(page, T).getByRole("button", { name: "Restaurar la plantilla original" }).click();
+    await expect(card(page, T).getByLabel("Asunto")).toHaveValue("Mantenimiento de protección contra incendios en {instalacion}");
     await page.reload();
-    await expect(card(page, "Aviso de revisión por fecha").getByText("Plantilla original")).toBeVisible();
+    await expect(card(page, T).getByText("Plantilla original")).toBeVisible();
   });
 
   test("correo: remitente, resumen, direcciones bloqueadas y webhook firmado", async ({ page, request }) => {
@@ -84,17 +85,17 @@ test.describe("sistema de correos", () => {
     await expect(page.getByText("La verificación de dominios propios no está disponible todavía")).toBeVisible();
 
     const sender = card(page, "Remitente de los avisos");
-    await sender.getByLabel("Resumen para el taller").selectOption("daily");
+    await sender.getByLabel("Resumen para la empresa").selectOption("daily");
     await sender.getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("Configuración del correo guardada.")).toBeVisible();
     await page.reload();
-    await expect(card(page, "Remitente de los avisos").getByLabel("Resumen para el taller")).toHaveValue("daily");
+    await expect(card(page, "Remitente de los avisos").getByLabel("Resumen para la empresa")).toHaveValue("daily");
 
     const blocked = card(page, "Direcciones bloqueadas");
     await blocked.getByLabel("Bloquear una dirección").fill("Moroso@Cliente.test");
     await blocked.getByRole("button", { name: "Bloquear" }).click();
     await expect(page.getByText("No se enviarán más correos a moroso@cliente.test.")).toBeVisible();
-    await expect(blocked.getByText("Bloqueada por el taller")).toBeVisible();
+    await expect(blocked.getByText("Bloqueada por la empresa")).toBeVisible();
     await blocked.getByRole("button", { name: "Desbloquear moroso@cliente.test" }).click();
     await expect(blocked.getByText("No hay direcciones bloqueadas.")).toBeVisible();
 

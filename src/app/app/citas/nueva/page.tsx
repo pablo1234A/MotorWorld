@@ -12,7 +12,7 @@ import { can } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
 import { withRls } from "@/server/db/client";
 
-export const metadata: Metadata = { title: "Nueva cita · RevisaYa" };
+export const metadata: Metadata = { title: "Nueva visita · RevisaYa" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -62,7 +62,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
         <Link href="/app/citas" className="text-sm text-[var(--accent)]">
           ← Citas
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Nueva cita</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Nueva visita</h1>
         <p className="text-sm text-[var(--muted)]">Para citas que te piden por teléfono o en persona. Nacen confirmadas.</p>
       </div>
       <Card className="flex flex-col gap-4">

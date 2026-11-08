@@ -3,6 +3,22 @@ import { expect, type Page, test } from "@playwright/test";
 import { db, grantPlan, uniqueEmail } from "./support/env";
 import { createWorkshop, signUpAndVerify } from "./support/flows";
 
+/**
+ * Funciones de vehículos de la etapa anterior de RevisaYa. Desde el paso a
+ * protección contra incendios solo aparecen en las cuentas que ya tienen
+ * vehículos: cada prueba simula esa cuenta con un vehículo previo y después
+ * recorre la interfaz igual que antes (no se pierde cobertura).
+ */
+async function seedLegacyVehicle(owner: string): Promise<void> {
+  await db(
+    `with o as (select m.organization_id as org, b.id as branch from organization_members m join profiles p on p.id = m.user_id
+                  join branches b on b.organization_id = m.organization_id and b.is_primary where p.email = $1),
+          c as (insert into customers (organization_id, branch_id, first_name, last_name) select org, branch, 'Cliente', 'Anterior' from o returning id, organization_id, branch_id)
+     insert into vehicles (organization_id, branch_id, customer_id, plate) select organization_id, branch_id, id, '0001 AAA' from c`,
+    [owner],
+  );
+}
+
 /** Tarjeta (<section>) del panel identificada por su título. */
 const card = (page: Page, title: string) => page.locator("section", { has: page.getByRole("heading", { name: title, exact: true }) });
 
@@ -17,11 +33,12 @@ test.describe("Clientes, vehículos e historial", () => {
     await signUpAndVerify(page, owner);
     await createWorkshop(page, "Taller Sur");
     await grantPlan(owner, "max");
+    await seedLegacyVehicle(owner);
 
     // Cliente
     await page.getByRole("link", { name: "Clientes", exact: true }).click();
-    await expect(page.getByText("Todavía no hay clientes.")).toBeVisible();
     await page.getByRole("link", { name: "Nuevo cliente" }).click();
+    await page.getByLabel("Particular").check();
     await page.getByLabel("Nombre", { exact: true }).fill("Laura");
     await page.getByLabel("Apellidos").fill("Martín");
     await page.getByLabel("Correo electrónico").fill("laura@correo.test");
@@ -77,13 +94,15 @@ test.describe("Clientes, vehículos e historial", () => {
     await page.getByRole("button", { name: "Buscar" }).click();
     await expect(page.getByText("Ningún cliente coincide con la búsqueda.")).toBeVisible();
 
-    // Historial global
-    await page.getByRole("link", { name: "Historial", exact: true }).click();
+    // Historial global de vehículos (etapa anterior)
+    await page.goto("/app/historial");
+    await expect(page.getByRole("heading", { name: "Historial de vehículos (etapa anterior)" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "Cambio de aceite y filtros" })).toBeVisible();
 
-    // Panel: la próxima revisión y los contadores son reales
+    // Panel: los contadores son reales y los vehículos conservados se indican
     await page.getByRole("link", { name: "Inicio" }).click();
     await expect(page.getByText("de 800 en tu plan")).toBeVisible();
+    await expect(page.getByText("La cuenta conserva 2 vehículos de la etapa anterior de RevisaYa")).toBeVisible();
   });
 
   test("aviso de cliente duplicado, revisiones vencidas y borrado seguro con vehículos", async ({ page }) => {
@@ -91,9 +110,11 @@ test.describe("Clientes, vehículos e historial", () => {
     await signUpAndVerify(page, owner);
     await createWorkshop(page, "Taller Norte");
     await grantPlan(owner, "pro");
+    await seedLegacyVehicle(owner);
 
     const create = async (name: string, email: string) => {
       await page.goto("/app/clientes/nuevo");
+      await page.getByLabel("Particular").check();
       await page.getByLabel("Nombre", { exact: true }).fill(name);
       await page.getByLabel("Correo electrónico").fill(email);
       await page.getByRole("button", { name: "Crear cliente" }).click();
@@ -109,8 +130,9 @@ test.describe("Clientes, vehículos e historial", () => {
     await add.getByRole("button", { name: "Dar de alta el vehículo" }).click();
     await expect(page.getByText("Vehículo dado de alta.")).toBeVisible();
 
-    await page.goto("/app");
-    await page.getByRole("link", { name: /Vencidas/ }).click();
+    await page.goto("/app/vehiculos");
+    await page.getByLabel("Próxima revisión").selectOption({ label: "Revisión vencida" });
+    await page.getByRole("button", { name: "Filtrar" }).click();
     await expect(page).toHaveURL(/revision=vencidas/);
     await expect(page.getByRole("link", { name: "5678 FGH" })).toBeVisible();
 
@@ -125,7 +147,7 @@ test.describe("Clientes, vehículos e historial", () => {
     const add2 = card(page, "Añadir vehículo");
     await add2.getByLabel("Matrícula").fill("5678-fgh");
     await add2.getByRole("button", { name: "Dar de alta el vehículo" }).click();
-    await expect(page.getByText("Ya existe un vehículo con esa matrícula en este taller.")).toBeVisible();
+    await expect(page.getByText("Ya existe un vehículo con esa matrícula en esta empresa.")).toBeVisible();
 
     // Borrado: con vehículos hay que marcar que se borran también
     await page.goto(customerUrl);
@@ -154,7 +176,9 @@ test.describe("Clientes, vehículos e historial", () => {
     await signUpAndVerify(page, owner);
     await createWorkshop(page, "Taller Lectura");
     await grantPlan(owner, "pro");
+    await seedLegacyVehicle(owner);
     await page.goto("/app/clientes/nuevo");
+    await page.getByLabel("Particular").check();
     await page.getByLabel("Nombre", { exact: true }).fill("Ana");
     await page.getByRole("button", { name: "Crear cliente" }).click();
     await expect(page.getByText("Cliente creado.")).toBeVisible();
@@ -172,6 +196,12 @@ test.describe("Clientes, vehículos e historial", () => {
     await expect(page.getByRole("button", { name: "Guardar cambios" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Añadir vehículo" })).toHaveCount(0);
     await page.goto("/app/clientes/nuevo");
-    await expect(page.getByText("Tu taller no tiene un plan activo.")).toBeVisible();
+    await expect(page.getByText("Tu empresa no tiene un plan activo.")).toBeVisible();
+    // PCI: tampoco se crean instalaciones, equipos ni órdenes.
+    await page.goto("/app/instalaciones");
+    await expect(page.getByText("Modo de solo lectura")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Nueva instalación" })).toHaveCount(0);
+    await page.goto("/app/ordenes-trabajo");
+    await expect(page.getByRole("link", { name: "Nueva orden" })).toHaveCount(0);
   });
 });

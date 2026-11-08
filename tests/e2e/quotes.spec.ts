@@ -30,22 +30,22 @@ test.describe("presupuestos y datos del taller", () => {
     await page.goto("/app/configuracion/taller");
     await page.getByLabel("Razón social").fill("Taller Presupuestos S.L.");
     await page.getByLabel("NIF / CIF").fill("B12345675");
-    await page.getByRole("button", { name: "Guardar datos del taller" }).click();
+    await page.getByRole("button", { name: "Guardar datos de la empresa" }).click();
     await expect(page.getByText("NIF, NIE o CIF no válido")).toBeVisible();
     await page.getByLabel("NIF / CIF").fill("B-12345674");
     await page.getByLabel("Código postal").fill("28001");
     await page.getByLabel("Población").fill("Madrid");
-    await page.getByRole("button", { name: "Guardar datos del taller" }).click();
-    await expect(page.getByText("Datos del taller guardados.")).toBeVisible();
+    await page.getByRole("button", { name: "Guardar datos de la empresa" }).click();
+    await expect(page.getByText("Datos de la empresa guardados.")).toBeVisible();
     await page.getByLabel("Archivo del logo").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: PNG });
     await page.getByRole("button", { name: "Subir logo" }).click();
     await expect(page.getByText("Logo actualizado.")).toBeVisible();
     await expect(page.getByRole("banner").getByRole("img", { name: "Taller Presupuestos" })).toBeVisible();
-    const logoSrc = await page.getByRole("img", { name: "Logo del taller" }).getAttribute("src");
+    const logoSrc = await page.getByRole("img", { name: "Logo de la empresa" }).getAttribute("src");
     const logo = await page.request.get(logoSrc!);
     expect(logo.headers()["content-type"]).toBe("image/png");
 
-    // Cliente y vehículo (datos de partida).
+    // Cliente e instalación (datos de partida).
     const [{ org_id, branch_id }] = await db<{ org_id: string; branch_id: string }>(
       `select m.organization_id as org_id, b.id as branch_id from organization_members m join profiles p on p.id = m.user_id
          join branches b on b.organization_id = m.organization_id and b.is_primary where p.email = $1`,
@@ -55,19 +55,21 @@ test.describe("presupuestos y datos del taller", () => {
       "insert into customers (organization_id, branch_id, first_name, last_name, email) values ($1, $2, 'Marta', 'López', $3) returning id",
       [org_id, branch_id, customerEmail],
     );
-    const [{ id: vehicleId }] = await db<{ id: string }>(
-      "insert into vehicles (organization_id, branch_id, customer_id, plate, make, model) values ($1, $2, $3, '5678 FGH', 'Renault', 'Clio') returning id",
+    const [{ id: installationId }] = await db<{ id: string }>(
+      "insert into installations (organization_id, branch_id, customer_id, name, address_line1, city) values ($1, $2, $3, 'Oficinas López', 'Calle Alta 5', 'Madrid') returning id",
       [org_id, branch_id, customerId],
     );
 
-    // Presupuesto desde la ficha del vehículo, con totales en vivo.
-    await page.goto(`/app/vehiculos/${vehicleId}`);
+    // Presupuesto desde la ficha de la instalación, con totales en vivo.
+    await page.goto(`/app/instalaciones/${installationId}`);
     await page.getByRole("link", { name: "Nuevo presupuesto" }).click();
-    await page.getByLabel("Concepto 1", { exact: true }).fill("Aceite 5W30");
+    await expect(page.getByLabel("Instalación")).toHaveValue(installationId);
+    await page.getByLabel("Tipo 1").selectOption("material");
+    await page.getByLabel("Concepto 1", { exact: true }).fill("Manguera BIE 25 mm (metros)");
     await page.getByLabel("Cantidad 1").fill("4,5");
     await page.getByLabel("Precio 1").fill("12,35");
     await page.getByRole("button", { name: "Añadir concepto" }).click();
-    await page.getByLabel("Concepto 2", { exact: true }).fill("Mano de obra");
+    await page.getByLabel("Concepto 2", { exact: true }).fill("Mano de obra de sustitución");
     await page.getByLabel("Cantidad 2").fill("1,5");
     await page.getByLabel("Precio 2").fill("40");
     // Base 55,58 + 60,00 = 115,58; IVA 11,67 + 12,60 = 24,27 → 139,85
@@ -90,6 +92,7 @@ test.describe("presupuestos y datos del taller", () => {
     const mail = await waitForEmail(customerEmail, `Presupuesto ${number}`);
     expect(mail.From.Name).toBe("Taller Presupuestos");
     expect(mail.Text).toContain("139,85");
+    expect(mail.Text).toContain("para Oficinas López");
     expect(mail.Attachments?.find((a) => a.FileName === `presupuesto-${number}.pdf`)?.ContentType).toBe("application/pdf");
 
     // Ya no se puede editar; se puede aceptar y duplicar.
@@ -108,12 +111,12 @@ test.describe("presupuestos y datos del taller", () => {
     await page.reload();
 
     await page.goto("/app/configuracion/citas");
-    const settings = card(page, "Página para pedir cita");
+    const settings = card(page, "Página para pedir visita");
     await settings.getByLabel("El cliente elige un hueco libre", { exact: false }).check();
     await settings.getByLabel("Antelación mínima (horas)").fill("0");
     await settings.getByRole("button", { name: "Guardar" }).click();
-    await expect(page.getByText("Configuración de citas guardada.")).toBeVisible();
-    const rules = card(page, "Horario para citas");
+    await expect(page.getByText("Configuración de visitas guardada.")).toBeVisible();
+    const rules = card(page, "Horario de visitas");
     await rules.getByLabel("Día").selectOption("1");
     await rules.getByLabel("Desde").fill("08:00");
     await rules.getByLabel("Hasta").fill("20:00");
@@ -141,7 +144,9 @@ test.describe("presupuestos y datos del taller", () => {
     const pick = Math.min(count - 1, 14);
     await customer.locator('input[name="slot"] + span').nth(pick).click();
     await expect(slots.nth(pick)).toBeChecked();
-    await customer.getByRole("button", { name: "Pedir cita" }).click();
+    await customer.getByLabel("¿Qué necesitas?").selectOption({ label: "Mantenimiento correctivo" });
+    await customer.getByLabel("Dirección de la instalación").fill("Polígono Norte, nave 7");
+    await customer.getByRole("button", { name: "Pedir la visita" }).click();
     await expect(customer.getByText("¡Solicitud enviada!")).toBeVisible();
     await customer.close();
 
@@ -150,8 +155,10 @@ test.describe("presupuestos y datos del taller", () => {
     await expect(request).toContainText("Solicitud");
     await request.click();
     await expect(page.getByText("El cliente no tiene correo: avísale por teléfono").first()).toBeVisible();
-    await page.getByRole("button", { name: "Confirmar cita" }).click();
-    await expect(page.getByText("Cita confirmada.")).toBeVisible();
+    await expect(page.getByText("Polígono Norte, nave 7")).toBeVisible();
+    await expect(page.getByText("Mantenimiento correctivo")).toBeVisible();
+    await page.getByRole("button", { name: "Confirmar visita" }).click();
+    await expect(page.getByText("Visita confirmada.")).toBeVisible();
     await page.getByRole("button", { name: "Crear ficha con estos datos" }).click();
     await expect(page.getByText("Ficha de cliente creada con los datos de la solicitud.")).toBeVisible();
     await expect(page.locator('a[href^="/app/clientes/"]', { hasText: "Pablo Ruiz" })).toBeVisible();

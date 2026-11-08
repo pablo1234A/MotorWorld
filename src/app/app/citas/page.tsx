@@ -50,7 +50,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Citas</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Solicitudes de visita</h1>
           <p className="text-sm text-[var(--muted)]">Solicitudes de tus clientes y citas confirmadas. Una solicitud no es una cita hasta que la confirmas.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -61,7 +61,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
           ) : null}
           {ctx.subscription.active ? (
             <Link href="/app/citas/nueva" className={buttonClass("primary")}>
-              Nueva cita
+              Nueva visita
             </Link>
           ) : null}
         </div>

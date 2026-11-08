@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { devices, expect, type Page, test } from "@playwright/test";
 
 import { db, grantPlan, uniqueEmail } from "./support/env";
 import { createWorkshop, signUpAndVerify } from "./support/flows";
@@ -190,5 +190,97 @@ test.describe("PCI: de un cliente nuevo a una orden de trabajo finalizada", () =
     await page.getByRole("link", { name: "Etiquetas QR" }).filter({ visible: true }).click();
     await expect(page.getByText("BIE-000001")).toBeVisible();
     await expect(page.locator("li svg").first()).toBeVisible();
+  });
+
+  test("técnico en el móvil: solo ve sus órdenes, empieza, registra el resultado con foto y la finaliza", async ({ page, browser }) => {
+    const owner = uniqueEmail("pci-jefe");
+    const techEmail = uniqueEmail("pci-tecnico");
+    await signUpAndVerify(page, owner);
+    await createWorkshop(page, "Extintores Sur");
+    await grantPlan(owner, "business");
+
+    // El técnico tiene su cuenta y entra en la empresa como «Técnico / operario» (solo ejecutar órdenes e incidencias).
+    const mobile = await browser.newContext({ ...devices["Pixel 7"] });
+    const tech = await mobile.newPage();
+    await signUpAndVerify(tech, techEmail, { firstName: "Pablo" });
+    const [ids] = await db<{ org: string; branch: string; member: string }>(
+      `with o as (select m.organization_id as org, b.id as branch from organization_members m join profiles p on p.id = m.user_id
+                    join branches b on b.organization_id = m.organization_id and b.is_primary where p.email = $1),
+            m as (insert into organization_members (organization_id, user_id, role, permissions, branch_scope, status)
+                  select o.org, p.id, 'operator', '{work_orders.execute,incidents.write}', 'all', 'active' from o, profiles p where p.email = $2 returning id)
+       select o.org, o.branch, m.id as member from o, m`,
+      [owner, techEmail],
+    );
+    const [{ id: techId }] = await db<{ id: string }>("insert into technicians (organization_id, member_id, full_name) values ($1, $2, 'Pablo Martín') returning id", [ids.org, ids.member]);
+    const [{ id: otherTech }] = await db<{ id: string }>("insert into technicians (organization_id, full_name) values ($1, 'Otra Persona') returning id", [ids.org]);
+    const [{ id: customerId }] = await db<{ id: string }>("insert into customers (organization_id, branch_id, first_name, customer_kind) values ($1, $2, 'Hotel Mar', 'company') returning id", [ids.org, ids.branch]);
+    const [{ id: instId }] = await db<{ id: string }>(
+      "insert into installations (organization_id, branch_id, customer_id, name, address_line1, city) values ($1, $2, $3, 'Hotel Mar · edificio', 'Paseo Marítimo 1', 'Cádiz') returning id",
+      [ids.org, ids.branch, customerId],
+    );
+    const [{ id: eqId }] = await db<{ id: string }>(
+      "insert into equipment (organization_id, branch_id, installation_id, category_code, code, location, installed_on) values ($1, $2, $3, 'bie', '', 'Recepción', current_date - 300) returning id",
+      [ids.org, ids.branch, instId],
+    );
+    const [{ id: action }] = await db<{ id: string }>("select id from maintenance_action_types where code = 'bie_annual' and organization_id is null");
+    const order = async (technician: string) => {
+      const [{ id }] = await db<{ id: string }>(
+        `insert into work_orders (organization_id, branch_id, customer_id, installation_id, service_type, status, scheduled_for, technician_id)
+         values ($1, $2, $3, $4, 'periodic_maintenance', 'assigned', current_date, $5) returning id`,
+        [ids.org, ids.branch, customerId, instId, technician],
+      );
+      await db("insert into work_order_items (organization_id, branch_id, work_order_id, equipment_id, planned_action_type_id) values ($1, $2, $3, $4, $5)", [ids.org, ids.branch, id, eqId, action]);
+      return id;
+    };
+    const mine = await order(techId);
+    const notMine = await order(otherTech);
+
+    // En el móvil: menú → órdenes de trabajo → solo la suya.
+    await tech.goto("/app");
+    expect(await tech.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await tech.getByText("Menú", { exact: true }).click();
+    await tech.getByRole("link", { name: "Órdenes de trabajo", exact: true }).click();
+    await expect(tech.getByText("Las órdenes que tienes asignadas.")).toBeVisible();
+    await expect(tech.locator(`a[href="/app/ordenes-trabajo/${mine}"]`)).toBeVisible();
+    await expect(tech.locator(`a[href="/app/ordenes-trabajo/${notMine}"]`)).toHaveCount(0);
+    await expect(tech.getByRole("link", { name: "Nueva orden" })).toHaveCount(0);
+    // La de otro técnico no existe para él.
+    // (La RLS no la devuelve; con el renderizado en streaming la página 404 llega con estado 200.)
+    await tech.goto(`/app/ordenes-trabajo/${notMine}`);
+    await expect(tech.getByRole("heading", { name: "Esta página no existe" })).toBeVisible();
+    await expect(tech.getByText("Hotel Mar · edificio")).toHaveCount(0);
+
+    await tech.goto(`/app/ordenes-trabajo/${mine}`);
+    await tech.getByRole("button", { name: "Empezar el trabajo" }).click();
+    await expect(tech.getByText("Estado: En curso.")).toBeVisible();
+    const form = tech.getByRole("form", { name: /Resultado de BIE-000001/ });
+    await form.getByLabel("Resultado", { exact: true }).selectOption({ label: "No conforme" });
+    await form.getByLabel("Observaciones", { exact: true }).fill("Manguera agrietada en el tramo final.");
+    await form.getByLabel("Registrar también una incidencia").check();
+    await form.getByLabel("Incidencia", { exact: true }).fill("Manguera BIE agrietada");
+    await form.getByLabel("Gravedad", { exact: true }).selectOption({ label: "Alta" });
+    await form.getByRole("button", { name: "Guardar resultado" }).click();
+    await expect(tech.getByText("Resultado guardado en el historial del equipo.")).toBeVisible();
+
+    // Foto desde el móvil (almacenamiento privado; se descarga con URL firmada).
+    const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    await tech.getByLabel("Añadir fotos o documentos").setInputFiles({ name: "bie.png", mimeType: "image/png", buffer: PNG });
+    await tech.getByRole("button", { name: "Subir" }).click();
+    await expect(tech.getByText("Archivo subido.")).toBeVisible();
+    const docLink = tech.getByRole("link", { name: /bie\.png/ });
+    const download = await tech.request.get((await docLink.getAttribute("href"))!, { maxRedirects: 0 });
+    expect(download.status()).toBe(303);
+    expect(download.headers()["location"]).toMatch(/token=/);
+
+    await tech.getByRole("button", { name: "Finalizar la orden" }).click();
+    await expect(tech.getByText("Estado: Completada.")).toBeVisible();
+
+    const [rec] = await db<{ result: string; incidents: string; status: string }>(
+      `select m.result, (select count(*) from equipment_incidents x where x.work_order_id = w.id) as incidents, w.status
+         from work_orders w join equipment_maintenance_records m on m.work_order_id = w.id where w.id = $1`,
+      [mine],
+    );
+    expect(rec).toEqual({ result: "non_compliant", incidents: "1", status: "completed" });
+    await mobile.close();
   });
 });

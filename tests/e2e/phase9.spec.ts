@@ -14,15 +14,19 @@ test.describe("fase 9", () => {
 
     // Contadores básicos en el inicio (todos los planes).
     await page.goto("/app");
-    await expect(page.getByRole("heading", { name: "Últimos 30 días" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Vencimientos y trabajo" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Parque mantenido" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Ver los informes" })).toBeVisible();
 
     await page.goto("/app/informes");
     await expect(page.getByRole("heading", { name: "Informes", exact: true })).toBeVisible();
-    await expect(page.getByText("Volvieron tras un aviso")).toBeVisible();
-    const csv = await page.request.get("/api/app/reports/revisiones-pendientes");
-    expect(csv.status()).toBe(200);
-    expect(csv.headers()["content-type"]).toContain("text/csv");
+    await expect(page.getByRole("heading", { name: "Mantenimiento de equipos" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Vencimientos", exact: true })).toBeVisible();
+    for (const kind of ["vencimientos", "mantenimientos", "instalaciones", "incidencias", "revisiones-pendientes"]) {
+      const csv = await page.request.get(`/api/app/reports/${kind}`);
+      expect(csv.status()).toBe(200);
+      expect(csv.headers()["content-type"]).toContain("text/csv");
+    }
 
     await page.goto("/app/configuracion/integraciones");
     await expect(page.getByRole("heading", { name: "Google Calendar" })).toBeVisible();

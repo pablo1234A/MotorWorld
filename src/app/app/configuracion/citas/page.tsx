@@ -32,7 +32,7 @@ export default async function BookingSettingsPage({ searchParams }: { searchPara
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Citas</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Solicitudes de visita</h1>
           <p className="text-sm text-[var(--muted)]">Cómo piden cita tus clientes desde los avisos o desde tu propio enlace.</p>
         </div>
         <Link href="/app/citas" className={buttonClass("secondary")}>

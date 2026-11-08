@@ -8,7 +8,8 @@ import { createWorkshop, signUpAndVerify } from "./support/flows";
 test.describe("web pública y textos legales", () => {
   test("portada con los precios exactos del PDF (sin IVA) y preguntas frecuentes", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("revisión");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("extintor");
+    await expect(page.getByText("Para empresas mantenedoras de protección contra incendios")).toBeVisible();
     const pricing = page.locator("#precios");
     for (const [plan, month, year] of [
       ["Pro", "39 €", "390 €"],
@@ -21,6 +22,10 @@ test.describe("web pública y textos legales", () => {
       await expect(card).toContainText(`o ${year}/año + IVA`);
     }
     await expect(pricing).toContainText("150 clientes");
+    await expect(pricing).toContainText("300 equipos en uso");
+    // No se afirma que el software certifique el cumplimiento normativo.
+    await page.getByText("¿RevisaYa certifica que cumplo el RIPCI?").click();
+    await expect(page.getByText("no certifica el cumplimiento normativo ni emite certificados oficiales")).toBeVisible();
     await expect(pricing).toContainText("50.000 correos al mes");
     await page.getByText("¿Hace falta tarjeta para la prueba?").click();
     await expect(page.getByText("no se cobra nada hasta que terminan los 7 días")).toBeVisible();
@@ -79,7 +84,7 @@ test.describe("móvil", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     const email = uniqueEmail("movil");
     await signUpAndVerify(page, email);
-    await createWorkshop(page, "Taller Móvil");
+    await createWorkshop(page, "Extintores Móvil");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await expect(page.getByRole("link", { name: "Clientes", exact: true })).toHaveCount(0);
     await page.getByText("Menú", { exact: true }).click();

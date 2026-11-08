@@ -17,14 +17,14 @@ test.describe("suscripción (Stripe en modo TEST)", () => {
     const owner = uniqueEmail("factura");
     await signUpAndVerify(page, owner);
     await createWorkshop(page, "Taller Facturas");
-    await expect(page.getByText("Tu taller aún no tiene un plan activo")).toBeVisible();
+    await expect(page.getByText("Tu empresa aún no tiene un plan activo")).toBeVisible();
 
     const sync = await runJob(baseURL!, "stripe-sync-catalog");
     expect(sync.ok).toBe(true);
 
     await page.getByRole("link", { name: "Elegir un plan (7 días gratis)" }).click();
     await expect(page.getByRole("heading", { name: "Facturación" })).toBeVisible();
-    await expect(page.getByText("Tu taller todavía no tiene plan")).toBeVisible();
+    await expect(page.getByText("Tu empresa todavía no tiene plan")).toBeVisible();
     // Precios EXACTOS del PDF, sin IVA.
     const max = page.locator("form", { has: page.getByRole("heading", { name: "Max", exact: true }) });
     await expect(max).toContainText("79 €/mes + IVA");
@@ -80,7 +80,7 @@ test.describe("suscripción (Stripe en modo TEST)", () => {
 
     // Con el plan activo el taller ya no está en solo lectura.
     await page.goto("/app");
-    await expect(page.getByText("Tu taller aún no tiene un plan activo")).toHaveCount(0);
+    await expect(page.getByText("Tu empresa aún no tiene un plan activo")).toHaveCount(0);
 
     await page.goto("/app/facturacion");
     page.once("dialog", (d) => d.accept());

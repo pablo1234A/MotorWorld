@@ -16,17 +16,17 @@ import { NOTIFY_MESSAGES } from "@/server/modules/appointments/notify";
 import { getAppointment } from "@/server/modules/appointments/service";
 
 const OK_MESSAGES: Record<string, string> = {
-  confirmed: "Cita confirmada.",
-  rescheduled: "Cita cambiada de fecha.",
+  confirmed: "Visita confirmada.",
+  rescheduled: "Visita cambiada de fecha.",
   rejected: "Solicitud rechazada.",
-  canceled: "Cita cancelada.",
-  completed: "Cita marcada como realizada.",
+  canceled: "Visita cancelada.",
+  completed: "Visita marcada como realizada.",
   no_show: "Marcada como «no se presentó».",
   linked_new: "Ficha de cliente creada con los datos de la solicitud.",
   linked_existing: "Solicitud vinculada a la ficha del cliente.",
 };
 
-export const metadata: Metadata = { title: "Cita · RevisaYa" };
+export const metadata: Metadata = { title: "Visita · RevisaYa" };
 
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

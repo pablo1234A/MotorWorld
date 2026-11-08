@@ -32,6 +32,7 @@ import { param } from "@/lib/pagination";
 import { CATEGORY_SINGULAR, ESTABLISHMENT_LABELS } from "@/lib/pci/labels";
 import { formatPhone } from "@/lib/phone";
 import { capabilities } from "@/server/auth/capabilities";
+import { can } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
 import { listDocuments } from "@/server/modules/documents/service";
 import { listEquipment } from "@/server/modules/equipment/service";
@@ -118,6 +119,11 @@ export default async function InstallationPage({
                 className={buttonClass("secondary")}
               >
                 Añadir equipo
+              </Link>
+            ) : null}
+            {can(ctx, "quotes.manage") && ctx.subscription.active ? (
+              <Link href={`/app/presupuestos/nuevo?cliente=${inst.customerId}&instalacion=${inst.id}`} className={buttonClass("ghost")}>
+                Nuevo presupuesto
               </Link>
             ) : null}
             {equipment.total ? (

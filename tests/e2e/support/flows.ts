@@ -29,11 +29,12 @@ export async function signIn(page: Page, email: string, password = PASSWORD, nex
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
 }
 
+/** Alta de la empresa (antes «taller»; el nombre de la función se mantiene). */
 export async function createWorkshop(page: Page, name: string) {
-  await expect(page.getByRole("heading", { name: "Da de alta tu taller" })).toBeVisible();
-  await page.getByLabel("Nombre del taller").fill(name);
+  await expect(page.getByRole("heading", { name: "Da de alta tu empresa" })).toBeVisible();
+  await page.getByLabel("Nombre de la empresa").fill(name);
   await page.getByRole("checkbox", { name: /contrato de encargo del tratamiento/ }).check();
-  await page.getByRole("button", { name: "Crear taller" }).click();
+  await page.getByRole("button", { name: "Crear empresa" }).click();
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole("heading", { name })).toBeVisible();
 }

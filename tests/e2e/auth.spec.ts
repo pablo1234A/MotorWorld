@@ -10,7 +10,7 @@ test.describe("Autenticación", () => {
     await signUpAndVerify(page, email);
     // El enlace del correo inicia sesión y lleva al alta del taller.
     await createWorkshop(page, "Taller Sur");
-    await expect(page.getByText("Tu taller aún no tiene un plan activo")).toBeVisible();
+    await expect(page.getByText("Tu empresa aún no tiene un plan activo")).toBeVisible();
     await expect(page.getByText("Administrador · propietario de la cuenta")).toBeVisible();
 
     await signOut(page);

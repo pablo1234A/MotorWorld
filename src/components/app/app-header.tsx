@@ -82,7 +82,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
         )}
         <div className="ml-auto flex items-center gap-2">
           <div className="text-[var(--foreground)] lg:hidden">
-            <AppNav groups={navGroups(ctx)} />
+            <AppNav groups={navGroups(ctx)} variant="mobile" />
           </div>
           <form action={signOutAction}>
             <button type="submit" className="rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-white/10">
@@ -98,7 +98,7 @@ export function AppHeader({ ctx }: { ctx: OrgContext }) {
 export function AppSidebar({ ctx }: { ctx: OrgContext }) {
   return (
     <div className="hidden lg:block">
-      <AppNav groups={navGroups(ctx)} />
+      <AppNav groups={navGroups(ctx)} variant="sidebar" />
     </div>
   );
 }
