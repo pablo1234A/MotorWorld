@@ -315,10 +315,11 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 # Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
 
-# Control MFA via App Authenticator (TOTP)
+# Control MFA via App Authenticator (TOTP): verificación en dos pasos de RevisaYa (Fase 11).
+# En el proyecto de Supabase en la nube: Authentication → Multi-Factor → TOTP activado.
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]

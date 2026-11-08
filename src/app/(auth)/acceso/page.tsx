@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { SignInForm } from "@/components/auth/auth-forms";
 import { Alert, Skeleton } from "@/components/ui/feedback";
-import { getAuthUser } from "@/server/auth/session";
+import { getAuthUser, getPendingMfaUser } from "@/server/auth/session";
 import { safeNextPath } from "@/server/http/request";
 
 export const metadata: Metadata = { title: "Iniciar sesión · RevisaYa" };
@@ -31,6 +31,7 @@ async function SignInContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const next = typeof params.next === "string" ? safeNextPath(params.next) : undefined;
   if (await getAuthUser()) redirect(next ?? "/app");
+  if (await getPendingMfaUser()) redirect(`/acceso/verificar${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   const error = typeof params.error === "string" ? LINK_ERRORS[params.error] : undefined;
   return (
     <div className="flex flex-col gap-4">

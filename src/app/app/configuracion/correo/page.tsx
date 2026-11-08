@@ -12,6 +12,7 @@ import { getDomainProvider } from "@/server/email/domains";
 import { getEmailProvider, getSenderConfig } from "@/server/email/provider";
 import { listAccessibleBranches } from "@/server/modules/branches/service";
 import { listDomains } from "@/server/modules/email/domains";
+import { orgEmailReputation } from "@/server/modules/email/notifications";
 import { getSenderSettings, listSuppressions } from "@/server/modules/email/settings";
 
 export const metadata: Metadata = { title: "Correo · RevisaYa" };
@@ -28,7 +29,8 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
   const branch = branches.find((b) => b.id === param(sp.taller, 40)) ?? branches[0];
   if (!branch) return <Alert tone="error">No hay ningún taller activo.</Alert>;
 
-  const [settings, domains, suppressions] = await Promise.all([getSenderSettings(ctx, branch.id), listDomains(ctx), listSuppressions(ctx)]);
+  const [settings, domains, suppressions, reputation] = await Promise.all([getSenderSettings(ctx, branch.id), listDomains(ctx), listSuppressions(ctx), orgEmailReputation(ctx)]);
+  const pct = (n: number) => `${(n * 100).toLocaleString("es-ES", { maximumFractionDigits: 2 })} %`;
   if (!settings) return <Alert tone="error">No se ha encontrado la configuración de este taller.</Alert>;
   const readOnly = !ctx.subscription.active;
   const sender = getSenderConfig();
@@ -50,6 +52,30 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
         <Alert tone="info">El envío de correo aún no está configurado en RevisaYa: la configuración se guarda, pero no se envía nada todavía.</Alert>
       ) : null}
       {readOnly ? <Alert tone="warning">Tu suscripción no está activa: la configuración está en solo lectura.</Alert> : null}
+
+      <section aria-labelledby="reputacion" className="flex flex-col gap-2">
+        <h2 id="reputacion" className="text-lg font-semibold">Calidad de los envíos (últimos 30 días)</h2>
+        {reputation.level !== "ok" ? (
+          <Alert tone={reputation.level === "critical" ? "error" : "warning"} title={reputation.level === "critical" ? "Demasiados rebotes o quejas" : "Revisa tu lista de clientes"}>
+            Gmail y Outlook mandan a spam a los remitentes con muchos rebotes o quejas. Revisa los correos de tus clientes y escribe solo a clientes del taller.
+          </Alert>
+        ) : null}
+        <dl className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <dt className="text-sm text-[var(--muted)]">Correos a clientes</dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums">{reputation.sent.toLocaleString("es-ES")}</dd>
+          </div>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <dt className="text-sm text-[var(--muted)]">Rebotes (recomendado: menos del 4 %)</dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums">{pct(reputation.bounceRate)}</dd>
+          </div>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <dt className="text-sm text-[var(--muted)]">Marcados como spam (recomendado: menos del 0,1 %)</dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums">{pct(reputation.complaintRate)}</dd>
+          </div>
+        </dl>
+        <p className="text-xs text-[var(--muted)]">Los rebotes y las quejas solo se conocen con un proveedor que los comunica (Resend). Con SMTP, aquí verás ceros.</p>
+      </section>
 
       {branches.length > 1 ? (
         <form method="get" className="flex flex-wrap items-center gap-2">

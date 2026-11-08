@@ -17,8 +17,45 @@
 | 8 — Suscripciones y límites (Stripe TEST) | ✅ Completada (pendiente de revisión y de la prueba con una cuenta TEST real) | 2026-11-07 |
 | 9 — Google Calendar, informes y API | ✅ Completada (Google y la API, sin probar con cuentas reales) | 2026-11-08 |
 | 10 — Frontend completo | ✅ Completada (textos legales pendientes de revisión jurídica) | 2026-11-08 |
-| 11 — Seguridad y testing global | ⏭ Siguiente | — |
-| 12 — Preparación para producción | ⏸ No iniciada | — |
+| 11 — Seguridad y testing global | ✅ Completada (falta una prueba de intrusión externa) | 2026-11-08 |
+| 12 — Preparación para producción | ⏭ Siguiente | — |
+
+---
+
+## Fase 11 — Seguridad y testing global
+
+### Qué se ha construido
+- **Verificación en dos pasos (TOTP)** para todos los usuarios, recomendada a los administradores (ADR-075):
+  - activar con QR y primer código; desactivar con un código;
+  - una sesión con solo la contraseña no vale para nada hasta introducir el código;
+  - límite de intentos y auditoría.
+- **Content-Security-Policy** estricta y prueba de todas las cabeceras (ADR-074). No usa nonces, por el prerenderizado parcial.
+- **Reputación del correo**:
+  - tasas de rebote y de quejas por taller;
+  - alertas a los administradores y a la plataforma (avisos con > 4 % o > 0,1 %, críticas con ≥ 8 % o ≥ 0,3 %);
+  - panel en *Configuración → Correo*.
+- **Auditoría de seguridad** documentada en `docs/SEGURIDAD.md` §9: IDOR, permisos, autenticación, CSRF, límites, cabeceras, secretos, registros y dependencias.
+
+### Pruebas ejecutadas (2026-11-08, desde base de datos nueva, todas en verde)
+| Prueba | Resultado |
+|---|---|
+| pgTAP | 310/310 |
+| Vitest (con stripe-mock) | 308/308 (nuevos: `security` unit, `reputation` integración) |
+| Playwright E2E | 35/35. Nuevo `security.spec.ts`: 2FA de punta a punta (código malo rechazado, sesión sin código bloqueada en el panel y la API, cambio de contraseña con 2FA, desactivar), CSP sin errores en la consola, rutas internas sin sesión → 401. |
+| typecheck, lint, build, `pnpm audit` | OK, 0 vulnerabilidades |
+
+### Errores encontrados y corregidos
+- **El cambio de contraseña habría fallado con 2FA**: reautenticaba iniciando sesión de nuevo, lo que rebajaba la sesión a `aal1`, y Supabase no deja cambiar la contraseña así. Ahora la contraseña actual se comprueba con un cliente aparte (probado en E2E).
+- Los informes contaban el correo de bienvenida como correo a clientes. Hay una lista única de tipos (`app.is_customer_email`).
+
+### Pendiente (documentado)
+- Prueba de intrusión externa antes de crecer.
+- Códigos de recuperación propios de la 2FA.
+- Decidir si se pausan los envíos con reputación crítica (ADR-076).
+- En el proyecto de Supabase en la nube hay que activar TOTP: *Authentication → Multi-Factor*.
+
+### Siguiente fase
+**Fase 12 — Preparación para producción**.
 
 ---
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { sql } from "kysely";
+import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/lib/validation/auth";
 import { type ActionState, parseForm, runAction } from "@/server/actions/result";
 import { requireUser } from "@/server/auth/guards";
+import { hasVerifiedFactor } from "@/server/auth/session";
 import { withRls } from "@/server/db/client";
 import { DomainError } from "@/server/db/errors";
 import { LEGAL_VERSION } from "@/config/legal";
@@ -120,6 +122,11 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
         return { status: "error", code: "invalid_credentials", message: "Correo o contraseña incorrectos.", values: { email: input.email } };
       }
       await audit(data.user.id, "auth.signed_in");
+      // Con la verificación en dos pasos activada, falta el código (la sesión aún no cuenta).
+      if (await hasVerifiedFactor(data.user.id)) {
+        const next = safeNextPath(input.next, "/app");
+        redirect(`/acceso/verificar?next=${encodeURIComponent(next)}`);
+      }
       redirect(safeNextPath(input.next, "/app"));
     },
     formData,
@@ -196,14 +203,23 @@ export async function changePasswordAction(_prev: ActionState, formData: FormDat
     const input = parseForm(changePasswordSchema, formData);
     await enforceRateLimits([[`signin:email:${fingerprint(user.email)}`, RATE_LIMITS.signInPerEmail]]);
 
-    const supabase = await createSupabaseServerClient();
-    // Reautenticación: verifica la contraseña actual (y deja una sesión reciente,
-    // requisito de Supabase Auth con secure_password_change).
-    const check = await supabase.auth.signInWithPassword({ email: user.email, password: input.currentPassword });
+    // Reautenticación: se comprueba la contraseña actual con un cliente APARTE,
+    // sin tocar la sesión de la petición (que puede tener ya el segundo paso,
+    // aal2: rehacer el inicio de sesión la rebajaría a aal1 y Supabase no
+    // dejaría cambiar la contraseña). La sesión de comprobación se cierra.
+    const probe = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const check = await probe.auth.signInWithPassword({ email: user.email, password: input.currentPassword });
     if (check.error) {
       return { status: "error", code: "invalid_credentials", message: "La contraseña actual no es correcta.", fieldErrors: { currentPassword: ["Contraseña incorrecta"] } };
     }
+    await probe.auth.signOut({ scope: "local" }).catch(() => undefined);
+    const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.updateUser({ password: input.password });
+    if (error?.code === "reauthentication_needed" || error?.code === "insufficient_aal") {
+      return { status: "error", code: "reauthentication_needed", message: "Por seguridad, cierra sesión, vuelve a entrar y cambia la contraseña justo después." };
+    }
     if (error) {
       logger.warn("auth_change_password_error", { code: error.code, status: error.status });
       throw new DomainError("internal_error");

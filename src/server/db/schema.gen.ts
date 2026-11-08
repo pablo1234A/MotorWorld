@@ -507,6 +507,16 @@ export interface PrivateDigestRuns {
   period_key: string;
 }
 
+export interface PrivateEmailReputationAlerts {
+  bounce_rate: Numeric;
+  complaint_rate: Numeric;
+  created_at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  level: string;
+  organization_id: string;
+  sent: number;
+}
+
 export interface PrivateIntegrationSecrets {
   auth_tag: Buffer;
   ciphertext: Buffer;
@@ -749,6 +759,7 @@ export interface DB {
   plans: Plans;
   "private.api_idempotency": PrivateApiIdempotency;
   "private.digest_runs": PrivateDigestRuns;
+  "private.email_reputation_alerts": PrivateEmailReputationAlerts;
   "private.integration_secrets": PrivateIntegrationSecrets;
   "private.job_runs": PrivateJobRuns;
   "private.jobs": PrivateJobs;

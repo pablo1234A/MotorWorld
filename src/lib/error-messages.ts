@@ -29,6 +29,7 @@ const PERMISSION_REASON: Record<string, string> = {
 };
 
 const CONFLICT_REASON: Record<string, string> = {
+  mfa_already_enabled: "Ya tienes activada la verificación en dos pasos.",
   organizations_slug_key: "Esa dirección pública ya está en uso. Elige otra.",
   invitations_pending_unique: "Ya hay una invitación pendiente para ese correo.",
   organization_members_unique: "Esa persona ya forma parte del taller.",

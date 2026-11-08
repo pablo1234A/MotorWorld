@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Alert } from "@/components/ui/feedback";
 import { isAdmin } from "@/server/auth/context";
 import { requireOrgPage } from "@/server/auth/guards";
+import { hasVerifiedFactor } from "@/server/auth/session";
 
 export const metadata: Metadata = { title: "Configuración · RevisaYa" };
 
@@ -24,9 +25,19 @@ export default async function SettingsPage() {
   if (!isAdmin(ctx)) {
     return <Alert tone="error" title="Sin permiso">Solo los administradores del taller pueden cambiar la configuración.</Alert>;
   }
+  const mfa = await hasVerifiedFactor(ctx.user.id);
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold tracking-tight">Configuración</h1>
+      {!mfa ? (
+        <Alert tone="warning" title="Protege tu cuenta de administrador">
+          Activa la verificación en dos pasos en{" "}
+          <Link href="/app/cuenta" className="font-medium underline">
+            Mi cuenta
+          </Link>
+          : aunque alguien consiga tu contraseña, no podrá entrar.
+        </Alert>
+      ) : null}
       <ul className="grid gap-4 sm:grid-cols-2">
         {SECTIONS.map((s) => (
           <li key={s.href}>

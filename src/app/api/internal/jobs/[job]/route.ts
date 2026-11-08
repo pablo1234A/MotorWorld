@@ -11,7 +11,7 @@ import { getStripe } from "@/server/billing/stripe";
 import { reconcileSubscriptions } from "@/server/modules/billing/service";
 import { syncPendingCalendar } from "@/server/modules/integrations/calendar";
 import { checkPendingDomains } from "@/server/modules/email/domains";
-import { notifyUsage, sendDigests } from "@/server/modules/email/notifications";
+import { checkEmailReputation, notifyUsage, sendDigests } from "@/server/modules/email/notifications";
 import { runDispatcher } from "@/server/reminders/dispatcher";
 
 /**
@@ -48,6 +48,7 @@ async function handle(request: Request, job: string) {
           domains: await checkPendingDomains(getDomainProvider()),
           usage: await notifyUsage(deps),
           digests: await sendDigests(deps),
+          reputation: await checkEmailReputation(deps),
           provider: deps.email ? "configured" : "not_configured",
         };
         const partial = stats.domains.failed + stats.usage.failed + stats.digests.failed > 0;

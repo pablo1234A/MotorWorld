@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "kysely";
 
 import { renderPlatformEmail } from "@/lib/email/platform-email";
-import { withSystem } from "@/server/db/client";
+import { withRls, withSystem } from "@/server/db/client";
 import type { EmailPort } from "@/server/email/port";
 import type { SenderConfig } from "@/server/email/provider";
 import { platformFrom } from "@/server/email/sender";
@@ -281,4 +281,89 @@ export async function sendDigests(deps: Deps, now = new Date(), limit = 200): Pr
     }
   }
   return stats;
+}
+
+// --------------------------------------------------------- reputación del correo
+
+export const REPUTATION_THRESHOLDS = {
+  warning: { bounce: 0.04, complaint: 0.001 },
+  critical: { bounce: 0.08, complaint: 0.003 },
+} as const;
+
+export function reputationLevel(bounceRate: number, complaintRate: number): "ok" | "warning" | "critical" {
+  const t = REPUTATION_THRESHOLDS;
+  if (bounceRate >= t.critical.bounce || complaintRate >= t.critical.complaint) return "critical";
+  if (bounceRate > t.warning.bounce || complaintRate > t.warning.complaint) return "warning";
+  return "ok";
+}
+
+/**
+ * Rebotes y quejas de los últimos 7 días por taller (mínimo 50 envíos). Si
+ * pasan de los umbrales, avisa a los administradores (como mucho una vez por
+ * semana y nivel) y deja una alerta para la plataforma en el registro. Un
+ * remitente con muchas quejas perjudica la entrega de TODOS los talleres que
+ * usan el dominio compartido.
+ */
+export async function checkEmailReputation(deps: Deps): Promise<{ checked: number; warning: number; critical: number; notified: number }> {
+  const stats = { checked: 0, warning: 0, critical: 0, notified: 0 };
+  const rows = await withSystem(async (tx) => {
+    const { rows } = await sql<{ organization_id: string; sent: string; bounced: string; complained: string; bounce_rate: string; complaint_rate: string; org_name: string; branch_id: string; recent: boolean }>`
+      select r.*, o.trade_name as org_name, b.id as branch_id,
+             exists (select 1 from private.email_reputation_alerts a where a.organization_id = r.organization_id
+                      and a.created_at > now() - interval '7 days') as recent
+        from private.email_reputation(7, 50) r
+        join organizations o on o.id = r.organization_id
+        join branches b on b.organization_id = r.organization_id and b.is_primary
+    `.execute(tx);
+    return rows;
+  });
+  for (const r of rows) {
+    stats.checked++;
+    const bounce = Number(r.bounce_rate);
+    const complaint = Number(r.complaint_rate);
+    const level = reputationLevel(bounce, complaint);
+    if (level === "ok") continue;
+    stats[level]++;
+    logger.error("email_reputation_alert", { organizationId: r.organization_id, level, sent: Number(r.sent), bounceRate: bounce, complaintRate: complaint });
+    if (r.recent) continue;
+    await withSystem((tx) =>
+      tx
+        .insertInto("private.email_reputation_alerts" as never)
+        .values({ organization_id: r.organization_id, level, sent: Number(r.sent), bounce_rate: bounce, complaint_rate: complaint } as never)
+        .execute(),
+    );
+    if (!deps.email || !deps.sender) continue;
+    const pct = (n: number) => `${(n * 100).toLocaleString("es-ES", { maximumFractionDigits: 2 })} %`;
+    const msg = renderPlatformEmail({
+      title: level === "critical" ? "Tus correos tienen demasiados rebotes o quejas" : "Revisa la calidad de tu lista de clientes",
+      intro: `En los últimos 7 días, de los ${fmt(Number(r.sent))} correos que ha enviado ${r.org_name}, el ${pct(bounce)} ha rebotado y el ${pct(complaint)} se ha marcado como spam.`,
+      rows: [
+        ["Rebotes (recomendado: menos del 4 %)", pct(bounce)],
+        ["Marcados como spam (recomendado: menos del 0,1 %)", pct(complaint)],
+      ],
+      notes: [
+        "Gmail y Outlook mandan a spam, o bloquean, a los remitentes con muchos rebotes o quejas: tus avisos dejarían de llegar.",
+        "Revisa los correos de tus clientes (los que rebotan ya no reciben avisos) y no añadas personas que no sean clientes del taller.",
+        ...(level === "critical" ? ["Si sigue así, RevisaYa puede tener que pausar los envíos del taller para proteger la entrega del resto (términos, «Uso aceptable»)."] : []),
+      ],
+      link: { href: new URL("/app/configuracion/correo", deps.sender.appUrl).toString(), label: "Ver el estado del correo" },
+    });
+    const to = await adminsOf(r.organization_id);
+    if (to.length && (await send({ email: deps.email, sender: deps.sender }, to, { subject: level === "critical" ? "Problema con la entrega de tus correos" : "Revisa la calidad de tus correos", ...msg }, { organizationId: r.organization_id, branchId: r.branch_id, kind: "usage_alert" })) > 0) {
+      stats.notified++;
+    }
+  }
+  return stats;
+}
+
+/** Datos del panel: últimos 30 días (solo administradores; lo comprueba la BD). */
+export async function orgEmailReputation(ctx: { auth: { userId: string }; membership: { organizationId: string } }) {
+  const raw = await withRls(ctx.auth, async (tx) => {
+    const { rows } = await sql<{ r: { sent: number; bounced: number; complained: number } }>`select app.org_email_reputation(${ctx.membership.organizationId}::uuid) as r`.execute(tx);
+    return rows[0].r;
+  });
+  const sent = Number(raw.sent);
+  const bounceRate = sent ? Number(raw.bounced) / sent : 0;
+  const complaintRate = sent ? Number(raw.complained) / sent : 0;
+  return { sent, bounced: Number(raw.bounced), complained: Number(raw.complained), bounceRate, complaintRate, level: sent >= 50 ? reputationLevel(bounceRate, complaintRate) : ("ok" as const) };
 }

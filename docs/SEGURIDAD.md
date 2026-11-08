@@ -1,6 +1,6 @@
 # RevisaYa — Seguridad y protección de datos
 
-> Estado: **diseño (Fase 0)**. Se implementa de forma transversal desde la Fase 1 y se audita en la Fase 11.
+> Estado: implementado de forma transversal desde la Fase 1 y **auditado en la Fase 11** (§9).
 > Aviso: este diseño busca facilitar el cumplimiento del RGPD, la LOPDGDD y la LSSI, pero **no constituye ni sustituye una revisión jurídica**. No se afirmará cumplimiento legal certificado sin esa revisión.
 
 ## 1. Modelo de amenazas (resumen)
@@ -38,7 +38,13 @@
 - **Invitaciones**: token de 256 bits (solo se guarda su SHA-256), caducidad de 7 días, un solo uso, ligado al email invitado; la página pública muestra el email enmascarado.
 - **Rate limiting** propio (ADR-027) además del de Supabase Auth.
 - **Auditoría**: inicio y cierre de sesión, cambios de contraseña, alta de taller, invitaciones y cambios de miembros.
-- 2FA (TOTP de Supabase) para administradores: pendiente, Fase 11.
+- **Verificación en dos pasos (TOTP)** para todos los usuarios, muy recomendada para los administradores (aviso en Configuración). Se implementó en la Fase 11 (ADR-075):
+  - se activa en *Mi cuenta* con una app de autenticación (QR o clave) y un primer código;
+  - para desactivarla hace falta un código actual;
+  - con ella activada, una sesión que solo tiene la contraseña (`aal1`) **no cuenta como sesión** en ninguna parte (páginas, acciones, rutas internas): el acceso pide el código;
+  - 10 intentos cada 15 minutos por usuario;
+  - quedan auditados la activación, la desactivación, los códigos correctos y los fallidos;
+  - el cambio de contraseña comprueba la actual con un cliente aparte, para no rebajar la sesión.
 
 ## 3. Autorización en tres capas
 
@@ -50,7 +56,17 @@ El rol de sistema (jobs, webhooks) evita RLS; por eso su código vive aislado en
 
 ## 4. Cabeceras y transporte
 
-HTTPS obligatorio (HSTS), `Content-Security-Policy` con nonce, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` restrictiva, `frame-ancestors 'none'`.
+- HTTPS obligatorio (HSTS en producción).
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` restrictiva y `Cross-Origin-Opener-Policy`; sin `X-Powered-By`.
+- **Content-Security-Policy** (`next.config.ts`, ADR-074):
+  - `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'`;
+  - `form-action` limitado a la app, Stripe Checkout/portal y Google OAuth;
+  - scripts solo propios y de Cloudflare Turnstile.
+- **Sin nonces**: el prerenderizado parcial de Next 16 es incompatible con ellos, así que `script-src` necesita `'unsafe-inline'` para las scripts de carga de Next.
+  - La defensa contra XSS es que React escapa siempre;
+  - no se usa `dangerouslySetInnerHTML` (comprobado);
+  - la vista previa de los correos va en un `iframe` con `sandbox` vacío;
+  - el logo se sirve con `nosniff` y `sandbox`.
 
 ## 5. Gestión de secretos y entornos
 
@@ -85,3 +101,27 @@ HTTPS obligatorio (HSTS), `Content-Security-Policy` con nonce, `X-Content-Type-O
 ## 8. Registro de acciones críticas (`audit_logs`)
 
 Se registran: inicio/cierre de sesión y fallos repetidos, invitaciones y cambios de rol, cambios de plan y cancelaciones, borrado de clientes/vehículos/historial, importaciones confirmadas, cambios de plantilla y dominio, conexión/desconexión de integraciones, creación/revocación de API keys, exportaciones y solicitudes RGPD. Nunca se guardan contraseñas, tokens ni contenido de los correos.
+
+## 9. Auditoría de seguridad (Fase 11, 2026-11-08)
+
+Revisión del código y pruebas automáticas. **No sustituye a una prueba de intrusión externa**: se recomienda una antes de tener muchos clientes de pago.
+
+| Área | Qué se ha comprobado | Resultado |
+|---|---|---|
+| Aislamiento entre talleres (IDOR) | RLS en todas las tablas (pgTAP `010`–`030`, 310 pruebas). Cada uso de la conexión del sistema (`withSystem`) se revisó a mano: o va detrás de un servicio con RLS que ya ha validado el recurso (correos de citas y presupuestos, invitaciones), o comprueba el administrador en la BD (`assertOrgAdmin`), o es un proceso del sistema sin datos del usuario. Informes y API: funciones o comprobaciones propias, con pruebas que cambian el id del taller o de la sucursal. | OK |
+| `organization_id` manipulado | El taller activo sale de las membresías verificadas (cookie comprobada contra la BD); la API lo saca de la clave; las funciones SQL comprueban `member_orgs()` y `admin_orgs()`. | OK (probado) |
+| Permisos de operario | Guardas en cada acción y página + RLS por permiso + `reports.read` en SQL. | OK (probado) |
+| Autenticación | Verificación de email, sin enumeración de cuentas, límites de intentos, redirecciones internas, 2FA con enforcement en el servidor y el cambio de contraseña sin rebajar la sesión. | OK (E2E `auth`, `security`) |
+| CSRF | Server Actions (comprobación de `Origin` de Next); rutas que escriben: webhooks firmados, procesos con Bearer, API con Bearer sin cookies, OAuth con `state` firmado más cookie. | OK |
+| Límites de peticiones | Registro, acceso, recuperación, reenvío, cambio de contraseña, códigos 2FA, invitaciones, importaciones, correos de prueba, dominios, página de citas (IP y taller) y API (clave y taller). | OK |
+| Cabeceras | CSP y cabeceras de §4 en páginas y API (E2E `security`, prueba unitaria de la CSP). | OK |
+| Secretos | Ninguno en el repositorio (búsqueda de patrones de claves de Stripe, Resend, AWS, Google y JWT); `.env.local` ignorado; validación del entorno al arrancar; claves live de Stripe bloqueadas. | OK |
+| Registros | Redacción de claves sensibles y de correos en el logger; la API no guarda cuerpos; los proveedores, sin direcciones. | OK |
+| Dependencias | `pnpm audit`: 0 vulnerabilidades conocidas. | OK |
+| Reputación del correo | Rebotes > 4 % o quejas > 0,1 % (7 días, mínimo 50 envíos): aviso a los administradores y alerta en el registro (`email_reputation_alert`). Crítico con ≥ 8 % o ≥ 0,3 % (límite de Gmail). Panel en *Configuración → Correo*. | Implementado |
+
+**Riesgos que quedan (documentados)**
+- `'unsafe-inline'` en `script-src` (ADR-074).
+- La pausa automática de los envíos de un taller con reputación crítica **no** se hace sola: hoy se avisa al taller y a la plataforma. Decidirlo es cosa del responsable, porque afecta al servicio contratado.
+- Recuperar el acceso de alguien que pierde el móvil con 2FA: por ahora, manual (soporte de Supabase o un administrador de la plataforma). No hay códigos de recuperación propios.
+- El límite de peticiones está en PostgreSQL; con mucho tráfico conviene pasarlo a Redis (Upstash).
