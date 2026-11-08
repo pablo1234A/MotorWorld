@@ -77,15 +77,18 @@ export interface Appointments {
   decided_at: Timestamp | null;
   decided_by: string | null;
   id: Generated<string>;
+  installation_id: string | null;
   internal_notes: string | null;
   organization_id: string;
   plate_entered: string | null;
   reminder_id: string | null;
   requested_date: string | null;
   requested_slot: string | null;
+  requester_address: string | null;
   requester_email: string | null;
   requester_name: string;
   requester_phone: string | null;
+  service_type: string | null;
   source: string;
   status: Generated<string>;
   updated_at: Generated<Timestamp>;
@@ -210,21 +213,30 @@ export interface CalendarEventLinks {
 }
 
 export interface Customers {
+  address_line1: string | null;
   branch_id: string;
+  city: string | null;
+  contact_name: string | null;
+  contact_role: string | null;
   created_at: Generated<Timestamp>;
   created_by: string | null;
+  customer_kind: Generated<string>;
   deleted_at: Timestamp | null;
   email: string | null;
   first_name: string;
   id: Generated<string>;
   import_batch_id: string | null;
   last_name: Generated<string>;
+  legal_name: string | null;
   notes: string | null;
   opted_out_at: Timestamp | null;
   organization_id: string;
   phone: string | null;
+  postal_code: string | null;
+  province: string | null;
   reminders_opt_out: Generated<boolean>;
   source: Generated<string>;
+  tax_id: string | null;
   updated_at: Generated<Timestamp>;
 }
 
@@ -273,6 +285,7 @@ export interface EmailLogs {
   error_message: string | null;
   from_email: string;
   id: Generated<Int8>;
+  installation_id: string | null;
   kind: string;
   opened_at: Timestamp | null;
   organization_id: string;
@@ -285,6 +298,7 @@ export interface EmailLogs {
   subject: string;
   to_email: string;
   vehicle_id: string | null;
+  work_order_id: string | null;
 }
 
 export interface EmailSuppressions {
@@ -309,6 +323,134 @@ export interface EmailTemplates {
   updated_at: Generated<Timestamp>;
   updated_by: string | null;
   version: Generated<number>;
+}
+
+export interface Equipment {
+  attributes: Generated<Json>;
+  branch_id: string;
+  category_code: string;
+  code: string;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  deleted_at: Timestamp | null;
+  id: Generated<string>;
+  import_batch_id: string | null;
+  installation_id: string;
+  installed_on: string | null;
+  last_action_on: string | null;
+  location: string | null;
+  manufactured_on: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  next_action_on: string | null;
+  notes: string | null;
+  organization_id: string;
+  qr_token: Generated<string>;
+  serial_number: string | null;
+  status: Generated<string>;
+  type_id: string | null;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface EquipmentActionSchedules {
+  action_type_id: string;
+  branch_id: string;
+  equipment_id: string;
+  last_done_on: string | null;
+  next_due_on: string | null;
+  organization_id: string;
+  retimbrados_done: number | null;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface EquipmentCategories {
+  code: string;
+  name: string;
+  position: number;
+  prefix: string;
+  ripci_ref: string | null;
+}
+
+export interface EquipmentExtinguishers {
+  agent: string;
+  branch_id: string;
+  charge_unit: string | null;
+  charge_value: Numeric | null;
+  efficacy: string | null;
+  equipment_id: string;
+  mobility: Generated<string>;
+  organization_id: string;
+  put_in_service_on: string | null;
+  retimbrados_before: Generated<number>;
+  stamped_on: string | null;
+}
+
+export interface EquipmentIncidents {
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  description: string | null;
+  detected_on: Generated<string>;
+  equipment_id: string | null;
+  id: Generated<string>;
+  installation_id: string;
+  organization_id: string;
+  record_id: string | null;
+  reported_by: string | null;
+  resolution: string | null;
+  resolved_on: string | null;
+  severity: Generated<string>;
+  status: Generated<string>;
+  title: string;
+  updated_at: Generated<Timestamp>;
+  work_order_id: string | null;
+}
+
+export interface EquipmentMaintenanceRecords {
+  action_type_id: string;
+  amended_at: Timestamp | null;
+  amended_by: string | null;
+  amendment_reason: string | null;
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  customer_id: string | null;
+  equipment_id: string;
+  id: Generated<string>;
+  installation_id: string;
+  next_action_recommended_on: string | null;
+  observations: string | null;
+  organization_id: string;
+  performed_on: string;
+  result: string;
+  technician_id: string | null;
+  updated_at: Generated<Timestamp>;
+  void_reason: string | null;
+  voided_at: Timestamp | null;
+  voided_by: string | null;
+  work_order_id: string | null;
+}
+
+export interface EquipmentRecordMaterials {
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  description: string;
+  id: Generated<string>;
+  organization_id: string;
+  quantity: Numeric;
+  record_id: string;
+  reference: string | null;
+  unit: string | null;
+}
+
+export interface EquipmentTypes {
+  active: Generated<boolean>;
+  attribute_schema: Generated<Json>;
+  category_code: string;
+  code: string;
+  created_at: Generated<Timestamp>;
+  id: Generated<string>;
+  name: string;
+  organization_id: string | null;
 }
 
 export interface ImportBatches {
@@ -343,6 +485,29 @@ export interface ImportRows {
   row_number: number;
   updated_at: Generated<Timestamp>;
   warnings: Generated<Json>;
+}
+
+export interface Installations {
+  address_line1: string;
+  branch_id: string;
+  city: string | null;
+  contact_email: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  customer_id: string;
+  deleted_at: Timestamp | null;
+  establishment_type: Generated<string>;
+  id: Generated<string>;
+  import_batch_id: string | null;
+  name: string;
+  notes: string | null;
+  organization_id: string;
+  postal_code: string | null;
+  province: string | null;
+  status: Generated<string>;
+  updated_at: Generated<Timestamp>;
 }
 
 export interface Integrations {
@@ -386,6 +551,23 @@ export interface LegalAcceptances {
   organization_id: string | null;
   user_id: string;
   version: string;
+}
+
+export interface MaintenanceActionTypes {
+  active: Generated<boolean>;
+  category_code: string | null;
+  code: string;
+  created_at: Generated<Timestamp>;
+  description: string | null;
+  enabled_by_default: Generated<boolean>;
+  id: Generated<string>;
+  interval_months: number | null;
+  kind: string;
+  legal_reference: string | null;
+  name: string;
+  organization_id: string | null;
+  performed_by: Generated<string>;
+  position: Generated<number>;
 }
 
 export interface MaintenanceParts {
@@ -436,6 +618,14 @@ export interface MileageReadings {
   vehicle_id: string;
 }
 
+export interface OrgActionTypeSettings {
+  action_type_id: string;
+  enabled: boolean;
+  interval_months: number | null;
+  organization_id: string;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface OrganizationMembers {
   branch_scope: Generated<string>;
   created_at: Generated<Timestamp>;
@@ -476,6 +666,25 @@ export interface Organizations {
   updated_at: Generated<Timestamp>;
 }
 
+export interface PciDocuments {
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+  equipment_id: string | null;
+  id: Generated<string>;
+  incident_id: string | null;
+  installation_id: string | null;
+  kind: string;
+  mime_type: string;
+  organization_id: string;
+  record_id: string | null;
+  size_bytes: number;
+  storage_path: string;
+  title: string;
+  uploaded_by: string | null;
+  work_order_id: string | null;
+}
+
 export interface Plans {
   code: string;
   currency: Generated<string>;
@@ -484,6 +693,7 @@ export interface Plans {
   max_active_vehicles: number | null;
   max_branches: number | null;
   max_customers: number | null;
+  max_equipment: number | null;
   max_users: number | null;
   monthly_emails: number;
   name: string;
@@ -515,6 +725,12 @@ export interface PrivateEmailReputationAlerts {
   level: string;
   organization_id: string;
   sent: number;
+}
+
+export interface PrivateEquipmentCounters {
+  category_code: string;
+  last_value: Generated<number>;
+  organization_id: string;
 }
 
 export interface PrivateIntegrationSecrets {
@@ -566,6 +782,13 @@ export interface PrivateRetentionNotices {
   sent_at: Generated<Timestamp>;
 }
 
+export interface PrivateStorageDeletions {
+  bucket: string;
+  created_at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  path: string;
+}
+
 export interface Profiles {
   created_at: Generated<Timestamp>;
   email: string;
@@ -582,6 +805,7 @@ export interface QuoteItems {
   branch_id: string;
   description: string;
   id: Generated<string>;
+  line_kind: Generated<string>;
   line_subtotal: Numeric;
   line_tax: Numeric;
   line_total: Numeric;
@@ -601,6 +825,7 @@ export interface Quotes {
   customer_id: string;
   decided_at: Timestamp | null;
   id: Generated<string>;
+  installation_id: string | null;
   issue_date: Generated<string>;
   notes: string | null;
   number: Generated<string>;
@@ -629,6 +854,7 @@ export interface Reminders {
   cycle_anchor: string | null;
   due_date: string;
   id: Generated<string>;
+  installation_id: string | null;
   last_error: string | null;
   locked_by: string | null;
   locked_until: Timestamp | null;
@@ -644,7 +870,7 @@ export interface Reminders {
   status: Generated<string>;
   type: string;
   updated_at: Generated<Timestamp>;
-  vehicle_id: string;
+  vehicle_id: string | null;
 }
 
 export interface SendingDomains {
@@ -694,6 +920,19 @@ export interface Subscriptions {
   updated_at: Generated<Timestamp>;
 }
 
+export interface Technicians {
+  active: Generated<boolean>;
+  created_at: Generated<Timestamp>;
+  email: string | null;
+  full_name: string;
+  id: Generated<string>;
+  member_id: string | null;
+  organization_id: string;
+  phone: string | null;
+  qualification_notes: string | null;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface UsageCounters {
   alert_100_sent_at: Timestamp | null;
   alert_80_sent_at: Timestamp | null;
@@ -730,6 +969,61 @@ export interface Vehicles {
   vin: string | null;
 }
 
+export interface WorkOrderEvents {
+  actor_id: string | null;
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  event: string;
+  from_status: string | null;
+  id: Generated<Int8>;
+  note: string | null;
+  organization_id: string;
+  to_status: string | null;
+  work_order_id: string;
+}
+
+export interface WorkOrderItems {
+  branch_id: string;
+  created_at: Generated<Timestamp>;
+  equipment_id: string;
+  id: Generated<string>;
+  observations: string | null;
+  organization_id: string;
+  planned_action_type_id: string;
+  record_id: string | null;
+  result: string | null;
+  status: Generated<string>;
+  updated_at: Generated<Timestamp>;
+  work_order_id: string;
+}
+
+export interface WorkOrders {
+  appointment_id: string | null;
+  branch_id: string;
+  canceled_at: Timestamp | null;
+  completed_at: Timestamp | null;
+  completion_notes: string | null;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  customer_id: string;
+  description: string | null;
+  id: Generated<string>;
+  installation_id: string;
+  notes: string | null;
+  number: string;
+  organization_id: string;
+  report_pdf_path: string | null;
+  scheduled_for: string | null;
+  scheduled_time: string | null;
+  sequence: number;
+  series_year: number;
+  service_type: string;
+  started_at: Timestamp | null;
+  status: Generated<string>;
+  technician_id: string | null;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface DB {
   api_keys: ApiKeys;
   api_request_logs: ApiRequestLogs;
@@ -751,26 +1045,40 @@ export interface DB {
   email_logs: EmailLogs;
   email_suppressions: EmailSuppressions;
   email_templates: EmailTemplates;
+  equipment: Equipment;
+  equipment_action_schedules: EquipmentActionSchedules;
+  equipment_categories: EquipmentCategories;
+  equipment_extinguishers: EquipmentExtinguishers;
+  equipment_incidents: EquipmentIncidents;
+  equipment_maintenance_records: EquipmentMaintenanceRecords;
+  equipment_record_materials: EquipmentRecordMaterials;
+  equipment_types: EquipmentTypes;
   import_batches: ImportBatches;
   import_rows: ImportRows;
+  installations: Installations;
   integrations: Integrations;
   invitations: Invitations;
   legal_acceptances: LegalAcceptances;
+  maintenance_action_types: MaintenanceActionTypes;
   maintenance_parts: MaintenanceParts;
   maintenance_records: MaintenanceRecords;
   member_branches: MemberBranches;
   mileage_readings: MileageReadings;
+  org_action_type_settings: OrgActionTypeSettings;
   organization_members: OrganizationMembers;
   organizations: Organizations;
+  pci_documents: PciDocuments;
   plans: Plans;
   "private.api_idempotency": PrivateApiIdempotency;
   "private.digest_runs": PrivateDigestRuns;
   "private.email_reputation_alerts": PrivateEmailReputationAlerts;
+  "private.equipment_counters": PrivateEquipmentCounters;
   "private.integration_secrets": PrivateIntegrationSecrets;
   "private.job_runs": PrivateJobRuns;
   "private.jobs": PrivateJobs;
   "private.rate_limit_buckets": PrivateRateLimitBuckets;
   "private.retention_notices": PrivateRetentionNotices;
+  "private.storage_deletions": PrivateStorageDeletions;
   profiles: Profiles;
   quote_items: QuoteItems;
   quotes: Quotes;
@@ -778,6 +1086,10 @@ export interface DB {
   sending_domains: SendingDomains;
   stripe_events: StripeEvents;
   subscriptions: Subscriptions;
+  technicians: Technicians;
   usage_counters: UsageCounters;
   vehicles: Vehicles;
+  work_order_events: WorkOrderEvents;
+  work_order_items: WorkOrderItems;
+  work_orders: WorkOrders;
 }
