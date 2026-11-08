@@ -126,7 +126,7 @@ type CustomerDb = {
   contact_name: string | null;
   contact_role: string | null;
 };
-const COMPANY_KEYS = [
+const _COMPANY_KEYS = [
   "customer_kind",
   "legal_name",
   "tax_id",
@@ -138,7 +138,7 @@ const COMPANY_KEYS = [
   "contact_role",
 ] as const;
 const companyCamel = (
-  b: Partial<Record<(typeof COMPANY_KEYS)[number], string | null>>,
+  b: Partial<Record<(typeof _COMPANY_KEYS)[number], string | null>>,
 ) =>
   Object.fromEntries(
     Object.entries({

@@ -87,10 +87,10 @@ async function call(
     }),
     init.params ? { params: Promise.resolve(init.params) } : undefined,
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- respuestas JSON de la API en las pruebas
   return {
     status: res.status,
     headers: res.headers,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- respuestas JSON de la API en las pruebas
     body: (await res.json()) as Record<string, any>,
   };
 }
