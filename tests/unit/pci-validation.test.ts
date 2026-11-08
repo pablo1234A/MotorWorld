@@ -77,3 +77,12 @@ describe("clientes: datos de empresa", () => {
     expect(r.taxId).toBeNull();
   });
 });
+
+describe("retención: archivos privados", () => {
+  it("los documentos PCI y los presupuestos van al bucket privado; los logos, al público", async () => {
+    const { fileBucket } = await import("@/server/modules/retention/service");
+    expect(fileBucket("org/pci/abc.jpg")).toBe("documents");
+    expect(fileBucket("org/quotes/P-1.pdf")).toBe("documents");
+    expect(fileBucket("org/logo.png")).toBe("org-assets");
+  });
+});

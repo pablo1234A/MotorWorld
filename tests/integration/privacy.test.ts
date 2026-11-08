@@ -67,8 +67,10 @@ describe("derechos de protección de datos", () => {
     const file = await privacy.exportWorkshop(await admin(org));
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(file as unknown as ArrayBuffer);
-    expect(wb.worksheets.map((w) => w.name)).toEqual(["Clientes", "Vehículos", "Historial", "Citas", "Presupuestos"]);
-    expect(wb.getWorksheet("Clientes")!.getRow(2).getCell(3).value).toBe("Elena");
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["Clientes", "Instalaciones", "Equipos", "Actuaciones", "Órdenes de trabajo", "Incidencias", "Técnicos", "Vehículos", "Historial", "Visitas", "Presupuestos"]);
+    const clientes = wb.getWorksheet("Clientes")!;
+    const nameCol = (clientes.getRow(1).values as unknown[]).indexOf("Nombre");
+    expect(clientes.getRow(2).getCell(nameCol).value).toBe("Elena");
   });
 
   it("supresión inmediata: borra ficha, vehículos, historial y citas; anonimiza los correos; mantiene la baja", async () => {

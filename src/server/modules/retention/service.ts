@@ -94,7 +94,7 @@ export async function purgeExpiredOrganizations(limit = 20): Promise<{ purged: n
     try {
       const r = await withSystem(async (tx) => (await sql<{ r: { files: string[] } }>`select private.purge_organization_data(${id}::uuid) as r`.execute(tx)).rows[0].r);
       for (const path of r.files ?? []) {
-        const bucket = path.includes("/quotes/") ? "documents" : "org-assets";
+        const bucket = fileBucket(path);
         await removeObject(bucket, path).catch((err) => logger.warn("retention_file_delete_failed", { error: err }));
         stats.files++;
       }
@@ -103,6 +103,33 @@ export async function purgeExpiredOrganizations(limit = 20): Promise<{ purged: n
     } catch (err) {
       stats.failed++;
       logger.error("organization_purge_failed", { organizationId: id, error: err });
+    }
+  }
+  return stats;
+}
+
+/** Bucket de un archivo de la empresa: presupuestos y documentos PCI son privados; logos, públicos. */
+export function fileBucket(path: string): "documents" | "org-assets" {
+  return path.includes("/quotes/") || path.includes("/pci/") ? "documents" : "org-assets";
+}
+
+/**
+ * Archivos pendientes de borrar del almacenamiento (fotos y documentos de
+ * instalaciones y equipos eliminados definitivamente): los encola la BD al
+ * purgar y aquí se borran. Si el borrado falla, la fila se queda para el
+ * siguiente intento.
+ */
+export async function processStorageDeletions(limit = 500): Promise<{ deleted: number; failed: number }> {
+  const stats = { deleted: 0, failed: 0 };
+  const rows = await withSystem(async (tx) => (await sql<{ id: string; bucket: string; path: string }>`select id, bucket, path from private.storage_deletions order by id limit ${limit}`.execute(tx)).rows);
+  for (const r of rows) {
+    try {
+      await removeObject(r.bucket === "documents" ? "documents" : "org-assets", r.path);
+      await withSystem((tx) => sql`delete from private.storage_deletions where id = ${r.id}::bigint`.execute(tx));
+      stats.deleted++;
+    } catch (err) {
+      stats.failed++;
+      logger.warn("storage_deletion_failed", { error: err });
     }
   }
   return stats;

@@ -12,7 +12,7 @@ import { reconcileSubscriptions } from "@/server/modules/billing/service";
 import { syncPendingCalendar } from "@/server/modules/integrations/calendar";
 import { checkPendingDomains } from "@/server/modules/email/domains";
 import { checkEmailReputation, notifyUsage, sendDigests } from "@/server/modules/email/notifications";
-import { purgeExpiredOrganizations, sendRetentionWarnings } from "@/server/modules/retention/service";
+import { processStorageDeletions, purgeExpiredOrganizations, sendRetentionWarnings } from "@/server/modules/retention/service";
 import { runDispatcher } from "@/server/reminders/dispatcher";
 
 /**
@@ -74,7 +74,10 @@ async function handle(request: Request, job: string) {
       }
       case "retention": {
         const deps = { email: getEmailProvider(), sender: getSenderConfig() };
-        return NextResponse.json({ ok: true, stats: { warnings: await sendRetentionWarnings(deps), purge: await purgeExpiredOrganizations() } });
+        return NextResponse.json({
+          ok: true,
+          stats: { warnings: await sendRetentionWarnings(deps), purge: await purgeExpiredOrganizations(), storage: await processStorageDeletions() },
+        });
       }
       case "calendar-sync": {
         return NextResponse.json({ ok: true, stats: await syncPendingCalendar() });
