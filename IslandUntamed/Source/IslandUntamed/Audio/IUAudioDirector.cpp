@@ -72,7 +72,7 @@ void AIUAudioDirector::CreateLayer(FName Name, IUSim::AudioSynth::Buffer&& Data)
 	C->RegisterComponent();
 	C->SetVolumeMultiplier(0.0f);
 	C->Play();
-	OwnedComponents.Add(C);
+	AudioComps.Add(C);
 	L.Component = C;
 	Layers.Add(L);
 }
@@ -109,7 +109,7 @@ void AIUAudioDirector::BeginPlay()
 		C->bAutoActivate = false;
 		C->AttenuationSettings = Attenuation;
 		C->RegisterComponent();
-		OwnedComponents.Add(C);
+		AudioComps.Add(C);
 		Voices.Add(FVoice{ C, 0.0 });
 	}
 	UE_LOG(LogIsland, Log, TEXT("Procedural audio synthesized in %.0f ms (%d layers, %d cues)"), (FPlatformTime::Seconds() - Start) * 1000.0, Layers.Num(), OneShots.Num());

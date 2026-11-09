@@ -55,7 +55,7 @@ private:
 	TArray<FLayer> Layers;
 	TArray<FVoice> Voices;
 	TMap<FName, TArray<int16>> OneShots;
-	UPROPERTY() TArray<TObjectPtr<UAudioComponent>> OwnedComponents;
+	UPROPERTY() TArray<TObjectPtr<UAudioComponent>> AudioComps;
 	UPROPERTY() TArray<TObjectPtr<USoundWaveProcedural>> LiveWaves;
 	UPROPERTY() TObjectPtr<USoundAttenuation> Attenuation;
 	float BirdTimer = 3.0f;

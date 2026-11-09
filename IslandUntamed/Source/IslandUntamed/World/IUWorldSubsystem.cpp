@@ -9,7 +9,7 @@
 #include "Player/IUSurvivalComponent.h"
 #include "World/IUIslandWorld.h"
 #include "World/IUStorySubsystem.h"
-#include "World/IUVillage.h"
+#include "Creatures/IUVillage.h"
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
