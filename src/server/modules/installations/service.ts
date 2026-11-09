@@ -2,6 +2,7 @@ import "server-only";
 
 import { sql } from "kysely";
 
+import { todayIn } from "@/lib/dates";
 import { escapeLike, type Page } from "@/lib/pagination";
 import type { CreateInstallationInput, UpdateInstallationInput } from "@/lib/validation/pci";
 import { type Tx, withRls } from "@/server/db/client";
@@ -50,7 +51,7 @@ export async function listInstallations(ctx: ServiceCtx, f: InstallationFilters)
                i.establishment_type, i.status, i.created_at,
                (select count(*) from equipment e where e.installation_id = i.id and e.deleted_at is null and e.status <> 'retired') as equipment,
                (select count(*) from equipment e where e.installation_id = i.id and e.deleted_at is null and e.status = 'in_service'
-                  and e.next_action_on < current_date) as overdue,
+                  and e.next_action_on < ${todayIn()}::date) as overdue,
                (select min(e.next_action_on) from equipment e where e.installation_id = i.id and e.deleted_at is null and e.status = 'in_service') as next_action_on
           from installations i join customers c on c.id = i.customer_id
          where i.organization_id = ${orgId} and i.deleted_at is null
@@ -59,7 +60,7 @@ export async function listInstallations(ctx: ServiceCtx, f: InstallationFilters)
            ${like ? sql`and (lower(i.name || ' ' || i.address_line1 || ' ' || coalesce(i.city, '')) like ${like} or lower(c.first_name || ' ' || c.last_name || ' ' || coalesce(c.legal_name, '')) like ${like})` : sql``}
       )
       select *, count(*) over () as total from base
-       where true ${f.due === "overdue" ? sql`and overdue > 0` : f.due === "30" ? sql`and next_action_on <= current_date + 30` : sql``}
+       where true ${f.due === "overdue" ? sql`and overdue > 0` : f.due === "30" ? sql`and next_action_on <= ${todayIn()}::date + 30` : sql``}
        order by ${f.due ? sql`next_action_on nulls last,` : sql``} name
        limit ${f.pageSize} offset ${(f.page - 1) * f.pageSize}
     `.execute(tx);

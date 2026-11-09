@@ -26,7 +26,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
   const vehicleId = param(sp.vehiculo, 40);
 
   const customer =
-    customerId && /^[0-9a-f-]{36}$/i.test(customerId)
+    customerId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)
       ? await withRls(ctx.auth, async (tx) => {
           const c = await tx
             .selectFrom("customers as c")

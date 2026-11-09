@@ -50,7 +50,7 @@ export function AppNav({ groups, variant }: { groups: readonly NavGroup[]; varia
   return (
     <>
       <details ref={menu} className="relative lg:hidden">
-        <summary className="cursor-pointer list-none rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium">Menú</summary>
+        <summary className="cursor-pointer list-none rounded-lg border border-white/30 px-3 py-2 text-sm font-medium text-white hover:bg-white/10">Menú</summary>
         <nav aria-label="Principal" className="absolute right-0 z-30 mt-2 flex max-h-[75vh] w-72 max-w-[calc(100vw-2rem)] flex-col gap-1 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
           <Links groups={groups} pathname={pathname} onMobile />
         </nav>

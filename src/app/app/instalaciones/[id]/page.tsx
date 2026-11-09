@@ -93,7 +93,7 @@ export default async function InstallationPage({
           <>
             <Link
               href={`/app/clientes/${inst.customerId}`}
-              className="text-[var(--accent)]"
+              className="text-[var(--accent)] underline underline-offset-2"
             >
               {inst.customerName}
             </Link>{" "}

@@ -25,6 +25,7 @@ import {
   updateInstallationSchema,
   workOrderStatusSchema,
 } from "@/lib/validation/pci";
+import { todayIn } from "@/lib/dates";
 import { withRls } from "@/server/db/client";
 import * as equipmentService from "@/server/modules/equipment/service";
 import * as incidentsService from "@/server/modules/incidents/service";
@@ -144,7 +145,7 @@ const branchWhere = (alias: string, p: ApiPrincipal) =>
     : sql``;
 const optUuid = (url: URL, name: string) => {
   const v = url.searchParams.get(name);
-  if (v && !/^[0-9a-f-]{36}$/i.test(v))
+  if (v && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v))
     throw new ApiError(
       400,
       "validation_error",
@@ -817,7 +818,7 @@ export async function createIncident({
     uuidParam(String(b.installation_id ?? "")),
   );
   const input = parseAs(createIncidentSchema, {
-    detectedOn: new Date().toISOString().slice(0, 10),
+    detectedOn: todayIn(),
     ...formFrom(b),
   });
   const id = await incidentsService.createIncident(p.ctx, input);

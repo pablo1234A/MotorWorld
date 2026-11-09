@@ -32,9 +32,11 @@ export default async function TechniciansPage() {
           key={t.id}
           title={t.fullName}
           actions={
-            <span className="flex gap-2">
+            <span className="flex min-w-0 flex-wrap gap-2">
               {t.active ? <Badge tone="ok">Activo</Badge> : <Badge tone="neutral">Inactivo</Badge>}
-              {t.memberEmail ? <Badge tone="info">Usuario: {t.memberEmail}</Badge> : null}
+              {t.memberEmail ? <Badge tone="info" className="max-w-full whitespace-normal break-all">
+                  Usuario: {t.memberEmail}
+                </Badge> : null}
               <Badge tone="neutral">{t.openOrders} órdenes abiertas</Badge>
             </span>
           }

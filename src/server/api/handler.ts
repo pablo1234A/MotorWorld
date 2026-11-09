@@ -475,7 +475,7 @@ export function pageParams(url: URL): {
   if (c) {
     try {
       const [at, id] = Buffer.from(c, "base64url").toString("utf8").split("|");
-      if (!at || Number.isNaN(Date.parse(at)) || !/^[0-9a-f-]{36}$/i.test(id))
+      if (!at || Number.isNaN(Date.parse(at)) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
         throw new Error();
       cursor = { at, id };
     } catch {

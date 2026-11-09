@@ -17,8 +17,8 @@ const TONES = {
   accent: "bg-[var(--accent-soft)] text-[var(--accent)]",
 } as const;
 
-export function Badge({ tone, children }: { tone: keyof typeof TONES; children: React.ReactNode }) {
-  return <span className={`${BASE} ${TONES[tone]}`}>{children}</span>;
+export function Badge({ tone, children, className }: { tone: keyof typeof TONES; children: React.ReactNode; className?: string }) {
+  return <span className={`${BASE} ${TONES[tone]}${className ? ` ${className}` : ""}`}>{children}</span>;
 }
 
 /** Próxima actuación con su estado: vencida, en 30 días o al día. */

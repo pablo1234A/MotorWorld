@@ -30,7 +30,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Sear
       q,
       from: from && isValidIsoDate(from) ? from : undefined,
       to: to && isValidIsoDate(to) ? to : undefined,
-      branchId: branchId && /^[0-9a-f-]{36}$/.test(branchId) ? branchId : undefined,
+      branchId: branchId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(branchId) ? branchId : undefined,
       page,
       pageSize: PAGE_SIZE,
     }),

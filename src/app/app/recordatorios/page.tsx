@@ -67,7 +67,7 @@ export default async function RemindersPage({
       filter,
       q,
       branchId:
-        branchId && /^[0-9a-f-]{36}$/.test(branchId) ? branchId : undefined,
+        branchId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(branchId) ? branchId : undefined,
       page,
       pageSize: PAGE_SIZE,
     }),

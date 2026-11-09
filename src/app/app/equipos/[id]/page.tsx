@@ -61,7 +61,7 @@ export default async function EquipmentPage({ params, searchParams }: Props) {
           <>
             {e.typeName ?? CATEGORY_SINGULAR[e.categoryCode]}
             {e.location ? ` · ${e.location}` : ""} ·{" "}
-            <Link href={`/app/clientes/${e.customerId}`} className="text-[var(--accent)]">
+            <Link href={`/app/clientes/${e.customerId}`} className="text-[var(--accent)] underline underline-offset-2">
               {e.customerName}
             </Link>
           </>

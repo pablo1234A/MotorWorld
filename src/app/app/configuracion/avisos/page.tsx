@@ -42,7 +42,7 @@ export default async function ReminderSettingsPage({ searchParams }: { searchPar
       {branches.length > 1 ? (
         <form method="get" className="flex flex-wrap items-center gap-2">
           <label htmlFor="taller" className="text-sm font-medium">
-            Taller
+            Delegación
           </label>
           <select id="taller" name="taller" defaultValue={branch.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-sm">
             {branches.map((b) => (

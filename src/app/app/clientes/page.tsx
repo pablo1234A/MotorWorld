@@ -29,7 +29,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Se
   };
   const page = parsePage(param(sp.pagina));
   const [result, branches] = await Promise.all([
-    listCustomers(ctx, { ...filters, branchId: filters.branchId && /^[0-9a-f-]{36}$/.test(filters.branchId) ? filters.branchId : undefined, page, pageSize: PAGE_SIZE }),
+    listCustomers(ctx, { ...filters, branchId: filters.branchId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(filters.branchId) ? filters.branchId : undefined, page, pageSize: PAGE_SIZE }),
     listAccessibleBranches(ctx),
   ]);
   const caps = capabilities(ctx);

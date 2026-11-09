@@ -197,7 +197,7 @@ export function formWithMaterials(formData: FormData): Record<string, unknown> {
 export function workOrderItemList(min: number) {
   return z.preprocess(
     (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).filter((x) => x !== ""),
-    z.array(z.string().regex(/^[0-9a-f-]{36}:[0-9a-f-]{36}$/i, "Equipo no válido")).min(min, "Elige al menos un equipo").max(500),
+    z.array(z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "Equipo no válido")).min(min, "Elige al menos un equipo").max(500),
   );
 }
 

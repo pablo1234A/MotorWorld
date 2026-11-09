@@ -2,6 +2,37 @@
 
 > Se actualiza al cerrar cada fase. Solo figura como "pasa" lo que se ha ejecutado de verdad.
 
+## Revisión global — 2026-11-09
+
+Revisión completa del proyecto después de la transformación PCI: rastreo automático de todas las pantallas y revisión del código por riesgos. No se ha borrado ninguna funcionalidad, tabla ni migración; no hay migraciones nuevas (ningún cambio estructural era necesario).
+
+### Nueva prueba permanente: recorrido de todas las pantallas
+
+`tests/e2e/smoke-crawl.spec.ts` siembra una empresa PCI completa y recorre, siguiendo los enlaces, **216 pantallas**: administrador en escritorio (94) y en móvil (94) y técnico con solo «ejecutar órdenes» en móvil (28), además de la web pública, los textos legales y la página pública de citas. En cada una comprueba que no hay errores de JavaScript ni de consola, respuestas 5xx, enlaces rotos, desbordamiento horizontal ni infracciones de accesibilidad graves o críticas (axe, WCAG 2.1 AA). También que los identificadores mal formados o inexistentes dan 404 y no 500. Solo navega; no crea ni borra nada.
+
+### Errores encontrados y corregidos
+
+- **Orden sin técnico**: mostraba «Empezar el trabajo» y, al pulsarlo, fallaba (la BD exige técnico para «En curso»). Ahora el botón no aparece y se indica que hay que asignar un técnico en «Planificación».
+- **Menú del móvil casi invisible**: el texto «Menú» salía oscuro sobre la cabecera oscura. Ahora es blanco.
+- **Desbordamiento horizontal**: los filtros de «Equipos» se salían de la pantalla en portátiles de 1280 px, y los datos de cada técnico se salían en el móvil cuando el correo del usuario vinculado era largo.
+- **Accesibilidad**: los días fuera del mes en el calendario tenían poco contraste, y los enlaces al cliente en las fichas de instalación y de equipo no se distinguían del texto (ahora van subrayados).
+- **Fechas en UTC**: los filtros «vencidas» y «vencen en 30 días» de equipos e instalaciones, el calendario, la sincronización con Google Calendar, la fecha de resolución de incidencias y dos valores por defecto de la API usaban el día UTC. Entre las 00:00 y las 02:00 de Madrid iban un día por detrás de lo que mostraba la pantalla. Ahora usan el día de Madrid, como el resto del panel.
+- **Identificadores mal formados**: una URL con un identificador de 36 caracteres que no era un UUID real (por ejemplo, solo guiones) llegaba a la BD y daba error 500. Ahora se valida el formato exacto en las 24 rutas afectadas y se responde 404.
+- **Textos de la etapa anterior**: en la configuración de avisos, citas y correo el selector se llamaba «Taller» (ahora «Delegación»). La descripción de la API y de la exportación de datos seguía hablando de vehículos (ahora enumera instalaciones, equipos, actuaciones, órdenes e incidencias).
+- **Tipado** de la confirmación de importaciones PCI: sin `as never`, y el recuento de filas omitidas se convierte a número explícitamente.
+
+### Pruebas ejecutadas (base de datos nueva, `pnpm db:reset`)
+
+| Prueba | Resultado |
+|---|---|
+| pgTAP | **354/354** (19 archivos) |
+| Vitest (unit + integración) | **358/358** (39 archivos) |
+| Playwright E2E | **40/40** (39 anteriores + el recorrido de pantallas) |
+| typecheck · lint · build | **OK** |
+| `pnpm audit` | **0 vulnerabilidades** |
+
+El CI pasa de 30 a 45 minutos de límite por el recorrido de pantallas (unos 4 minutos). Nueva dependencia de desarrollo: `@axe-core/playwright` (solo pruebas).
+
 ## Transformación a protección contra incendios (PCI) — 2026-11-15
 
 RevisaYa pasa de talleres mecánicos a **empresas mantenedoras de extintores y sistemas PCI**. Se ha transformado el software real (no un proyecto nuevo ni una demo). Diseño: [PCI-DISENO.md](PCI-DISENO.md) · normativa: [NORMATIVA-PCI.md](NORMATIVA-PCI.md) · decisiones: ADR-079…089.
@@ -47,6 +78,7 @@ Las 20 pruebas obligatorias del encargo, dónde se cubren: alta de cliente, inst
 
 | Fase | Estado | Fecha |
 |---|---|---|
+| Revisión global (rastreo de pantallas, accesibilidad, fechas, robustez) | ✅ Completada (ver arriba) | 2026-11-09 |
 | PCI 0–10 — Transformación a protección contra incendios | ✅ Completada (ver arriba) | 2026-11-15 |
 | 0 — Auditoría y planificación | ✅ Completada y **aprobada** (ADR-001…015, P1–P20) | 2026-11-04 |
 | 1 — Infraestructura y base de datos | ✅ Completada | 2026-11-04 |

@@ -11,7 +11,7 @@ import { getRecord } from "@/server/modules/maintenance/service";
 
 export const metadata: Metadata = { title: "Editar revisión · RevisaYa" };
 
-const UUID = /^[0-9a-f-]{36}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function EditRecordPage({ params }: { params: Promise<{ id: string; recordId: string }> }) {
   const ctx = await requireOrgPage("/app/vehiculos");

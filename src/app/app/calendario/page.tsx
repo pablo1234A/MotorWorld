@@ -112,7 +112,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             const list = byDay.get(d) ?? [];
             const inMonth = d.startsWith(month);
             return (
-              <div key={d} className={`min-h-28 border-b border-r border-[var(--border)] p-1.5 ${inMonth ? "" : "bg-[var(--surface-2)] opacity-60"}`}>
+              <div key={d} className={`min-h-28 border-b border-r border-[var(--border)] p-1.5 ${inMonth ? "" : "bg-[var(--surface-2)]"}`}>
                 <div className={`mb-1 text-right text-xs ${d === today ? "font-bold text-[var(--accent)]" : "text-[var(--muted)]"}`}>{Number(d.slice(8))}</div>
                 <div className="flex flex-col gap-1">
                   {list.slice(0, 4).map((e) => (

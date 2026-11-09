@@ -1250,17 +1250,21 @@ export function WorkOrderStatusButtons({
   status,
   canManage,
   pendingItems,
+  hasTechnician,
 }: {
   id: string;
   status: WorkOrderStatus;
   canManage: boolean;
   pendingItems: number;
+  /** Sin técnico asignado la orden no puede pasar a «En curso» (restricción de la BD). */
+  hasTechnician: boolean;
 }) {
   const [state, action] = useActionState(setWorkOrderStatusAction, idle);
   const next = WORK_ORDER_TRANSITIONS[status].filter(
     (s) =>
       s in STATUS_BUTTON &&
-      (canManage || (s !== "canceled" && s !== "pending")),
+      (canManage || (s !== "canceled" && s !== "pending")) &&
+      (s !== "in_progress" || hasTechnician),
   );
   if (!next.length) return null;
   return (

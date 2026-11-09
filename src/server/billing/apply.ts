@@ -35,7 +35,7 @@ async function orgForCustomer(customerId: string | null, metadataOrg: string | u
       const byCustomer = await tx.selectFrom("billing_customers").select("organization_id").where("stripe_customer_id", "=", customerId).executeTakeFirst();
       if (byCustomer) return byCustomer.organization_id;
     }
-    if (metadataOrg && /^[0-9a-f-]{36}$/i.test(metadataOrg)) {
+    if (metadataOrg && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(metadataOrg)) {
       const org = await tx.selectFrom("organizations").select("id").where("id", "=", metadataOrg).executeTakeFirst();
       if (org && customerId) {
         await tx

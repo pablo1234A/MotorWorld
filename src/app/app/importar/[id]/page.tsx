@@ -41,7 +41,7 @@ export default async function ImportBatchPage({
 }) {
   const ctx = await requireOrgPage("/app/importar");
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  if (!/^[0-9a-f-]{36}$/i.test(id) || !can(ctx, "imports.run")) notFound();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) || !can(ctx, "imports.run")) notFound();
   const batch = await getBatch(ctx, id);
   if (!batch || batch.status === "canceled") notFound();
   if (batch.kind !== "vehicles")

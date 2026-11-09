@@ -2,6 +2,7 @@ import "server-only";
 
 import { sql } from "kysely";
 
+import { todayIn } from "@/lib/dates";
 import type { Page } from "@/lib/pagination";
 import { withRls } from "@/server/db/client";
 import { DomainError } from "@/server/db/errors";
@@ -117,7 +118,7 @@ export async function updateIncident(ctx: ServiceCtx, input: { id: string; statu
         status: input.status,
         severity: input.severity,
         resolution: input.resolution,
-        resolved_on: closed ? sql<string>`coalesce(resolved_on, current_date)` : null,
+        resolved_on: closed ? sql<string>`coalesce(resolved_on, ${todayIn()}::date)` : null,
       })
       .where("id", "=", input.id)
       .where("organization_id", "=", ctx.membership.organizationId)

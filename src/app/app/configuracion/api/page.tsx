@@ -20,7 +20,7 @@ export default async function ApiKeysPage({ searchParams }: { searchParams: Sear
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">API</h1>
       <p className="text-sm text-[var(--muted)]">
-        Conecta tu programa de gestión con RevisaYa: clientes, vehículos, historial, citas y avisos.{" "}
+        Conecta tu programa de gestión con RevisaYa: clientes, instalaciones, equipos PCI, actuaciones, órdenes de trabajo, incidencias, citas y avisos.{" "}
         <a href="/api/v1/openapi.json" className="text-[var(--accent)] underline">
           Especificación OpenAPI
         </a>

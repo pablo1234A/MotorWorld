@@ -25,7 +25,7 @@ export default async function QuotePage({ params, searchParams }: { params: Para
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const ctx = await requireOrgPage(`/app/presupuestos/${id}`);
   if (!can(ctx, "quotes.manage")) return <Alert tone="error" title="Sin permiso">No tienes permiso para gestionar presupuestos.</Alert>;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
   const q = await getQuote(ctx, id);
   if (!q) notFound();
   const writable = ctx.subscription.active;

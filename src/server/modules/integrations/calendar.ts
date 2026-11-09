@@ -5,6 +5,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { sql } from "kysely";
 import { after } from "next/server";
 
+import { todayIn } from "@/lib/dates";
 import { formatPhone } from "@/lib/phone";
 import { planHasFeature } from "@/lib/plans";
 import type { OrgContext } from "@/server/auth/context";
@@ -328,7 +329,7 @@ export async function syncPendingCalendar(limit = 100): Promise<Record<SyncOutco
       select w.id from work_orders w
         join integrations i on i.organization_id = w.organization_id and i.type = 'google_calendar' and i.status = 'connected'
         left join work_order_calendar_links l on l.work_order_id = w.id
-       where (l.work_order_id is null and w.scheduled_for >= current_date and w.status not in ('completed', 'canceled'))
+       where (l.work_order_id is null and w.scheduled_for >= ${todayIn()}::date and w.status not in ('completed', 'canceled'))
           or l.sync_status = 'pending'
           or (l.sync_status = 'synced' and w.status = 'canceled')
        order by w.updated_at

@@ -22,7 +22,9 @@ import { MAX_IMPORT_ROWS } from "@/lib/imports/columns";
 import type { RawValue } from "@/lib/imports/validate";
 import { normalizeTaxId } from "@/lib/tax-id";
 import {
+  type CreateEquipmentInput,
   createEquipmentSchema,
+  type CreateInstallationInput,
   createInstallationSchema,
 } from "@/lib/validation/pci";
 import { createCustomerSchema } from "@/lib/validation/workshop";
@@ -670,11 +672,12 @@ export async function commitPciImport(
             })
             .execute();
         } else if (r.action === "create_installation") {
-          await insertInstallation(tx, ctx, n as never, {
+          // `normalized` es la salida del mismo esquema Zod guardada al subir el archivo.
+          await insertInstallation(tx, ctx, n as unknown as CreateInstallationInput, {
             importBatchId: batchId,
           });
         } else {
-          await insertEquipment(tx, ctx, n as never, {
+          await insertEquipment(tx, ctx, n as unknown as CreateEquipmentInput, {
             importBatchId: batchId,
           });
         }
@@ -682,13 +685,15 @@ export async function commitPciImport(
       const result = {
         created: rows.length,
         skipped:
-          ((
-            await tx
-              .selectFrom("import_rows")
-              .select((eb) => eb.fn.countAll<string>().as("n"))
-              .where("batch_id", "=", batchId)
-              .executeTakeFirstOrThrow()
-          ).n as unknown as number) - rows.length,
+          Number(
+            (
+              await tx
+                .selectFrom("import_rows")
+                .select((eb) => eb.fn.countAll<string>().as("n"))
+                .where("batch_id", "=", batchId)
+                .executeTakeFirstOrThrow()
+            ).n,
+          ) - rows.length,
       };
       await tx
         .updateTable("import_batches")

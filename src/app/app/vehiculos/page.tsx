@@ -40,7 +40,7 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Sea
   if ((await legacyVehicleCounts(ctx)).vehicles === 0) redirect("/app/equipos");
 
   const [result, branches] = await Promise.all([
-    listVehicles(ctx, { q, branchId: branchId && /^[0-9a-f-]{36}$/.test(branchId) ? branchId : undefined, status, due, page, pageSize: PAGE_SIZE }, today),
+    listVehicles(ctx, { q, branchId: branchId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(branchId) ? branchId : undefined, status, due, page, pageSize: PAGE_SIZE }, today),
     listAccessibleBranches(ctx),
   ]);
   const caps = capabilities(ctx);

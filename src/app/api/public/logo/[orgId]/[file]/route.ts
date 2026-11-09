@@ -10,7 +10,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ orgId: string; file: string }> }) {
   const { orgId, file } = await params;
-  if (!UUID.test(orgId) || !/^logo-[0-9a-f-]{36}\.(png|jpg|webp)$/.test(file)) {
+  if (!UUID.test(orgId) || !/^logo-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|webp)$/.test(file)) {
     return new NextResponse(null, { status: 404 });
   }
   const logo = await readLogo(orgId, file);

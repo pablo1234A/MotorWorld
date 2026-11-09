@@ -179,8 +179,15 @@ export default async function WorkOrderPage({ params, searchParams }: Props) {
               status={o.status}
               canManage={caps.workOrdersManage}
               pendingItems={pending}
+              hasTechnician={o.technicianId !== null}
             />
-            {o.status !== "in_progress" && pending > 0 ? (
+            {o.status !== "in_progress" && !o.technicianId ? (
+              <p className="mt-2 text-xs text-[var(--muted)]">
+                {canManage
+                  ? "Asigna un técnico en «Planificación» para poder empezar el trabajo."
+                  : "La orden aún no tiene técnico asignado."}
+              </p>
+            ) : o.status !== "in_progress" && pending > 0 ? (
               <p className="mt-2 text-xs text-[var(--muted)]">
                 Pulsa «Empezar el trabajo» al llegar a la instalación para poder
                 registrar los resultados.

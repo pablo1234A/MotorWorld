@@ -7,7 +7,7 @@ import type { ServiceCtx } from "@/server/modules/branches/service";
 
 /** Cliente y sus vehículos para el editor de presupuestos y citas. */
 export async function customerWithVehicles(ctx: Pick<ServiceCtx, "auth" | "membership">, customerId: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(customerId)) return null;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)) return null;
   return withRls(ctx.auth, async (tx) => {
     const c = await tx
       .selectFrom("customers")

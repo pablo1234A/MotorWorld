@@ -33,7 +33,7 @@ export function parseRange(input: { desde?: string; hasta?: string; sucursal?: s
   let from = input.desde && isValidIsoDate(input.desde) ? input.desde : addDays(to, -89);
   if (from > to) from = to;
   if (addDays(from, MAX_RANGE_DAYS) < to) from = addDays(to, -MAX_RANGE_DAYS);
-  const branchId = input.sucursal && /^[0-9a-f-]{36}$/i.test(input.sucursal) ? input.sucursal : null;
+  const branchId = input.sucursal && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.sucursal) ? input.sucursal : null;
   return { from, to, branchId };
 }
 

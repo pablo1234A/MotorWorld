@@ -33,7 +33,7 @@ const MILEAGE_SOURCES: Record<string, string> = {
 export default async function VehiclePage({ params, searchParams }: Props) {
   const ctx = await requireOrgPage("/app/vehiculos");
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
   const v = await getVehicle(ctx, id);
   if (!v) notFound();
 

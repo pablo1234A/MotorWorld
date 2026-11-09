@@ -2,6 +2,7 @@ import "server-only";
 
 import { sql } from "kysely";
 
+import { todayIn } from "@/lib/dates";
 import { escapeLike, type Page } from "@/lib/pagination";
 import { AGENT_BY_TYPE_CODE, type CategoryCode } from "@/lib/pci/labels";
 import type { CreateEquipmentInput, UpdateEquipmentInput } from "@/lib/validation/pci";
@@ -58,8 +59,8 @@ export async function listEquipment(ctx: ServiceCtx, f: EquipmentFilters): Promi
          ${f.installationId ? sql`and e.installation_id = ${f.installationId}` : sql``}
          ${f.categoryCode ? sql`and e.category_code = ${f.categoryCode}` : sql``}
          ${f.status ? sql`and e.status = ${f.status}` : sql`and e.status <> 'retired'`}
-         ${f.due === "overdue" ? sql`and e.status = 'in_service' and e.next_action_on < current_date` : sql``}
-         ${f.due === "30" ? sql`and e.status = 'in_service' and e.next_action_on between current_date and current_date + 30` : sql``}
+         ${f.due === "overdue" ? sql`and e.status = 'in_service' and e.next_action_on < ${todayIn()}::date` : sql``}
+         ${f.due === "30" ? sql`and e.status = 'in_service' and e.next_action_on between ${todayIn()}::date and ${todayIn()}::date + 30` : sql``}
          ${f.due === "none" ? sql`and e.next_action_on is null` : sql``}
          ${like ? sql`and (lower(e.code || ' ' || coalesce(e.serial_number, '') || ' ' || coalesce(e.location, '') || ' ' || coalesce(e.manufacturer, '') || ' ' || i.name) like ${like})` : sql``}
        order by ${f.due ? sql`e.next_action_on nulls last,` : sql``} i.name, e.code

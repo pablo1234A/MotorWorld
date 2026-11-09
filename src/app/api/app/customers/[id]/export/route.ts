@@ -11,7 +11,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!ctx) return NextResponse.json({ error: { code: "unauthenticated" } }, { status: 401 });
   if (!isAdmin(ctx)) return NextResponse.json({ error: { code: "permission_denied" } }, { status: 403 });
   const { id } = await params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
   try {
     const data = await exportCustomer(ctx, id);
     if (!data) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!ctx) return NextResponse.json({ error: { code: "unauthenticated" } }, { status: 401 });
   if (!can(ctx, "imports.run")) return NextResponse.json({ error: { code: "permission_denied" } }, { status: 403 });
   const { id } = await params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
   const batch = await getBatch(ctx, id);
   if (!batch) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
 

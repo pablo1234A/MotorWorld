@@ -30,7 +30,7 @@ export default async function DataPage() {
       </div>
       <Card className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Descargar todos los datos</h2>
-        <p className="text-sm text-[var(--muted)]">Un Excel con clientes, vehículos, historial (con piezas), citas y presupuestos. Incluye lo que está en la papelera.</p>
+        <p className="text-sm text-[var(--muted)]">Un Excel con clientes, instalaciones, equipos PCI, actuaciones, órdenes de trabajo, incidencias, técnicos, visitas y presupuestos (y los vehículos e historial de la etapa anterior, si los hay). Incluye lo que está en la papelera.</p>
         <a href="/api/app/export" className={buttonClass("secondary", "self-start")} download>
           Descargar Excel
         </a>

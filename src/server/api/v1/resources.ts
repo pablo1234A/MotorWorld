@@ -3,6 +3,7 @@ import "server-only";
 import { sql } from "kysely";
 import { z } from "zod";
 
+import { todayIn } from "@/lib/dates";
 import { normalizePlate } from "@/lib/plate";
 import {
   createVehicleSchema,
@@ -538,7 +539,7 @@ export async function recordMileage(
   await vehiclesService.recordMileage(p.ctx, {
     id: cur.id,
     km: b.km,
-    readOn: b.read_on ?? new Date().toISOString().slice(0, 10),
+    readOn: b.read_on ?? todayIn(),
     confirmLower: b.confirm_lower ?? false,
   });
   return { status: 201, body: vehicleJson(await getVehicleRow(p, cur.id)) };

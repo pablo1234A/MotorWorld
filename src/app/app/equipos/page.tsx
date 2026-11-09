@@ -56,7 +56,7 @@ export default async function EquipmentListPage({ searchParams }: { searchParams
         <FindEquipmentForm />
       </div>
 
-      <FilterBar cols="sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto]">
+      <FilterBar cols="sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,13rem))_auto]">
         <input name="q" type="search" defaultValue={q} placeholder="Código, ubicación, nº de serie o instalación" aria-label="Buscar" className={INPUT} />
         {installationId ? <input type="hidden" name="instalacion" value={installationId} /> : null}
         <select name="categoria" defaultValue={categoryCode ?? ""} aria-label="Tipo de equipo" className={INPUT}>

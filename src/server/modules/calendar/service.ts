@@ -2,6 +2,7 @@ import "server-only";
 
 import { sql } from "kysely";
 
+import { todayIn } from "@/lib/dates";
 import { withRls } from "@/server/db/client";
 
 import type { ServiceCtx } from "../branches/service";
@@ -57,7 +58,7 @@ export async function calendarEntries(ctx: ServiceCtx, from: string, to: string,
         `.execute(tx)
       : { rows: [] };
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayIn();
     const out: CalendarEntry[] = [];
     for (const o of orders.rows)
       out.push({ kind: "work_order", date: day(o.scheduled_for), time: o.time, id: o.id, label: o.number, detail: `${o.installation}${o.technician ? ` · ${o.technician}` : ""}`, status: o.status });

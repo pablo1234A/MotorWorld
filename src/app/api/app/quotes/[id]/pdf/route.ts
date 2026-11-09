@@ -10,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!ctx) return NextResponse.json({ error: { code: "unauthenticated" } }, { status: 401 });
   if (!can(ctx, "quotes.manage")) return NextResponse.json({ error: { code: "permission_denied" } }, { status: 403 });
   const { id } = await params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
   try {
     const pdf = await quotePdf(ctx, id);
     if (!pdf) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
