@@ -1,0 +1,48 @@
+{
+  "recipes": [
+    // ------------------------------------------------ Basics (by hand)
+    { "id": "r_rope", "category": "Materiales", "in": [{ "item": "plant_fiber", "count": 3 }], "out": [{ "item": "rope", "count": 1 }], "time": 2 },
+    { "id": "r_stone_hatchet", "category": "Herramientas", "in": [{ "item": "stone", "count": 2 }, { "item": "stick", "count": 2 }, { "item": "plant_fiber", "count": 2 }], "out": [{ "item": "stone_hatchet", "count": 1 }], "time": 3 },
+    { "id": "r_digging_stick", "category": "Herramientas", "in": [{ "item": "stick", "count": 1 }, { "item": "plant_fiber", "count": 2 }], "out": [{ "item": "digging_stick", "count": 1 }], "time": 2 },
+    { "id": "r_stone_knife", "category": "Herramientas", "in": [{ "item": "flint", "count": 1 }, { "item": "stick", "count": 1 }, { "item": "plant_fiber", "count": 1 }], "out": [{ "item": "stone_knife", "count": 1 }], "time": 2 },
+    { "id": "r_stone_pick", "category": "Herramientas", "in": [{ "item": "stone", "count": 3 }, { "item": "stick", "count": 2 }, { "item": "rope", "count": 1 }], "out": [{ "item": "stone_pick", "count": 1 }], "time": 3 },
+    { "id": "r_wooden_club", "category": "Armas", "in": [{ "item": "wood", "count": 2 }, { "item": "stone", "count": 1 }], "out": [{ "item": "wooden_club", "count": 1 }], "time": 3 },
+    { "id": "r_stone_spear", "category": "Armas", "in": [{ "item": "stick", "count": 2 }, { "item": "flint", "count": 1 }, { "item": "rope", "count": 1 }], "out": [{ "item": "stone_spear", "count": 1 }], "time": 3 },
+    { "id": "r_torch", "category": "Supervivencia", "in": [{ "item": "stick", "count": 1 }, { "item": "plant_fiber", "count": 2 }, { "item": "resin", "count": 1 }], "out": [{ "item": "torch", "count": 1 }], "time": 2 },
+    { "id": "r_torch_leaves", "name": "Antorcha de hojas", "category": "Supervivencia", "in": [{ "item": "stick", "count": 1 }, { "item": "leaves", "count": 4 }, { "item": "plant_fiber", "count": 2 }], "out": [{ "item": "torch", "count": 1 }], "time": 2 },
+    { "id": "r_leaf_poncho", "category": "Equipo", "in": [{ "item": "leaves", "count": 12 }, { "item": "plant_fiber", "count": 4 }], "out": [{ "item": "leaf_poncho", "count": 1 }], "time": 4 },
+    { "id": "r_mortar", "category": "Materiales", "in": [{ "item": "clay", "count": 1 }, { "item": "sand", "count": 2 }], "out": [{ "item": "mortar", "count": 2 }], "time": 2 },
+    { "id": "r_compost", "category": "Cultivo", "in": [{ "item": "leaves", "count": 6 }, { "item": "bone", "count": 1 }], "out": [{ "item": "compost", "count": 2 }], "time": 3 },
+    { "id": "r_bandage_cloth", "name": "Venda (tela)", "category": "Medicina", "in": [{ "item": "cloth", "count": 1 }], "out": [{ "item": "bandage", "count": 2 }], "time": 2 },
+    { "id": "r_bandage_fiber", "name": "Venda (fibra)", "category": "Medicina", "in": [{ "item": "plant_fiber", "count": 4 }, { "item": "leaves", "count": 2 }], "out": [{ "item": "bandage", "count": 1 }], "time": 3 },
+    { "id": "r_splint", "category": "Medicina", "in": [{ "item": "stick", "count": 2 }, { "item": "rope", "count": 1 }], "out": [{ "item": "splint", "count": 1 }], "time": 2 },
+    { "id": "r_poultice", "category": "Medicina", "in": [{ "item": "herbs", "count": 2 }, { "item": "leaves", "count": 1 }], "out": [{ "item": "herbal_poultice", "count": 1 }], "time": 2 },
+    { "id": "r_herb_seed", "category": "Cultivo", "in": [{ "item": "herbs", "count": 3 }], "out": [{ "item": "herb_seed", "count": 2 }], "time": 2, "tool": "knife" },
+
+    // ------------------------------------------------ Workbench
+    { "id": "r_bow", "category": "Armas", "station": "workbench", "in": [{ "item": "stick", "count": 3 }, { "item": "rope", "count": 2 }, { "item": "resin", "count": 1 }], "out": [{ "item": "bow", "count": 1 }], "time": 5 },
+    { "id": "r_arrow", "category": "Armas", "station": "workbench", "in": [{ "item": "stick", "count": 2 }, { "item": "flint", "count": 1 }, { "item": "feather", "count": 2 }], "out": [{ "item": "arrow", "count": 4 }], "time": 3 },
+    { "id": "r_fishing_rod", "category": "Herramientas", "station": "workbench", "in": [{ "item": "stick", "count": 2 }, { "item": "rope", "count": 2 }, { "item": "bone", "count": 1 }], "out": [{ "item": "fishing_rod", "count": 1 }], "time": 4 },
+    { "id": "r_hide_vest", "category": "Equipo", "station": "workbench", "in": [{ "item": "hide", "count": 3 }, { "item": "rope", "count": 2 }], "out": [{ "item": "hide_vest", "count": 1 }], "time": 6, "tool": "knife" },
+    { "id": "r_hide_boots", "category": "Equipo", "station": "workbench", "in": [{ "item": "hide", "count": 2 }, { "item": "rope", "count": 1 }], "out": [{ "item": "hide_boots", "count": 1 }], "time": 5, "tool": "knife" },
+    { "id": "r_bone_armor", "category": "Equipo", "station": "workbench", "in": [{ "item": "bone", "count": 6 }, { "item": "hide", "count": 2 }, { "item": "rope", "count": 2 }], "out": [{ "item": "bone_armor", "count": 1 }], "time": 8 },
+    { "id": "r_obsidian_dagger", "category": "Armas", "station": "workbench", "in": [{ "item": "obsidian", "count": 2 }, { "item": "bone", "count": 1 }, { "item": "rope", "count": 1 }], "out": [{ "item": "obsidian_dagger", "count": 1 }], "time": 5 },
+    { "id": "r_iron_axe", "category": "Herramientas", "station": "workbench", "in": [{ "item": "iron_ingot", "count": 2 }, { "item": "wood", "count": 1 }, { "item": "rope", "count": 1 }], "out": [{ "item": "iron_axe", "count": 1 }], "time": 6, "unlocked": false },
+    { "id": "r_iron_pick", "category": "Herramientas", "station": "workbench", "in": [{ "item": "iron_ingot", "count": 2 }, { "item": "wood", "count": 1 }, { "item": "rope", "count": 1 }], "out": [{ "item": "iron_pick", "count": 1 }], "time": 6, "unlocked": false },
+    { "id": "r_iron_machete", "category": "Armas", "station": "workbench", "in": [{ "item": "iron_ingot", "count": 2 }, { "item": "hide", "count": 1 }], "out": [{ "item": "iron_machete", "count": 1 }], "time": 6, "unlocked": false },
+    { "id": "r_iron_spear", "category": "Armas", "station": "workbench", "in": [{ "item": "iron_ingot", "count": 1 }, { "item": "stick", "count": 2 }, { "item": "rope", "count": 1 }], "out": [{ "item": "iron_spear", "count": 1 }], "time": 6, "unlocked": false },
+
+    // ------------------------------------------------ Campfire (cooking)
+    { "id": "r_water_flask", "category": "Herramientas", "station": "campfire", "in": [{ "item": "clay", "count": 2 }, { "item": "plant_fiber", "count": 1 }], "out": [{ "item": "water_flask", "count": 1 }], "time": 6 },
+    { "id": "r_stew", "category": "Cocina", "station": "campfire", "in": [{ "item": "raw_meat", "count": 1 }, { "item": "potato", "count": 1 }, { "item": "clean_water", "count": 1 }], "out": [{ "item": "stew", "count": 1 }], "time": 10 },
+    { "id": "r_fish_stew", "name": "Guiso de pescado", "category": "Cocina", "station": "campfire", "in": [{ "item": "raw_fish", "count": 2 }, { "item": "tomato", "count": 1 }, { "item": "clean_water", "count": 1 }], "out": [{ "item": "stew", "count": 1 }], "time": 10 },
+    { "id": "r_antiseptic_tea", "category": "Medicina", "station": "campfire", "in": [{ "item": "herbs", "count": 3 }, { "item": "clean_water", "count": 1 }], "out": [{ "item": "antiseptic_tea", "count": 1 }], "time": 6 },
+
+    // ------------------------------------------------ Drying rack / Furnace
+    { "id": "r_jerky", "category": "Cocina", "station": "drying_rack", "in": [{ "item": "raw_meat", "count": 2 }], "out": [{ "item": "jerky", "count": 2 }], "time": 12 },
+    { "id": "r_charcoal", "category": "Materiales", "station": "furnace", "in": [{ "item": "wood", "count": 2 }], "out": [{ "item": "charcoal", "count": 3 }], "time": 6 },
+    { "id": "r_brick", "category": "Materiales", "station": "furnace", "in": [{ "item": "clay", "count": 2 }], "out": [{ "item": "brick", "count": 1 }], "time": 6 },
+    { "id": "r_iron_ingot", "category": "Materiales", "station": "furnace", "in": [{ "item": "metal_ore", "count": 2 }, { "item": "charcoal", "count": 1 }], "out": [{ "item": "iron_ingot", "count": 1 }], "time": 8 },
+    { "id": "r_scrap_ingot", "name": "Fundir chatarra", "category": "Materiales", "station": "furnace", "in": [{ "item": "plane_scrap", "count": 3 }, { "item": "charcoal", "count": 1 }], "out": [{ "item": "iron_ingot", "count": 1 }], "time": 8 }
+  ]
+}

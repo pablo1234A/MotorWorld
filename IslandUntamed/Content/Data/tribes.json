@@ -1,0 +1,21 @@
+{
+  "tribes": [
+    { "id": "kairu", "name": "Kairu", "biome": "Beach", "temperament": "peaceful", "start_rep": 5, "territory": 200, "inner": 55, "population": 12, "trades": true, "color": "#2e86c1",
+      "desc": "El Pueblo de las Mareas. Pescadores que viven en palafitos en la costa este. Desconfian de los extranjeros, pero respetan a quien comparte su comida.",
+      "rules": ["No se toca la red de otro.", "Quien comparte pescado es bienvenido.", "La sangre en la arena trae la desgracia."],
+      "relations": { "veshka": -20, "ashborn": -75 },
+      "trade_goods": ["cooked_fish", "rope", "coconut", "fishing_rod", "bandage", "corn_seed", "tomato_seed"],
+      "wants": ["hide", "iron_ingot", "medkit", "herbal_poultice", "plane_scrap"] },
+    { "id": "veshka", "name": "Vesh'ka", "biome": "Jungle", "temperament": "territorial", "start_rep": -15, "territory": 240, "inner": 65, "population": 14, "trades": true, "color": "#1e8449",
+      "desc": "Cazadores del Dosel. Orgullosos y territoriales: avisan una vez, despues atacan. Admiran la habilidad en la caza.",
+      "rules": ["El extranjero no cruza la empalizada sin permiso.", "La presa se comparte con la aldea.", "Robar al clan es una ofensa de sangre."],
+      "relations": { "kairu": -20, "ashborn": -65 },
+      "trade_goods": ["hide", "bow", "arrow", "herbs", "glow_mushroom", "tribal_mask"],
+      "wants": ["iron_ingot", "metal_ore", "arrow", "raw_meat", "iron_machete"] },
+    { "id": "ashborn", "name": "Hijos de la Ceniza", "biome": "Volcanic", "temperament": "aggressive", "start_rep": -55, "territory": 260, "inner": 70, "population": 16, "trades": false, "color": "#922b21",
+      "desc": "Viven a la sombra del volcan y adoran el fuego que hay bajo la isla. Cazan forasteros. Algo los ha vuelto fanaticos.",
+      "rules": ["El fuego reclama a los extranjeros.", "Nadie abandona la Ceniza."],
+      "relations": { "kairu": -75, "veshka": -65 },
+      "trade_goods": [], "wants": ["crystal"] }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  // Objective types: acquire craft build discover kill talk consume catch harvest sleep read deliver flag | reputation | has_flag
+  // Discover targets: POI id ("plane_tail") or "type:<poi type>" ("type:village").
+  // Kill targets: animal id ("boar") or "tribe:<id>". Talk targets: tribe id.
+  "quests": [
+    // ============================================================ ACT I - SUPERVIVIENTE
+    { "id": "main_01", "type": "main", "act": 1, "title": "Primer dia",
+      "desc": "Estas vivo. Nadie mas respondio a tus gritos. Necesitas herramientas antes de que caiga la noche.",
+      "objectives": [
+        { "type": "acquire", "target": "stick", "count": 3, "text": "Recoge ramas de los arbustos (3)" },
+        { "type": "acquire", "target": "stone", "count": 2, "text": "Recoge piedras sueltas (2)" },
+        { "type": "acquire", "target": "plant_fiber", "count": 2, "text": "Recoge fibra vegetal (2)" },
+        { "type": "craft", "target": "stone_hatchet", "count": 1, "text": "Fabrica un hacha de piedra [TAB]" },
+        { "type": "consume", "target": "*", "count": 1, "text": "Come o bebe algo (cocos, bayas, agua)" }
+      ],
+      "reward": { "items": [{ "item": "airline_snack", "count": 2 }] },
+      "completion": "Tienes un hacha. Ahora la isla parece un poco menos hostil." },
+
+    { "id": "main_02", "type": "main", "act": 1, "title": "Un refugio para la noche", "requires": ["main_01"],
+      "desc": "La tormenta no ha terminado. Necesitas fuego y un techo.",
+      "objectives": [
+        { "type": "build", "target": "campfire", "count": 1, "text": "Construye una hoguera [B]" },
+        { "type": "build", "target": "lean_to", "count": 1, "text": "Construye un refugio pequeno" },
+        { "type": "sleep", "target": "*", "count": 1, "text": "Duerme en el refugio" }
+      ],
+      "reward": { "items": [{ "item": "bandage", "count": 2 }] },
+      "completion": "Sobreviviste a la primera noche." },
+
+    { "id": "main_03", "type": "main", "act": 1, "title": "La caja negra", "requires": ["main_02"],
+      "desc": "Antes de estrellarse, la cola del avion se separo. Cayo hacia el norte, en la selva. La caja negra explicaria que paso.",
+      "objectives": [
+        { "type": "discover", "target": "plane_tail", "count": 1, "text": "Encuentra la cola del avion (norte)" },
+        { "type": "acquire", "target": "flight_recorder", "count": 1, "text": "Recupera la caja negra" },
+        { "type": "read", "target": "note_copilot", "count": 1, "text": "Lee el cuaderno del copiloto", "optional": true }
+      ],
+      "reward": { "flags": ["has_recorder"], "items": [{ "item": "radio_parts", "count": 1 }] },
+      "completion": "La grabacion termina con una frase: 'No es una tormenta... es la isla'." },
+
+    { "id": "main_04", "type": "main", "act": 1, "title": "No estamos solos", "requires": ["main_03"],
+      "desc": "Has visto humo al este y totems en la selva. Hay gente en la isla.",
+      "objectives": [
+        { "type": "discover", "target": "type:village", "count": 1, "text": "Encuentra una aldea" },
+        { "type": "talk", "target": "*", "count": 1, "text": "Habla con alguien de una tribu (o al menos sobrevive al intento)" }
+      ],
+      "completion": "Las tribus conocen la isla mejor que nadie. Y no todas te quieren aqui." },
+
+    // ============================================================ ACT II - LAS TRIBUS (decision)
+    { "id": "main_05a", "type": "main", "act": 2, "title": "Pacto de las Mareas", "requires": ["main_04"], "sequential": false, "excludes": ["main_05b"],
+      "desc": "Los Kairu podrian ayudarte a llegar a la Estacion Meridian si demuestras que eres de fiar.",
+      "objectives": [
+        { "type": "reputation", "target": "kairu", "count": 60, "text": "Gana la confianza de los Kairu (Aliados)" },
+        { "type": "deliver", "target": "*", "count": 3, "text": "Ofrece regalos a los Kairu (3)", "optional": true }
+      ],
+      "reward": { "flags": ["ally_kairu", "has_ally"], "recipes": ["house", "r_iron_spear"], "items": [{ "item": "fishing_rod", "count": 1 }] },
+      "completion": "Los Kairu te llaman 'el que vino con la tormenta'. Te ensenan a construir casas como las suyas." },
+
+    { "id": "main_05b", "type": "main", "act": 2, "title": "Sangre del Dosel", "requires": ["main_04"], "sequential": false, "excludes": ["main_05a"],
+      "desc": "Los Vesh'ka respetan la fuerza. Si cazas como ellos, te aceptaran.",
+      "objectives": [
+        { "type": "reputation", "target": "veshka", "count": 60, "text": "Gana el respeto de los Vesh'ka (Aliados)" },
+        { "type": "kill", "target": "jaguar", "count": 1, "text": "Caza un jaguar", "optional": true }
+      ],
+      "reward": { "flags": ["ally_veshka", "has_ally"], "recipes": ["house", "r_iron_machete"], "items": [{ "item": "tribal_mask", "count": 1 }] },
+      "completion": "Te pintan la frente con ceniza blanca. Ahora eres de la selva." },
+
+    { "id": "main_06", "type": "main", "act": 2, "title": "Senales en la montana", "requires": ["main_03"],
+      "desc": "La caja negra registro una senal de radio repetitiva antes del accidente. Viene de las montanas del norte.",
+      "objectives": [
+        { "type": "discover", "target": "facility", "count": 1, "text": "Encuentra el origen de la senal (montanas del norte)" },
+        { "type": "acquire", "target": "meridian_keycard", "count": 1, "text": "Encuentra una tarjeta de acceso (ruinas de la montana)" },
+        { "type": "read", "target": "meridian_log_1", "count": 1, "text": "Lee el registro de la Estacion Meridian" }
+      ],
+      "reward": { "flags": ["meridian_open"], "recipes": ["r_iron_axe", "r_iron_pick"] },
+      "completion": "Proyecto MERIDIAN. Investigaban algo bajo el volcan. Y se fueron con prisa." },
+
+    // ============================================================ ACT III - EL CORAZON (en desarrollo)
+    { "id": "main_07", "type": "main", "act": 3, "title": "El corazon de la isla", "requires": ["main_06"],
+      "desc": "Los registros hablan de un 'nucleo' en la caldera del volcan y de un amuleto que abre el camino.",
+      "objectives": [
+        { "type": "acquire", "target": "sun_amulet", "count": 1, "text": "Encuentra el Amuleto Solar (Templo del Sol)" },
+        { "type": "discover", "target": "secret_caldera", "count": 1, "text": "Alcanza la caldera del Monte Ceniza" }
+      ],
+      "reward": { "flags": ["act3_teaser_done"] },
+      "completion": "El cristal del amuleto brilla con el mismo pulso que el suelo. [Fin del contenido actual: Acto III en desarrollo]" },
+
+    // ============================================================ SIDE QUESTS
+    { "id": "side_fisher", "type": "side", "title": "El arte de la pesca", "requires": ["main_01"], "start_event": { "type": "talk", "target": "kairu" },
+      "desc": "Una anciana Kairu se rie de tu hambre. 'El mar da de comer a quien sabe esperar.'",
+      "objectives": [ { "type": "catch", "target": "*", "count": 3, "text": "Pesca 3 peces" }, { "type": "deliver", "target": "cooked_fish", "count": 2, "text": "Entrega 2 pescados asados a los Kairu" } ],
+      "reward": { "reputation": { "kairu": 15 }, "items": [{ "item": "rope", "count": 4 }] } },
+
+    { "id": "side_hunt", "type": "side", "title": "Prueba del cazador", "requires": ["main_01"], "start_event": { "type": "talk", "target": "veshka" },
+      "desc": "'Hablas mucho, extranjero. Trae colmillos.'",
+      "objectives": [ { "type": "kill", "target": "boar", "count": 2, "text": "Caza 2 jabalies" }, { "type": "deliver", "target": "hide", "count": 2, "text": "Entrega 2 pieles a los Vesh'ka" } ],
+      "reward": { "reputation": { "veshka": 20 }, "items": [{ "item": "arrow", "count": 10 }] } },
+
+    { "id": "side_garden", "type": "side", "title": "Raices", "requires": ["main_02"],
+      "desc": "Recolectar no basta para siempre. Cultiva tu propia comida.",
+      "objectives": [ { "type": "build", "target": "farm_plot", "count": 1, "text": "Construye un huerto" }, { "type": "harvest", "target": "*", "count": 1, "text": "Cosecha un cultivo" } ],
+      "reward": { "items": [{ "item": "compost", "count": 3 }, { "item": "pumpkin_seed", "count": 3 }] } },
+
+    { "id": "side_explorer", "type": "side", "title": "Cartografo", "requires": ["main_01"], "sequential": false,
+      "desc": "Cada lugar descubierto se marca en tu mapa [M].",
+      "objectives": [ { "type": "discover", "target": "type:cave", "count": 2, "text": "Descubre 2 cuevas" }, { "type": "discover", "target": "type:ruins", "count": 2, "text": "Descubre 2 ruinas" }, { "type": "discover", "target": "type:waterfall", "count": 1, "text": "Descubre una cascada" } ],
+      "reward": { "items": [{ "item": "map_fragment", "count": 2 }, { "item": "gold_trinket", "count": 2 }] } },
+
+    { "id": "side_medic", "type": "side", "title": "Medicina de la selva", "requires": ["main_01"],
+      "desc": "Las heridas se infectan rapido en este clima.",
+      "objectives": [ { "type": "acquire", "target": "herbs", "count": 5, "text": "Recoge hierbas medicinales (5)" }, { "type": "craft", "target": "herbal_poultice", "count": 1, "text": "Prepara una cataplasma" } ],
+      "reward": { "items": [{ "item": "herb_seed", "count": 4 }, { "item": "bandage", "count": 2 }] } },
+
+    { "id": "side_ash", "type": "side", "title": "Humo en el horizonte", "requires": ["main_04"],
+      "desc": "Los Hijos de la Ceniza atacan a todas las aldeas. Debilitarlos te ganara amigos.",
+      "objectives": [ { "type": "kill", "target": "tribe:ashborn", "count": 3, "text": "Derrota a 3 guerreros de la Ceniza" } ],
+      "reward": { "reputation": { "kairu": 15, "veshka": 15 }, "items": [{ "item": "ash_warclub", "count": 1 }] } },
+
+    { "id": "side_lore", "type": "side", "title": "Ecos del pasado", "requires": ["main_01"],
+      "desc": "Otros llegaron a esta isla antes que tu. Dejaron notas.",
+      "objectives": [ { "type": "read", "target": "*", "count": 4, "text": "Lee 4 documentos" } ],
+      "reward": { "items": [{ "item": "medkit", "count": 1 }] } }
+  ]
+}

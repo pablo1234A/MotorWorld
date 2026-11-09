@@ -1,0 +1,11 @@
+{
+  // growth_hours: game hours at ideal conditions (1 game day = 48 real minutes by default)
+  "crops": [
+    { "id": "corn", "name": "Maiz", "seed": "corn_seed", "produce": "corn", "yield_min": 2, "yield_max": 4, "seeds_back": 3, "growth_hours": 40, "water_use": 0.02, "temp_min": 18, "temp_max": 33, "color": "#c9b13a" },
+    { "id": "potato", "name": "Patata", "seed": "potato_seed", "produce": "potato", "yield_min": 3, "yield_max": 5, "seeds_back": 2, "growth_hours": 48, "water_use": 0.015, "temp_min": 12, "temp_max": 28, "color": "#8a6f3a" },
+    { "id": "tomato", "name": "Tomate", "seed": "tomato_seed", "produce": "tomato", "yield_min": 3, "yield_max": 6, "seeds_back": 3, "growth_hours": 36, "water_use": 0.025, "temp_min": 18, "temp_max": 32, "color": "#c0392b" },
+    { "id": "pumpkin", "name": "Calabaza", "seed": "pumpkin_seed", "produce": "pumpkin", "yield_min": 1, "yield_max": 2, "seeds_back": 3, "growth_hours": 60, "water_use": 0.03, "temp_min": 18, "temp_max": 34, "color": "#e67e22" },
+    { "id": "mango_tree", "name": "Mango", "seed": "mango_sapling", "produce": "mango", "yield_min": 3, "yield_max": 6, "seeds_back": 0, "growth_hours": 96, "water_use": 0.01, "temp_min": 20, "temp_max": 36, "regrows": true, "color": "#f1c40f" },
+    { "id": "medicinal", "name": "Plantas medicinales", "seed": "herb_seed", "produce": "herbs", "yield_min": 3, "yield_max": 5, "seeds_back": 2, "growth_hours": 30, "water_use": 0.02, "temp_min": 15, "temp_max": 30, "color": "#27ae60" }
+  ]
+}

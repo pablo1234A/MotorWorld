@@ -1,0 +1,32 @@
+{
+  // Documents placed in the world. "poi" decides where the engine spawns them.
+  "documents": [
+    { "id": "note_flight", "poi": "crash_site", "title": "Tarjeta de embarque", "text": "Vuelo IU-417. Puerta 12. Asiento 23F. Destino: Auckland. La tormenta no aparecia en ningun pronostico." },
+    { "id": "note_copilot", "poi": "plane_tail", "title": "Cuaderno del copiloto", "text": "03:12 Brujula girando. 03:14 Instrumentos muertos. 03:15 Hay una luz azul bajo las nubes. Parece venir del agua. 03:16 Capitan ordena descenso. No es una tormenta. Es la isla." },
+    { "id": "explorer_journal_1", "poi": "camp_old", "title": "Diario de E. Marlow (1974)", "text": "Dia 41. Los pescadores del este me dan pescado si les ayudo a reparar redes. Los de la selva me tiraron una lanza de aviso. No volvere a cruzar su empalizada sin invitacion." },
+    { "id": "explorer_journal_2", "poi": "ruins_sun", "title": "Diario de E. Marlow (II)", "text": "Las escaleras del templo estan alineadas con el amanecer del solsticio. Bajo el altar hay un hueco con forma de disco. Algo se llevo lo que habia." },
+    { "id": "tablet_sun", "poi": "ruins_sun", "title": "Tablilla del Sol", "text": "[Grabado] Un sol con un ojo azul en el centro. Bajo el, figuras arrodilladas frente a una montana que escupe fuego." },
+    { "id": "lighthouse_log", "poi": "lighthouse", "title": "Bitacora del farero", "text": "La luz azul ha vuelto esta noche. Los barcos ya no se acercan. El suministro no llegara. Me ire a la estacion de la montana; dicen que alli tienen radio." },
+    { "id": "meridian_log_1", "poi": "facility", "title": "Registro MERIDIAN 07", "text": "Lecturas magneticas anomalas bajo el Monte Ceniza: el campo pulsa cada 11 segundos. Los nativos de la Ceniza veneran ese pulso. El Dr. Haldane insiste en perforar. Si el nucleo es lo que creemos, no deberiamos estar aqui." },
+    { "id": "meridian_log_2", "poi": "cave_crystal", "title": "Registro MERIDIAN 12", "text": "Los cristales amplifican el pulso. Varios tecnicos refieren suenos identicos. Ordenada la evacuacion. Haldane se queda." },
+    { "id": "tribal_carving", "poi": "village_vesh", "title": "Talla Vesh'ka", "text": "[Talla en madera] Tres tribus alrededor de un fuego. Una de ellas da la espalda a las demas y mira hacia el volcan." },
+    { "id": "kairu_song", "poi": "village_kairu", "title": "Cancion de las mareas", "text": "'Cuando el cielo se vuelve azul y el mar calla, la isla elige a quien se queda.' (Traducida a duras penas.)" },
+    { "id": "ash_decree", "poi": "village_ash", "title": "Decreto de la Ceniza", "text": "[Pintura en piedra] Figuras con mascaras arrojan extranjeros a un crater. Encima, un disco azul con un ojo." }
+  ],
+  // Loot placed in specific POIs (containers spawned by the engine).
+  "poi_loot": [
+    { "poi": "crash_site", "items": [{ "item": "bottled_water", "count": 2 }, { "item": "airline_snack", "count": 3 }, { "item": "cloth", "count": 4 }, { "item": "plane_scrap", "count": 3 }, { "item": "medkit", "count": 1 }] },
+    { "poi": "plane_tail", "items": [{ "item": "flight_recorder", "count": 1 }, { "item": "cloth", "count": 3 }, { "item": "bottled_water", "count": 1 }, { "item": "plane_scrap", "count": 4 }] },
+    { "poi": "camp_old", "items": [{ "item": "rope", "count": 3 }, { "item": "fishing_rod", "count": 1 }, { "item": "map_fragment", "count": 1 }] },
+    { "poi": "ruins_sun", "items": [{ "item": "sun_amulet", "count": 1 }, { "item": "gold_trinket", "count": 3 }] },
+    { "poi": "ruins_observatory", "items": [{ "item": "meridian_keycard", "count": 1 }, { "item": "crystal", "count": 2 }] },
+    { "poi": "ruins_sunken", "items": [{ "item": "ancient_blade", "count": 1 }, { "item": "gold_trinket", "count": 2 }] },
+    { "poi": "facility", "items": [{ "item": "medkit", "count": 2 }, { "item": "radio_parts", "count": 2 }, { "item": "iron_ingot", "count": 4 }] },
+    { "poi": "lighthouse", "items": [{ "item": "resin", "count": 4 }, { "item": "map_fragment", "count": 1 }] },
+    { "poi": "cave_echo", "items": [{ "item": "metal_ore", "count": 4 }, { "item": "glow_mushroom", "count": 2 }] },
+    { "poi": "cave_crystal", "items": [{ "item": "crystal", "count": 3 }] },
+    { "poi": "cave_cliff", "items": [{ "item": "gold_trinket", "count": 2 }, { "item": "bone", "count": 5 }] },
+    { "poi": "cave_lava", "items": [{ "item": "obsidian", "count": 4 }] },
+    { "poi": "secret_bluegrotto", "items": [{ "item": "gold_trinket", "count": 5 }, { "item": "crystal", "count": 2 }] }
+  ]
+}

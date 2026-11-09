@@ -1,0 +1,11 @@
+# Unreal Engine
+IslandUntamed/Binaries/
+IslandUntamed/Intermediate/
+IslandUntamed/Saved/
+IslandUntamed/DerivedDataCache/
+IslandUntamed/.vs/
+IslandUntamed/*.sln
+IslandUntamed/.idea/
+# Test builds
+build/
+IslandUntamed/build/

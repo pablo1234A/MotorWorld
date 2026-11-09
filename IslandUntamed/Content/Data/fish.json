@@ -1,0 +1,15 @@
+{
+  "fish": [
+    { "id": "snapper", "name": "Pargo", "item": "raw_fish", "zones": ["sea", "reef"], "min_kg": 0.6, "max_kg": 3.0, "rarity": 1.0, "strength": 0.45, "stamina": 6 },
+    { "id": "mackerel", "name": "Caballa", "item": "raw_fish", "zones": ["sea"], "min_kg": 0.3, "max_kg": 1.2, "rarity": 1.4, "strength": 0.3, "stamina": 4 },
+    { "id": "parrotfish", "name": "Pez loro", "item": "raw_fish", "zones": ["reef"], "min_kg": 0.5, "max_kg": 2.5, "rarity": 1.0, "time": "day", "strength": 0.35, "stamina": 5 },
+    { "id": "grouper", "name": "Mero", "item": "raw_fish", "zones": ["reef", "sea"], "min_kg": 3.0, "max_kg": 15.0, "rarity": 0.25, "strength": 0.85, "stamina": 12, "spearable": false },
+    { "id": "barracuda", "name": "Barracuda", "item": "raw_fish", "zones": ["sea", "reef"], "min_kg": 2.0, "max_kg": 8.0, "rarity": 0.3, "time": "night", "strength": 0.75, "stamina": 9 },
+    { "id": "tilapia", "name": "Tilapia", "item": "raw_fish", "zones": ["river", "lake"], "min_kg": 0.3, "max_kg": 1.5, "rarity": 1.5, "strength": 0.25, "stamina": 4 },
+    { "id": "mountain_trout", "name": "Trucha de montana", "item": "raw_fish", "zones": ["river"], "min_kg": 0.4, "max_kg": 2.0, "rarity": 0.8, "time": "day", "strength": 0.5, "stamina": 6 },
+    { "id": "catfish", "name": "Bagre", "item": "raw_fish", "zones": ["river", "swamp", "lake"], "min_kg": 1.0, "max_kg": 6.0, "rarity": 0.7, "time": "night", "strength": 0.6, "stamina": 8 },
+    { "id": "eel", "name": "Anguila", "item": "raw_fish", "zones": ["swamp"], "min_kg": 0.8, "max_kg": 3.0, "rarity": 0.8, "time": "night", "strength": 0.65, "stamina": 7, "spearable": false },
+    { "id": "swamp_biter", "name": "Pez dientes", "item": "raw_fish", "zones": ["swamp"], "min_kg": 0.3, "max_kg": 1.0, "rarity": 1.2, "strength": 0.4, "stamina": 4 },
+    { "id": "golden_carp", "name": "Carpa dorada", "item": "gold_trinket", "zones": ["lake"], "min_kg": 1.0, "max_kg": 4.0, "rarity": 0.05, "strength": 0.7, "stamina": 10, "spearable": false }
+  ]
+}
