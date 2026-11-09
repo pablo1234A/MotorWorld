@@ -1,6 +1,7 @@
 #include "TestFramework.h"
 #include "TestShared.h"
 
+#include "SimAudioSynth.h"
 #include "SimIsland.h"
 #include "SimWorldClock.h"
 
@@ -203,4 +204,25 @@ IU_TEST(World_PersistenceFogAndRegrowth)
 	EXPECT_EQ(Regrown.size(), 1u);
 	EXPECT_FALSE(L.IsDepleted(1234U, 60.0));
 	EXPECT_TRUE(L.IsDepleted(99U, 1.0e9));
+}
+
+IU_TEST(Audio_ProceduralSynthesis)
+{
+	using namespace IUSim::AudioSynth;
+	const Buffer Wind = IUSim::AudioSynth::Wind(4.0f, 1);
+	EXPECT_GT(DurationSeconds(Wind), 3.0f);
+	EXPECT_GT(Peak(Wind), 8000);
+	EXPECT_LT(Peak(Wind), 32001);
+	const Buffer Music = MusicPad(16.0f, 0.2f, 3);
+	EXPECT_GT(DurationSeconds(Music), 14.0f);
+	EXPECT_GT(Peak(Music), 5000);
+	for (const std::string& Cue : OneShotNames())
+	{
+		const Buffer B = OneShot(Cue, 7);
+		EXPECT_GT(B.size(), 100u);
+		EXPECT_GT(Peak(B), 1000);
+		EXPECT_LT(DurationSeconds(B), 6.0f);
+	}
+	// Deterministic for a given seed.
+	EXPECT_TRUE(OneShot("chop", 5) == OneShot("chop", 5));
 }

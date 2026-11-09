@@ -56,6 +56,9 @@ namespace IUSim
 		/** Moves everything that fits into Other. Returns number of units moved. */
 		int32_t TransferAllTo(Inventory& Other);
 
+		/** Overwrites a slot (equipment placement, save migration). Returns false for invalid index/item. */
+		bool SetSlot(int32_t Index, const ItemStack& Stack);
+
 		/** Reduces durability on a slot. Returns true if the item broke and was removed. */
 		bool DamageDurability(int32_t Slot, float Amount);
 

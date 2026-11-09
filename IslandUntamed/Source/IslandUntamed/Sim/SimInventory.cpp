@@ -235,6 +235,15 @@ namespace IUSim
 		return Total;
 	}
 
+	bool Inventory::SetSlot(int32_t Index, const ItemStack& Stack)
+	{
+		if (!IsValidSlot(Index)) { return false; }
+		if (!Stack.IsEmpty() && Db && !Db->Contains(Stack.ItemId)) { return false; }
+		Slots[static_cast<size_t>(Index)] = Stack;
+		Touch();
+		return true;
+	}
+
 	bool Inventory::DamageDurability(int32_t Slot, float Amount)
 	{
 		if (!IsValidSlot(Slot)) { return false; }
