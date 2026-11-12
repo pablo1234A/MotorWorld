@@ -48,7 +48,7 @@ function cleanContent(input: Partial<ListingContent>) {
   return patch;
 }
 
-const ALLOWED_TAGS = /<\/?(p|ul|ol|li|br|strong|em|b|i)\s*\/?>/gi;
+const ALLOWED_TAGS = /<(\/?)(p|ul|ol|li|br|strong|em|b|i)\b[^>]*>/gi;
 
 /**
  * Permite únicamente el HTML básico que producen los perfiles HTML (p, ul, li, br, strong…),
@@ -56,12 +56,14 @@ const ALLOWED_TAGS = /<\/?(p|ul|ol|li|br|strong|em|b|i)\s*\/?>/gi;
  */
 export function sanitizeDescription(value: string): string {
   const placeholders: string[] = [];
-  const protectedText = value.slice(0, 20000).replace(ALLOWED_TAGS, (tag) => {
-    placeholders.push(tag.toLowerCase().replace(/\s+/g, ""));
+  // Se eliminan primero los bloques peligrosos completos (incluido su contenido).
+  const withoutBlocks = value.slice(0, 20000).replace(/<\s*(script|style|iframe|object|embed|template)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "");
+  // Las etiquetas permitidas se conservan sin ningún atributo (adiós a onclick, style, href…).
+  const protectedText = withoutBlocks.replace(ALLOWED_TAGS, (_tag, slash: string, name: string) => {
+    placeholders.push(`<${slash}${name.toLowerCase()}>`);
     return `\u0001${placeholders.length - 1}\u0002`;
   });
   const cleaned = protectedText
-    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, " ")
     .replace(/<[^>]*>/g, "")
     .replace(/[\u0000\u0003-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
   return cleaned.replace(/\u0001(\d+)\u0002/g, (_, index: string) => placeholders[Number(index)] ?? "").trim();
