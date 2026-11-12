@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { notFound as notFoundPage, redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient, hasAdminClient } from "@/lib/supabase/admin";
@@ -87,5 +87,12 @@ export async function requireApiAdmin(): Promise<SessionContext> {
   if (!(await isPlatformAdmin(context.user.id))) {
     throw new ApiError("not_found", "El recurso no existe.");
   }
+  return context;
+}
+
+/** Para páginas de /admin: quien no es administrador recibe un 404 (no se revela que el panel existe). */
+export async function requireAdminPage(): Promise<SessionContext> {
+  const context = await requireSession();
+  if (!(await isPlatformAdmin(context.user.id))) notFoundPage();
   return context;
 }
