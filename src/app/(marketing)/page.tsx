@@ -81,7 +81,7 @@ export default async function LandingPage() {
             <div className="rounded-[20px] border border-line bg-surface p-2 shadow-raised">
               <div className="rounded-[14px] border border-line bg-paper p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-faint">Lo que escribes</p>
-                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
+                <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 text-[13px] sm:grid-cols-2">
                   {hero.input.map((row) => (
                     <div key={row.label} className="flex justify-between gap-2 border-b border-dashed border-line pb-1.5">
                       <dt className="text-muted">{row.label}</dt>

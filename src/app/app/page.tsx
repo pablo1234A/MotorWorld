@@ -80,7 +80,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader title="Actividad de los últimos 30 días" description="Productos y anuncios creados por día." action={<Link href="/app/estadisticas" className="text-[13px] font-medium text-brand-strong hover:underline">Ver estadísticas</Link>} />
           <div className="p-5">

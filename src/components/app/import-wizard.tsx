@@ -2,7 +2,7 @@
 
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Download, FileSpreadsheet, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/form";
 import { Card, CardHeader, Notice } from "@/components/ui/primitives";
@@ -65,6 +65,15 @@ export function ImportWizard({ templates }: { templates: TemplateOption[] }) {
       if (input.current) input.current.value = "";
     }
   }
+
+  // Si el usuario eligió un archivo antes de que la página terminara de cargar (hidratación),
+  // el evento change se habría perdido: se procesa aquí.
+  useEffect(() => {
+    const pending = input.current?.files?.[0];
+    if (!pending) return;
+    const timer = setTimeout(() => void upload(pending), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   async function validate() {
     if (!analysis) return;

@@ -169,7 +169,7 @@ function buildKeywords(product: GenerationProduct, phrases: Phrases, max: number
   if (product.subcategory) candidates.push(product.subcategory);
   if (product.category) candidates.push(product.category);
   for (const attribute of product.attributes) {
-    if (!attribute.isBoolean && attribute.value.length <= 24 && /[a-zA-Z]/.test(attribute.value) && ["color", "material", "tipo", "plataforma", "combustible", "talla"].includes(attribute.key)) {
+    if (!attribute.isBoolean && attribute.value.length >= 2 && attribute.value.length <= 24 && /[a-zA-Z]/.test(attribute.value) && ["color", "material", "tipo", "plataforma", "combustible", "talla"].includes(attribute.key)) {
       candidates.push(attribute.value);
     }
   }

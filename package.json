@@ -23,7 +23,8 @@
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "seed:demo": "tsx scripts/seed-demo.mts",
-    "admin:grant": "tsx scripts/grant-admin.mts"
+    "admin:grant": "tsx scripts/grant-admin.mts",
+    "check": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
