@@ -16,14 +16,14 @@
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "test:all": "pnpm test && pnpm test:integration && pnpm test:e2e",
-    "check:env": "tsx scripts/check-env.ts",
+    "check:env": "tsx scripts/check-env.mts",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts",
-    "admin:grant": "tsx scripts/grant-admin.ts"
+    "seed:demo": "tsx scripts/seed-demo.mts",
+    "admin:grant": "tsx scripts/grant-admin.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
