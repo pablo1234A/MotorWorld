@@ -65,6 +65,9 @@ const FAQ = [
   { q: "¿Puedo eliminar mi cuenta?", a: "Sí, en cualquier momento desde «Mi cuenta». Se eliminan tus productos, anuncios y archivos de forma definitiva." },
 ];
 
+// Prerenderizada; los planes se refrescan desde la base de datos cada 5 minutos.
+export const revalidate = 300;
+
 export default async function LandingPage() {
   const [plans, examples] = [await getPublicPlans(), getLandingExamples()];
   const hero = examples[0]!;

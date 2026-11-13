@@ -8,7 +8,7 @@ const NAV = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export function SiteHeader({ signedIn }: { signedIn: boolean }) {
+export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
@@ -23,20 +23,12 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          {signedIn ? (
-            <ButtonLink href="/app" size="sm">
-              Ir a mi panel
-            </ButtonLink>
-          ) : (
-            <>
-              <ButtonLink href="/login" variant="ghost" size="sm">
-                Entrar
-              </ButtonLink>
-              <ButtonLink href="/registro" size="sm">
-                Crear cuenta gratis
-              </ButtonLink>
-            </>
-          )}
+          <ButtonLink href="/login" variant="ghost" size="sm">
+            Entrar
+          </ButtonLink>
+          <ButtonLink href="/registro" size="sm">
+            Crear cuenta gratis
+          </ButtonLink>
         </div>
       </div>
       <nav className="flex gap-5 overflow-x-auto border-t border-line/60 px-5 py-2.5 md:hidden" aria-label="Principal móvil">

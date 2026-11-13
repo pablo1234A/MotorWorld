@@ -11,7 +11,7 @@ export function ProductShot({ src, alt, className, priority }: { src: string; al
         <span className="size-2.5 rounded-full bg-line-strong" />
         <span className="ml-3 h-5 flex-1 max-w-64 rounded-md bg-sunken" />
       </div>
-      <Image src={src} alt={alt} width={2560} height={1600} sizes="(min-width: 1024px) 640px, 100vw" priority={priority} className="block h-auto w-full" />
+      <Image src={src} alt={alt} width={1728} height={1312} sizes="(min-width: 1024px) 660px, 100vw" priority={priority} className="block h-auto w-full" />
     </figure>
   );
 }

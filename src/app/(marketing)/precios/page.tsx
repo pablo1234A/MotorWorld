@@ -6,6 +6,9 @@ import { getPublicPlans } from "@/server/services/public";
 
 export const metadata: Metadata = { title: "Precios", description: "Planes de AnunciaPro: empieza gratis y amplía cuando tu catálogo crezca." };
 
+// Prerenderizada; los planes se refrescan desde la base de datos cada 5 minutos.
+export const revalidate = 300;
+
 export default async function PricingPage() {
   const plans = await getPublicPlans();
   const enabled = paymentsEnabled();

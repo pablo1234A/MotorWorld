@@ -1,19 +1,15 @@
 import type { ReactNode } from "react";
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function MarketingLayout({ children }: { children: ReactNode }) {
-  let signedIn = false;
-  try {
-    const supabase = await createClient();
-    // getSession solo lee la cookie: aquí únicamente decide qué botón mostrar, no autoriza nada.
-    signedIn = Boolean((await supabase.auth.getSession()).data.session);
-  } catch {
-    signedIn = false;
-  }
+/**
+ * Las páginas públicas no leen la sesión: así se sirven prerenderizadas (rápidas y
+ * cacheables). Quien ya ha iniciado sesión y pulsa «Entrar» es redirigido a su panel
+ * por el proxy.
+ */
+export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <SiteHeader signedIn={signedIn} />
+      <SiteHeader />
       <main id="contenido">{children}</main>
       <SiteFooter />
     </>

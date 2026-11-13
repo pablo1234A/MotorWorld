@@ -37,10 +37,11 @@ export async function loginThroughUi(page: Page, email: string, password: string
 
 export async function dismissOnboarding(page: Page) {
   const dialog = page.getByRole("dialog");
-  if (await dialog.isVisible().catch(() => false)) {
-    await dialog.getByRole("button", { name: "Explorar por mi cuenta" }).click();
-    await expect(dialog).toBeHidden();
-  }
+  // La bienvenida se monta tras la hidratación: se le da un margen antes de darla por ausente.
+  const shown = await dialog.waitFor({ state: "visible", timeout: 4000 }).then(() => true, () => false);
+  if (!shown) return;
+  await dialog.getByRole("button", { name: "Explorar por mi cuenta" }).click();
+  await expect(dialog).toBeHidden();
 }
 
 export async function deleteByEmail(email: string) {

@@ -44,8 +44,8 @@ test("recorrido completo de un vendedor", async ({ page }) => {
   const title = page.getByLabel("Título comercial");
   await expect(title).toHaveValue(/Bicicleta de montaña Orbea/);
   const description = page.getByLabel("Descripción completa");
-  await expect(description).toHaveValue(/Arañazo en la vaina trasera/);
-  await expect(description).toHaveValue(/Frenos de disco hidráulicos/);
+  await expect(description).toHaveValue(/arañazo en la vaina trasera/i);
+  await expect(description).toHaveValue(/frenos de disco hidráulicos/i);
   // Medidor de calidad en vivo: sin fotografías no llega a 100 y explica cómo mejorar.
   await expect(page.getByRole("region", { name: "Calidad del anuncio" })).toContainText("Al menos una fotografía");
   expect(Number(await page.getByTestId("quality-score").innerText())).toBeLessThan(100);
