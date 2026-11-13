@@ -36,7 +36,10 @@ export function TeamManager({ members, invitations, canManage, isOwner, maxMembe
     try {
       const invitation = await api<Invitation>("/api/team/invitations", { body: { email, role } });
       setEmail("");
-      await copyText(invitation.link, "Invitación creada: enlace copiado");
+      // La invitación ya existe: copiar el enlace es una comodidad y, si el navegador no lo
+      // permite, no es un error (el enlace queda disponible en «Copiar enlace»).
+      const copied = await navigator.clipboard.writeText(invitation.link).then(() => true, () => false);
+      toast.success(copied ? "Invitación creada: enlace copiado" : "Invitación creada", { description: copied ? "Envíaselo a la persona invitada." : "Usa «Copiar enlace» para enviárselo a la persona invitada." });
       router.refresh();
     } catch (error) {
       toast.error(errorMessage(error));

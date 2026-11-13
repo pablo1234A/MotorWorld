@@ -8,14 +8,16 @@ export function cn(...inputs: ClassValue[]) {
 export function formatPrice(amount: number | null | undefined, currency = "EUR", locale = "es-ES"): string {
   if (amount === null || amount === undefined || Number.isNaN(amount)) return "—";
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
+    // Los importes redondos se muestran sin decimales (0 €, 420 €); el resto, con dos (5,99 €).
+    return new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always", minimumFractionDigits: Number.isInteger(amount) ? 0 : 2 }).format(amount);
   } catch {
     return `${amount} ${currency}`;
   }
 }
 
 export function formatNumber(value: number, locale = "es-ES"): string {
-  return new Intl.NumberFormat(locale).format(value);
+  // «always»: en español los números de cuatro cifras también llevan separador (2.000), como 50.000.
+  return new Intl.NumberFormat(locale, { useGrouping: "always" }).format(value);
 }
 
 export function formatDate(value: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string {
