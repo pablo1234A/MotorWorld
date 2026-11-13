@@ -9,6 +9,7 @@ import type { Language, ListingStatus, Tone } from "@/domain/product";
 import { isUuid } from "@/lib/utils";
 import { requireSession } from "@/server/auth/session";
 import { ApiError } from "@/server/http/errors";
+import { getQualityFacts } from "@/server/services/generation";
 import { getListing, listingContent } from "@/server/services/listings";
 import { listTemplates, resolveListingProfile } from "@/server/services/templates";
 import { getUsage } from "@/server/services/usage";
@@ -23,9 +24,10 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     if (error instanceof ApiError && error.code === "not_found") notFound();
     throw error;
   });
-  const [usage, templates, resolved] = await Promise.all([
+  const [usage, templates, facts, resolved] = await Promise.all([
     getUsage(context.supabase, context.workspace.id),
     listTemplates(context),
+    getQualityFacts(context, listing.product.id),
     resolveListingProfile(context.supabase, context.workspace.id, listing.platform, listing.template_id).catch(() => resolveListingProfile(context.supabase, context.workspace.id, listing.platform, null)),
   ]);
 
@@ -55,6 +57,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         usage={{ used: usage.used, limit: usage.monthlyListingLimit, remaining: usage.remaining }}
         providerLabel={generationProviderInfo().label}
         initialOptions={{ platform: listing.platform, templateId: listing.template_id, tone: listing.tone as Tone, length: resolved.profile.defaultLength ?? "medium", language: listing.language as Language, titleVariant: 0 }}
+        facts={facts}
         saved={{
           id: listing.id,
           content: listingContent(listing),

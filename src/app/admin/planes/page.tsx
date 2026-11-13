@@ -32,6 +32,7 @@ export default async function AdminPlansPage() {
                   maxTemplates: features.maxTemplates ?? 0,
                   maxBulkRows: features.maxBulkRows,
                   maxImagesPerProduct: features.maxImagesPerProduct,
+                  maxMembers: features.maxMembers,
                   isActive: plan.is_active,
                 }}
               />

@@ -499,6 +499,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"workspace_invitations": {
+                  Row: {
+                    "created_at": string,"email": string,"expires_at": string,"id": string,"invited_by": string | null,"role": string,"token": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"email": string,"expires_at"?: string,"id"?: string,"invited_by"?: string | null,"role"?: string,"token"?: string,"workspace_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"email"?: string,"expires_at"?: string,"id"?: string,"invited_by"?: string | null,"role"?: string,"token"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workspace_invitations_invited_by_fkey"
+      columns: ["invited_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workspace_invitations_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workspace_members": {
                   Row: {
                     "created_at": string,"id": string,"role": string,"user_id": string,"workspace_id": string
@@ -551,7 +577,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "can_edit_workspace":
+            "accept_invitation":
+{ Args: { "p_token": string }; Returns: Json
+                           },
+"can_edit_workspace":
 { Args: { "p_workspace": string }; Returns: boolean
                            },
 "can_manage_workspace":
@@ -595,11 +624,23 @@ isOneToOne: false
 "create_generation_job":
 { Args: { "p_filename": string,"p_items": Json,"p_options": Json,"p_source_path": string,"p_workspace": string }; Returns: Json
                            },
+"current_user_email":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"decline_invitation":
+{ Args: { "p_token": string }; Returns: boolean
+                           },
 "get_dashboard_stats":
 { Args: { "p_workspace": string }; Returns: Json
                            },
+"get_invitation":
+{ Args: { "p_token": string }; Returns: Json
+                           },
 "get_usage_summary":
 { Args: { "p_workspace": string }; Returns: Json
+                           },
+"invite_member":
+{ Args: { "p_email": string,"p_role": string,"p_workspace": string }; Returns: Json
                            },
 "is_service_role":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -609,6 +650,11 @@ isOneToOne: false
                            },
 "log_audit_event":
 { Args: { "p_action": string,"p_metadata"?: Json,"p_resource_id"?: string,"p_resource_type": string,"p_workspace": string }; Returns: undefined
+                           },
+"my_invitations":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "expires_at": string,"invited_by_name": string,"role": string,"token": string,"workspace_name": string
+            }[]
                            },
 "refresh_generation_job":
 { Args: { "p_job": string }; Returns: {
@@ -638,11 +684,20 @@ isOneToOne: false
 "refund_usage":
 { Args: { "p_idempotency_key": string,"p_workspace": string }; Returns: boolean
                            },
+"remove_member":
+{ Args: { "p_user": string,"p_workspace": string }; Returns: Json
+                           },
 "report_job_item":
 { Args: { "p_error"?: string,"p_item": string,"p_listing"?: string,"p_product"?: string,"p_status": string,"p_system_error"?: boolean }; Returns: undefined
                            },
 "retry_failed_job_items":
 { Args: { "p_job": string }; Returns: Json
+                           },
+"revoke_invitation":
+{ Args: { "p_invitation": string }; Returns: boolean
+                           },
+"set_member_role":
+{ Args: { "p_role": string,"p_user": string,"p_workspace": string }; Returns: Json
                            },
 "shares_workspace_with":
 { Args: { "p_user": string }; Returns: boolean
@@ -652,6 +707,9 @@ isOneToOne: false
                            },
 "try_uuid":
 { Args: { "p_value": string }; Returns: string
+                           },
+"workspace_member_limit":
+{ Args: { "p_workspace": string }; Returns: number
                            },
 "workspace_plan":
 { Args: { "p_workspace": string }; Returns: {

@@ -132,7 +132,7 @@ export function WorkspacePlanAction({ workspaceId, workspaceName, currentPlan, p
   );
 }
 
-export type EditablePlan = { id: string; code: string; name: string; price: number; monthlyListingLimit: number; monthlyBulkLimit: number; maxProducts: number; maxTemplates: number; maxBulkRows: number; maxImagesPerProduct: number; isActive: boolean };
+export type EditablePlan = { id: string; code: string; name: string; price: number; monthlyListingLimit: number; monthlyBulkLimit: number; maxProducts: number; maxTemplates: number; maxBulkRows: number; maxImagesPerProduct: number; maxMembers: number; isActive: boolean };
 
 export function PlanEditor({ plan }: { plan: EditablePlan }) {
   const router = useRouter();
@@ -177,6 +177,7 @@ export function PlanEditor({ plan }: { plan: EditablePlan }) {
         {number("maxTemplates", "Máx. plantillas")}
         {number("maxBulkRows", "Máx. filas por CSV")}
         {number("maxImagesPerProduct", "Fotos por producto")}
+        {number("maxMembers", "Miembros del equipo")}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label className="flex items-center gap-2.5 text-sm">

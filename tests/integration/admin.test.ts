@@ -68,7 +68,7 @@ describe("panel de administración", () => {
 
   it("edita los límites de un plan desde la base de datos", async () => {
     const { data: plan } = await adminClient().from("plans").select("*").eq("code", "starter").single();
-    const body = { name: "Starter", price: 5.99, monthlyListingLimit: 120, monthlyBulkLimit: 0, maxProducts: 500, maxTemplates: 10, maxBulkRows: 0, maxImagesPerProduct: 6, isActive: true };
+    const body = { name: "Starter", price: 5.99, monthlyListingLimit: 120, monthlyBulkLimit: 0, maxProducts: 500, maxTemplates: 10, maxBulkRows: 0, maxImagesPerProduct: 6, maxMembers: 1, isActive: true };
     expect((await adminHttp.json(`/api/admin/plans/${plan!.id}`, { method: "PATCH", body })).status).toBe(200);
     const { data } = await target.client.rpc("get_usage_summary", { p_workspace: target.workspaceId });
     expect(data).toMatchObject({ monthly_listing_limit: 120 });

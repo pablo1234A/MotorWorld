@@ -52,6 +52,24 @@ export async function changePassword(context: SessionContext, currentPassword: s
   await audit(context.supabase, { workspaceId: context.workspace.id, action: "account.password_changed", resourceType: "user", resourceId: context.user.id });
 }
 
+/**
+ * Solicita el cambio de correo. Supabase envía un enlace de confirmación (a la dirección
+ * nueva y a la actual); el correo no cambia hasta que se confirma.
+ */
+export async function changeEmail(context: SessionContext, email: string, password: string) {
+  if (email === context.profile.email.toLowerCase()) throw new ApiError("validation_error", "Ese ya es tu correo actual.", { fields: { email: "Ese ya es tu correo actual." } });
+  if (!(await verifyPassword(context.profile.email, password))) {
+    throw new ApiError("validation_error", "La contraseña no es correcta.", { fields: { password: "La contraseña no es correcta." } });
+  }
+  const { error } = await context.supabase.auth.updateUser({ email }, { emailRedirectTo: `${getEnv().NEXT_PUBLIC_APP_URL}/auth/confirm` });
+  if (error) {
+    if (error.code === "email_exists") throw new ApiError("conflict", "Ya existe una cuenta con ese correo.", { fields: { email: "Ya existe una cuenta con ese correo." } });
+    if (error.status === 429) throw new ApiError("rate_limited", "Se han enviado demasiados correos. Espera unos minutos.");
+    throw new ApiError("bad_request", "No se pudo solicitar el cambio de correo.");
+  }
+  await audit(context.supabase, { workspaceId: context.workspace.id, action: "account.email_change_requested", resourceType: "user", resourceId: context.user.id });
+}
+
 export async function signOutOtherSessions(context: SessionContext) {
   const { error } = await context.supabase.auth.signOut({ scope: "others" });
   if (error) throw new ApiError("internal_error", "No se pudieron cerrar las otras sesiones.");

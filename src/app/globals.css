@@ -16,7 +16,8 @@
   --color-ink: #14171f;
   --color-ink-soft: #2b303b;
   --color-muted: #5d6472;
-  --color-faint: #8b919d;
+  /* 4.6:1 sobre papel: válido también para texto pequeño. */
+  --color-faint: #6c727e;
   --color-line: #e7e3da;
   --color-line-strong: #d6d1c5;
 
@@ -35,16 +36,22 @@
   --color-info-soft: #e8f0fa;
 
   --radius-card: 14px;
-  --shadow-card: 0 1px 2px rgb(20 23 31 / 0.04), 0 1px 1px rgb(20 23 31 / 0.03);
+  /* La elevación se declara una vez: las tarjetas usan borde; la sombra se reserva a lo que flota. */
+  --shadow-card: 0 1px 0 rgb(20 23 31 / 0.02);
   --shadow-raised: 0 12px 32px -12px rgb(20 23 31 / 0.18), 0 2px 6px rgb(20 23 31 / 0.05);
 
   --animate-rise: rise 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-reveal: reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade: fade 0.2s ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
 
   @keyframes rise {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes reveal {
+    from { opacity: 0; clip-path: inset(0 100% 0 0); }
+    to { opacity: 1; clip-path: inset(0 0 0 0); }
   }
   @keyframes fade {
     from { opacity: 0; }
@@ -77,6 +84,33 @@
     background: var(--color-brand);
     color: #fff;
   }
+  input, textarea, [contenteditable] {
+    caret-color: var(--color-brand);
+  }
+  a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: from-font;
+  }
+  table, [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-faint);
+  }
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
@@ -101,11 +135,6 @@
   background: linear-gradient(90deg, var(--color-sunken) 25%, #ebe7de 37%, var(--color-sunken) 63%);
   background-size: 400% 100%;
   animation: var(--animate-shimmer);
-}
-
-@utility dotgrid {
-  background-image: radial-gradient(circle at 1px 1px, rgb(20 23 31 / 0.07) 1px, transparent 0);
-  background-size: 22px 22px;
 }
 
 @utility prose-legal {

@@ -42,16 +42,18 @@ test("recorrido completo de un vendedor", async ({ page }) => {
 
   // 7. Se genera el anuncio automáticamente.
   const title = page.getByLabel("Título comercial");
-  await expect(title).toHaveValue(/Orbea Bicicleta de montaña/);
+  await expect(title).toHaveValue(/Bicicleta de montaña Orbea/);
   const description = page.getByLabel("Descripción completa");
   await expect(description).toHaveValue(/Arañazo en la vaina trasera/);
   await expect(description).toHaveValue(/Frenos de disco hidráulicos/);
-  await expect(page.getByText("Información que mejoraría este anuncio")).toBeVisible(); // sin fotos
+  // Medidor de calidad en vivo: sin fotografías no llega a 100 y explica cómo mejorar.
+  await expect(page.getByRole("region", { name: "Calidad del anuncio" })).toContainText("Al menos una fotografía");
+  expect(Number(await page.getByTestId("quality-score").innerText())).toBeLessThan(100);
 
   // Ajuste rápido: cambiar el tono (consume una generación).
   await page.getByRole("button", { name: "Cambiar tono" }).click();
   await page.getByRole("menuitem", { name: "Cercano" }).click();
-  await expect(description).toHaveValue(/¡Hola!/);
+  await expect(description).toHaveValue(/[Vv]endo bicicleta de montaña Orbea/);
 
   // 8-9. Lo edita a mano y lo guarda.
   await title.fill("Bicicleta Orbea revisada, lista para rodar");

@@ -1,6 +1,6 @@
 "use client";
 
-import { Keyboard, LogOut, Menu as MenuIcon, ShieldCheck, X } from "lucide-react";
+import { Check, ChevronsUpDown, Keyboard, LogOut, Menu as MenuIcon, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -13,6 +13,7 @@ import { cn, formatNumber } from "@/lib/utils";
 import { APP_NAV, SHORTCUTS } from "./nav";
 
 export type ShellUser = { name: string; email: string; avatarUrl: string | null; isAdmin: boolean };
+export type ShellWorkspace = { id: string; name: string; active: boolean };
 export type ShellUsage = { planName: string; used: number; limit: number; percent: number };
 
 function isActive(pathname: string, href: string, exact?: boolean) {
@@ -116,7 +117,39 @@ function useShortcuts(openHelp: () => void) {
   }, [router, openHelp]);
 }
 
-export function AppShell({ user, usage, children }: { user: ShellUser; usage: ShellUsage; children: ReactNode }) {
+function WorkspaceSwitcher({ workspaces }: { workspaces: ShellWorkspace[] }) {
+  const active = workspaces.find((workspace) => workspace.active) ?? workspaces[0];
+  if (!active) return null;
+  // Con un único espacio se muestra su nombre, sin desplegable.
+  if (workspaces.length < 2) return <p className="mx-3 mb-1 truncate px-3 text-[13px] font-medium text-muted">{active.name}</p>;
+  async function switchTo(workspaceId: string) {
+    try {
+      await api("/api/workspace/switch", { body: { workspaceId } });
+      window.location.assign("/app");
+    } catch {
+      toast.error("No se pudo cambiar de espacio de trabajo.");
+    }
+  }
+  return (
+    <Menu>
+      <MenuTrigger className="mx-3 mb-1 flex items-center justify-between gap-2 rounded-[10px] border border-line px-3 py-2 text-left text-[13px] font-medium hover:bg-sunken" aria-label="Cambiar de espacio de trabajo">
+        <span className="truncate">{active.name}</span>
+        <ChevronsUpDown className="size-3.5 shrink-0 text-muted" aria-hidden />
+      </MenuTrigger>
+      <MenuContent align="start" className="w-56">
+        <MenuLabel>Espacios de trabajo</MenuLabel>
+        {workspaces.map((workspace) => (
+          <MenuItem key={workspace.id} onSelect={() => !workspace.active && switchTo(workspace.id)}>
+            <span className="flex-1 truncate">{workspace.name}</span>
+            {workspace.active ? <Check aria-hidden /> : null}
+          </MenuItem>
+        ))}
+      </MenuContent>
+    </Menu>
+  );
+}
+
+export function AppShell({ user, usage, workspaces, children }: { user: ShellUser; usage: ShellUsage; workspaces: ShellWorkspace[]; children: ReactNode }) {
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
   const [help, setHelp] = useState(false);
@@ -136,6 +169,7 @@ export function AppShell({ user, usage, children }: { user: ShellUser; usage: Sh
       <div className="flex h-16 shrink-0 items-center px-5">
         <Logo href="/app" size="sm" />
       </div>
+      <WorkspaceSwitcher workspaces={workspaces} />
       <NavLinks pathname={pathname} onNavigate={onNavigate} />
       <UsageCard usage={usage} />
     </>

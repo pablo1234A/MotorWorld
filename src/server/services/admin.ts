@@ -253,7 +253,7 @@ export async function adminSetWorkspacePlan(actor: SessionContext, workspaceId: 
 export async function adminUpdatePlan(
   actor: SessionContext,
   planId: string,
-  input: { name: string; price: number; monthlyListingLimit: number; monthlyBulkLimit: number; maxProducts: number; maxTemplates: number; maxBulkRows: number; maxImagesPerProduct: number; isActive: boolean },
+  input: { name: string; price: number; monthlyListingLimit: number; monthlyBulkLimit: number; maxProducts: number; maxTemplates: number; maxBulkRows: number; maxImagesPerProduct: number; maxMembers: number; isActive: boolean },
 ) {
   const admin = getAdminClient();
   const { data: plan } = await admin.from("plans").select("*").eq("id", planId).maybeSingle();
@@ -265,6 +265,7 @@ export async function adminUpdatePlan(
     max_templates: input.maxTemplates,
     max_bulk_rows: input.maxBulkRows,
     max_images_per_product: input.maxImagesPerProduct,
+    max_members: input.maxMembers,
   };
   const { error } = await admin
     .from("plans")

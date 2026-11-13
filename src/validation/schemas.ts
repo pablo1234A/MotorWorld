@@ -284,6 +284,15 @@ export const adminPlanSchema = z.object({
   maxTemplates: z.coerce.number().int().min(0).max(100000),
   maxBulkRows: z.coerce.number().int().min(0).max(5000),
   maxImagesPerProduct: z.coerce.number().int().min(1).max(20),
+  maxMembers: z.coerce.number().int().min(1).max(500),
   isActive: z.boolean(),
 });
 export const adminListQuerySchema = z.object({ q: searchParam, page: pageParam, pageSize: pageSizeParam });
+
+// --- Equipo -----------------------------------------------------------------
+const memberRole = z.enum(["admin", "editor", "viewer"], { error: "Rol no válido" });
+export const inviteMemberSchema = z.object({ email: emailSchema, role: memberRole.default("editor") });
+export const memberRoleSchema = z.object({ role: memberRole });
+export const invitationActionSchema = z.object({ action: z.enum(["accept", "decline"]) });
+export const switchWorkspaceSchema = z.object({ workspaceId: uuid });
+export const changeEmailSchema = z.object({ email: emailSchema, password: z.string().min(1, "Introduce tu contraseña").max(200) });

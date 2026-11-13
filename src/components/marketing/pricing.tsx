@@ -23,7 +23,7 @@ export function planFeatureList(plan: PublicPlan): string[] {
       : "Generación individual",
     `Exportación: ${plan.features.exportFormats.map((format) => EXPORT_FORMAT_LABELS[format]).join(", ")}`,
   ];
-  if (plan.features.teamReady) items.push("Preparado para equipos (próximamente)");
+  if (plan.features.maxMembers > 1) items.push(`Equipo de hasta ${plan.features.maxMembers} personas con roles`);
   return items;
 }
 

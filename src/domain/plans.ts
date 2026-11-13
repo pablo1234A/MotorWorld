@@ -20,7 +20,8 @@ export type PlanFeatures = {
   maxBulkRows: number;
   maxImagesPerProduct: number;
   exportFormats: ExportFormat[];
-  teamReady: boolean;
+  /** Miembros máximos del espacio de trabajo, incluido el propietario. */
+  maxMembers: number;
 };
 
 export type UsageState = {
@@ -53,7 +54,7 @@ export function parsePlanFeatures(raw: unknown): PlanFeatures {
     maxBulkRows: toInt(source.max_bulk_rows, 0),
     maxImagesPerProduct: Math.max(1, toInt(source.max_images_per_product, 3)),
     exportFormats: formats.length > 0 ? formats : ["txt"],
-    teamReady: source.team_ready === true,
+    maxMembers: Math.max(1, toInt(source.max_members, 1)),
   };
 }
 

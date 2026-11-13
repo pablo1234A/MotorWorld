@@ -12,10 +12,12 @@ import { ConfirmDialog, Dialog, Menu, MenuContent, MenuItem, MenuTrigger, Toolti
 import { Badge, Card, CardHeader, Notice } from "@/components/ui/primitives";
 import { MARKETPLACE_OPTIONS, platformName } from "@/domain/marketplaces/profiles";
 import type { UsageState } from "@/domain/plans";
+import type { QualityFacts } from "@/domain/quality";
 import { LENGTHS, LENGTH_LABELS, LISTING_STATUS_LABELS, TONES, TONE_LABELS, type Language, type Length, type ListingStatus, type Tone } from "@/domain/product";
 import { htmlToPlain, looksLikeHtml } from "@/domain/text";
 import { ApiClientError, api, errorMessage, newIdempotencyKey } from "@/lib/api-client";
 import { cn, formatDateTime, formatNumber } from "@/lib/utils";
+import { QualityMeter } from "./quality-meter";
 
 export type EditorContent = {
   title: string;
@@ -38,6 +40,7 @@ type GenerateResponse = {
   options: EditorOptions;
   usage: UsageState;
   profile: ProfileInfo;
+  facts: QualityFacts;
 };
 
 type Props = {
@@ -48,6 +51,8 @@ type Props = {
   initialOptions: EditorOptions;
   /** Anuncio ya guardado (modo edición). Sin él, el editor trabaja sobre un borrador nuevo. */
   saved?: { id: string; content: EditorContent; status: ListingStatus; isFavorite: boolean; method: string; version: number; updatedAt: string; profile: ProfileInfo };
+  /** Datos del producto para el medidor de calidad (en borradores llegan con la primera generación). */
+  facts?: QualityFacts | null;
   /** Lanza la primera generación automáticamente al montar (flujo "Guardar y generar"). */
   autoGenerate?: boolean;
 };
@@ -67,12 +72,13 @@ function Counter({ value, max }: { value: number; max?: number }) {
 
 const lines = (value: string) => value.split("\n").map((line) => line.trim()).filter(Boolean);
 
-export function ListingEditor({ product, templates, usage: initialUsage, providerLabel, initialOptions, saved, autoGenerate }: Props) {
+export function ListingEditor({ product, templates, usage: initialUsage, providerLabel, initialOptions, saved, facts: initialFacts, autoGenerate }: Props) {
   const router = useRouter();
   const [content, setContent] = useState<EditorContent>(saved?.content ?? EMPTY);
   const [options, setOptions] = useState<EditorOptions>(initialOptions);
   const [profile, setProfile] = useState<ProfileInfo | null>(saved?.profile ?? null);
   const [usage, setUsage] = useState(initialUsage);
+  const [facts, setFacts] = useState<QualityFacts | null>(initialFacts ?? null);
   const [missingInfo, setMissingInfo] = useState<string[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [method, setMethod] = useState<string>(saved?.method ?? "template");
@@ -117,6 +123,7 @@ export function ListingEditor({ product, templates, usage: initialUsage, provide
       setContent((current) => (operation === "improve_title" ? { ...current, title: listing.title } : listing));
       setOptions({ ...requestOptions, tone: result.options.tone, length: result.options.length, language: result.options.language, platform: result.options.platform, templateId: result.options.templateId });
       setProfile(result.profile);
+      setFacts(result.facts);
       setMissingInfo(missing);
       setWarnings(warns);
       setMethod(usedMethod);
@@ -378,7 +385,7 @@ export function ListingEditor({ product, templates, usage: initialUsage, provide
 
       {generated ? (
         <>
-          {missingInfo.length > 0 ? (
+          {missingInfo.length > 0 && !(facts && profile) ? (
             <Notice tone="warning" title="Información que mejoraría este anuncio">
               <ul className="mt-1 list-inside list-disc space-y-0.5">
                 {missingInfo.map((item) => (
@@ -398,6 +405,11 @@ export function ListingEditor({ product, templates, usage: initialUsage, provide
                 <span>{warnings.join(" ")}</span>
               </span>
             </Notice>
+          ) : null}
+
+          {facts && profile ? <QualityMeter content={content} facts={facts} limits={profile} productHref={`/app/productos/${product.id}`} /> : null}
+          {facts && profile && missingInfo.length > 0 ? (
+            <p className="-mt-2 px-1 text-[13px] text-muted">El generador no inventa datos: la información que falta se ha omitido del texto.</p>
           ) : null}
 
           <Card className={cn("transition-opacity", working && busy !== "save" && "opacity-60")} aria-busy={working}>

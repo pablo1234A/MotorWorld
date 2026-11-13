@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError, Input, fieldAria } from "@/components/ui/form";
 import { ConfirmDialog, Dialog } from "@/components/ui/overlays";
 import { ApiClientError, api, errorMessage } from "@/lib/api-client";
-import { changePasswordSchema, deleteAccountSchema, profileSchema, workspaceSchema } from "@/validation/schemas";
+import { changeEmailSchema, changePasswordSchema, deleteAccountSchema, profileSchema, workspaceSchema } from "@/validation/schemas";
 
 export function ProfileForm({ fullName, email, avatarUrl }: { fullName: string; email: string; avatarUrl: string | null }) {
   const router = useRouter();
@@ -92,7 +92,7 @@ export function ProfileForm({ fullName, email, avatarUrl }: { fullName: string; 
         <Field label="Nombre" htmlFor="profile-name" error={errors.fullName?.message}>
           <Input autoComplete="name" {...fieldAria("profile-name", errors.fullName?.message)} {...register("fullName")} />
         </Field>
-        <Field label="Correo electrónico" htmlFor="profile-email" hint="Para cambiar el correo, escríbenos desde Contacto.">
+        <Field label="Correo electrónico" htmlFor="profile-email" hint={<ChangeEmail current={email} />}>
           <Input id="profile-email" value={email} disabled readOnly />
         </Field>
       </div>
@@ -100,6 +100,78 @@ export function ProfileForm({ fullName, email, avatarUrl }: { fullName: string; 
         Guardar perfil
       </Button>
     </form>
+  );
+}
+
+function ChangeEmail({ current }: { current: string }) {
+  const [open, setOpen] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<z.input<typeof changeEmailSchema>>({ resolver: zodResolver(changeEmailSchema), defaultValues: { email: "", password: "" } });
+
+  return (
+    <>
+      <button type="button" className="font-medium text-brand-strong hover:underline" onClick={() => setOpen(true)}>
+        Cambiar correo
+      </button>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) {
+            setSentTo(null);
+            reset();
+          }
+        }}
+        title="Cambiar correo electrónico"
+        description={sentTo ? undefined : `Tu correo actual es ${current}. El cambio no se aplica hasta que lo confirmes desde el enlace que te enviaremos.`}
+        size="sm"
+      >
+        {sentTo ? (
+          <p className="text-sm leading-relaxed text-ink-soft" role="status">
+            Te hemos enviado un enlace de confirmación a <strong>{sentTo}</strong> y otro a tu correo actual. Abre ambos para completar el cambio; hasta entonces seguirás entrando con {current}.
+          </p>
+        ) : (
+          <form
+            noValidate
+            className="space-y-4"
+            onSubmit={handleSubmit(async (values) => {
+              setFormError(null);
+              try {
+                await api("/api/account/email", { body: values });
+                setSentTo(values.email);
+              } catch (error) {
+                if (error instanceof ApiClientError && Object.keys(error.fields).length > 0) {
+                  for (const [field, message] of Object.entries(error.fields)) setError(field as "email" | "password", { message });
+                } else setFormError(errorMessage(error));
+              }
+            })}
+          >
+            <FormError message={formError} />
+            <Field label="Nuevo correo electrónico" htmlFor="email-new" error={errors.email?.message}>
+              <Input type="email" autoComplete="email" {...fieldAria("email-new", errors.email?.message)} {...register("email")} />
+            </Field>
+            <Field label="Tu contraseña" htmlFor="email-password" error={errors.password?.message}>
+              <Input type="password" autoComplete="current-password" {...fieldAria("email-password", errors.password?.message)} {...register("password")} />
+            </Field>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="secondary" onClick={() => setOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" loading={isSubmitting}>
+                Enviar confirmación
+              </Button>
+            </div>
+          </form>
+        )}
+      </Dialog>
+    </>
   );
 }
 

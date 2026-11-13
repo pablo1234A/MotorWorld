@@ -12,7 +12,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">{children}</div>
       </main>
       <aside className="relative hidden overflow-hidden bg-ink text-white lg:block">
-        <div className="dotgrid absolute inset-0 opacity-30 invert" aria-hidden />
         <div className="relative flex h-full flex-col justify-end p-12">
           <p className="font-display text-3xl font-semibold leading-tight">Menos tiempo redactando, más tiempo vendiendo.</p>
           <ul className="mt-8 space-y-3.5">

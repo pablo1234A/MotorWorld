@@ -69,7 +69,7 @@ function inSentence(name: string, product: GenerationProduct): string {
  * en el resto, detrás («Abrigo de lana Mango»), que es como se busca y se lee.
  */
 function baseName(product: GenerationProduct): string {
-  let name = capitalizeName(sanitizeLine(product.name, 200));
+  const name = capitalizeName(sanitizeLine(product.name, 200));
   const brand = sanitizeLine(product.brand, 120);
   const model = sanitizeLine(product.model, 120);
   const brandFirst = BRAND_FIRST.has(familyOf(product.categorySlug));
