@@ -37,6 +37,7 @@
 | Cambiar límites o precio informativo de un plan | `/admin/planes` (se aplica al instante; la página pública de precios se refresca en ≤ 5 min) |
 | Asignar un plan sin cobro | `/admin/espacios` → Cambiar plan (con motivo, queda auditado) |
 | Desactivar una cuenta | `/admin/usuarios` → Desactivar (exige causa; bloquea login y acceso a datos al instante) |
+| Cambiar el límite de miembros de un plan | `/admin/planes` → «Miembros del equipo» |
 | Conceder/retirar administrador | `pnpm admin:grant correo [--revoke]` |
 | Añadir una categoría o atributo del sistema | Nueva migración con `insert into categories/category_attributes` (ver `20261110000400_reference_data.sql`) |
 | Ajustar un perfil de marketplace | `src/domain/marketplaces/profiles.ts` + pruebas |

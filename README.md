@@ -2,11 +2,12 @@
 
 Plataforma SaaS para crear, optimizar, organizar y preparar anuncios de productos de cualquier categoría: desde un particular que vende su móvil hasta una tienda que gestiona miles de referencias.
 
-- **Generador universal** con formularios adaptados a cada categoría (atributos dinámicos) y un motor que **no inventa datos**.
+- **Generador universal** con formularios adaptados a cada categoría (atributos dinámicos) y un motor que **no inventa datos**: redacción natural por tipo de producto, otra versión del texto al regenerar y **medidor de calidad** en vivo.
 - **Generación masiva** desde CSV: mapeo de columnas, validación por fila, procesamiento por lotes, reintentos y exportación.
 - **Perfiles de marketplace** (Wallapop, Vinted, eBay, Shopify, Facebook Marketplace y plantillas propias) para adaptar, copiar y exportar. Sin integraciones oficiales ni publicación automática.
 - **Catálogo** con búsqueda, filtros, paginación en servidor, edición en lote, archivo y fotografías privadas.
 - **Planes y límites** controlados en la base de datos con operaciones atómicas. **Stripe integrado y desactivado** (`PAYMENTS_ENABLED=false`).
+- **Equipos**: invitaciones por enlace, roles (administrador, editor, solo lectura) y cambio de espacio de trabajo.
 - **Panel de administración** separado y validado en servidor.
 - **Seguridad**: RLS en todas las tablas privadas, aislamiento por espacio de trabajo, CSRF, limitación de peticiones, validación de archivos por contenido, auditoría.
 
@@ -55,6 +56,7 @@ pnpm dev                      # http://127.0.0.1:3000
 | `pnpm test` | Pruebas unitarias |
 | `pnpm test:integration` | Pruebas contra Supabase local y el servidor (`pnpm build && pnpm start` antes) |
 | `pnpm test:e2e` | Pruebas E2E con Playwright |
+| `pnpm test:load` | Prueba de carga local (autocannon) |
 | `pnpm check:env` | Comprueba variables de entorno antes de desplegar |
 | `pnpm db:reset` | Recrea la base de datos local aplicando todas las migraciones |
 | `pnpm db:push` | Aplica las migraciones al proyecto de Supabase enlazado |

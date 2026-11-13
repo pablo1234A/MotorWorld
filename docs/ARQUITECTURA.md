@@ -72,6 +72,7 @@ flowchart LR
 ```
 domain/generation/
   types.ts               Contrato GenerationProvider + GenerationSystemError
+  copy.ts                Banco de redacción: frases por tipo de producto, estado y tono
   template-provider.ts   Plantillas y reglas (por defecto, sin IA)
   anthropic-provider.ts  Proveedor de IA (salida estructurada validada con Zod)
   registry.ts            Selección según AI_PROVIDER
@@ -80,6 +81,8 @@ domain/generation/
 - **Entrada**: `GenerationProduct` construido en servidor solo con datos del producto guardado (incluidos atributos resueltos con unidades y atributos obligatorios ausentes).
 - **Salida**: título, descripción completa y breve, características destacadas, puntos de venta, palabras clave, información del estado, CTA, información que falta y avisos.
 - **Reglas que no dependen del proveedor**: los defectos se incluyen siempre; los límites de la plataforma se aplican con `adaptListing`; la información ausente y el texto del estado se calculan con reglas locales también cuando se usa IA.
+- **Redacción natural sin inventar**: `copy.ts` convierte los atributos en frases («128 GB de almacenamiento y color azul»), coloca la marca según la categoría y elige entre alternativas con una semilla determinista: dos productos no se leen igual y «Volver a generar» (`variation`) ofrece otro texto con los mismos datos. Una matriz de pruebas recorre todos los tonos, extensiones, variaciones y plataformas verificando que no aparece ningún hecho no aportado.
+- **Medidor de calidad** (`domain/quality.ts`): puntuación 0–100 con comprobaciones objetivas (longitudes, precio, fotos, datos clave, transparencia del estado) que se recalcula en el navegador mientras se edita.
 - **Añadir un modelo**: implementar `GenerationProvider` y registrarlo en `registry.ts`. Las claves nunca llegan al navegador.
 - **Errores**: un fallo del proveedor lanza `GenerationSystemError`; el servicio devuelve la cuota consumida (`refund_usage`).
 
@@ -129,5 +132,5 @@ sequenceDiagram
 | Cálculo de márgenes y comparación de precios | `cost_price` y margen estimado ya existen |
 | Detección de duplicados | Índice trigram sobre `products.name` ya creado |
 | API pública | Los Route Handlers ya exponen contratos JSON; faltaría autenticación por clave de API |
-| Gestión de equipos | `workspace_members` con roles y políticas RLS por rol |
+| Equipos más amplios (SSO, permisos por recurso) | Ya existen invitaciones, roles y cambio de espacio; los roles viven en `workspace_members` |
 | Sincronización de inventario / integraciones oficiales | Adaptadores de publicación (ver arriba) |

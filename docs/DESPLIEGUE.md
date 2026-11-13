@@ -95,7 +95,7 @@ Los proveedores cambian sus condiciones; verifica los valores actuales en sus p�
 | Vercel Hobby | Funciones serverless con límite de duración y de ejecuciones, crons solo diarios | **Uso no comercial**: para un SaaS de pago se necesita un plan de pago |
 | Stripe | Sin cuota fija | Comisión por transacción |
 
-No se han hecho pruebas de carga: no hay cifras verificadas de usuarios simultáneos soportados.
+Solo se han hecho pruebas de carga en local (TESTING.md): no hay cifras verificadas de usuarios simultáneos sobre infraestructura real.
 
 ## 9. Lista de comprobación final
 

@@ -11,8 +11,10 @@ PostgreSQL 17 gestionado por Supabase. Identificadores UUID, fechas `timestamptz
 | `20261110000300_storage.sql` | Buckets privados y políticas de Storage |
 | `20261110000400_reference_data.sql` | Planes (Free, Starter, Pro, Business), 53 categorías y 103 atributos |
 | `20261110000500_contact_messages.sql` | Mensajes del formulario de contacto |
+| `20261113000600_teams.sql` | Invitaciones, gestión de miembros y límite de miembros por plan |
+| `20261113000700_rls_performance.sql` | Políticas RLS basadas en conjuntos (una evaluación por consulta), índices y estadísticas optimizadas |
 
-Las cinco migraciones se han aplicado y probado en la base de datos **local** (`supabase db reset`). En un proyecto de Supabase en la nube **no se han aplicado**: hay que hacerlo con `pnpm db:push` (ver DESPLIEGUE.md).
+Las siete migraciones se han aplicado y probado en la base de datos **local** (`supabase db reset`). En un proyecto de Supabase en la nube **no se han aplicado**: hay que hacerlo con `pnpm db:push` (ver DESPLIEGUE.md).
 
 ## Diagrama de relaciones
 
@@ -22,6 +24,7 @@ erDiagram
   profiles ||--o{ workspaces : "owner_id"
   profiles ||--o| platform_admins : ""
   workspaces ||--o{ workspace_members : ""
+  workspaces ||--o{ workspace_invitations : ""
   profiles ||--o{ workspace_members : ""
   workspaces ||--|| subscriptions : ""
   plans ||--o{ subscriptions : ""
@@ -65,6 +68,7 @@ erDiagram
 | `stripe_events` | Idempotencia de webhooks | Estado `processing`/`processed`/`failed`. |
 | `audit_logs` | Auditoría | Lectura para propietarios del espacio y administración. |
 | `rate_limit_buckets` | Limitación de peticiones compartida entre instancias | Solo `service_role`. |
+| `workspace_invitations` | Invitaciones pendientes a un espacio | Enlace con token secreto; única por espacio y correo; caduca a los 14 días. Solo se escribe mediante funciones. |
 | `contact_messages` | Formulario de contacto | Escritura solo mediante función; lectura solo `service_role`. |
 
 ## Funciones principales
@@ -72,7 +76,9 @@ erDiagram
 | Función | Quién la usa | Qué garantiza |
 |---|---|---|
 | `handle_new_user()` (trigger) | Auth | Perfil + espacio + membresía de propietario + suscripción Free en la misma transacción |
-| `is_workspace_member`, `can_edit_workspace`, `can_manage_workspace` | Políticas RLS | Pertenencia y rol; excluyen cuentas desactivadas |
+| `user_workspace_ids(rol_mínimo)` | Políticas RLS | Conjunto de espacios del usuario (se evalúa una vez por consulta); excluye cuentas desactivadas |
+| `is_workspace_member`, `can_edit_workspace`, `can_manage_workspace` | Funciones de negocio y Storage | Pertenencia y rol; excluyen cuentas desactivadas |
+| `invite_member`, `accept_invitation`, `revoke_invitation`, `decline_invitation`, `set_member_role`, `remove_member` | Equipo | Permisos por rol, límite de miembros del plan (atómico) y aceptación solo por el correo invitado |
 | `workspace_plan`, `workspace_usage_period`, `workspace_usage_state` | Internas | Plan vigente (Free si la suscripción no da acceso) y periodo: mes natural UTC o periodo de facturación de Stripe |
 | `consume_usage(workspace, op, key)` | Generación individual | Atómica, idempotente, nunca supera el límite |
 | `refund_usage(workspace, key)` | Servidor (`service_role`) | Devolución única por errores del sistema |
@@ -94,3 +100,7 @@ Todas las funciones `SECURITY DEFINER` fijan `search_path = ''` y se revoca `EXE
 - Borrar una plantilla → los anuncios conservan su contenido (`template_id` nulo).
 - Borrar una categoría personalizada → los productos quedan sin categoría.
 - Auditoría: conserva el registro con referencias nulas (`ON DELETE SET NULL`).
+
+## Rendimiento de las políticas
+
+Las políticas usan `workspace_id in (select public.user_workspace_ids())`. PostgreSQL calcula ese conjunto una sola vez por consulta y lo combina con los índices por `workspace_id`, en lugar de ejecutar una función por cada fila. En la prueba de carga local con 2.000 productos, el panel pasó de ~2 a ~43 peticiones/s tras este cambio (ver TESTING.md). Al añadir tablas nuevas, sigue este patrón.

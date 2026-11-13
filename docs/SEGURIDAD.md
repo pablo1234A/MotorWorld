@@ -13,6 +13,7 @@
 | Acceso entre cuentas | RLS por membresía en todas las tablas privadas; claves foráneas compuestas `(id, workspace_id)`; 404 en recursos ajenos | Migración 0002, servicios | `rls-isolation.test.ts`, `api.test.ts`, `dos-usuarios.spec.ts` |
 | Manipulación de identificadores | `workspace_id`, `created_by`, `product_id` forzados por triggers; esquemas Zod sin esos campos | Triggers `*_before_write` | `rls-isolation`, `api` |
 | Escalada de privilegios | `platform_admins` sin políticas (solo `service_role`); privilegios por columna en `profiles`; admin validado en servidor; sin endpoint para concederlo | Migración 0002, `session.ts` | `rls-isolation`, `admin.test.ts` |
+| Equipos | Membresías e invitaciones solo mediante funciones con comprobación de rol; el enlace de invitación solo lo acepta la cuenta con el correo invitado; el espacio activo (cookie) se valida contra las membresías | Migración 0006, `session.ts` | `teams.test.ts`, `equipo.spec.ts` |
 | Modificación del plan o consumo | `subscriptions`, `usage_records`, `plans` de solo lectura; consumo mediante funciones atómicas | Migración 0002 | `rls-isolation`, `usage-and-jobs` |
 | Abuso concurrente del límite | Bloqueo `FOR UPDATE` de la suscripción + clave de idempotencia única | `consume_usage` | 25 peticiones simultáneas → exactamente el límite |
 | SQL injection | Consultas parametrizadas (PostgREST/supabase-js); términos de búsqueda saneados para los filtros `or()`; funciones con `search_path` vacío | `sanitizeSearch`, migraciones | `security.test.ts`, `api.test.ts` |

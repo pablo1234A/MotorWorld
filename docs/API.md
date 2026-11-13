@@ -43,7 +43,22 @@ Todas las rutas son Route Handlers de Next.js bajo `/api`. Formato JSON:
 | `POST/DELETE /api/account/avatar` | multipart `file` (JPG/PNG/WebP ≤ 2 MB) | 40/min |
 | `DELETE /api/account/sessions` | Cierra las demás sesiones | — |
 | `POST /api/account/onboarding` | Marca la bienvenida como vista | — |
+| `POST /api/account/email` | `{email, password}` → envía enlaces de confirmación; el correo cambia al confirmarlos | 10/h por usuario |
 | `PATCH /api/workspace` | `{name}` (propietario/administrador) | — |
+| `POST /api/workspace/switch` | `{workspaceId}` → cambia el espacio activo (solo si eres miembro) | — |
+
+## Equipo
+
+| Método y ruta | Descripción |
+|---|---|
+| `GET /api/team/invitations` | Miembros, invitaciones pendientes y plazas del plan |
+| `POST /api/team/invitations` | `{email, role: admin|editor|viewer}` → crea la invitación y devuelve su enlace (propietario/administrador; 10/h) |
+| `DELETE /api/team/invitations/{id}` | Anula una invitación |
+| `PATCH /api/team/members/{userId}` | `{role}` — solo el propietario gestiona administradores |
+| `DELETE /api/team/members/{userId}` | Quita a un miembro o, con tu propio id, abandona el espacio |
+| `POST /api/invitations/{token}` | `{action: accept|decline}` — solo la cuenta con el correo invitado |
+
+El espacio activo se guarda en la cookie `ap_workspace`, que el servidor **solo acepta si el usuario es miembro** de ese espacio; en otro caso se usa su espacio propio.
 
 ## Catálogo
 
@@ -62,7 +77,7 @@ Todas las rutas son Route Handlers de Next.js bajo `/api`. Formato JSON:
 
 | Método y ruta | Descripción |
 |---|---|
-| `POST /api/generate` | `{productId, operation: generate|regenerate|tone|shorten|expand|improve_title, options: {platform, templateId, tone, length, language, titleVariant}, idempotencyKey}` → contenido + consumo. No guarda: el anuncio se guarda con `POST /api/listings`. Consume 1 generación (idempotente por clave). |
+| `POST /api/generate` | `{productId, operation: generate|regenerate|tone|shorten|expand|improve_title, options: {platform, templateId, tone, length, language, titleVariant, variation}, idempotencyKey}` → contenido + consumo + datos del medidor de calidad. `variation` cambia la redacción con los mismos datos. No guarda: el anuncio se guarda con `POST /api/listings`. Consume 1 generación (idempotente por clave). |
 | `GET /api/listings` | `q, status, platform, product, favorites=1, sort, page, pageSize` |
 | `POST /api/listings` | Guarda un anuncio (HTML saneado en servidor) |
 | `GET/PATCH/DELETE /api/listings/{id}` | Cada cambio de contenido crea una versión |
