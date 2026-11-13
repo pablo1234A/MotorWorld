@@ -324,6 +324,7 @@ export function toGenerationProduct(product: Row<"products">, catalog: CategoryC
     name: product.name,
     category: path.category,
     subcategory: path.subcategory,
+    categorySlug: path.slug,
     brand: product.brand,
     model: product.model,
     price: product.price,

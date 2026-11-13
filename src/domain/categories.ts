@@ -41,12 +41,13 @@ export function attributesForCategory(catalog: CategoryCatalog, categoryId: stri
   return [...own, ...inherited].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "es"));
 }
 
-export function categoryPath(catalog: CategoryCatalog, categoryId: string | null | undefined): { category: string | null; subcategory: string | null } {
+export function categoryPath(catalog: CategoryCatalog, categoryId: string | null | undefined): { category: string | null; subcategory: string | null; slug: string | null } {
   const category = findCategory(catalog, categoryId);
-  if (!category) return { category: null, subcategory: null };
-  if (!category.parentId) return { category: category.name, subcategory: null };
+  if (!category) return { category: null, subcategory: null, slug: null };
+  const slugOf = (node: CategoryNode) => (node.isCustom ? null : node.slug);
+  if (!category.parentId) return { category: category.name, subcategory: null, slug: slugOf(category) };
   const parent = findCategory(catalog, category.parentId);
-  return { category: parent?.name ?? category.name, subcategory: parent ? category.name : null };
+  return { category: parent?.name ?? category.name, subcategory: parent ? category.name : null, slug: parent ? slugOf(parent) : slugOf(category) };
 }
 
 const CUSTOM_KEY = /^[a-z][a-z0-9_]{0,59}$/;

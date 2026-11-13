@@ -5,6 +5,7 @@ import { templateProvider } from "@/domain/generation/template-provider";
 import { GenerationSystemError, TITLE_VARIANTS, type GeneratedListing, type GenerationOptions } from "@/domain/generation/types";
 import type { MarketplaceProfile } from "@/domain/marketplaces/profiles";
 import type { UsageState } from "@/domain/plans";
+import { qualityFacts, type QualityFacts } from "@/domain/quality";
 import type { Language, Length, Tone } from "@/domain/product";
 import { logger } from "@/lib/logger";
 import type { Row } from "@/lib/supabase/types";
@@ -17,11 +18,11 @@ import { toGenerationProduct } from "./products";
 import { resolveListingProfile } from "./templates";
 import { consumeUsage, refundUsage } from "./usage";
 
-export type ResolvedOptions = { tone: Tone; length: Length; language: Language; titleVariant: number };
+export type ResolvedOptions = { tone: Tone; length: Length; language: Language; titleVariant: number; variation: number };
 
 export function resolveOptions(
   profile: MarketplaceProfile,
-  requested: { tone?: Tone; length?: Length; language?: Language; titleVariant?: number },
+  requested: { tone?: Tone; length?: Length; language?: Language; titleVariant?: number; variation?: number },
 ): ResolvedOptions {
   return {
     tone: requested.tone ?? profile.defaultTone ?? "professional",
@@ -29,6 +30,7 @@ export function resolveOptions(
     language: requested.language ?? profile.language,
     // La variante 0 respeta la estructura propia del perfil; "Mejorar título" rota desde ahí.
     titleVariant: (profile.titleVariant + (requested.titleVariant ?? 0)) % TITLE_VARIANTS,
+    variation: requested.variation ?? 0,
   };
 }
 
@@ -39,14 +41,25 @@ export async function generateContent(
   imageCount: number,
   profile: MarketplaceProfile,
   options: ResolvedOptions,
-): Promise<GeneratedListing> {
+): Promise<GeneratedListing & { facts: QualityFacts }> {
   const generationOptions: GenerationOptions = { ...options, profile: { ...profile, language: options.language } };
   const input = toGenerationProduct(product, catalog, imageCount, options.language);
-  return getGenerationProvider().generate(input, generationOptions);
+  const listing = await getGenerationProvider().generate(input, generationOptions);
+  return { ...listing, facts: qualityFacts(input) };
+}
+
+/** Datos del producto que necesita el medidor de calidad de un anuncio ya guardado. */
+export async function getQualityFacts(context: SessionContext, productId: string): Promise<QualityFacts | null> {
+  const { data } = await context.supabase.from("products").select("*, product_images(count)").eq("id", productId).eq("workspace_id", context.workspace.id).maybeSingle();
+  if (!data) return null;
+  const { product_images: images, ...row } = data;
+  const catalog = await loadCategoryCatalog(context.supabase);
+  return qualityFacts(toGenerationProduct(row, catalog, images[0]?.count ?? 0, "es"));
 }
 
 export type GenerateResult = {
   listing: GeneratedListing;
+  facts: QualityFacts;
   options: ResolvedOptions & { platform: string; templateId: string | null };
   usage: UsageState;
   profile: { name: string; titleMaxLength: number; descriptionMaxLength: number; rules: string[] };
@@ -90,8 +103,9 @@ export async function generateForProduct(context: SessionContext, input: Generat
 
   const { product_images: images, ...row } = product;
   let listing: GeneratedListing;
+  let facts: QualityFacts;
   try {
-    listing = await generateContent(row, catalog, images[0]?.count ?? 0, resolved.profile, options);
+    ({ facts, ...listing } = await generateContent(row, catalog, images[0]?.count ?? 0, resolved.profile, options));
   } catch (cause) {
     const refunded = await refundUsage(workspace.id, usageKey);
     logger.error("generation.failed", { workspaceId: workspace.id, productId: product.id, refunded, error: cause });
@@ -101,6 +115,7 @@ export async function generateForProduct(context: SessionContext, input: Generat
 
   return {
     listing,
+    facts,
     options: { ...options, platform: resolved.platform, templateId: resolved.templateId },
     usage: consumed.usage,
     profile: {

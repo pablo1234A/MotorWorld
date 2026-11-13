@@ -23,8 +23,8 @@ describe("categorías y atributos", () => {
   });
 
   it("resuelve la ruta categoría/subcategoría", () => {
-    expect(categoryPath(catalog, "c2")).toEqual({ category: "Vehículos", subcategory: "Coches" });
-    expect(categoryPath(catalog, "c1")).toEqual({ category: "Vehículos", subcategory: null });
+    expect(categoryPath(catalog, "c2")).toEqual({ category: "Vehículos", subcategory: "Coches", slug: "vehiculos" });
+    expect(categoryPath(catalog, "c1")).toEqual({ category: "Vehículos", subcategory: null, slug: "vehiculos" });
   });
 
   it("valida y normaliza tipos", () => {

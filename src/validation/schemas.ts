@@ -139,12 +139,13 @@ export const generationOptionsSchema = z.object({
   length: z.enum(LENGTHS).optional(),
   language: z.enum(LANGUAGES).optional(),
   titleVariant: z.number().int().min(0).max(50).default(0),
+  variation: z.number().int().min(0).max(1000).default(0),
 });
 
 export const generateSchema = z.object({
   productId: uuid,
   operation: z.enum(["generate", "regenerate", "tone", "shorten", "expand", "improve_title"]).default("generate"),
-  options: generationOptionsSchema.default({ platform: "generic", templateId: null, titleVariant: 0 }),
+  options: generationOptionsSchema.default({ platform: "generic", templateId: null, titleVariant: 0, variation: 0 }),
   // Clave generada por el cliente por cada pulsación: un reintento técnico no consume dos veces.
   idempotencyKey: z.string().regex(/^[A-Za-z0-9_-]{16,80}$/, "Clave de idempotencia no válida"),
 });
@@ -258,7 +259,7 @@ export const importValidateSchema = z.object({
 
 export const jobCreateSchema = importValidateSchema.extend({
   filename: z.string().trim().max(255).default("importacion.csv"),
-  options: generationOptionsSchema.omit({ titleVariant: true }).default({ platform: "generic", templateId: null }),
+  options: generationOptionsSchema.omit({ titleVariant: true, variation: true }).default({ platform: "generic", templateId: null }),
 });
 
 export const jobListQuerySchema = z.object({ page: pageParam, pageSize: pageSizeParam });

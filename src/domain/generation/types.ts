@@ -7,6 +7,8 @@ export type GenerationProduct = {
   name: string;
   category: string | null;
   subcategory: string | null;
+  /** Slug de la categoría principal del sistema (define el estilo de redacción). */
+  categorySlug?: string | null;
   brand: string | null;
   model: string | null;
   price: number | null;
@@ -29,6 +31,8 @@ export type GenerationOptions = {
   language: Language;
   /** Variante de estructura del título; "Mejorar título" rota entre variantes. */
   titleVariant: number;
+  /** Semilla de redacción: «Volver a generar» la incrementa para obtener otro texto con los mismos datos. */
+  variation?: number;
   profile: MarketplaceProfile;
 };
 

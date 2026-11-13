@@ -28,7 +28,7 @@ export type EditorContent = {
   cta: string;
 };
 
-export type EditorOptions = { platform: string; templateId: string | null; tone: Tone; length: Length; language: Language; titleVariant: number };
+export type EditorOptions = { platform: string; templateId: string | null; tone: Tone; length: Length; language: Language; titleVariant: number; variation?: number };
 export type TemplateOption = { id: string; name: string; platform: string };
 export type ProfileInfo = { name: string; titleMaxLength: number; descriptionMaxLength: number; rules: string[] };
 type Version = { id: string; version_number: number; title: string; description: string; platform: string; generation_method: string; created_at: string };
@@ -108,7 +108,7 @@ export function ListingEditor({ product, templates, usage: initialUsage, provide
         body: {
           productId: product.id,
           operation,
-          options: { platform: requestOptions.platform, templateId: requestOptions.templateId, tone: requestOptions.tone, length: requestOptions.length, language: requestOptions.language, titleVariant: requestOptions.titleVariant },
+          options: { platform: requestOptions.platform, templateId: requestOptions.templateId, tone: requestOptions.tone, length: requestOptions.length, language: requestOptions.language, titleVariant: requestOptions.titleVariant, variation: requestOptions.variation ?? 0 },
           idempotencyKey: newIdempotencyKey(),
         },
       });
@@ -336,7 +336,7 @@ export function ListingEditor({ product, templates, usage: initialUsage, provide
               <option value="en">Inglés</option>
             </Select>
           </Field>
-          <Button variant="brand" onClick={() => request(generated ? "regenerate" : "generate")} loading={busy === "generate" || busy === "regenerate"} disabled={working || outOfQuota}>
+          <Button variant="brand" onClick={() => request(generated ? "regenerate" : "generate", generated ? { variation: (options.variation ?? 0) + 1 } : {})} loading={busy === "generate" || busy === "regenerate"} disabled={working || outOfQuota}>
             {generated ? <RefreshCw aria-hidden /> : <Sparkles aria-hidden />}
             {generated ? "Volver a generar" : "Generar anuncio"}
           </Button>
