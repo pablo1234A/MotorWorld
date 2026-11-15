@@ -4,12 +4,19 @@
 | Control | Resultado | Estado |
 |---|---|---|
 | Resolución / fps | 1080 × 1920, 30 fps, H.264 yuv420p | OK |
-| Duración | 73,3 s | OK (algo más largo que la v1 por los 4 remates de humor) |
+| Duración | 75,7 s | OK (más largo que la v1 por los 4 remates de humor) |
 | Audio | AAC 192 kbps, 48 kHz, estéreo | OK |
-| Sonoridad integrada | −14,1 LUFS (EBU R128) | OK (objetivo de redes: −14) |
-| Pico real | −1,3 dBFS | OK (sin clipping) |
+| Sonoridad integrada | −14,0 LUFS (EBU R128) | OK (objetivo de redes: −14) |
+| Pico real | −1,2 dBFS | OK (sin clipping) |
 | Decodificación completa | `ffmpeg -v error -f null` sin errores | OK |
 | Inteligibilidad de la voz | Transcripción automática (Whisper *small*) del MP4 final: ver `asr_transcripcion_whisper.txt` | OK: reconoce el texto casi completo pese a la música |
+
+## Versión 3: voz de narrador al estilo de la referencia
+- La voz **no es un clon** del narrador de `referencia_estilo.mp4`: es una voz original creada a partir de la voz CC0 «davefx», ajustada para parecerse a su **estilo** medido (voz grave de hombre, ≈106 Hz; ritmo rápido, 3,4 pal/s; entonación muy expresiva).
+- Resultado: ≈110 Hz, 3,18 palabras/s y expresividad alta (exaggeration 0,8; 0,95 en los remates). Rubberband con tempo ×1,18 y tono −1,5 semitonos, conservando los formantes.
+- «DGT» se dice «Tráfico» en la narración, como en el habla coloquial, porque la voz no pronunciaba bien las siglas. En pantalla, las fuentes siguen citando a la DGT.
+- Efectos de los remates (confeti, notificaciones, ding) colocados después de la palabra clave para no tapar la voz.
+- 214/215 palabras alineadas con Whisper. La transcripción del vídeo final coincide con el guion. En el vídeo completo Whisper confundió «Tráfico odie la diversión», pero ese fragmento por separado se transcribe bien: era un error del reconocedor con audio largo, no de la mezcla.
 
 ## Versión 2: voz realista y humor
 - **Voz**: Chatterbox multilingüe (Resemble AI, MIT, local en CPU), con timbre de referencia de la voz castellana CC0 «davefx». Se generan 3 tomas por frase y se elige automáticamente la que Whisper transcribe igual que el guion y tiene un ritmo natural (`05_audio/voice/takes_report.json`): las 19 frases elegidas tienen una similitud de 1,00. Se aplica un tempo ×1,10 que conserva el tono.

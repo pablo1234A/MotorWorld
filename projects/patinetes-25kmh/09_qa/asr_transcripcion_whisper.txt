@@ -1,12 +1,15 @@
-[  0.0-  6.6] Tu patinete podría ir a 50 por hora, pero la ley lo frena en 25. Y no, no es porque la
-[  6.6- 13.0] de GT odia la diversión. Desde 2021, en España, un patinete eléctrico solo puede ir entre
-[ 13.0- 19.8] 6 y 25 kilómetros por hora. Y nunca por la acera. La razón es física. Sí, esa asignatura
-[ 19.8- 24.0] que juraste que nunca te iba a servir. La energía de un golpe crece con el cuadrado
-[ 24.0- 28.8] de la velocidad. Al doble de velocidad, cuatro veces más energía. Y en el segundo
-[ 28.8- 36.2] que tardas en reaccionar, a 25 recorres 7 metros. A 50 a casi 14. Justo la distancia hasta ese peatón.
-[ 36.2- 43.2] Además, sus ruedas miden apenas 20 centímetros. Un bache que a 25 es un susto. A 50 es una caída.
-[ 43.2- 48.6] Y un vídeo viral que no quieres protagonizar. Pero esto no es solo un meme. Los datos de la
-[ 48.6- 53.9] de GT lo confirman. En 2024 murieron 13 usuarios de patinete en ciudad frente a 8 el año
-[ 54.0- 60.8] anterior. Y los heridos hospitalizados pasaron de 93 a 419 en solo 4 años. Por eso ahora,
-[ 60.8- 66.3] además, la ley exige seguro obligatorio. 25 es la velocidad a la que una caída
-[ 66.3- 71.2] todavía es solo una caída. Llegas un par de minutos más tarde. Pero llegas de una pieza.
+[  0.0-  8.0] Un patinete podría ir a 50 kmh, pero la ley lo frena en 25 kmh, y no, no es porque traficó o diera diversión.
+[  8.0- 16.0] Desde 2021 en España, un patinete eléctrico solo puede ir entre 6 y 25 kmh, y nunca por la acera.
+[ 16.0- 21.0] La razón es física. Sí. Esa asignatura que juraste que nunca te iba a servir.
+[ 21.0- 27.0] La energía de un golpe crece con el cuadrado de la velocidad. Al doble de velocidad, 4 veces más energía.
+[ 27.0- 34.0] Y en el segundo que tardas en reaccionar, a 25 recorres 7 metros, a 50, casi 14.
+[ 34.0- 36.0] Justo la distancia hasta ese peatón.
+[ 36.0- 40.0] Además, sus ruedas miden apenas 20 centímetros.
+[ 40.0- 44.0] Un bache que a 25 es un susto. A 50 es una caída.
+[ 44.0- 47.0] Y un vídeo viral que no quieres protagonizar.
+[ 47.0- 50.0] Pero hasta no es solo un meme. Los datos de tráfico lo confirman.
+[ 50.0- 54.0] En 2024 murieron 13 usuarios de patinete en ciudad.
+[ 54.0- 62.0] Frente a 8 al año anterior. Y los heridos hospitalizados pasaron de 93 a 419 en solo 4 años.
+[ 62.0- 66.0] Por eso ahora, además, la ley exige seguro obligatorio.
+[ 66.0- 71.0] 25 es la velocidad a la que una caída, todavía es solo una caída.
+[ 71.0- 74.0] Llegas un par de minutos más tarde, pero llegas en una pieza.

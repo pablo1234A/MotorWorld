@@ -16,9 +16,10 @@ proj = Path(sys.argv[1])
 model = sys.argv[2] if len(sys.argv) > 2 else None
 SR = None
 GAP_HUMOR = 0.42  # pausa antes de un remate humorístico
-TEMPO = 1.10  # 1.0 = sin cambio
+TEMPO = 1.18  # 1.0 = sin cambio
+PITCH_ST = -1.5  # ajuste de tono final en semitonos (rubberband, conserva formantes)
 GAP_LINE = 0.28
-GAP_SCENE = 0.55
+GAP_SCENE = 0.5
 LEAD_IN = 0.45
 
 data = json.loads((proj / "01_script/narration.json").read_text(encoding="utf-8"))
@@ -102,9 +103,9 @@ full = vdir / "narration_full.wav"; raw = vdir / "narration_full_1x.wav"
 with wave.open(str(raw), "wb") as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
     w.writeframes((np.clip(y, -1, 1) * 32767).astype(np.int16).tobytes())
-# ritmo de narración para redes: tempo ×TEMPO sin cambiar el tono (atempo) y tiempos escalados
+# ritmo de narración para redes: tempo ×TEMPO y tono PITCH_ST (rubberband); tiempos escalados
 import subprocess
-subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(raw), "-af", f"atempo={TEMPO}", str(full)], check=True)
+subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(raw), "-af", f"rubberband=tempo={TEMPO}:pitch={2 ** (PITCH_ST / 12):.5f}:formant=preserved:pitchq=quality", str(full)], check=True)
 raw.unlink()
 def scale(o):
     if isinstance(o, dict):

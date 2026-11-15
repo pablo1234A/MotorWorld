@@ -1,14 +1,14 @@
 {
   "title": "¿Por qué tu patinete no pasa de 25?",
   "voice": "ver tools/tts_chatterbox.py (Chatterbox multilingüe, local, MIT)",
-  "humor_notes": "4 golpes de humor puntuales (marcados con style=humor), siempre ligados al tema y separados por bloques serios: ley, peatón y datos de la DGT van sin chistes.",
+  "humor_notes": "4 golpes de humor puntuales (marcados con style=humor), siempre ligados al tema y separados por bloques serios: ley, peatón y datos de Tráfico (DGT) van sin chistes. En la narración se dice «Tráfico» en lugar de «DGT» porque la voz sintética no pronunciaba bien las siglas.",
   "scenes": [
     {
       "id": "s1_gancho",
       "lines": [
         "Tu patinete podría ir a cincuenta por hora.",
         "Pero la ley lo frena en veinticinco.",
-        {"text": "Y no, no es porque la DGT odie la diversión.", "style": "humor"}
+        {"text": "Y no, no es porque Tráfico odie la diversión.", "style": "humor"}
       ]
     },
     {
@@ -45,7 +45,7 @@
     {
       "id": "s6_datos",
       "lines": [
-        "Pero esto no es solo un meme. Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+        "Pero esto no es solo un meme. Los datos de Tráfico lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
         "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años."
       ]
     },

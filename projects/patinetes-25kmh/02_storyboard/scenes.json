@@ -1,17 +1,17 @@
 {
  "titulo": "¿Por qué tu patinete no pasa de 25?",
  "formato": "1080x1920, 30 fps",
- "duracion": 73.255,
+ "duracion": 75.726,
  "escenas": [
   {
    "id": "s1_gancho",
    "inicio": 0.0,
-   "fin": 8.42,
-   "duracion": 8.42,
+   "fin": 8.45,
+   "duracion": 8.45,
    "voz": [
     "Tu patinete podría ir a cincuenta por hora.",
     "Pero la ley lo frena en veinticinco.",
-    "Y no, no es porque la DGT odie la diversión."
+    "Y no, no es porque Tráfico odie la diversión."
    ],
    "encuadre": "Plano general de calle nocturna; zoom lento hacia dentro",
    "accion": "Piloto en silueta acelera por el carril bici; el velocímetro sube a 50 y cae a 25; sello LIMITADO A 25. GAG (humor): estalla confeti al decir «diversión»",
@@ -29,9 +29,9 @@
   },
   {
    "id": "s2_ley",
-   "inicio": 8.42,
-   "fin": 17.01,
-   "duracion": 8.6,
+   "inicio": 8.46,
+   "fin": 16.62,
+   "duracion": 8.16,
    "voz": [
     "Desde dos mil veintiuno, en España, un patinete eléctrico solo puede ir entre seis y veinticinco kilómetros por hora.",
     "Y nunca por la acera."
@@ -53,9 +53,9 @@
   },
   {
    "id": "s3_energia",
-   "inicio": 17.01,
-   "fin": 28.06,
-   "duracion": 11.05,
+   "inicio": 16.62,
+   "fin": 27.94,
+   "duracion": 11.32,
    "voz": [
     "La razón es física.",
     "Sí, esa asignatura que juraste que nunca te iba a servir.",
@@ -76,9 +76,9 @@
   },
   {
    "id": "s4_reaccion",
-   "inicio": 28.06,
-   "fin": 36.99,
-   "duracion": 8.93,
+   "inicio": 27.94,
+   "fin": 36.95,
+   "duracion": 9.01,
    "voz": [
     "Y en el segundo que tardas en reaccionar, a veinticinco recorres siete metros.",
     "A cincuenta, casi catorce. Justo la distancia hasta ese peatón."
@@ -101,9 +101,9 @@
   },
   {
    "id": "s5_ruedas",
-   "inicio": 36.99,
-   "fin": 46.54,
-   "duracion": 9.55,
+   "inicio": 36.95,
+   "fin": 47.37,
+   "duracion": 10.42,
    "voz": [
     "Además, sus ruedas miden apenas veinte centímetros.",
     "Un bache que a veinticinco es un susto, a cincuenta es una caída.",
@@ -126,11 +126,11 @@
   },
   {
    "id": "s6_datos",
-   "inicio": 46.54,
-   "fin": 60.28,
-   "duracion": 13.74,
+   "inicio": 47.37,
+   "fin": 62.44,
+   "duracion": 15.07,
    "voz": [
-    "Pero esto no es solo un meme. Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+    "Pero esto no es solo un meme. Los datos de Tráfico lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
     "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años."
    ],
    "encuadre": "Calle nocturna con panel de datos; cruza una ambulancia",
@@ -147,9 +147,9 @@
   },
   {
    "id": "s7_cierre",
-   "inicio": 60.28,
-   "fin": 73.25,
-   "duracion": 12.97,
+   "inicio": 62.44,
+   "fin": 75.73,
+   "duracion": 13.28,
    "voz": [
     "Por eso ahora, además, la ley exige seguro obligatorio.",
     "Veinticinco es la velocidad a la que una caída todavía es solo una caída.",

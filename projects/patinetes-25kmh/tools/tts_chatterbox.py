@@ -3,7 +3,8 @@
 Uso (en un entorno con chatterbox-tts y faster-whisper):
     HF_HUB_DISABLE_XET=1 python tts_chatterbox.py <proyecto> <referencia.wav> [--force]
 
-- La referencia fija el timbre/acento (se usa una muestra de la voz CC0 es_ES "davefx").
+- La referencia fija el timbre/acento: voz original creada a partir de la voz CC0 es_ES "davefx"
+  (más rápida y 3 semitonos más grave), sin clonar a ninguna persona real.
 - Las frases style=humor se generan con más expresividad (exaggeration) y algo más pausadas.
 - Por cada frase se generan N tomas; se elige automáticamente la que Whisper transcribe más
   fiel al guion y con ritmo natural (palabras/segundo). Reanudable: no rehace WAV existentes.
@@ -21,11 +22,12 @@ from faster_whisper import WhisperModel
 
 proj, ref = Path(sys.argv[1]), sys.argv[2]
 force = "--force" in sys.argv
-TAKES = 3
-STYLE = {"normal": dict(exaggeration=0.6, cfg_weight=0.4, temperature=0.8),
-         "humor": dict(exaggeration=0.85, cfg_weight=0.3, temperature=0.85)}
+TAKES = int(__import__("os").environ.get("TAKES", 3))
+# perfil "narrador de intriga": grave, rápido (~3,2-3,4 pal/s) y muy expresivo
+STYLE = {"normal": dict(exaggeration=0.8, cfg_weight=0.5, temperature=0.8),
+         "humor": dict(exaggeration=0.95, cfg_weight=0.45, temperature=0.85)}
 # cómo se debe PRONUNCIAR (el guion conserva la grafía para los subtítulos)
-SAY = {r"\bDGT\b": "De Ge Te"}
+SAY = {r"\bDGT\b": "Dé Gé Té"}
 NUM = {"50": "cincuenta", "25": "veinticinco", "2021": "dos mil veintiuno", "6": "seis", "7": "siete", "14": "catorce",
        "20": "veinte", "2024": "dos mil veinticuatro", "13": "trece", "8": "ocho", "93": "noventa y tres",
        "419": "cuatrocientos diecinueve", "4": "cuatro", "2": "dos"}
@@ -59,11 +61,11 @@ for sc in data["scenes"]:
             voiced = np.where(np.abs(wav) > 0.02)[0]
             dur = (voiced[-1] - voiced[0]) / tts.sr if len(voiced) else 0.01
             wps = len(text.split()) / dur
-            score = sim - 0.15 * max(0, abs(wps - 3.0) - 0.6)  # ritmo natural ≈ 2,4–3,6 palabras/s
+            score = sim - 0.15 * max(0, abs(wps - 3.2) - 0.5)  # ritmo objetivo ≈ 2,7–3,7 palabras/s
             print(f"{out.name} toma {k}: sim={sim:.2f} pal/s={wps:.2f} score={score:.2f} | {hyp.strip()}", flush=True)
             if best is None or score > best[0]:
                 best = (score, wav, hyp.strip(), sim, wps)
-            if sim >= 0.97 and 2.3 <= wps <= 3.7:
+            if sim >= 0.97 and 2.7 <= wps <= 3.8:
                 break
         pcm = (np.clip(best[1], -1, 1) * 32767).astype(np.int16)
         with wave.open(str(out), "wb") as w:
