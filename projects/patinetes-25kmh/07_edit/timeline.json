@@ -3,1021 +3,1290 @@
  "scenes": [
   {
    "id": "s1_gancho",
-   "start": 0.45,
+   "start": 0.409,
    "lines": [
     {
      "text": "Tu patinete podría ir a cincuenta por hora.",
-     "start": 0.45,
-     "end": 2.552,
+     "style": "normal",
+     "start": 0.409,
+     "end": 2.531,
      "words": [
       {
        "w": "Tu",
-       "start": 0.45,
-       "end": 0.607
+       "start": 0.409,
+       "end": 0.476
       },
       {
        "w": "patinete",
-       "start": 0.607,
-       "end": 1.032
+       "start": 0.476,
+       "end": 0.931
       },
       {
        "w": "podría",
-       "start": 1.032,
-       "end": 1.367
+       "start": 0.931,
+       "end": 1.204
       },
       {
        "w": "ir",
-       "start": 1.367,
-       "end": 1.524
+       "start": 1.204,
+       "end": 1.44
       },
       {
        "w": "a",
-       "start": 1.524,
-       "end": 1.635
+       "start": 1.44,
+       "end": 1.495
       },
       {
        "w": "cincuenta",
-       "start": 1.635,
-       "end": 2.105
+       "start": 1.495,
+       "end": 2.004
       },
       {
        "w": "por",
-       "start": 2.105,
-       "end": 2.306
+       "start": 2.004,
+       "end": 2.204
       },
       {
        "w": "hora.",
-       "start": 2.306,
-       "end": 2.552
+       "start": 2.204,
+       "end": 2.349
       }
      ]
     },
     {
-     "text": "Pero la ley lo frena en veinticinco. Y no es un capricho.",
-     "start": 2.832,
-     "end": 6.369,
+     "text": "Pero la ley lo frena en veinticinco.",
+     "style": "normal",
+     "start": 2.785,
+     "end": 5.095,
      "words": [
       {
        "w": "Pero",
-       "start": 2.832,
-       "end": 3.146
+       "start": 2.785,
+       "end": 2.915
       },
       {
        "w": "la",
-       "start": 3.146,
-       "end": 3.346
+       "start": 2.915,
+       "end": 3.096
       },
       {
        "w": "ley",
-       "start": 3.346,
-       "end": 3.603
+       "start": 3.096,
+       "end": 3.351
       },
       {
        "w": "lo",
-       "start": 3.603,
-       "end": 3.802
+       "start": 3.351,
+       "end": 3.733
       },
       {
        "w": "frena",
-       "start": 3.802,
-       "end": 4.173
+       "start": 3.733,
+       "end": 4.115
       },
       {
        "w": "en",
-       "start": 4.173,
-       "end": 4.373
+       "start": 4.115,
+       "end": 4.315
       },
       {
        "w": "veinticinco.",
-       "start": 4.373,
-       "end": 5.086
-      },
+       "start": 4.315,
+       "end": 4.987
+      }
+     ]
+    },
+    {
+     "text": "Y no, no es porque la DGT odie la diversión.",
+     "style": "humor",
+     "start": 5.477,
+     "end": 7.918,
+     "words": [
       {
        "w": "Y",
-       "start": 5.086,
-       "end": 5.228
+       "start": 5.477,
+       "end": 5.573
+      },
+      {
+       "w": "no,",
+       "start": 5.573,
+       "end": 5.7
       },
       {
        "w": "no",
-       "start": 5.228,
-       "end": 5.428
+       "start": 5.936,
+       "end": 6.118
       },
       {
        "w": "es",
-       "start": 5.428,
-       "end": 5.628
+       "start": 6.118,
+       "end": 6.227
       },
       {
-       "w": "un",
-       "start": 5.628,
-       "end": 5.827
+       "w": "porque",
+       "start": 6.227,
+       "end": 6.409
       },
       {
-       "w": "capricho.",
-       "start": 5.827,
-       "end": 6.369
+       "w": "la",
+       "start": 6.409,
+       "end": 6.573
+      },
+      {
+       "w": "DGT",
+       "start": 6.573,
+       "end": 6.955
+      },
+      {
+       "w": "odie",
+       "start": 6.955,
+       "end": 7.191
+      },
+      {
+       "w": "la",
+       "start": 7.191,
+       "end": 7.282
+      },
+      {
+       "w": "diversión.",
+       "start": 7.282,
+       "end": 7.736
       }
      ]
     }
    ],
-   "end": 6.919
+   "end": 8.418
   },
   {
    "id": "s2_ley",
-   "start": 6.91936507936508,
+   "start": 8.418,
    "lines": [
     {
      "text": "Desde dos mil veintiuno, en España, un patinete eléctrico solo puede ir entre seis y veinticinco kilómetros por hora.",
-     "start": 6.919,
-     "end": 12.716,
+     "style": "normal",
+     "start": 8.418,
+     "end": 15.006,
      "words": [
       {
        "w": "Desde",
-       "start": 6.919,
-       "end": 7.222
+       "start": 8.418,
+       "end": 8.588
       },
       {
        "w": "dos",
-       "start": 7.222,
-       "end": 7.432
+       "start": 8.588,
+       "end": 8.843
       },
       {
        "w": "mil",
-       "start": 7.432,
-       "end": 7.641
+       "start": 8.843,
+       "end": 9.061
       },
       {
        "w": "veintiuno,",
-       "start": 7.641,
-       "end": 8.13
+       "start": 9.061,
+       "end": 9.679
       },
       {
        "w": "en",
-       "start": 8.13,
-       "end": 8.293
+       "start": 10.061,
+       "end": 10.134
       },
       {
        "w": "España,",
-       "start": 8.293,
-       "end": 8.642
+       "start": 10.134,
+       "end": 10.479
       },
       {
        "w": "un",
-       "start": 8.642,
-       "end": 8.805
+       "start": 10.988,
+       "end": 11.152
       },
       {
        "w": "patinete",
-       "start": 8.805,
-       "end": 9.247
+       "start": 11.152,
+       "end": 11.588
       },
       {
        "w": "eléctrico",
-       "start": 9.247,
-       "end": 9.736
+       "start": 11.588,
+       "end": 12.043
       },
       {
        "w": "solo",
-       "start": 9.736,
-       "end": 9.992
+       "start": 12.043,
+       "end": 12.279
       },
       {
        "w": "puede",
-       "start": 9.992,
-       "end": 10.295
+       "start": 12.279,
+       "end": 12.534
       },
       {
        "w": "ir",
-       "start": 10.295,
-       "end": 10.458
+       "start": 12.534,
+       "end": 12.715
       },
       {
        "w": "entre",
-       "start": 10.458,
-       "end": 10.761
+       "start": 12.715,
+       "end": 12.915
       },
       {
        "w": "seis",
-       "start": 10.761,
-       "end": 11.017
+       "start": 12.915,
+       "end": 13.243
       },
       {
        "w": "y",
-       "start": 11.017,
-       "end": 11.133
+       "start": 13.243,
+       "end": 13.406
       },
       {
        "w": "veinticinco",
-       "start": 11.133,
-       "end": 11.715
+       "start": 13.406,
+       "end": 13.952
       },
       {
        "w": "kilómetros",
-       "start": 11.715,
-       "end": 12.251
+       "start": 13.952,
+       "end": 14.443
       },
       {
        "w": "por",
-       "start": 12.251,
-       "end": 12.46
+       "start": 14.443,
+       "end": 14.661
       },
       {
        "w": "hora.",
-       "start": 12.46,
-       "end": 12.716
+       "start": 14.661,
+       "end": 14.825
       }
      ]
     },
     {
      "text": "Y nunca por la acera.",
-     "start": 12.996,
-     "end": 14.105,
+     "style": "normal",
+     "start": 15.261,
+     "end": 16.513,
      "words": [
       {
        "w": "Y",
-       "start": 12.996,
-       "end": 13.114
+       "start": 15.261,
+       "end": 15.38
       },
       {
        "w": "nunca",
-       "start": 13.114,
-       "end": 13.421
+       "start": 15.38,
+       "end": 15.616
       },
       {
        "w": "por",
-       "start": 13.421,
-       "end": 13.633
+       "start": 15.616,
+       "end": 15.871
       },
       {
        "w": "la",
-       "start": 13.633,
-       "end": 13.799
+       "start": 15.871,
+       "end": 16.035
       },
       {
        "w": "acera.",
-       "start": 13.799,
-       "end": 14.105
+       "start": 16.035,
+       "end": 16.344
       }
      ]
     }
    ],
-   "end": 14.655
+   "end": 17.013
   },
   {
    "id": "s3_energia",
-   "start": 14.655396825396826,
+   "start": 17.013,
    "lines": [
     {
-     "text": "La razón es física. La energía de un golpe crece con el cuadrado de la velocidad.",
-     "start": 14.655,
-     "end": 19.523,
+     "text": "La razón es física.",
+     "style": "normal",
+     "start": 17.013,
+     "end": 18.401,
      "words": [
       {
        "w": "La",
-       "start": 14.655,
-       "end": 14.849
+       "start": 17.013,
+       "end": 17.146
       },
       {
        "w": "razón",
-       "start": 14.849,
-       "end": 15.209
+       "start": 17.146,
+       "end": 17.455
       },
       {
        "w": "es",
-       "start": 15.209,
-       "end": 15.402
+       "start": 17.455,
+       "end": 17.819
       },
       {
        "w": "física.",
-       "start": 15.402,
-       "end": 15.817
+       "start": 17.819,
+       "end": 18.219
+      }
+     ]
+    },
+    {
+     "text": "Sí, esa asignatura que juraste que nunca te iba a servir.",
+     "style": "humor",
+     "start": 18.783,
+     "end": 21.476,
+     "words": [
+      {
+       "w": "Sí,",
+       "start": 18.783,
+       "end": 18.967
       },
       {
+       "w": "esa",
+       "start": 19.131,
+       "end": 19.276
+      },
+      {
+       "w": "asignatura",
+       "start": 19.276,
+       "end": 19.804
+      },
+      {
+       "w": "que",
+       "start": 19.804,
+       "end": 19.967
+      },
+      {
+       "w": "juraste",
+       "start": 19.967,
+       "end": 20.349
+      },
+      {
+       "w": "que",
+       "start": 20.349,
+       "end": 20.495
+      },
+      {
+       "w": "nunca",
+       "start": 20.495,
+       "end": 20.676
+      },
+      {
+       "w": "te",
+       "start": 20.676,
+       "end": 20.895
+      },
+      {
+       "w": "iba",
+       "start": 20.895,
+       "end": 21.04
+      },
+      {
+       "w": "a",
+       "start": 21.04,
+       "end": 21.131
+      },
+      {
+       "w": "servir.",
+       "start": 21.131,
+       "end": 21.295
+      }
+     ]
+    },
+    {
+     "text": "La energía de un golpe crece con el cuadrado de la velocidad.",
+     "style": "normal",
+     "start": 21.731,
+     "end": 24.65,
+     "words": [
+      {
        "w": "La",
-       "start": 15.817,
-       "end": 16.011
+       "start": 21.731,
+       "end": 21.868
       },
       {
        "w": "energía",
-       "start": 16.011,
-       "end": 16.481
+       "start": 21.868,
+       "end": 22.232
       },
       {
        "w": "de",
-       "start": 16.481,
-       "end": 16.674
+       "start": 22.232,
+       "end": 22.414
       },
       {
        "w": "un",
-       "start": 16.674,
-       "end": 16.868
+       "start": 22.414,
+       "end": 22.505
       },
       {
        "w": "golpe",
-       "start": 16.868,
-       "end": 17.228
+       "start": 22.505,
+       "end": 22.741
       },
       {
        "w": "crece",
-       "start": 17.228,
-       "end": 17.587
+       "start": 22.741,
+       "end": 23.159
       },
       {
        "w": "con",
-       "start": 17.587,
-       "end": 17.836
+       "start": 23.159,
+       "end": 23.377
       },
       {
        "w": "el",
-       "start": 17.836,
-       "end": 18.03
+       "start": 23.377,
+       "end": 23.505
       },
       {
        "w": "cuadrado",
-       "start": 18.03,
-       "end": 18.555
+       "start": 23.505,
+       "end": 23.959
       },
       {
        "w": "de",
-       "start": 18.555,
-       "end": 18.749
+       "start": 23.959,
+       "end": 24.068
       },
       {
        "w": "la",
-       "start": 18.749,
-       "end": 18.942
+       "start": 24.068,
+       "end": 24.159
       },
       {
        "w": "velocidad.",
-       "start": 18.942,
-       "end": 19.523
+       "start": 24.159,
+       "end": 24.468
       }
      ]
     },
     {
      "text": "Al doble de velocidad, cuatro veces más energía.",
-     "start": 19.803,
-     "end": 22.523,
+     "style": "normal",
+     "start": 24.905,
+     "end": 27.563,
      "words": [
       {
        "w": "Al",
-       "start": 19.803,
-       "end": 19.99
+       "start": 24.905,
+       "end": 25.054
       },
       {
        "w": "doble",
-       "start": 19.99,
-       "end": 20.336
+       "start": 25.054,
+       "end": 25.326
       },
       {
        "w": "de",
-       "start": 20.336,
-       "end": 20.523
+       "start": 25.326,
+       "end": 25.417
       },
       {
        "w": "velocidad,",
-       "start": 20.523,
-       "end": 21.083
+       "start": 25.417,
+       "end": 25.854
       },
       {
        "w": "cuatro",
-       "start": 21.083,
-       "end": 21.483
+       "start": 26.163,
+       "end": 26.508
       },
       {
        "w": "veces",
-       "start": 21.483,
-       "end": 21.83
+       "start": 26.508,
+       "end": 26.835
       },
       {
        "w": "más",
-       "start": 21.83,
-       "end": 22.07
+       "start": 26.835,
+       "end": 27.072
       },
       {
        "w": "energía.",
-       "start": 22.07,
-       "end": 22.523
+       "start": 27.072,
+       "end": 27.381
       }
      ]
     }
    ],
-   "end": 23.073
+   "end": 28.063
   },
   {
    "id": "s4_reaccion",
-   "start": 23.072925170068032,
+   "start": 28.063,
    "lines": [
     {
      "text": "Y en el segundo que tardas en reaccionar, a veinticinco recorres siete metros.",
-     "start": 23.073,
-     "end": 26.696,
+     "style": "normal",
+     "start": 28.063,
+     "end": 32.345,
      "words": [
       {
        "w": "Y",
-       "start": 23.073,
-       "end": 23.181
+       "start": 28.063,
+       "end": 28.182
       },
       {
        "w": "en",
-       "start": 23.181,
-       "end": 23.333
+       "start": 28.182,
+       "end": 28.327
       },
       {
        "w": "el",
-       "start": 23.333,
-       "end": 23.485
+       "start": 28.327,
+       "end": 28.436
       },
       {
        "w": "segundo",
-       "start": 23.485,
-       "end": 23.854
+       "start": 28.436,
+       "end": 28.782
       },
       {
        "w": "que",
-       "start": 23.854,
-       "end": 24.049
+       "start": 28.782,
+       "end": 28.982
       },
       {
        "w": "tardas",
-       "start": 24.049,
-       "end": 24.375
+       "start": 28.982,
+       "end": 29.382
       },
       {
        "w": "en",
-       "start": 24.375,
-       "end": 24.526
+       "start": 29.382,
+       "end": 29.509
       },
       {
        "w": "reaccionar,",
-       "start": 24.526,
-       "end": 25.025
+       "start": 29.509,
+       "end": 30.073
       },
       {
        "w": "a",
-       "start": 25.025,
-       "end": 25.134
+       "start": 30.327,
+       "end": 30.582
       },
       {
        "w": "veinticinco",
-       "start": 25.134,
-       "end": 25.676
+       "start": 30.582,
+       "end": 31.218
       },
       {
        "w": "recorres",
-       "start": 25.676,
-       "end": 26.088
+       "start": 31.218,
+       "end": 31.673
       },
       {
        "w": "siete",
-       "start": 26.088,
-       "end": 26.37
+       "start": 31.673,
+       "end": 31.855
       },
       {
        "w": "metros.",
-       "start": 26.37,
-       "end": 26.696
+       "start": 31.855,
+       "end": 32.164
       }
      ]
     },
     {
      "text": "A cincuenta, casi catorce. Justo la distancia hasta ese peatón.",
-     "start": 26.976,
-     "end": 30.924,
+     "style": "normal",
+     "start": 32.6,
+     "end": 36.489,
      "words": [
       {
        "w": "A",
-       "start": 26.976,
-       "end": 27.125
+       "start": 32.6,
+       "end": 32.707
       },
       {
        "w": "cincuenta,",
-       "start": 27.125,
-       "end": 27.753
+       "start": 32.707,
+       "end": 33.235
       },
       {
        "w": "casi",
-       "start": 27.753,
-       "end": 28.082
+       "start": 33.325,
+       "end": 33.435
       },
       {
        "w": "catorce.",
-       "start": 28.082,
-       "end": 28.591
+       "start": 33.435,
+       "end": 34.035
       },
       {
        "w": "Justo",
-       "start": 28.591,
-       "end": 28.98
+       "start": 34.325,
+       "end": 34.671
       },
       {
        "w": "la",
-       "start": 28.98,
-       "end": 29.189
+       "start": 34.671,
+       "end": 34.762
       },
       {
        "w": "distancia",
-       "start": 29.189,
-       "end": 29.817
+       "start": 34.762,
+       "end": 35.325
       },
       {
        "w": "hasta",
-       "start": 29.817,
-       "end": 30.206
+       "start": 35.325,
+       "end": 35.653
       },
       {
        "w": "ese",
-       "start": 30.206,
-       "end": 30.475
+       "start": 35.653,
+       "end": 35.889
       },
       {
        "w": "peatón.",
-       "start": 30.475,
-       "end": 30.924
+       "start": 35.889,
+       "end": 36.307
       }
      ]
     }
    ],
-   "end": 31.474
+   "end": 36.989
   },
   {
    "id": "s5_ruedas",
-   "start": 31.473718820861684,
+   "start": 36.989,
    "lines": [
     {
      "text": "Además, sus ruedas miden apenas veinte centímetros.",
-     "start": 31.474,
-     "end": 34.362,
+     "style": "normal",
+     "start": 36.989,
+     "end": 39.743,
      "words": [
       {
        "w": "Además,",
-       "start": 31.474,
-       "end": 31.879
+       "start": 36.989,
+       "end": 37.288
       },
       {
        "w": "sus",
-       "start": 31.879,
-       "end": 32.122
+       "start": 37.579,
+       "end": 37.725
       },
       {
        "w": "ruedas",
-       "start": 32.122,
-       "end": 32.526
+       "start": 37.725,
+       "end": 38.088
       },
       {
        "w": "miden",
-       "start": 32.526,
-       "end": 32.877
+       "start": 38.088,
+       "end": 38.434
       },
       {
        "w": "apenas",
-       "start": 32.877,
-       "end": 33.282
+       "start": 38.434,
+       "end": 38.597
       },
       {
        "w": "veinte",
-       "start": 33.282,
-       "end": 33.687
+       "start": 38.597,
+       "end": 39.015
       },
       {
        "w": "centímetros.",
-       "start": 33.687,
-       "end": 34.362
+       "start": 39.015,
+       "end": 39.561
       }
      ]
     },
     {
      "text": "Un bache que a veinticinco es un susto, a cincuenta es una caída.",
-     "start": 34.642,
-     "end": 37.548,
+     "style": "normal",
+     "start": 39.997,
+     "end": 43.406,
      "words": [
       {
        "w": "Un",
-       "start": 34.642,
-       "end": 34.786
+       "start": 39.997,
+       "end": 40.134
       },
       {
        "w": "bache",
-       "start": 34.786,
-       "end": 35.054
+       "start": 40.134,
+       "end": 40.497
       },
       {
        "w": "que",
-       "start": 35.054,
-       "end": 35.239
+       "start": 40.497,
+       "end": 40.679
       },
       {
        "w": "a",
-       "start": 35.239,
-       "end": 35.343
+       "start": 40.679,
+       "end": 40.734
       },
       {
        "w": "veinticinco",
-       "start": 35.343,
-       "end": 35.858
+       "start": 40.734,
+       "end": 41.206
       },
       {
        "w": "es",
-       "start": 35.858,
-       "end": 36.002
+       "start": 41.206,
+       "end": 41.297
       },
       {
        "w": "un",
-       "start": 36.002,
-       "end": 36.146
+       "start": 41.297,
+       "end": 41.406
       },
       {
        "w": "susto,",
-       "start": 36.146,
-       "end": 36.414
+       "start": 41.406,
+       "end": 41.897
       },
       {
        "w": "a",
-       "start": 36.414,
-       "end": 36.517
+       "start": 42.006,
+       "end": 42.079
       },
       {
        "w": "cincuenta",
-       "start": 36.517,
-       "end": 36.95
+       "start": 42.079,
+       "end": 42.57
       },
       {
        "w": "es",
-       "start": 36.95,
-       "end": 37.094
+       "start": 42.57,
+       "end": 42.734
       },
       {
        "w": "una",
-       "start": 37.094,
-       "end": 37.28
+       "start": 42.734,
+       "end": 42.861
       },
       {
        "w": "caída.",
-       "start": 37.28,
-       "end": 37.548
+       "start": 42.861,
+       "end": 43.225
+      }
+     ]
+    },
+    {
+     "text": "Y un vídeo viral que no quieres protagonizar.",
+     "style": "humor",
+     "start": 43.788,
+     "end": 46.041,
+     "words": [
+      {
+       "w": "Y",
+       "start": 43.788,
+       "end": 43.896
+      },
+      {
+       "w": "un",
+       "start": 43.896,
+       "end": 44.005
+      },
+      {
+       "w": "vídeo",
+       "start": 44.005,
+       "end": 44.26
+      },
+      {
+       "w": "viral",
+       "start": 44.26,
+       "end": 44.551
+      },
+      {
+       "w": "que",
+       "start": 44.551,
+       "end": 44.769
+      },
+      {
+       "w": "no",
+       "start": 44.769,
+       "end": 44.896
+      },
+      {
+       "w": "quieres",
+       "start": 44.896,
+       "end": 45.187
+      },
+      {
+       "w": "protagonizar.",
+       "start": 45.187,
+       "end": 45.896
       }
      ]
     }
    ],
-   "end": 38.098
+   "end": 46.541
   },
   {
    "id": "s6_datos",
-   "start": 38.097687074829935,
+   "start": 46.541,
    "lines": [
     {
-     "text": "Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
-     "start": 38.098,
-     "end": 45.396,
+     "text": "Pero esto no es solo un meme. Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+     "style": "normal",
+     "start": 46.541,
+     "end": 54.349,
      "words": [
       {
+       "w": "Pero",
+       "start": 46.541,
+       "end": 46.658
+      },
+      {
+       "w": "esto",
+       "start": 46.658,
+       "end": 46.84
+      },
+      {
+       "w": "no",
+       "start": 46.84,
+       "end": 47.004
+      },
+      {
+       "w": "es",
+       "start": 47.004,
+       "end": 47.131
+      },
+      {
+       "w": "solo",
+       "start": 47.131,
+       "end": 47.276
+      },
+      {
+       "w": "un",
+       "start": 47.276,
+       "end": 47.44
+      },
+      {
+       "w": "meme.",
+       "start": 47.44,
+       "end": 47.567
+      },
+      {
        "w": "Los",
-       "start": 38.098,
-       "end": 38.324
+       "start": 47.931,
+       "end": 48.058
       },
       {
        "w": "datos",
-       "start": 38.324,
-       "end": 38.651
+       "start": 48.058,
+       "end": 48.276
       },
       {
        "w": "de",
-       "start": 38.651,
-       "end": 38.828
+       "start": 48.276,
+       "end": 48.44
       },
       {
        "w": "la",
-       "start": 38.828,
-       "end": 39.004
+       "start": 48.44,
+       "end": 48.567
       },
       {
        "w": "DGT",
-       "start": 39.004,
-       "end": 39.23
+       "start": 48.567,
+       "end": 48.913
       },
       {
        "w": "lo",
-       "start": 39.23,
-       "end": 39.406
+       "start": 48.913,
+       "end": 49.022
       },
       {
        "w": "confirman.",
-       "start": 39.406,
-       "end": 39.935
+       "start": 49.022,
+       "end": 49.531
       },
       {
        "w": "En",
-       "start": 39.935,
-       "end": 40.111
+       "start": 49.84,
+       "end": 49.985
       },
       {
        "w": "dos",
-       "start": 40.111,
-       "end": 40.338
+       "start": 49.985,
+       "end": 50.113
       },
       {
        "w": "mil",
-       "start": 40.338,
-       "end": 40.564
+       "start": 50.113,
+       "end": 50.276
       },
       {
        "w": "veinticuatro",
-       "start": 40.564,
-       "end": 41.243
+       "start": 50.276,
+       "end": 50.804
       },
       {
        "w": "murieron",
-       "start": 41.243,
-       "end": 41.722
+       "start": 50.804,
+       "end": 51.204
       },
       {
        "w": "trece",
-       "start": 41.722,
-       "end": 42.049
+       "start": 51.204,
+       "end": 51.531
       },
       {
        "w": "usuarios",
-       "start": 42.049,
-       "end": 42.527
+       "start": 51.531,
+       "end": 51.913
       },
       {
        "w": "de",
-       "start": 42.527,
-       "end": 42.703
+       "start": 51.913,
+       "end": 52.04
       },
       {
        "w": "patinete",
-       "start": 42.703,
-       "end": 43.181
+       "start": 52.04,
+       "end": 52.476
       },
       {
        "w": "en",
-       "start": 43.181,
-       "end": 43.357
+       "start": 52.476,
+       "end": 52.549
       },
       {
        "w": "ciudad,",
-       "start": 43.357,
-       "end": 43.735
+       "start": 52.549,
+       "end": 52.767
       },
       {
        "w": "frente",
-       "start": 43.735,
-       "end": 44.112
+       "start": 52.967,
+       "end": 53.095
       },
       {
        "w": "a",
-       "start": 44.112,
-       "end": 44.238
+       "start": 53.095,
+       "end": 53.295
       },
       {
        "w": "ocho",
-       "start": 44.238,
-       "end": 44.515
+       "start": 53.295,
+       "end": 53.622
       },
       {
        "w": "el",
-       "start": 44.515,
-       "end": 44.691
+       "start": 53.622,
+       "end": 53.731
       },
       {
        "w": "año",
-       "start": 44.691,
-       "end": 44.918
+       "start": 53.731,
+       "end": 53.895
       },
       {
        "w": "anterior.",
-       "start": 44.918,
-       "end": 45.396
+       "start": 53.895,
+       "end": 54.167
       }
      ]
     },
     {
      "text": "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años.",
-     "start": 45.676,
-     "end": 51.186,
+     "style": "normal",
+     "start": 54.604,
+     "end": 59.783,
      "words": [
       {
        "w": "Y",
-       "start": 45.676,
-       "end": 45.801
+       "start": 54.604,
+       "end": 54.674
       },
       {
        "w": "los",
-       "start": 45.801,
-       "end": 46.027
+       "start": 54.674,
+       "end": 54.783
       },
       {
        "w": "heridos",
-       "start": 46.027,
-       "end": 46.452
+       "start": 54.783,
+       "end": 55.055
       },
       {
        "w": "hospitalizados",
-       "start": 46.452,
-       "end": 47.229
+       "start": 55.055,
+       "end": 55.855
       },
       {
        "w": "pasaron",
-       "start": 47.229,
-       "end": 47.655
+       "start": 55.855,
+       "end": 56.31
       },
       {
        "w": "de",
-       "start": 47.655,
-       "end": 47.83
+       "start": 56.31,
+       "end": 56.419
       },
       {
        "w": "noventa",
-       "start": 47.83,
-       "end": 48.256
+       "start": 56.419,
+       "end": 56.801
       },
       {
        "w": "y",
-       "start": 48.256,
-       "end": 48.381
+       "start": 56.801,
+       "end": 56.855
       },
       {
        "w": "tres",
-       "start": 48.381,
-       "end": 48.656
+       "start": 56.855,
+       "end": 57.11
       },
       {
        "w": "a",
-       "start": 48.656,
-       "end": 48.782
+       "start": 57.11,
+       "end": 57.274
       },
       {
        "w": "cuatrocientos",
-       "start": 48.782,
-       "end": 49.508
+       "start": 57.274,
+       "end": 57.91
       },
       {
        "w": "diecinueve,",
-       "start": 49.508,
-       "end": 50.084
+       "start": 57.91,
+       "end": 58.51
       },
       {
        "w": "en",
-       "start": 50.084,
-       "end": 50.259
+       "start": 58.674,
+       "end": 58.765
       },
       {
        "w": "solo",
-       "start": 50.259,
-       "end": 50.535
+       "start": 58.765,
+       "end": 58.965
       },
       {
        "w": "cuatro",
-       "start": 50.535,
-       "end": 50.911
+       "start": 58.965,
+       "end": 59.255
       },
       {
        "w": "años.",
-       "start": 50.911,
-       "end": 51.186
+       "start": 59.255,
+       "end": 59.601
       }
      ]
     }
    ],
-   "end": 51.736
+   "end": 60.283
   },
   {
    "id": "s7_cierre",
-   "start": 51.736167800453515,
+   "start": 60.283,
    "lines": [
     {
      "text": "Por eso ahora, además, la ley exige seguro obligatorio.",
-     "start": 51.736,
-     "end": 54.757,
+     "style": "normal",
+     "start": 60.283,
+     "end": 63.621,
      "words": [
       {
        "w": "Por",
-       "start": 51.736,
-       "end": 51.973
+       "start": 60.283,
+       "end": 60.366
       },
       {
        "w": "eso",
-       "start": 51.973,
-       "end": 52.209
+       "start": 60.366,
+       "end": 60.566
       },
       {
        "w": "ahora,",
-       "start": 52.209,
-       "end": 52.551
+       "start": 60.566,
+       "end": 60.839
       },
       {
        "w": "además,",
-       "start": 52.551,
-       "end": 52.945
+       "start": 61.057,
+       "end": 61.275
       },
       {
        "w": "la",
-       "start": 52.945,
-       "end": 53.129
+       "start": 61.821,
+       "end": 61.966
       },
       {
        "w": "ley",
-       "start": 53.129,
-       "end": 53.365
+       "start": 61.966,
+       "end": 62.166
       },
       {
        "w": "exige",
-       "start": 53.365,
-       "end": 53.707
+       "start": 62.166,
+       "end": 62.585
       },
       {
        "w": "seguro",
-       "start": 53.707,
-       "end": 54.101
+       "start": 62.585,
+       "end": 62.857
       },
       {
        "w": "obligatorio.",
-       "start": 54.101,
-       "end": 54.757
+       "start": 62.857,
+       "end": 63.439
       }
      ]
     },
     {
      "text": "Veinticinco es la velocidad a la que una caída todavía es solo una caída.",
-     "start": 55.037,
-     "end": 58.411,
+     "style": "normal",
+     "start": 63.875,
+     "end": 67.73,
      "words": [
       {
        "w": "Veinticinco",
-       "start": 55.037,
-       "end": 55.564
+       "start": 63.875,
+       "end": 64.537
       },
       {
        "w": "es",
-       "start": 55.564,
-       "end": 55.712
+       "start": 64.537,
+       "end": 64.937
       },
       {
        "w": "la",
-       "start": 55.712,
-       "end": 55.86
+       "start": 64.937,
+       "end": 65.065
       },
       {
        "w": "velocidad",
-       "start": 55.86,
-       "end": 56.302
+       "start": 65.065,
+       "end": 65.392
       },
       {
        "w": "a",
-       "start": 56.302,
-       "end": 56.408
+       "start": 65.392,
+       "end": 65.683
       },
       {
        "w": "la",
-       "start": 56.408,
-       "end": 56.555
+       "start": 65.683,
+       "end": 65.737
       },
       {
        "w": "que",
-       "start": 56.555,
-       "end": 56.745
+       "start": 65.737,
+       "end": 65.883
       },
       {
        "w": "una",
-       "start": 56.745,
-       "end": 56.935
+       "start": 65.883,
+       "end": 66.01
       },
       {
        "w": "caída",
-       "start": 56.935,
-       "end": 57.209
+       "start": 66.01,
+       "end": 66.301
       },
       {
        "w": "todavía",
-       "start": 57.209,
-       "end": 57.567
+       "start": 66.301,
+       "end": 66.574
       },
       {
        "w": "es",
-       "start": 57.567,
-       "end": 57.715
+       "start": 66.574,
+       "end": 66.774
       },
       {
        "w": "solo",
-       "start": 57.715,
-       "end": 57.947
+       "start": 66.774,
+       "end": 66.992
       },
       {
        "w": "una",
-       "start": 57.947,
-       "end": 58.137
+       "start": 66.992,
+       "end": 67.265
       },
       {
        "w": "caída.",
-       "start": 58.137,
-       "end": 58.411
+       "start": 67.265,
+       "end": 67.61
+      }
+     ]
+    },
+    {
+     "text": "Llegas un par de minutos más tarde. Pero llegas de una pieza.",
+     "style": "humor",
+     "start": 68.112,
+     "end": 71.301,
+     "words": [
+      {
+       "w": "Llegas",
+       "start": 68.112,
+       "end": 68.375
+      },
+      {
+       "w": "un",
+       "start": 68.375,
+       "end": 68.502
+      },
+      {
+       "w": "par",
+       "start": 68.502,
+       "end": 68.684
+      },
+      {
+       "w": "de",
+       "start": 68.684,
+       "end": 68.793
+      },
+      {
+       "w": "minutos",
+       "start": 68.793,
+       "end": 69.029
+      },
+      {
+       "w": "más",
+       "start": 69.029,
+       "end": 69.265
+      },
+      {
+       "w": "tarde.",
+       "start": 69.265,
+       "end": 69.611
+      },
+      {
+       "w": "Pero",
+       "start": 69.956,
+       "end": 70.193
+      },
+      {
+       "w": "llegas",
+       "start": 70.193,
+       "end": 70.575
+      },
+      {
+       "w": "de",
+       "start": 70.575,
+       "end": 70.647
+      },
+      {
+       "w": "una",
+       "start": 70.647,
+       "end": 70.756
+      },
+      {
+       "w": "pieza.",
+       "start": 70.756,
+       "end": 71.156
       }
      ]
     }
    ],
-   "end": 60.561
+   "end": 73.255
   }
  ],
- "duration": 60.561
+ "duration": 73.255
 }

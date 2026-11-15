@@ -4,17 +4,20 @@
 | Control | Resultado | Estado |
 |---|---|---|
 | Resolución / fps | 1080 × 1920, 30 fps, H.264 yuv420p | OK |
-| Duración | 60,56 s | OK (objetivo: 45–65 s) |
+| Duración | 73,3 s | OK (algo más largo que la v1 por los 4 remates de humor) |
 | Audio | AAC 192 kbps, 48 kHz, estéreo | OK |
-| Sonoridad integrada | −14,2 LUFS (EBU R128) | OK (objetivo de redes: −14) |
-| Pico real | −1,4 dBFS | OK (sin clipping) |
+| Sonoridad integrada | −14,1 LUFS (EBU R128) | OK (objetivo de redes: −14) |
+| Pico real | −1,3 dBFS | OK (sin clipping) |
 | Decodificación completa | `ffmpeg -v error -f null` sin errores | OK |
 | Inteligibilidad de la voz | Transcripción automática (Whisper *small*) del MP4 final: ver `asr_transcripcion_whisper.txt` | OK: reconoce el texto casi completo pese a la música |
 
-## Diferencias de la transcripción automática
-- «rodas» en lugar de «ruedas» y «recorre» en lugar de «recorres»: son errores leves del reconocedor o de la pronunciación de la voz sintética. El significado se mantiene.
-- «90 y 3» en lugar de «93»: es solo cómo el reconocedor escribe el número. La voz dice «noventa y tres».
-- Corrección aplicada: la frase «…a cuatrocientos diecinueve en cuatro años» sonaba pegada («4194 años»). Se añadió una pausa («…diecinueve, en solo cuatro años») y se regeneró solo esa frase.
+## Versión 2: voz realista y humor
+- **Voz**: Chatterbox multilingüe (Resemble AI, MIT, local en CPU), con timbre de referencia de la voz castellana CC0 «davefx». Se generan 3 tomas por frase y se elige automáticamente la que Whisper transcribe igual que el guion y tiene un ritmo natural (`05_audio/voice/takes_report.json`): las 19 frases elegidas tienen una similitud de 1,00. Se aplica un tempo ×1,10 que conserva el tono.
+- **Siglas**: «DGT» se pronuncia «De Ge Te» (antes se leía «dega todo»).
+- **Artefactos**: se recortaron colas de ruido o respiración de hasta 4 s tras la última palabra, usando la alineación de Whisper.
+- **Subtítulos**: se sincronizan palabra a palabra con Whisper (`tools/align.py`): 217/217 palabras alineadas, en lugar del reparto proporcional.
+- **Humor**: 4 remates (DGT y diversión, la asignatura de la ESO, el vídeo viral y «de una pieza»). Cada uno va con un gag visual y un efecto de sonido. La ley, el peatón y los datos de la DGT se mantienen serios, y «Pero esto no es solo un meme» marca el paso al tono serio.
+- Transcripción del vídeo final: ver `asr_transcripcion_whisper.txt`. Solo hay diferencias de grafía del reconocedor («de GT», «odia»).
 
 ## Controles visuales (hojas de contactos cada 2 s y fotogramas clave)
 | Control | Estado |
@@ -29,6 +32,6 @@
 
 ## Limitaciones honestas
 - **Animación**: animación programática 2.5D (Canvas 2D vectorial con *rigs* articulados y cámara), no vídeo generado por IA. Los personajes se mueven de verdad (ciclo de caminar, inclinación, señalar, caída), pero su complejidad es menor que la de una animación 3D de la referencia.
-- **Voz**: Piper TTS local (`es_ES-davefx-medium`). Es clara y es la misma en todo el vídeo, pero es una voz sintética de calidad media; una voz premium (por ejemplo ElevenLabs) sonaría más natural. Para cambiarla, se sustituyen los WAV de `05_audio/voice/` y se vuelve a ejecutar el pipeline.
+- **Voz**: es neuronal y mucho más natural que Piper, pero sigue siendo sintética. El acento castellano procede de la voz de referencia y no se ha comprobado con una escucha humana. Una voz premium (por ejemplo ElevenLabs) o un locutor real sonarían todavía mejor. Para cambiarla, se sustituyen los WAV de `05_audio/voice/` y se vuelve a ejecutar el pipeline.
 - **Música y efectos**: sintetizados desde cero en Python (sin muestras ni licencias de terceros). Funcionales y sincronizados, pero más simples que una banda sonora de librería.
 - **Escucha humana**: la mezcla se validó con medidores y con reconocimiento automático de voz, no con una escucha humana. Se recomienda revisarla con auriculares antes de publicar.

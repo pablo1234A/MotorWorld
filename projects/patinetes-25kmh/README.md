@@ -1,6 +1,6 @@
 # ¿Por qué tu patinete no pasa de 25? — vídeo vertical
 
-Vídeo narrativo vertical (1080×1920, 60 s) para TikTok, Reels o Shorts, con estilo de siluetas y escenarios 2.5D nocturnos inspirado en `referencia_estilo.mp4`. Todas las cifras son reales y verificadas (ver `00_brief/fuentes.md`).
+Vídeo narrativo vertical (1080×1920, 73 s) con toques de humor puntuales para TikTok, Reels o Shorts, con estilo de siluetas y escenarios 2.5D nocturnos inspirado en `referencia_estilo.mp4`. Todas las cifras son reales y verificadas (ver `00_brief/fuentes.md`).
 
 **Resultado final:** `08_exports/final_1080x1920.mp4` · miniatura: `08_exports/thumbnail.png` · subtítulos: `06_captions/subtitles.srt`
 
@@ -19,11 +19,13 @@ tools/           pipeline reproducible
 ```
 
 ## Pipeline (reanudable)
-Requisitos: Python 3 con `piper-tts` y `numpy`, Node con `playwright` (Chromium), FFmpeg y el modelo de voz `es_ES-davefx-medium.onnx` (+ `.json`) de `rhasspy/piper-voices` en Hugging Face.
+Requisitos: Python 3 con `piper-tts`, `numpy` y `faster-whisper`; un entorno Python 3.11 con `chatterbox-tts` y `faster-whisper` (y `setuptools<81`); Node con `playwright` (Chromium) y FFmpeg. Los modelos se descargan de Hugging Face (con `HF_HUB_DISABLE_XET=1`).
 
 ```bash
 cd projects/patinetes-25kmh
-python3 tools/tts.py . /ruta/es_ES-davefx-medium.onnx   # voz por frases → timeline.json (solo regenera las frases que faltan)
+python tools/tts_chatterbox.py . 05_audio/voice_reference/ref_davefx_cc0.wav  # (venv 3.11) voz neuronal, mejor de 3 tomas por frase
+python3 tools/align.py .                                # alineación palabra a palabra con Whisper
+python3 tools/tts.py .                                  # pista de voz continua (tempo ×1,10) → timeline.json
 node tools/render.js . cues                             # exporta los cues de sonido desde la animación
 node tools/render.js . video                            # renderiza 1080×1920 a 30 fps (~1,5 min)
 python3 tools/audio.py .                                # música original + efectos sintetizados

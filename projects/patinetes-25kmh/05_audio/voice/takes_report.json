@@ -1,0 +1,135 @@
+{
+ "s1_gancho_0": {
+  "texto": "Tu patinete podría ir a cincuenta por hora.",
+  "estilo": "normal",
+  "transcripcion": "Tu patinete podría ir a 50 por hora.",
+  "similitud": 1.0,
+  "palabras_s": 2.75
+ },
+ "s1_gancho_1": {
+  "texto": "Pero la ley lo frena en veinticinco.",
+  "estilo": "normal",
+  "transcripcion": "Pero la ley lo frena en 25.",
+  "similitud": 1.0,
+  "palabras_s": 2.88
+ },
+ "s1_gancho_2": {
+  "texto": "Y no, no es porque la DGT odie la diversión.",
+  "estilo": "humor",
+  "transcripcion": "Y no, no es porque la de GT odie la diversión.",
+  "similitud": 1.0,
+  "palabras_s": 2.09
+ },
+ "s2_ley_0": {
+  "texto": "Desde dos mil veintiuno, en España, un patinete eléctrico solo puede ir entre seis y veinticinco kilómetros por hora.",
+  "estilo": "normal",
+  "transcripcion": "Desde 2021, en España, un patinete eléctrico solo puede ir entre 6 y 25 kilómetros por  hora.",
+  "similitud": 1.0,
+  "palabras_s": 2.3
+ },
+ "s2_ley_1": {
+  "texto": "Y nunca por la acera.",
+  "estilo": "normal",
+  "transcripcion": "y nunca por la acera.",
+  "similitud": 1.0,
+  "palabras_s": 3.94
+ },
+ "s3_energia_0": {
+  "texto": "La razón es física.",
+  "estilo": "normal",
+  "transcripcion": "La razón es física.",
+  "similitud": 1.0,
+  "palabras_s": 0.75
+ },
+ "s3_energia_1": {
+  "texto": "Sí, esa asignatura que juraste que nunca te iba a servir.",
+  "estilo": "humor",
+  "transcripcion": "Sí, esa asignatura que juraste que nunca te iba a servir.",
+  "similitud": 1.0,
+  "palabras_s": 3.71
+ },
+ "s3_energia_2": {
+  "texto": "La energía de un golpe crece con el cuadrado de la velocidad.",
+  "estilo": "normal",
+  "transcripcion": "La energía de un golpe crece con el cuadrado de la velocidad.",
+  "similitud": 1.0,
+  "palabras_s": 3.76
+ },
+ "s3_energia_3": {
+  "texto": "Al doble de velocidad, cuatro veces más energía.",
+  "estilo": "normal",
+  "transcripcion": "al doble de velocidad, cuatro veces más energía.",
+  "similitud": 1.0,
+  "palabras_s": 2.69
+ },
+ "s4_reaccion_0": {
+  "texto": "Y en el segundo que tardas en reaccionar, a veinticinco recorres siete metros.",
+  "estilo": "normal",
+  "transcripcion": "y en el segundo que tardas en reaccionar a 25 recorres 7 metros.",
+  "similitud": 1.0,
+  "palabras_s": 2.74
+ },
+ "s4_reaccion_1": {
+  "texto": "A cincuenta, casi catorce. Justo la distancia hasta ese peatón.",
+  "estilo": "normal",
+  "transcripcion": "A 50, casi 14, justo la distancia hasta ese peatón.",
+  "similitud": 1.0,
+  "palabras_s": 2.38
+ },
+ "s5_ruedas_0": {
+  "texto": "Además, sus ruedas miden apenas veinte centímetros.",
+  "estilo": "normal",
+  "transcripcion": "Además, sus ruedas miden apenas 20 centímetros.",
+  "similitud": 1.0,
+  "palabras_s": 2.35
+ },
+ "s5_ruedas_1": {
+  "texto": "Un bache que a veinticinco es un susto, a cincuenta es una caída.",
+  "estilo": "normal",
+  "transcripcion": "Un bache, que a 25 es un susto, a 50 es una caída.",
+  "similitud": 1.0,
+  "palabras_s": 2.29
+ },
+ "s5_ruedas_2": {
+  "texto": "Y un vídeo viral que no quieres protagonizar.",
+  "estilo": "humor",
+  "transcripcion": "y un vídeo viral que no quieres protagonizar.",
+  "similitud": 1.0,
+  "palabras_s": 3.35
+ },
+ "s6_datos_0": {
+  "texto": "Pero esto no es solo un meme. Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+  "estilo": "normal",
+  "transcripcion": "Pero esto no es solo un meme. Los datos de la DGT lo confirman.  En 2024 murieron 13 usuarios de patinete en ciudad frente a 8 el año anterior.",
+  "similitud": 1.0,
+  "palabras_s": 3.65
+ },
+ "s6_datos_1": {
+  "texto": "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años.",
+  "estilo": "normal",
+  "transcripcion": "Y los heridos hospitalizados pasaron de 93 a 419 en solo 4 años.",
+  "similitud": 1.0,
+  "palabras_s": 2.82
+ },
+ "s7_cierre_0": {
+  "texto": "Por eso ahora, además, la ley exige seguro obligatorio.",
+  "estilo": "normal",
+  "transcripcion": "Por eso ahora, además, la ley exige seguro obligatorio.",
+  "similitud": 1.0,
+  "palabras_s": 2.51
+ },
+ "s7_cierre_1": {
+  "texto": "Veinticinco es la velocidad a la que una caída todavía es solo una caída.",
+  "estilo": "normal",
+  "transcripcion": "25 es la velocidad a la que una caída todavía es solo, una caída.",
+  "similitud": 1.0,
+  "palabras_s": 3.38
+ },
+ "s7_cierre_2": {
+  "texto": "Llegas un par de minutos más tarde. Pero llegas de una pieza.",
+  "estilo": "humor",
+  "transcripcion": "Llegas un par de minutos más tarde, pero llegas de una pieza.",
+  "similitud": 1.0,
+  "palabras_s": 3.52
+ }
+}

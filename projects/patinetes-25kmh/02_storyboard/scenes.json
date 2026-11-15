@@ -1,19 +1,20 @@
 {
  "titulo": "¿Por qué tu patinete no pasa de 25?",
  "formato": "1080x1920, 30 fps",
- "duracion": 60.561,
+ "duracion": 73.255,
  "escenas": [
   {
    "id": "s1_gancho",
    "inicio": 0.0,
-   "fin": 6.92,
-   "duracion": 6.92,
+   "fin": 8.42,
+   "duracion": 8.42,
    "voz": [
     "Tu patinete podría ir a cincuenta por hora.",
-    "Pero la ley lo frena en veinticinco. Y no es un capricho."
+    "Pero la ley lo frena en veinticinco.",
+    "Y no, no es porque la DGT odie la diversión."
    ],
    "encuadre": "Plano general de calle nocturna; zoom lento hacia dentro",
-   "accion": "Piloto en silueta acelera por el carril bici; el velocímetro sube a 50 y cae a 25; sello LIMITADO A 25",
+   "accion": "Piloto en silueta acelera por el carril bici; el velocímetro sube a 50 y cae a 25; sello LIMITADO A 25. GAG (humor): estalla confeti al decir «diversión»",
    "rotulos": [
     "LIMITADO A 25"
    ],
@@ -22,14 +23,15 @@
     "motor que sube/baja con la velocidad",
     "pitido",
     "frenada",
-    "sello"
+    "sello",
+    "matasuegras + confeti"
    ]
   },
   {
    "id": "s2_ley",
-   "inicio": 6.92,
-   "fin": 14.65,
-   "duracion": 7.74,
+   "inicio": 8.42,
+   "fin": 17.01,
+   "duracion": 8.6,
    "voz": [
     "Desde dos mil veintiuno, en España, un patinete eléctrico solo puede ir entre seis y veinticinco kilómetros por hora.",
     "Y nunca por la acera."
@@ -51,15 +53,17 @@
   },
   {
    "id": "s3_energia",
-   "inicio": 14.66,
-   "fin": 23.07,
-   "duracion": 8.42,
+   "inicio": 17.01,
+   "fin": 28.06,
+   "duracion": 11.05,
    "voz": [
-    "La razón es física. La energía de un golpe crece con el cuadrado de la velocidad.",
+    "La razón es física.",
+    "Sí, esa asignatura que juraste que nunca te iba a servir.",
+    "La energía de un golpe crece con el cuadrado de la velocidad.",
     "Al doble de velocidad, cuatro veces más energía."
    ],
    "encuadre": "Interior (aula) con lámpara de pie cálida; zoom lento",
-   "accion": "El profesor en silueta señala la pizarra; se escribe E = ½·m·v²; bloques: 1 a 25 km/h, 4 a 50 km/h",
+   "accion": "GAG (humor): en la pizarra aparece «¿Y esto para qué me va a servir? — yo, en 2º de la ESO», el profesor se encoge de hombros y se borra; después señala la pizarra y se escribe E = ½·m·v²; bloques: 1 a 25 km/h, 4 a 50 km/h",
    "rotulos": [
     "× 4",
     "VELOCIDAD ×2 = ENERGÍA ×4"
@@ -72,9 +76,9 @@
   },
   {
    "id": "s4_reaccion",
-   "inicio": 23.07,
-   "fin": 31.47,
-   "duracion": 8.4,
+   "inicio": 28.06,
+   "fin": 36.99,
+   "duracion": 8.93,
    "voz": [
     "Y en el segundo que tardas en reaccionar, a veinticinco recorres siete metros.",
     "A cincuenta, casi catorce. Justo la distancia hasta ese peatón."
@@ -97,15 +101,16 @@
   },
   {
    "id": "s5_ruedas",
-   "inicio": 31.47,
-   "fin": 38.1,
-   "duracion": 6.62,
+   "inicio": 36.99,
+   "fin": 46.54,
+   "duracion": 9.55,
    "voz": [
     "Además, sus ruedas miden apenas veinte centímetros.",
-    "Un bache que a veinticinco es un susto, a cincuenta es una caída."
+    "Un bache que a veinticinco es un susto, a cincuenta es una caída.",
+    "Y un vídeo viral que no quieres protagonizar."
    ],
    "encuadre": "Primer plano de la rueda (zoom 2,6×) → plano general",
-   "accion": "Cota de 20 cm en la rueda; pasada a 25: bote en el bache; pasada a 50: vuelco y caída (sin violencia explícita)",
+   "accion": "Cota de 20 cm en la rueda; pasada a 25: bote en el bache; pasada a 50: vuelco y caída (sin violencia explícita). GAG (humor): un móvil lo graba (REC, #patinetefail) y los likes suben a 1,2 mil",
    "rotulos": [
     "RUEDAS DE 20 cm",
     "25 → SUSTO",
@@ -115,20 +120,21 @@
     "motor",
     "bote",
     "choque",
-    "arrastre"
+    "arrastre",
+    "notificaciones de likes"
    ]
   },
   {
    "id": "s6_datos",
-   "inicio": 38.1,
-   "fin": 51.74,
-   "duracion": 13.64,
+   "inicio": 46.54,
+   "fin": 60.28,
+   "duracion": 13.74,
    "voz": [
-    "Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+    "Pero esto no es solo un meme. Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
     "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años."
    ],
    "encuadre": "Calle nocturna con panel de datos; cruza una ambulancia",
-   "accion": "Barras 2023 (8) → 2024 (13) fallecidos; barras-edificio de hospitalizados 2020–2024 (93 → 419)",
+   "accion": "Transición al tono serio («Pero esto no es solo un meme»). Barras 2023 (8) → 2024 (13) fallecidos; barras-edificio de hospitalizados 2020–2024 (93 → 419)",
    "rotulos": [
     "+62,5 %",
     "×4,5 EN 4 AÑOS"
@@ -141,25 +147,30 @@
   },
   {
    "id": "s7_cierre",
-   "inicio": 51.74,
-   "fin": 60.56,
-   "duracion": 8.82,
+   "inicio": 60.28,
+   "fin": 73.25,
+   "duracion": 12.97,
    "voz": [
     "Por eso ahora, además, la ley exige seguro obligatorio.",
-    "Veinticinco es la velocidad a la que una caída todavía es solo una caída."
+    "Veinticinco es la velocidad a la que una caída todavía es solo una caída.",
+    "Llegas un par de minutos más tarde. Pero llegas de una pieza."
    ],
    "encuadre": "Amanecer cálido; zoom lento",
-   "accion": "El piloto, con casco, circula tranquilo a 25; tarjeta SEGURO OBLIGATORIO (Ley 5/2025) con sello VIGENTE; gran 25 km/h final",
+   "accion": "El piloto, con casco, circula tranquilo a 25; tarjeta SEGURO OBLIGATORIO (Ley 5/2025) con sello VIGENTE; gran 25 km/h. GAG final (humor): «≈ +2 min» y «DE UNA PIEZA ✓» mientras el piloto saluda",
    "rotulos": [
     "SEGURO OBLIGATORIO",
     "VIGENTE",
-    "25 km/h"
+    "25 km/h",
+    "≈ +2 min",
+    "DE UNA PIEZA ✓"
    ],
    "sonido": [
     "papel",
     "sello",
     "subida",
-    "golpe final"
+    "golpe final",
+    "tic",
+    "ding"
    ]
   }
  ]

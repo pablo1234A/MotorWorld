@@ -16,6 +16,7 @@ proj = Path(sys.argv[1])
 model = sys.argv[2] if len(sys.argv) > 2 else None
 SR = None
 GAP_HUMOR = 0.42  # pausa antes de un remate humorístico
+TEMPO = 1.10  # 1.0 = sin cambio
 GAP_LINE = 0.28
 GAP_SCENE = 0.55
 LEAD_IN = 0.45
@@ -70,9 +71,14 @@ for si, sc in enumerate(data["scenes"]):
             extra = GAP_HUMOR - GAP_LINE
             track.append(np.zeros(int(extra * SR), np.float32)); t += extra
         x, off = trim(read_wav(p))
-        dur = len(x) / SR
         words = text.split()
         al = ALIGN.get(f"{sc['id']}_{li}")
+        if al and al["sig"].startswith(text + "|"):
+            # corta colas de ruido/respiración tras la última palabra (artefacto del TTS neuronal)
+            cut = int((al["words"][-1][1] - off + 0.2) * SR)
+            if 0 < cut < len(x):
+                x = x[:cut].copy(); f = min(len(x), int(.03 * SR)); x[-f:] *= np.linspace(1, 0, f)
+        dur = len(x) / SR
         if al and al["sig"].startswith(text + "|") and len(al["words"]) == len(words):
             wl = [{"w": w, "start": round(t + max(0, a - off), 3), "end": round(t + min(dur, b - off), 3)} for w, (a, b) in zip(words, al["words"])]
         else:
@@ -92,9 +98,20 @@ track.append(np.zeros(int(tail * SR), np.float32)); t += tail
 timeline["scenes"][-1]["end"] = round(t, 3)
 timeline["duration"] = round(t, 3)
 y = np.concatenate(track)
-with wave.open(str(vdir / "narration_full.wav"), "wb") as w:
+full = vdir / "narration_full.wav"; raw = vdir / "narration_full_1x.wav"
+with wave.open(str(raw), "wb") as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
     w.writeframes((np.clip(y, -1, 1) * 32767).astype(np.int16).tobytes())
+# ritmo de narración para redes: tempo ×TEMPO sin cambiar el tono (atempo) y tiempos escalados
+import subprocess
+subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(raw), "-af", f"atempo={TEMPO}", str(full)], check=True)
+raw.unlink()
+def scale(o):
+    if isinstance(o, dict):
+        return {k: (round(v / TEMPO, 3) if k in ("start", "end", "duration") else scale(v)) for k, v in o.items()}
+    if isinstance(o, list): return [scale(v) for v in o]
+    return o
+timeline = scale(timeline); t = t / TEMPO
 (proj / "07_edit/timeline.json").write_text(json.dumps(timeline, ensure_ascii=False, indent=1), encoding="utf-8")
 for s in timeline["scenes"]:
     print(f"{s['id']:14s} {s['start']:6.2f} -> {s['end']:6.2f}  ({s['end']-s['start']:.2f}s)")

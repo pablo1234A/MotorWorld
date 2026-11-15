@@ -56,12 +56,12 @@ function wt(id,li,frag,edge='start'){
 function line(id,li){return scene(id).lines[li]}
 function heart(x,y,r){ctx.beginPath();ctx.moveTo(x,y+r*.35);
   ctx.bezierCurveTo(x-r*1.1,y-r*.4,x-r*.5,y-r*1.1,x,y-r*.45);ctx.bezierCurveTo(x+r*.5,y-r*1.1,x+r*1.1,y-r*.4,x,y+r*.35);ctx.fill();}
-function confetti(t,t0,x0,y0,n=70){
+function confetti(t,t0,x0,y0,n=120){
   const u=t-t0; if(u<0||u>2.6)return;
   const cols=[PAL.gold,PAL.red,'#4fd1a5','#4aa3ff','#ffffff',PAL.orange];
   ctx.save();ctx.globalAlpha=1-seg(u,1.9,2.6);
   for(let i=0;i<n;i++){
-    const a=-Math.PI/2+(hash(i*3.3)-.5)*2.4, v=500+hash(i*7.7)*700;
+    const a=-Math.PI/2+(hash(i*3.3)-.5)*2.2, v=380+hash(i*7.7)*520;
     const x=x0+Math.cos(a)*v*u*.9+Math.sin(u*6+i)*12, y=y0+Math.sin(a)*v*u+900*u*u;
     ctx.save();ctx.translate(x,y);ctx.rotate(u*8*(hash(i)-.5)*4+i);ctx.fillStyle=cols[i%cols.length];
     ctx.fillRect(-9,-4,18,8);ctx.restore();}
@@ -718,7 +718,7 @@ function S5(t){
     ctx.fillStyle='#ff3b5c';heart(70,160,26);
     ctx.fillStyle='#fff';ctx.font='900 30px Inter';ctx.textAlign='center';
     ctx.fillText(likes>=1000?(likes/1000).toFixed(1).replace('.',',')+' mil':String(likes),70,205);
-    ctx.font='700 22px Inter';ctx.fillStyle='#9fd3ff';ctx.fillText('#patinetefail',0,-140);
+    ctx.font='800 30px Inter';ctx.fillStyle='#9fd3ff';ctx.fillText('#patinetefail',0,-140);
     // corazones que suben
     for(let i=0;i<8;i++){const hu=(t-V.start-i*.18);if(hu<0||hu>1.4)continue;
       ctx.globalAlpha=1-hu/1.4;ctx.fillStyle=i%2?'#ff3b5c':'#ff8fa3';heart(70+Math.sin(hu*6+i)*30,140-hu*260,14+6*hash(i));}
@@ -823,18 +823,18 @@ function S7(t){
     ctx.restore();
   }
   // cierre: gran 25
-  const fp=seg(t,tV-.3,tV+.4)*(1-.75*seg(t,Lf.start-.2,Lf.start+.3));
+  const fadeF=seg(t,Lf.start-.25,Lf.start+.2), fp=seg(t,tV-.3,tV+.4)*(1-fadeF);
   if(fp>0){
     ctx.fillStyle=`rgba(4,10,14,${.55*fp})`;ctx.fillRect(0,0,W,H);
     const g=ctx.createRadialGradient(W/2,900,10,W/2,900,520);g.addColorStop(0,`rgba(255,210,122,${.35*fp})`);g.addColorStop(1,'rgba(255,210,122,0)');
     ctx.fillStyle=g;ctx.fillRect(0,300,W,1200);
     label('25',W/2,900,330,fp);
     smallText('km/h',W/2,1100,64,fp,'#ffe48a',900);
-    smallText('una caída que sigue siendo solo una caída',W/2,1210,38,seg(t,tSolo,tSolo+.5),'#e9efe6',700);
+    smallText('una caída que sigue siendo solo una caída',W/2,1210,38,seg(t,tSolo,tSolo+.5)*(1-fadeF),'#e9efe6',700);
   }
   // remate: un poco más tarde, pero entero
-  label('≈ +2 min',W/2-170,1000,80,seg(t,wt('s7_cierre',2,'tarde')-.1,wt('s7_cierre',2,'tarde')+.3),{c1:'#d9e4df',c2:'#9fb3ad'});
-  label('DE UNA PIEZA ✓',W/2+40,1130,84,seg(t,tPz-.15,tPz+.25),{c1:'#9ff0c8',c2:'#3fbf7f'});
+  label('≈ +2 min',W/2,690,96,seg(t,wt('s7_cierre',2,'tarde')-.1,wt('s7_cierre',2,'tarde')+.3),{c1:'#d9e4df',c2:'#9fb3ad'});
+  label('DE UNA PIEZA ✓',W/2,815,90,seg(t,tPz-.15,tPz+.25),{c1:'#9ff0c8',c2:'#3fbf7f'});
   const ep=seg(t,S.end-1.3,S.end-.9);
   if(ep>0){smallText('Fuentes: BOE (RD 970/2020, Ley 5/2025) · DGT (datos urbanos 2024)',W/2,1680,26,ep,'#9fb3ad',600);}
   if(Math.abs(t-S.start)<1/60){cue('whoosh',S.start,.6);cue('paper',S.start+.3,.8);cue('stamp',tOb,.9);cue('rise',tV-.8,.8);cue('hit',tV,1);cue('tick',wt('s7_cierre',2,'tarde'),.6);cue('ding',tPz,.8);}
