@@ -169,6 +169,20 @@ def make(cu):
         n = int(.35 * SR); return bp_noise(n, 1500, 7000) * np.sin(np.pi * tt(n) / .35) ** 2 * .18
     if k == "rise":
         d = .9; n = int(d * SR); return (bp_noise(n, 500, 6000) * .25 + tone_sweep(200, 900, d, (1,)) * .08) * (tt(n) / d) ** 2
+    if k == "party":  # matasuegras + chispas de confeti
+        d = .9; n = int(d * SR); t = tt(n)
+        horn = lp_fast(np.sign(np.sin(2 * np.pi * np.cumsum(np.linspace(620, 560, n)) / SR)), 3000) * env(n, .02, .5, 1.2) * .12
+        sparks = np.zeros(n)
+        for i in range(14):
+            j = int((.05 + .045 * i) * SR); c = click(.025, 4000) * .25
+            sparks[j:j + len(c)] += c[: max(0, n - j)]
+        return horn + sparks
+    if k == "notif":  # notificación de "me gusta"
+        n = int(.22 * SR); t = tt(n)
+        return (np.sin(2 * np.pi * 1318 * t) * env(n, .002, .12) + np.sin(2 * np.pi * 1975 * t) * np.exp(-np.maximum(0, t - .06) * 30) * (t > .06)) * .18
+    if k == "ding":
+        n = int(1.4 * SR); t = tt(n)
+        return (np.sin(2 * np.pi * 1568 * t) + .5 * np.sin(2 * np.pi * 2349 * t) + .25 * np.sin(2 * np.pi * 3136 * t)) * np.exp(-t * 3.2) * .16
     raise ValueError(k)
 
 for cu in cues:

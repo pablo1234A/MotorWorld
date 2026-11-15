@@ -1,12 +1,14 @@
 {
   "title": "¿Por qué tu patinete no pasa de 25?",
-  "voice": "es_ES-davefx-medium (Piper TTS, local)",
+  "voice": "ver tools/tts_chatterbox.py (Chatterbox multilingüe, local, MIT)",
+  "humor_notes": "4 golpes de humor puntuales (marcados con style=humor), siempre ligados al tema y separados por bloques serios: ley, peatón y datos de la DGT van sin chistes.",
   "scenes": [
     {
       "id": "s1_gancho",
       "lines": [
         "Tu patinete podría ir a cincuenta por hora.",
-        "Pero la ley lo frena en veinticinco. Y no es un capricho."
+        "Pero la ley lo frena en veinticinco.",
+        {"text": "Y no, no es porque la DGT odie la diversión.", "style": "humor"}
       ]
     },
     {
@@ -19,7 +21,9 @@
     {
       "id": "s3_energia",
       "lines": [
-        "La razón es física. La energía de un golpe crece con el cuadrado de la velocidad.",
+        "La razón es física.",
+        {"text": "Sí, esa asignatura que juraste que nunca te iba a servir.", "style": "humor"},
+        "La energía de un golpe crece con el cuadrado de la velocidad.",
         "Al doble de velocidad, cuatro veces más energía."
       ]
     },
@@ -34,13 +38,14 @@
       "id": "s5_ruedas",
       "lines": [
         "Además, sus ruedas miden apenas veinte centímetros.",
-        "Un bache que a veinticinco es un susto, a cincuenta es una caída."
+        "Un bache que a veinticinco es un susto, a cincuenta es una caída.",
+        {"text": "Y un vídeo viral que no quieres protagonizar.", "style": "humor"}
       ]
     },
     {
       "id": "s6_datos",
       "lines": [
-        "Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+        "Pero esto no es solo un meme. Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
         "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años."
       ]
     },
@@ -48,7 +53,8 @@
       "id": "s7_cierre",
       "lines": [
         "Por eso ahora, además, la ley exige seguro obligatorio.",
-        "Veinticinco es la velocidad a la que una caída todavía es solo una caída."
+        "Veinticinco es la velocidad a la que una caída todavía es solo una caída.",
+        {"text": "Llegas un par de minutos más tarde. Pero llegas de una pieza.", "style": "humor"}
       ]
     }
   ],
