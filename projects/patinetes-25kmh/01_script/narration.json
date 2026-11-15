@@ -1,0 +1,70 @@
+{
+  "title": "¿Por qué tu patinete no pasa de 25?",
+  "voice": "es_ES-davefx-medium (Piper TTS, local)",
+  "scenes": [
+    {
+      "id": "s1_gancho",
+      "lines": [
+        "Tu patinete podría ir a cincuenta por hora.",
+        "Pero la ley lo frena en veinticinco. Y no es un capricho."
+      ]
+    },
+    {
+      "id": "s2_ley",
+      "lines": [
+        "Desde dos mil veintiuno, en España, un patinete eléctrico solo puede ir entre seis y veinticinco kilómetros por hora.",
+        "Y nunca por la acera."
+      ]
+    },
+    {
+      "id": "s3_energia",
+      "lines": [
+        "La razón es física. La energía de un golpe crece con el cuadrado de la velocidad.",
+        "Al doble de velocidad, cuatro veces más energía."
+      ]
+    },
+    {
+      "id": "s4_reaccion",
+      "lines": [
+        "Y en el segundo que tardas en reaccionar, a veinticinco recorres siete metros.",
+        "A cincuenta, casi catorce. Justo la distancia hasta ese peatón."
+      ]
+    },
+    {
+      "id": "s5_ruedas",
+      "lines": [
+        "Además, sus ruedas miden apenas veinte centímetros.",
+        "Un bache que a veinticinco es un susto, a cincuenta es una caída."
+      ]
+    },
+    {
+      "id": "s6_datos",
+      "lines": [
+        "Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+        "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años."
+      ]
+    },
+    {
+      "id": "s7_cierre",
+      "lines": [
+        "Por eso ahora, además, la ley exige seguro obligatorio.",
+        "Veinticinco es la velocidad a la que una caída todavía es solo una caída."
+      ]
+    }
+  ],
+  "captions_display": {
+    "cincuenta": "50",
+    "veinticinco": "25",
+    "dos mil veintiuno": "2021",
+    "seis": "6",
+    "siete": "7",
+    "catorce": "14",
+    "veinte": "20",
+    "dos mil veinticuatro": "2024",
+    "trece": "13",
+    "ocho": "8",
+    "noventa y tres": "93",
+    "cuatrocientos diecinueve": "419",
+    "cuatro": "4"
+  }
+}

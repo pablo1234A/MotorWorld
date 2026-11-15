@@ -1,0 +1,237 @@
+[
+ {
+  "type": "whoosh_in",
+  "t": 0,
+  "gain": 0.6
+ },
+ {
+  "type": "motor",
+  "t": 0.2,
+  "gain": 1
+ },
+ {
+  "type": "brake",
+  "t": 3.802,
+  "gain": 0.7
+ },
+ {
+  "type": "beep",
+  "t": 3.852,
+  "gain": 0.8
+ },
+ {
+  "type": "stamp",
+  "t": 4.302,
+  "gain": 1
+ },
+ {
+  "type": "whoosh",
+  "t": 6.919,
+  "gain": 0.7
+ },
+ {
+  "type": "steps",
+  "t": 7.219,
+  "gain": 0.35
+ },
+ {
+  "type": "sign",
+  "t": 7.919,
+  "gain": 0.8
+ },
+ {
+  "type": "pop",
+  "t": 10.761,
+  "gain": 0.8
+ },
+ {
+  "type": "buzz",
+  "t": 13.364,
+  "gain": 0.9
+ },
+ {
+  "type": "whoosh",
+  "t": 14.655,
+  "gain": 0.7
+ },
+ {
+  "type": "chalk",
+  "t": 15.911,
+  "gain": 0.8
+ },
+ {
+  "type": "pop",
+  "t": 20.09,
+  "gain": 0.7
+ },
+ {
+  "type": "pop",
+  "t": 20.783,
+  "gain": 0.7
+ },
+ {
+  "type": "pop",
+  "t": 21.003,
+  "gain": 0.7
+ },
+ {
+  "type": "pop",
+  "t": 21.223,
+  "gain": 0.7
+ },
+ {
+  "type": "pop",
+  "t": 21.443,
+  "gain": 0.7
+ },
+ {
+  "type": "hit",
+  "t": 21.583,
+  "gain": 0.9
+ },
+ {
+  "type": "whoosh",
+  "t": 23.073,
+  "gain": 0.7
+ },
+ {
+  "type": "steps",
+  "t": 23.373,
+  "gain": 0.5
+ },
+ {
+  "type": "tick",
+  "t": 25.134,
+  "gain": 0.7
+ },
+ {
+  "type": "motor_short",
+  "t": 25.134,
+  "gain": 0.6
+ },
+ {
+  "type": "tick",
+  "t": 27.125,
+  "gain": 0.7
+ },
+ {
+  "type": "motor_fast",
+  "t": 27.125,
+  "gain": 0.9
+ },
+ {
+  "type": "horn",
+  "t": 28.711,
+  "gain": 0.8
+ },
+ {
+  "type": "whoosh",
+  "t": 31.474,
+  "gain": 0.6
+ },
+ {
+  "type": "pop",
+  "t": 32.274,
+  "gain": 0.6
+ },
+ {
+  "type": "motor_short",
+  "t": 34.686,
+  "gain": 0.5
+ },
+ {
+  "type": "bump",
+  "t": 36.096,
+  "gain": 0.6
+ },
+ {
+  "type": "motor_fast",
+  "t": 36.217,
+  "gain": 0.8
+ },
+ {
+  "type": "crash",
+  "t": 37.28,
+  "gain": 1
+ },
+ {
+  "type": "scrape",
+  "t": 37.43,
+  "gain": 0.7
+ },
+ {
+  "type": "whoosh",
+  "t": 38.098,
+  "gain": 0.6
+ },
+ {
+  "type": "siren",
+  "t": 38.298,
+  "gain": 0.45
+ },
+ {
+  "type": "hit",
+  "t": 41.722,
+  "gain": 0.9
+ },
+ {
+  "type": "pop",
+  "t": 44.238,
+  "gain": 0.7
+ },
+ {
+  "type": "pop",
+  "t": 47.73,
+  "gain": 0.6
+ },
+ {
+  "type": "pop",
+  "t": 48.043,
+  "gain": 0.6
+ },
+ {
+  "type": "pop",
+  "t": 48.356,
+  "gain": 0.6
+ },
+ {
+  "type": "pop",
+  "t": 48.669,
+  "gain": 0.6
+ },
+ {
+  "type": "pop",
+  "t": 48.982,
+  "gain": 0.6
+ },
+ {
+  "type": "hit",
+  "t": 49.282,
+  "gain": 0.9
+ },
+ {
+  "type": "whoosh",
+  "t": 51.736,
+  "gain": 0.6
+ },
+ {
+  "type": "paper",
+  "t": 52.036,
+  "gain": 0.8
+ },
+ {
+  "type": "stamp",
+  "t": 54.101,
+  "gain": 0.9
+ },
+ {
+  "type": "rise",
+  "t": 54.237,
+  "gain": 0.8
+ },
+ {
+  "type": "hit",
+  "t": 55.037,
+  "gain": 1
+ }
+]

@@ -1,0 +1,133 @@
+1
+00:00:00,450 --> 00:00:02,702
+Tu patinete podría ir a 50 por hora.
+
+2
+00:00:02,832 --> 00:00:05,076
+Pero la ley lo frena en 25.
+
+3
+00:00:05,086 --> 00:00:06,519
+Y no es un capricho.
+
+4
+00:00:06,919 --> 00:00:08,120
+Desde 2021,
+
+5
+00:00:08,130 --> 00:00:08,632
+en España,
+
+6
+00:00:08,642 --> 00:00:11,123
+un patinete eléctrico solo
+puede ir entre 6 y
+
+7
+00:00:11,133 --> 00:00:12,866
+25 kilómetros por hora.
+
+8
+00:00:12,996 --> 00:00:14,255
+Y nunca por la acera.
+
+9
+00:00:14,655 --> 00:00:15,807
+La razón es física.
+
+10
+00:00:15,817 --> 00:00:18,545
+La energía de un
+golpe crece con el cuadrado
+
+11
+00:00:18,555 --> 00:00:19,673
+de la velocidad.
+
+12
+00:00:19,803 --> 00:00:21,073
+Al doble de velocidad,
+
+13
+00:00:21,083 --> 00:00:22,673
+4 veces más energía.
+
+14
+00:00:23,073 --> 00:00:25,015
+Y en el segundo
+que tardas en reaccionar,
+
+15
+00:00:25,025 --> 00:00:26,846
+a 25 recorres 7 metros.
+
+16
+00:00:26,976 --> 00:00:27,743
+A 50,
+
+17
+00:00:27,753 --> 00:00:28,581
+casi 14.
+
+18
+00:00:28,591 --> 00:00:31,074
+Justo la distancia hasta ese peatón.
+
+19
+00:00:31,474 --> 00:00:31,869
+Además,
+
+20
+00:00:31,879 --> 00:00:34,512
+sus ruedas miden
+apenas 20 centímetros.
+
+21
+00:00:34,642 --> 00:00:36,404
+Un bache que a 25 es un susto,
+
+22
+00:00:36,414 --> 00:00:37,698
+a 50 es una caída.
+
+23
+00:00:38,098 --> 00:00:39,925
+Los datos de la DGT lo confirman.
+
+24
+00:00:39,935 --> 00:00:43,725
+En 2024 murieron 13
+usuarios de patinete en ciudad,
+
+25
+00:00:43,735 --> 00:00:45,546
+frente a 8 el año anterior.
+
+26
+00:00:45,676 --> 00:00:50,074
+Y los heridos hospitalizados
+pasaron de 93 a 419,
+
+27
+00:00:50,084 --> 00:00:51,336
+en solo 4 años.
+
+28
+00:00:51,736 --> 00:00:52,541
+Por eso ahora,
+
+29
+00:00:52,551 --> 00:00:52,935
+además,
+
+30
+00:00:52,945 --> 00:00:54,907
+la ley exige seguro obligatorio.
+
+31
+00:00:55,037 --> 00:00:57,199
+25 es la velocidad a la que una caída
+
+32
+00:00:57,209 --> 00:00:58,561
+todavía es solo una caída.

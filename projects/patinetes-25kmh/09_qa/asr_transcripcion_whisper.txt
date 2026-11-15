@@ -1,0 +1,10 @@
+[  0.0-  6.2] Tu patinete podría ir a 50 por hora, pero la ley lo frena en 25. Y no es un capricho.
+[  6.2- 12.6] Desde 2021, en España, un patinete eléctrico solo puede ir entre 6 y 25 kilómetros por hora,
+[ 12.6- 18.8] y nunca por la acera. La razón es física. La energía de un golpe crece con el cuadrado de
+[ 18.8- 24.1] la velocidad. Al doble de velocidad, cuatro veces más energía. Y en el segundo que tardas
+[ 24.1- 30.7] en reaccionar, a 25 recorre 7 metros, a 50, casi 14. Justo la distancia hasta ese peatón.
+[ 30.7- 37.3] Además, sus rodas miden apenas 20 centímetros. Un bache que a 25 es un susto, a 50 es una caída.
+[ 37.3- 43.4] Los datos de la DGT lo confirman. En 2024 murieron 13 usuarios de patinete en ciudad,
+[ 43.4- 50.1] frente a 8 el año anterior. Y los heridos hospitalizados pasaron de 90 y 3 a 419 en
+[ 50.1- 56.6] solo 4 años. Por eso ahora, además, la ley exige seguro obligatorio. 25 es la velocidad a la que
+[ 56.6- 58.3] una caída todavía es solo una caída.

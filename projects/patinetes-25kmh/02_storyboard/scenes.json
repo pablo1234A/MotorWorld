@@ -1,0 +1,166 @@
+{
+ "titulo": "¿Por qué tu patinete no pasa de 25?",
+ "formato": "1080x1920, 30 fps",
+ "duracion": 60.561,
+ "escenas": [
+  {
+   "id": "s1_gancho",
+   "inicio": 0.0,
+   "fin": 6.92,
+   "duracion": 6.92,
+   "voz": [
+    "Tu patinete podría ir a cincuenta por hora.",
+    "Pero la ley lo frena en veinticinco. Y no es un capricho."
+   ],
+   "encuadre": "Plano general de calle nocturna; zoom lento hacia dentro",
+   "accion": "Piloto en silueta acelera por el carril bici; el velocímetro sube a 50 y cae a 25; sello LIMITADO A 25",
+   "rotulos": [
+    "LIMITADO A 25"
+   ],
+   "sonido": [
+    "whoosh",
+    "motor que sube/baja con la velocidad",
+    "pitido",
+    "frenada",
+    "sello"
+   ]
+  },
+  {
+   "id": "s2_ley",
+   "inicio": 6.92,
+   "fin": 14.65,
+   "duracion": 7.74,
+   "voz": [
+    "Desde dos mil veintiuno, en España, un patinete eléctrico solo puede ir entre seis y veinticinco kilómetros por hora.",
+    "Y nunca por la acera."
+   ],
+   "encuadre": "Plano general, travelling lateral",
+   "accion": "Señal de 25 crece en la acera; peatones caminan; patinete fantasma en la acera, tachado en rojo",
+   "rotulos": [
+    "REAL DECRETO 970/2020",
+    "6 – 25 km/h",
+    "ACERA: PROHIBIDO"
+   ],
+   "sonido": [
+    "whoosh",
+    "señal metálica",
+    "pop",
+    "zumbido de error",
+    "pasos"
+   ]
+  },
+  {
+   "id": "s3_energia",
+   "inicio": 14.66,
+   "fin": 23.07,
+   "duracion": 8.42,
+   "voz": [
+    "La razón es física. La energía de un golpe crece con el cuadrado de la velocidad.",
+    "Al doble de velocidad, cuatro veces más energía."
+   ],
+   "encuadre": "Interior (aula) con lámpara de pie cálida; zoom lento",
+   "accion": "El profesor en silueta señala la pizarra; se escribe E = ½·m·v²; bloques: 1 a 25 km/h, 4 a 50 km/h",
+   "rotulos": [
+    "× 4",
+    "VELOCIDAD ×2 = ENERGÍA ×4"
+   ],
+   "sonido": [
+    "tiza",
+    "pops",
+    "golpe grave"
+   ]
+  },
+  {
+   "id": "s4_reaccion",
+   "inicio": 23.07,
+   "fin": 31.47,
+   "duracion": 8.4,
+   "voz": [
+    "Y en el segundo que tardas en reaccionar, a veinticinco recorres siete metros.",
+    "A cincuenta, casi catorce. Justo la distancia hasta ese peatón."
+   ],
+   "encuadre": "Vista 3/4 elevada de un paso de cebra; cámara fija",
+   "accion": "Un peatón cruza; regla de distancia en 1 s: 7 m a 25 km/h y 14 m a 50 km/h, justo hasta el peatón; destello rojo",
+   "rotulos": [
+    "1 s",
+    "25 km/h",
+    "50 km/h",
+    "7 m / 14 m",
+    "¡PEATÓN!"
+   ],
+   "sonido": [
+    "tic de reloj",
+    "motor",
+    "timbre",
+    "pasos"
+   ]
+  },
+  {
+   "id": "s5_ruedas",
+   "inicio": 31.47,
+   "fin": 38.1,
+   "duracion": 6.62,
+   "voz": [
+    "Además, sus ruedas miden apenas veinte centímetros.",
+    "Un bache que a veinticinco es un susto, a cincuenta es una caída."
+   ],
+   "encuadre": "Primer plano de la rueda (zoom 2,6×) → plano general",
+   "accion": "Cota de 20 cm en la rueda; pasada a 25: bote en el bache; pasada a 50: vuelco y caída (sin violencia explícita)",
+   "rotulos": [
+    "RUEDAS DE 20 cm",
+    "25 → SUSTO",
+    "50 → CAÍDA"
+   ],
+   "sonido": [
+    "motor",
+    "bote",
+    "choque",
+    "arrastre"
+   ]
+  },
+  {
+   "id": "s6_datos",
+   "inicio": 38.1,
+   "fin": 51.74,
+   "duracion": 13.64,
+   "voz": [
+    "Los datos de la DGT lo confirman. En dos mil veinticuatro murieron trece usuarios de patinete en ciudad, frente a ocho el año anterior.",
+    "Y los heridos hospitalizados pasaron de noventa y tres a cuatrocientos diecinueve, en solo cuatro años."
+   ],
+   "encuadre": "Calle nocturna con panel de datos; cruza una ambulancia",
+   "accion": "Barras 2023 (8) → 2024 (13) fallecidos; barras-edificio de hospitalizados 2020–2024 (93 → 419)",
+   "rotulos": [
+    "+62,5 %",
+    "×4,5 EN 4 AÑOS"
+   ],
+   "sonido": [
+    "sirena (paneo izq.→dcha.)",
+    "pops",
+    "golpes graves"
+   ]
+  },
+  {
+   "id": "s7_cierre",
+   "inicio": 51.74,
+   "fin": 60.56,
+   "duracion": 8.82,
+   "voz": [
+    "Por eso ahora, además, la ley exige seguro obligatorio.",
+    "Veinticinco es la velocidad a la que una caída todavía es solo una caída."
+   ],
+   "encuadre": "Amanecer cálido; zoom lento",
+   "accion": "El piloto, con casco, circula tranquilo a 25; tarjeta SEGURO OBLIGATORIO (Ley 5/2025) con sello VIGENTE; gran 25 km/h final",
+   "rotulos": [
+    "SEGURO OBLIGATORIO",
+    "VIGENTE",
+    "25 km/h"
+   ],
+   "sonido": [
+    "papel",
+    "sello",
+    "subida",
+    "golpe final"
+   ]
+  }
+ ]
+}
